@@ -63,7 +63,11 @@ export function RoadsPanel({ snap }: { snap: Snapshot }) {
   if (!data) return <Card title="Roads"><Skeleton className="h-80" /></Card>;
   const tz = snap.facility.timezone;
   const center: [number, number] = [data.facility.lat - 0.12, data.facility.lon];
-  const toggle = (k: keyof typeof layers) => setLayers((l) => ({ ...l, [k]: !l[k] }));
+  const toggle = (k: keyof typeof layers) => {
+    // Turning cameras off also closes the camera viewer.
+    if (k === "cameras" && layers.cameras) setSelected(null);
+    setLayers((l) => ({ ...l, [k]: !l[k] }));
+  };
 
   return (
     <Card title="Roads: Iowa DOT conditions on commute corridors"
@@ -72,7 +76,7 @@ export function RoadsPanel({ snap }: { snap: Snapshot }) {
       </span>}>
       {data.status !== "ok" && <p className="mb-3 rounded-lg bg-[var(--surface-2)] px-3 py-2 text-sm text-ink2">{data.detail}</p>}
       <div className="grid gap-4 lg:grid-cols-5">
-        <div className="h-96 lg:col-span-3">
+        <div className="h-96 lg:col-span-3 lg:h-auto lg:min-h-[24rem]">
           <MapContainer key={snap.snapshot_id} center={center} zoom={9} scrollWheelZoom={false} className="h-full w-full">
             <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             {layers.corridors && data.corridors.map((c: any) => (
@@ -93,6 +97,7 @@ export function RoadsPanel({ snap }: { snap: Snapshot }) {
                 <LTooltip direction="top" offset={[0, -12]}>{c.name} · {c.views.length} view{c.views.length > 1 ? "s" : ""}</LTooltip>
               </Marker>
             ))}
+            <AutoResize />
             <FitView center={center} points={layers.cameras ? visibleCams.map((c) => [c.lat, c.lon] as [number, number]) : []} />
             <CircleMarker center={[data.facility.lat, data.facility.lon]} radius={8}
               pathOptions={{ color: cssVar("var(--surface-1)"), weight: 2, fillColor: cssVar("var(--text-primary)"), fillOpacity: 1 }}>
@@ -174,6 +179,18 @@ function LayerToggle({ on, onChange, label }: { on: boolean; onChange: () => voi
 }
 
 /** Glide out to fit the cameras when that layer turns on, and back to the facility view when it turns off. */
+/** Leaflet must be told when its container changes size (e.g. the camera viewer makes the row taller). */
+function AutoResize() {
+  const map = useMap();
+  useEffect(() => {
+    const el = map.getContainer();
+    const ro = new ResizeObserver(() => map.invalidateSize({ pan: false }));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [map]);
+  return null;
+}
+
 function FitView({ center, points }: { center: [number, number]; points: [number, number][] }) {
   const map = useMap();
   const key = points.map((p) => p.join(",")).join(";");
