@@ -1,0 +1,43 @@
+"""Runtime settings, read once from the environment (and backend/.env if present)."""
+from __future__ import annotations
+
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+BACKEND_DIR = Path(__file__).resolve().parents[1]
+REPO_DIR = BACKEND_DIR.parent
+load_dotenv(REPO_DIR / ".env")
+load_dotenv(BACKEND_DIR / ".env")
+
+
+def _bool(name: str, default: bool = False) -> bool:
+    return os.environ.get(name, str(default)).strip().lower() in {"1", "true", "yes", "on"}
+
+
+class Settings:
+    nws_user_agent: str = os.environ.get(
+        "NWS_USER_AGENT", "ClosureCall-HackMidwest2026 (set NWS_USER_AGENT to your contact)"
+    )
+    demo_mode: bool = _bool("DEMO_MODE")
+    db_path: Path = Path(os.environ.get("DATABASE_PATH", BACKEND_DIR / "var" / "closurecall.db"))
+    cache_dir: Path = Path(os.environ.get("HTTP_CACHE_DIR", BACKEND_DIR / "fixtures" / "http_cache"))
+    live_ttl_seconds: int = int(os.environ.get("LIVE_CACHE_TTL_SECONDS", "600"))
+    snapshot_stale_seconds: int = int(os.environ.get("SNAPSHOT_STALE_SECONDS", "600"))
+    refresh_interval_seconds: int = int(os.environ.get("REFRESH_INTERVAL_SECONDS", "0"))
+
+    # AI layer (Strands). Provider: bedrock | anthropic | openai | none
+    model_provider: str = os.environ.get("MODEL_PROVIDER", "none").strip().lower()
+    model_id: str = os.environ.get("MODEL_ID", "")
+    anthropic_api_key: str = os.environ.get("ANTHROPIC_API_KEY", "")
+    openai_api_key: str = os.environ.get("OPENAI_API_KEY", "")
+    openai_base_url: str = os.environ.get("OPENAI_BASE_URL", "")
+    aws_region: str = os.environ.get("AWS_REGION", "us-east-1")
+
+    data_dir: Path = BACKEND_DIR / "data"
+    config_dir: Path = BACKEND_DIR / "config"
+    fixtures_dir: Path = BACKEND_DIR / "fixtures"
+
+
+settings = Settings()

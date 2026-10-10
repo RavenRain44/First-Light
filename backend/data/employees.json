@@ -1,0 +1,475 @@
+{
+ "_synthetic": "SYNTHETIC roster. Names are fictitious; no real employee data.",
+ "employees": [
+  {
+   "id": "E001",
+   "name": "Avery Lindqvist",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": true,
+   "essential_role": "County Executive Director (decision maker)",
+   "telework_eligible": true,
+   "teleworking_today": false,
+   "home_town": "Ames, IA",
+   "commute_corridor": "local",
+   "commute_miles": 3,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "sms",
+    "email",
+    "phone"
+   ]
+  },
+  {
+   "id": "E002",
+   "name": "Jordan Okafor",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": true,
+   "essential_role": "Facility / building POC",
+   "telework_eligible": false,
+   "teleworking_today": false,
+   "home_town": "Nevada, IA",
+   "commute_corridor": "us30_ames_nevada",
+   "commute_miles": 10,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "sms",
+    "phone"
+   ]
+  },
+  {
+   "id": "E003",
+   "name": "Riley Marchetti",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": true,
+   "teleworking_today": false,
+   "home_town": "Des Moines, IA",
+   "commute_corridor": "i35_ames_dsm",
+   "commute_miles": 32,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "sms",
+    "email"
+   ]
+  },
+  {
+   "id": "E004",
+   "name": "Casey Thorvaldsen",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": true,
+   "teleworking_today": true,
+   "home_town": "Ankeny, IA",
+   "commute_corridor": "i35_ames_dsm",
+   "commute_miles": 24,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "email"
+   ]
+  },
+  {
+   "id": "E005",
+   "name": "Morgan Delacroix",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": true,
+   "teleworking_today": false,
+   "home_town": "Boone, IA",
+   "commute_corridor": "us30_ames_boone",
+   "commute_miles": 16,
+   "accessibility_needs": "Uses wheelchair; needs ramp entrance clear",
+   "contact_channels": [
+    "sms",
+    "email"
+   ]
+  },
+  {
+   "id": "E006",
+   "name": "Taylor Nakamura",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "detail:IA-DSM-SO",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": true,
+   "teleworking_today": false,
+   "home_town": "Ames, IA",
+   "commute_corridor": "local",
+   "commute_miles": 3,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "email",
+    "sms"
+   ]
+  },
+  {
+   "id": "E007",
+   "name": "Jamie Kowalczyk",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": false,
+   "teleworking_today": false,
+   "home_town": "Huxley, IA",
+   "commute_corridor": "us69_ames_huxley",
+   "commute_miles": 12,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "sms"
+   ]
+  },
+  {
+   "id": "E008",
+   "name": "Quinn Abernathy",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "travel:Kansas City, MO",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": true,
+   "teleworking_today": false,
+   "home_town": "Story City, IA",
+   "commute_corridor": "i35_ames_storycity",
+   "commute_miles": 14,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "email",
+    "sms"
+   ]
+  },
+  {
+   "id": "E009",
+   "name": "Drew Halvorsen",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": true,
+   "essential_role": "IT / continuity (COOP) lead",
+   "telework_eligible": true,
+   "teleworking_today": false,
+   "home_town": "Gilbert, IA",
+   "commute_corridor": "local",
+   "commute_miles": 7,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "sms",
+    "email",
+    "phone"
+   ]
+  },
+  {
+   "id": "E010",
+   "name": "Sasha Petrakis",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": true,
+   "teleworking_today": true,
+   "home_town": "Des Moines, IA",
+   "commute_corridor": "i35_ames_dsm",
+   "commute_miles": 32,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "email"
+   ]
+  },
+  {
+   "id": "E011",
+   "name": "Rowan Fairweather",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": true,
+   "teleworking_today": false,
+   "home_town": "Slater, IA",
+   "commute_corridor": "us69_ames_huxley",
+   "commute_miles": 15,
+   "accessibility_needs": "Hearing impaired; text/email only",
+   "contact_channels": [
+    "sms",
+    "email"
+   ]
+  },
+  {
+   "id": "E012",
+   "name": "Emerson Baptiste",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": false,
+   "teleworking_today": false,
+   "home_town": "Boone, IA",
+   "commute_corridor": "us30_ames_boone",
+   "commute_miles": 16,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "phone",
+    "sms"
+   ]
+  },
+  {
+   "id": "E013",
+   "name": "Hayden Vasquez",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": true,
+   "teleworking_today": false,
+   "home_town": "Ankeny, IA",
+   "commute_corridor": "i35_ames_dsm",
+   "commute_miles": 24,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "sms",
+    "email"
+   ]
+  },
+  {
+   "id": "E014",
+   "name": "Parker Engstrom",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "detail:IA-CR-SC",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": true,
+   "teleworking_today": false,
+   "home_town": "Nevada, IA",
+   "commute_corridor": "us30_ames_nevada",
+   "commute_miles": 10,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "email"
+   ]
+  },
+  {
+   "id": "E015",
+   "name": "Reese Oyelaran",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": true,
+   "teleworking_today": false,
+   "home_town": "Ames, IA",
+   "commute_corridor": "local",
+   "commute_miles": 3,
+   "accessibility_needs": "Mobility: uses cane; avoid icy lot",
+   "contact_channels": [
+    "sms",
+    "email"
+   ]
+  },
+  {
+   "id": "E016",
+   "name": "Skyler Brandt",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": true,
+   "teleworking_today": true,
+   "home_town": "Story City, IA",
+   "commute_corridor": "i35_ames_storycity",
+   "commute_miles": 14,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "email"
+   ]
+  },
+  {
+   "id": "E017",
+   "name": "Dakota Sorensen",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": true,
+   "essential_role": "Public counter lead",
+   "telework_eligible": false,
+   "teleworking_today": false,
+   "home_town": "Huxley, IA",
+   "commute_corridor": "us69_ames_huxley",
+   "commute_miles": 12,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "sms",
+    "phone"
+   ]
+  },
+  {
+   "id": "E018",
+   "name": "Finley Achebe",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "travel:Washington, DC",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": true,
+   "teleworking_today": false,
+   "home_town": "Des Moines, IA",
+   "commute_corridor": "i35_ames_dsm",
+   "commute_miles": 32,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "email",
+    "sms"
+   ]
+  },
+  {
+   "id": "E019",
+   "name": "Cameron Ostrowski",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": true,
+   "teleworking_today": false,
+   "home_town": "Gilbert, IA",
+   "commute_corridor": "local",
+   "commute_miles": 7,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "sms",
+    "email"
+   ]
+  },
+  {
+   "id": "E020",
+   "name": "Alex Raghunathan",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": true,
+   "teleworking_today": false,
+   "home_town": "Boone, IA",
+   "commute_corridor": "us30_ames_boone",
+   "commute_miles": 16,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "sms",
+    "email"
+   ]
+  },
+  {
+   "id": "E021",
+   "name": "Blake Fitzgerald",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": false,
+   "teleworking_today": false,
+   "home_town": "Ames, IA",
+   "commute_corridor": "local",
+   "commute_miles": 3,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "phone"
+   ]
+  },
+  {
+   "id": "E022",
+   "name": "Kendall Moreau",
+   "synthetic": true,
+   "assigned_facility": "IA-AMES-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": true,
+   "teleworking_today": true,
+   "home_town": "Slater, IA",
+   "commute_corridor": "us69_ames_huxley",
+   "commute_miles": 15,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "email"
+   ]
+  },
+  {
+   "id": "E101",
+   "name": "Logan Whitfield",
+   "synthetic": true,
+   "assigned_facility": "IA-DSM-SO",
+   "this_week_location": "IA-AMES-SC",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": true,
+   "teleworking_today": false,
+   "home_town": "Des Moines, IA",
+   "commute_corridor": "i35_ames_dsm",
+   "commute_miles": 32,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "sms",
+    "email"
+   ]
+  },
+  {
+   "id": "E102",
+   "name": "Harper Sundquist",
+   "synthetic": true,
+   "assigned_facility": "IA-MSH-SC",
+   "this_week_location": "IA-AMES-SC",
+   "essential": false,
+   "essential_role": null,
+   "telework_eligible": true,
+   "teleworking_today": false,
+   "home_town": "Nevada, IA",
+   "commute_corridor": "us30_ames_nevada",
+   "commute_miles": 10,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "sms",
+    "email"
+   ]
+  },
+  {
+   "id": "E103",
+   "name": "Peyton Castellanos",
+   "synthetic": true,
+   "assigned_facility": "IA-DSM-SO",
+   "this_week_location": "IA-AMES-SC",
+   "essential": true,
+   "essential_role": "Visiting engineer (NRCS), on-site inspections",
+   "telework_eligible": false,
+   "teleworking_today": false,
+   "home_town": "Ankeny, IA",
+   "commute_corridor": "i35_ames_dsm",
+   "commute_miles": 24,
+   "accessibility_needs": null,
+   "contact_channels": [
+    "sms",
+    "phone"
+   ]
+  }
+ ]
+}
