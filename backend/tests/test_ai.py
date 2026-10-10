@@ -1,6 +1,8 @@
 """AI layer: tools, number validation, retry-then-fallback, deterministic fallback."""
 import asyncio
 import json
+import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -15,6 +17,28 @@ from app.snapshots import build_snapshot_dict
 from engine.evaluate import assess
 
 FIX = Path(__file__).resolve().parents[1] / "fixtures" / "derecho_2020-08-10T16Z_inputs.json"
+
+
+def test_agent_import_does_not_require_strands():
+    """Deterministic/no-model runs must work when optional AI packages are absent."""
+    code = """
+import builtins
+
+real_import = builtins.__import__
+
+def without_strands(name, *args, **kwargs):
+    if name == "strands" or name.startswith("strands."):
+        raise ModuleNotFoundError("strands intentionally unavailable")
+    return real_import(name, *args, **kwargs)
+
+builtins.__import__ = without_strands
+from ai import agent
+assert agent.FALLBACK_ID == "deterministic-fallback"
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code], cwd=FIX.parents[1], capture_output=True, text=True, check=False,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 @pytest.fixture(scope="module")
