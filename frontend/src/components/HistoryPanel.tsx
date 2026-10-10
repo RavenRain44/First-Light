@@ -5,10 +5,22 @@ import { Badge, Card, PostureBadge, fmtTime, readinessColor } from "../util";
 
 export function AnalogsPanel({ snap }: { snap: Snapshot }) {
   const tz = snap.facility.timezone;
+  const [nEvents, setNEvents] = useState<number | null>(null);
+  useEffect(() => { api.events().then((e) => setNEvents(e.length)).catch(() => setNEvents(null)); }, []);
+  const quiet = Object.values(snap.hazards).every((h) => h.level === 0) && snap.alerts.length === 0;
   return (
     <Card title="Similar past events" right={<span className="text-xs text-muted">nearest neighbors on the snapshot feature vector</span>}>
       {snap.analogs.length === 0 ? (
-        <p className="text-sm text-ink2">No backtested history loaded yet. Run <code>python -m scripts.build_history</code> in backend/.</p>
+        nEvents === 0 ? (
+          <p className="text-sm text-ink2">No backtested history in this database yet. Run <code>npm run build:history</code> (works offline in about 20 s from the committed cache).</p>
+        ) : (
+          <p className="text-sm text-ink2">
+            {quiet
+              ? `No active alerts or hazards right now, so comparing to past storms isn't meaningful (a calm day resembles every storm's calm hours).`
+              : "No past event is similar enough to show."}
+            {nEvents ? ` ${nEvents} past events are loaded; try Replay to see analogs during a storm.` : ""}
+          </p>
+        )
       ) : (
         <div className="grid gap-3 md:grid-cols-3">
           {snap.analogs.map((a) => (
