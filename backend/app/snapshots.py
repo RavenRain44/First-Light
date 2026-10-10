@@ -32,7 +32,7 @@ def build_snapshot_dict(facility: Facility, a: Assessment, inputs, statuses, mod
     return json_ready({
         "snapshot_id": uuid.uuid4().hex,
         "facility": facility,
-        "roster": roster_summary(facility) if not facility.hypothetical else {"hypothetical": True},
+        "roster": roster_summary(facility, a.posture.decision_day.isoformat()) if not facility.hypothetical else {"hypothetical": True},
         "as_of": a.as_of,
         "created_at": datetime.now(timezone.utc),
         "mode": mode,

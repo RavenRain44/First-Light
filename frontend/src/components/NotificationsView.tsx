@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../api";
-import { Card } from "../util";
+import { Card, Skeleton } from "../util";
 
 async function request(path: string, method = "GET", body?: unknown): Promise<any> {
   const r = await fetch(`/api/notifications${path}`, { method, headers: { "content-type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
@@ -8,7 +8,7 @@ async function request(path: string, method = "GET", body?: unknown): Promise<an
   if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail));
   return data;
 }
-const input = "rounded-lg border border-edge bg-surface px-2 py-1";
+const input = "min-w-0 max-w-full rounded-lg border border-edge bg-surface px-2 py-1";
 const button = "btn";
 const time = (t: string, tz: string) => new Intl.DateTimeFormat("en-US", { timeZone: tz, dateStyle: "medium", timeStyle: "short" }).format(new Date(t));
 
@@ -44,7 +44,7 @@ function GroupEditor({ group: g, pack: p, contacts, actor, run, onDirty }: any) 
       <label className="grid gap-1 text-sm">Timing override (ISO time with offset; blank = recipient schedule)<input className={input} placeholder="2026-10-12T07:30:00-05:00" value={schedule} disabled={!editable} onChange={e => setSchedule(e.target.value)} /></label>
       <label className="grid gap-1 text-sm">Simulated provider outcome<select className={input} value={scenario} disabled={!editable} onChange={e => setScenario(e.target.value)}><option value="success">Success</option><option value="failure">Failure</option><option value="delay">Five-minute delay</option></select></label>
     </div>
-    <details open><summary className="cursor-pointer text-sm">Choose recipients in this group</summary><label className="mt-2 block text-sm"><input type="checkbox" disabled={!editable} checked={employeeIds.length === g.recipients.length} onChange={e => setEmployeeIds(e.target.checked ? g.recipients.map((r: any) => r.id) : [])} /> Select all {g.recipients.length} group members</label><ul className="mt-2 space-y-2 text-sm">{g.recipients.map((r: any) => <li key={r.id}><label><input type="checkbox" disabled={!editable} checked={employeeIds.includes(r.id)} onChange={e => setEmployeeIds(e.target.checked ? [...employeeIds, r.id] : employeeIds.filter(id => id !== r.id))} /> <strong>{r.name}</strong></label> · {r.channels.join(" + ")} · {time(schedule || r.due_at, p.timezone)}<br />{r.reason}<br /><span className="text-xs text-muted">{r.schedule_source} · work start {r.work_start}{r.accessibility_followup ? " · manager accessibility follow-up needed" : ""}</span></li>)}</ul></details>
+    <details><summary className="cursor-pointer text-sm">Choose recipients in this group</summary><label className="mt-2 block text-sm"><input type="checkbox" disabled={!editable} checked={employeeIds.length === g.recipients.length} onChange={e => setEmployeeIds(e.target.checked ? g.recipients.map((r: any) => r.id) : [])} /> Select all {g.recipients.length} group members</label><ul className="mt-2 max-h-72 space-y-2 overflow-auto text-sm">{g.recipients.map((r: any) => <li key={r.id}><label><input type="checkbox" disabled={!editable} checked={employeeIds.includes(r.id)} onChange={e => setEmployeeIds(e.target.checked ? [...employeeIds, r.id] : employeeIds.filter(id => id !== r.id))} /> <strong>{r.name}</strong></label> · {r.channels.join(" + ")} · {time(schedule || r.due_at, p.timezone)}<br />{r.reason}<br /><span className="text-xs text-muted">{r.schedule_source} · work start {r.work_start}{r.accessibility_followup ? " · manager accessibility follow-up needed" : ""}</span></li>)}</ul></details>
     <details><summary className="cursor-pointer text-sm">Add separate test contacts (simulation only)</summary><div className="mt-2 grid gap-2">{contacts.length === 0 && <p className="text-sm">No local test contacts configured.</p>}{contacts.map((c: any) => <label key={c.id} className="text-sm"><input type="checkbox" disabled={!editable} checked={selected.includes(c.id)} onChange={e => setSelected(e.target.checked ? [...selected, c.id] : selected.filter(x => x !== c.id))} /> {c.name} · {c.channel} · {c.address}</label>)}</div></details>
     <details><summary className="cursor-pointer text-sm">Personalized message previews</summary><select className={`${input} mt-2`} value={recipient} onChange={e => setRecipient(e.target.value)}>{g.recipients.map((r: any) => <option key={r.id}>{r.name}</option>)}</select><div className="mt-2 grid gap-3 md:grid-cols-2">{["sms", "email"].map(c => <div key={c}><h4 className="text-sm font-semibold">{c.toUpperCase()} · simulated{c === "sms" ? ` · ${(g.previews?.sms ?? "").length} characters` : ""}</h4><p className="whitespace-pre-wrap text-sm">{(g.previews?.[c] ?? "").replace("Recipient:", `${recipient}:`).replace(c === "sms" ? g.sms_intro : g.email_intro, c === "sms" ? sms : email)}</p></div>)}</div></details>
     {editable && <div className="flex gap-2"><button className={button} disabled={!actor.trim() || !dirty} onClick={() => run(() => request(`/packages/${p.id}/groups/${g.id}`, "PUT", { version: p.version, actor, sms_intro: sms, email_intro: email, schedule_override: schedule || null, scenario, test_contacts: selected, recipient_ids: employeeIds }))}>Save edits · clear approval</button><button className={button} disabled={!actor.trim() || dirty || g.approved} onClick={() => run(() => request(`/packages/${p.id}/groups/${g.id}/approve`, "POST", { version: p.version, actor }))}>Approve this group</button></div>}
@@ -107,11 +107,100 @@ function NotificationTools() {
       <button className="btn btn-primary" disabled={busy || actor.trim().length < 2 || p.status !== "draft" || !p.groups.length || Object.values(dirtyGroups).some(Boolean) || p.groups.some((g: any) => ((g.recipient_ids ?? g.recipients.map((r: any) => r.id)).length > 0 || g.test_contacts.length > 0) && !g.approved) || p.groups.every((g: any) => (g.recipient_ids ?? g.recipients).length === 0 && g.test_contacts.length === 0)} onClick={() => run(() => request(`/packages/${p.id}/send`, "POST", { version: p.version, actor }))}>Send approved immediate messages & schedule updates · simulated</button>
       <details className="card p-3"><summary className="cursor-pointer" onClick={() => request(`/packages/${p.id}/audit`).then(setAudit).catch(e => setError(e.message))}>Audit trail</summary>{audit?.map(a => <details key={a.id} className="mt-2 text-sm"><summary>{time(a.at, p.timezone)} · {a.actor} · {a.action}</summary><pre className="overflow-auto whitespace-pre-wrap text-xs">{JSON.stringify(JSON.parse(a.detail_json), null, 2)}</pre></details>)}</details>
     </>}
-    <Card title="Simulated outbox"><div className="space-y-3">{messages.length === 0 && <p className="text-sm">No messages sent or scheduled.</p>}{messages.map((m: any) => <details key={m.id} className="border-b border-edge pb-2 text-sm"><summary className="cursor-pointer">{m.recipient_name} · {m.channel} · {m.status} (simulated) · {time(m.due_at, m.package.timezone)}</summary><p>Destination: {m.address}</p><p>{m.reason}</p><p className="mt-2 whitespace-pre-wrap">{m.body}</p><ul className="mt-2 text-xs">{m.attempts.map((a: any, i: number) => <li key={i}>{time(a.at, m.package.timezone)} · {a.detail}</li>)}</ul>{m.status === "simulated_failed" && m.package.status === "dispatched" && <button className={`${button} mt-2`} disabled={busy || actor.trim().length < 2} onClick={() => run(() => request(`/packages/${m.package.id}/messages/${encodeURIComponent(m.id)}/retry`, "POST", { version: m.package.version, actor }))}>Retry with simulated success</button>}</details>)}</div></Card>
+    <Card title="Simulated outbox" right={messages.length > 60 ? <span className="text-xs text-muted">showing 60 of {messages.length}</span> : undefined}><div className="max-h-[32rem] space-y-3 overflow-auto pr-1">{messages.length === 0 && <p className="text-sm">No messages sent or scheduled.</p>}{messages.slice(0, 60).map((m: any) => <details key={m.id} className="border-b border-edge pb-2 text-sm"><summary className="cursor-pointer">{m.recipient_name} · {m.channel} · {m.status} (simulated) · {time(m.due_at, m.package.timezone)}</summary><p>Destination: {m.address}</p><p>{m.reason}</p><p className="mt-2 whitespace-pre-wrap">{m.body}</p><ul className="mt-2 text-xs">{m.attempts.map((a: any, i: number) => <li key={i}>{time(a.at, m.package.timezone)} · {a.detail}</li>)}</ul>{m.status === "simulated_failed" && m.package.status === "dispatched" && <button className={`${button} mt-2`} disabled={busy || actor.trim().length < 2} onClick={() => run(() => request(`/packages/${m.package.id}/messages/${encodeURIComponent(m.id)}/retry`, "POST", { version: m.package.version, actor }))}>Retry with simulated success</button>}</details>)}</div></Card>
     <Card title="Recipient inbox preview"><select aria-label="Recipient inbox" className={input} value={inbox} onChange={e => setInbox(e.target.value)}><option value="">Select recipient</option>{Array.from(new Set<string>(messages.map((m: any) => m.recipient_name))).map(n => <option key={n}>{n}</option>)}</select><div className="mt-3 space-y-3">{messages.filter((m: any) => m.recipient_name === inbox && m.status === "simulated_sent").map((m: any) => <div className="rounded-md border border-edge p-3" key={m.id}><p className="text-xs text-muted">{m.channel.toUpperCase()} · SIMULATED · Decision #{m.package.decision_id}</p><p className="whitespace-pre-wrap text-sm">{m.body}</p></div>)}</div><p className="mt-2 text-xs text-muted">Only successful simulated deliveries appear here. No acknowledgments are collected.</p></Card>
   </div>;
 }
 
+
+/** Counts of people and messages for the selected recipients of some groups. */
+function tally(groups: any[]) {
+  let people = 0, sms = 0, email = 0, now = 0, later = 0, access = 0;
+  for (const g of groups) {
+    for (const r of g.recipients) {
+      if (!g.recipient_ids.includes(r.id)) continue;
+      people += 1;
+      if (r.channels.includes("sms")) sms += 1;
+      if (r.channels.includes("email")) email += 1;
+      if (g.kind === "awareness") later += 1; else now += 1;
+      if (r.accessibility_followup) access += 1;
+    }
+  }
+  return { people, sms, email, messages: sms + email, now, later, access };
+}
+
+function Stat({ label, value, hint }: { label: string; value: number | string; hint?: string }) {
+  return (
+    <div className="rounded-xl bg-[var(--surface-2)] px-4 py-3">
+      <p className="text-xs font-medium uppercase tracking-[0.06em] text-muted">{label}</p>
+      <p className="tabnum mt-0.5 text-2xl font-semibold">{value}</p>
+      {hint && <p className="text-xs text-ink2">{hint}</p>}
+    </div>
+  );
+}
+
+function ChannelPills({ channels }: { channels: string[] }) {
+  return <span className="inline-flex gap-1">{channels.map((c) => (
+    <span key={c} className="rounded-full bg-[var(--tint)] px-1.5 py-0.5 text-[10px] font-semibold uppercase text-[var(--accent)]">{c}</span>
+  ))}</span>;
+}
+
+/** One recipient group: counts up front, a searchable/scrollable recipient table on demand. */
+function GroupCard({ g, p, update }: { g: any; p: any; update: (id: string, patch: any) => void }) {
+  const [q, setQ] = useState("");
+  const t = tally([g]);
+  const rows = g.recipients.filter((r: any) => `${r.name} ${r.job_role ?? ""} ${r.division ?? ""}`.toLowerCase().includes(q.toLowerCase()));
+  const all = g.recipient_ids.length === g.recipients.length;
+  return (
+    <section className="card cc-rise p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="font-semibold">{g.title}</h3>
+          <p className="mt-0.5 text-xs text-muted">{g.kind === "awareness" ? "Email at each person's work start" : "Sent immediately"} · {g.recipient_ids.length} of {g.recipients.length} selected</p>
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs">
+          <span className="rounded-full bg-[var(--surface-2)] px-2 py-1"><strong className="tabnum">{t.sms}</strong> texts</span>
+          <span className="rounded-full bg-[var(--surface-2)] px-2 py-1"><strong className="tabnum">{t.email}</strong> emails</span>
+          {t.access > 0 && <span className="rounded-full bg-[var(--tint)] px-2 py-1 text-[var(--accent)]">{t.access} accessibility follow-up</span>}
+        </div>
+      </div>
+      <p className="mt-3 text-sm">{g.instruction}</p>
+      <label className="mt-3 grid gap-1 text-sm">Message explanation
+        <textarea className={input} rows={2} value={g.email_intro} onChange={(e) => update(g.id, { email_intro: e.target.value, sms_intro: e.target.value.slice(0, 120) })} />
+      </label>
+      <details className="mt-3 text-sm">
+        <summary className="cursor-pointer text-[var(--accent)]">Recipients and message preview</summary>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <label className="flex items-center gap-2"><input type="checkbox" checked={all}
+            onChange={(e) => update(g.id, { recipient_ids: e.target.checked ? g.recipients.map((r: any) => r.id) : [] })} /> Select all {g.recipients.length}</label>
+          <input className={`${input} w-56`} placeholder="Search name, role or division" value={q} onChange={(e) => setQ(e.target.value)} />
+        </div>
+        <div className="mt-2 max-h-72 overflow-auto rounded-xl border border-edge">
+          <table className="w-full text-left text-xs">
+            <thead className="sticky top-0 bg-[var(--surface-2)] text-muted">
+              <tr><th className="w-8 p-2" /><th className="p-2">Name</th><th className="p-2">Role</th><th className="p-2">Channels</th><th className="p-2 text-right">Sends</th></tr>
+            </thead>
+            <tbody>
+              {rows.map((r: any) => (
+                <tr key={r.id} className="border-t border-edge/60">
+                  <td className="p-2"><input type="checkbox" aria-label={`Include ${r.name}`} checked={g.recipient_ids.includes(r.id)}
+                    onChange={(e) => update(g.id, { recipient_ids: e.target.checked ? [...g.recipient_ids, r.id] : g.recipient_ids.filter((id: string) => id !== r.id) })} /></td>
+                  <td className="p-2 font-medium">{r.name}{r.accessibility_followup && <span title="Accessibility follow-up by manager" className="ml-1 text-[var(--accent)]">♿</span>}</td>
+                  <td className="p-2 text-ink2">{r.job_role ?? "—"}{r.division && <span className="block text-[10px] text-muted">{r.division}</span>}</td>
+                  <td className="p-2"><ChannelPills channels={r.channels} /></td>
+                  <td className="tabnum p-2 text-right text-ink2">{time(r.due_at, p.timezone)}</td>
+                </tr>
+              ))}
+              {rows.length === 0 && <tr><td colSpan={5} className="p-3 text-center text-muted">No one matches “{q}”.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.06em] text-muted">Message preview</p>
+        <p className="mt-1 whitespace-pre-wrap rounded-xl bg-[var(--surface-2)] p-3 text-sm">{p.facility_name} · {p.decision_day}: {p.posture.replaceAll("_", " ")}{"\n"}{g.instruction}{"\n"}{g.email_intro}{"\n"}{p.next_update}</p>
+      </details>
+    </section>
+  );
+}
 
 export function NotificationsView({ decisionId, onBack }: { decisionId?: number | null; onBack?: () => void }) {
   const [p, setP] = useState<any>(null);
@@ -150,41 +239,75 @@ export function NotificationsView({ decisionId, onBack }: { decisionId?: number 
   const edits = () => groups.map(g => ({id:g.id, sms_intro:g.sms_intro, email_intro:g.email_intro,
     recipient_ids:g.recipient_ids, test_contacts:g.test_contacts, schedule_override:g.schedule_override, scenario:g.scenario}));
   const update = (id: string, patch: any) => setGroups(cur => cur.map(g => g.id === id ? {...g, ...patch} : g));
-  const selected = groups.reduce((sum, g) => sum + g.recipient_ids.length, 0);
-  const immediate = groups.filter(g => g.kind !== "awareness").reduce((sum, g) => sum + g.recipient_ids.length, 0);
+  const t = tally(groups);
   const sent = p?.status === "dispatched";
   const selectedContacts = contacts.filter(c => testIds.includes(c.id));
   const testConfigured = selectedContacts.length > 0 && selectedContacts.every(c => ready[c.channel]);
-  const step = (active: boolean, done: boolean) => `flex items-center gap-2 ${active ? "font-semibold text-[var(--accent)]" : done ? "text-ink" : "text-muted"}`;
-  return <div className="mx-auto max-w-4xl space-y-5">
+  const excludedByReason: [string, number][] = Object.entries((p?.excluded ?? []).reduce((acc: Record<string, number>, r: any) => {
+    acc[r.reason] = (acc[r.reason] ?? 0) + 1; return acc;
+  }, {})).sort((a: any, b: any) => b[1] - a[1]) as [string, number][];
+  const msgCount = (st: string[]) => (p?.messages ?? []).filter((m: any) => st.includes(m.status)).length;
+
+  return <div className="mx-auto max-w-5xl space-y-5">
     <ol className="card flex flex-wrap gap-6 p-4 text-sm" aria-label="Alert workflow">
-      <li className={step(false, true)}>✓ 1. Decision</li>
-      <li className={step(!sent, sent)}>{sent ? "✓" : "→"} 2. Review alerts</li>
-      <li className={step(sent, false)}>{sent ? "✓" : ""} 3. Send & done</li>
+      <li className="flex items-center gap-2 text-ink">✓ 1. Decision</li>
+      <li className={`flex items-center gap-2 ${!sent ? "font-semibold text-[var(--accent)]" : "text-ink"}`}>{sent ? "✓" : "→"} 2. Review alerts</li>
+      <li className={`flex items-center gap-2 ${sent ? "font-semibold text-[var(--accent)]" : "text-muted"}`}>{sent ? "✓" : ""} 3. Send & done</li>
+      <li className="ml-auto"><span className="rounded-full bg-[var(--tint)] px-2 py-0.5 text-xs font-semibold text-[var(--accent)]">SIMULATION · synthetic roster</span></li>
     </ol>
     {error && <Feedback tone="error" title="Action could not be completed" text={error} />}
     {notice && <Feedback tone={notice.tone} title={notice.tone === "success" ? "Action completed" : "Check delivery results"} text={notice.text} />}
-    {busy && <p role="status" className="cc-fade rounded-lg bg-[var(--tint)] px-3 py-2 text-sm text-[var(--accent)]">Working… Please wait before trying again.</p>}
-    {!p && <Card title="Make a decision first"><p>Record the facility decision, then your alerts will appear here automatically.</p>{onBack && <button className={`${button} mt-3`} onClick={onBack}>Go to decision →</button>}</Card>}
+    {busy && !p && <div className="space-y-4"><Skeleton className="h-40" /><Skeleton className="h-64" /></div>}
+    {busy && p && <p role="status" className="cc-fade rounded-lg bg-[var(--tint)] px-3 py-2 text-sm text-[var(--accent)]">Working… Please wait before trying again.</p>}
+    {!p && !busy && <Card title="Make a decision first"><p>Record the facility decision, then your alerts will appear here automatically.</p>{onBack && <button className={`${button} mt-3`} onClick={onBack}>Go to decision →</button>}</Card>}
     {p && <>
       <Card title={sent ? "Alerts sent · you're done" : "2 · Review your alerts"}>
-        <p className="text-lg font-semibold">{p.posture.replaceAll("_", " ")} · {p.decision_day}</p><p className="text-sm text-ink2">{p.facility_name}</p>
-        {!sent && <p className="mt-3">{immediate} people alerted immediately · {selected - immediate} receive an update at work start.</p>}
-        {sent && <><p className="mt-3">Immediate alerts have been simulated. Later updates are scheduled. No real message was sent by this demo action.</p><button className={`${button} mt-3`} disabled={busy} onClick={() => perform(async () => install(await request(`/packages/${p.id}/followup`, "POST", {version:p.version, actor})), "Follow-up draft created. Review your messages before sending.")}>Write a follow-up</button></>}
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <p className="text-xl font-semibold">{p.posture.replaceAll("_", " ")} · {p.decision_day}</p>
+            <p className="text-sm text-ink2">{p.facility_name}</p>
+          </div>
+          <p className="text-xs text-muted">Decision #{p.decision_id} · {p.draft_source}</p>
+        </div>
+        {!sent ? (
+          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+            <Stat label="People notified" value={t.people} hint={`${t.now} now · ${t.later} at work start`} />
+            <Stat label="Text messages" value={t.sms} />
+            <Stat label="Emails" value={t.email} />
+            <Stat label="Total messages" value={t.messages} hint={t.access ? `${t.access} need accessibility follow-up` : undefined} />
+          </div>
+        ) : (
+          <>
+            <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+              <Stat label="Delivered (simulated)" value={msgCount(["simulated_sent"])} />
+              <Stat label="Scheduled" value={msgCount(["scheduled", "queued", "delayed"])} hint="updates at work start" />
+              <Stat label="Failed (simulated)" value={msgCount(["simulated_failed"])} hint="retry in advanced tools" />
+              <Stat label="Total messages" value={(p.messages ?? []).length} />
+            </div>
+            <p className="mt-3 text-sm text-ink2">Immediate alerts were delivered in the simulator; later updates are scheduled. Nothing reached a real phone or mailbox.</p>
+            <button className={`${button} mt-3`} disabled={busy} onClick={() => perform(async () => install(await request(`/packages/${p.id}/followup`, "POST", {version:p.version, actor})), "Follow-up draft created. Review your messages before sending.")}>Write a follow-up</button>
+          </>
+        )}
+        {excludedByReason.length > 0 && (
+          <details className="mt-4 text-sm">
+            <summary className="cursor-pointer text-ink2"><strong className="tabnum">{p.excluded.length}</strong> people not notified</summary>
+            <ul className="mt-2 grid gap-1 sm:grid-cols-2">
+              {excludedByReason.map(([reason, n]) => (
+                <li key={reason} className="flex items-center justify-between gap-2 rounded-lg bg-[var(--surface-2)] px-3 py-1.5 text-xs">
+                  <span>{reason}</span><strong className="tabnum">{n}</strong>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </Card>
       {!sent && <>
-        <label className="grid gap-1 text-sm">Your name<input className={input} value={actor} onChange={e => setActor(e.target.value)} /></label>
-        {groups.map(g => <Card key={g.id} title={g.title} right={<span className="text-sm">{g.recipient_ids.length} people · {g.kind === "awareness" ? "at work start" : "now"}</span>}>
-          <p className="text-sm">{g.instruction}</p>
-          <label className="mt-3 grid gap-1 text-sm">Message explanation<textarea className={input} rows={2} value={g.email_intro} onChange={e => update(g.id, {email_intro:e.target.value, sms_intro:e.target.value.slice(0,120)})} /></label>
-          <details className="mt-3 text-sm"><summary className="cursor-pointer">Change recipients or view message</summary>
-            <label className="mt-2 block"><input type="checkbox" checked={g.recipient_ids.length === g.recipients.length} onChange={e => update(g.id,{recipient_ids:e.target.checked ? g.recipients.map((r:any)=>r.id) : []})} /> Select everyone in this group</label>
-            {g.recipients.map((r:any)=><label className="mt-1 block" key={r.id}><input type="checkbox" checked={g.recipient_ids.includes(r.id)} onChange={e=>update(g.id,{recipient_ids:e.target.checked ? [...g.recipient_ids,r.id] : g.recipient_ids.filter((id:string)=>id!==r.id)})} /> {r.name} · {r.channels.join(" + ")}</label>)}
-            <p className="mt-3 whitespace-pre-wrap rounded-lg border border-edge p-3">{p.facility_name} · {p.decision_day}: {p.posture.replaceAll("_"," ")}<br />{g.instruction}<br />{g.email_intro}<br />{p.next_update}</p>
-          </details>
-        </Card>)}
-        <button className="btn btn-primary w-full !rounded-xl !py-4 !text-lg" disabled={busy || actor.trim().length<2 || !selected} onClick={()=>perform(async()=>install(await request(`/packages/${p.id}/review`,"POST",{version:p.version,actor,groups:edits(),approve_and_send:true})), "Approved alerts sent in the simulator; later updates are scheduled. No real email or text was sent.")}>{busy ? "Working…" : `3 · Approve and alert ${selected} people`}</button>
-        <p className="text-center text-sm text-muted">Demo delivery. This button approves all reviewed groups and sends them together in the simulator.</p>
+        <label className="grid max-w-sm gap-1 text-sm">Your name<input className={input} value={actor} onChange={e => setActor(e.target.value)} /></label>
+        <div className="space-y-4">{groups.map(g => <GroupCard key={g.id} g={g} p={p} update={update} />)}</div>
+        <button className="btn btn-primary w-full !rounded-xl !py-4 !text-lg" disabled={busy || actor.trim().length<2 || !t.people} onClick={()=>perform(async()=>install(await request(`/packages/${p.id}/review`,"POST",{version:p.version,actor,groups:edits(),approve_and_send:true})), "Approved alerts sent in the simulator; later updates are scheduled. No real email or text was sent.")}>
+          {busy ? "Working…" : `3 · Approve and alert ${t.people} people · ${t.messages} messages`}
+        </button>
+        <p className="text-center text-sm text-muted">Simulated delivery. Approves every reviewed group and sends them together in the simulator.</p>
       </>}
       <details className="card p-4"><summary className="cursor-pointer font-semibold">Send real test emails / gateway texts</summary>
         <p className="mt-3 text-sm">The SMTP service sends reviewed test messages to the selected email contacts or configured SMS gateway addresses. Messages say TEST ONLY. Employee roster delivery remains simulated.</p>
@@ -211,7 +334,7 @@ export function NotificationsView({ decisionId, onBack }: { decisionId?: number 
         {!testConfigured && <p className="mt-2 text-sm text-muted">{!testIds.length ? "Select at least one test contact to send." : "Configure SMTP and the gateway for your selected channels before sending."}</p>}
         <details className="mt-4 text-sm"><summary className="cursor-pointer">One-time SMTP email setup</summary><p className="mt-2">Configure SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD and SMTP_FROM in your local .env, then restart the API. Use your sending account’s SMTP host and app password.</p><p className="mt-2">Full instructions: docs/notification-delivery-setup.md. Credentials stay local.</p><button className={`${button} mt-2`} onClick={()=>perform(async()=>setReady(await request('/delivery-setup')), 'Connection settings refreshed. Use Verify SMTP login to check authentication.')}>Check connection settings</button></details>
       </details>
-      <details className="card p-4"><summary className="cursor-pointer">Delivery history & advanced tools</summary><div className="mt-4"><NotificationTools /></div></details>
+      <details className="card p-4"><summary className="cursor-pointer font-semibold">Delivery history & advanced tools</summary><div className="mt-4"><NotificationTools /></div></details>
     </>}
   </div>;
 }

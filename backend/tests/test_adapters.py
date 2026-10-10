@@ -141,6 +141,9 @@ def test_corridor_matching_on_real_segments():
 
 
 def test_roster_differs_from_building_population():
-    s = roster_summary(load_facility())
-    assert s["assigned"] != s["expected_in_building"]
-    assert s["detailed_in"] > 0 and s["detailed_out"] > 0 and s["on_travel"] > 0
+    fac = load_facility()
+    s = roster_summary(fac, "2026-10-12")  # Monday: CSV details and scheduled telework are active
+    assert s["assigned"] == 270 and s["assigned"] != s["expected_in_building"]
+    assert s["detailed_out"] > 0 and s["teleworking_today"] > 0
+    assert roster_summary(fac, "2026-10-13")["on_leave"] > 0      # approved sick leave from the CSV
+    assert roster_summary(fac, "2026-10-11")["not_scheduled"] > 0  # Sunday: only rotating schedules work

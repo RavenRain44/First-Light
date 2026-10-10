@@ -37,7 +37,7 @@ export function Header({ snap, mode, setMode, onRefresh, busy, demo, theme, togg
           </div>
           {demo && <Badge tone="warn" title="DEMO_MODE=true: sources served from cached fixtures">Demo mode · cached data</Badge>}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div role="tablist" aria-label="Mode" className="flex rounded-xl bg-[var(--surface-2)] p-1 text-sm">
             {MODES.map((m) => (
               <button key={m.id} role="tab" aria-selected={mode === m.id} onClick={() => setMode(m.id)}
@@ -80,11 +80,16 @@ export function Header({ snap, mode, setMode, onRefresh, busy, demo, theme, togg
                   </span>
                 </Fact>
                 {roster && !roster.hypothetical ? (
-                  <Fact label="In building today">
-                    <span className="tabnum" title={`Assigned ${roster.assigned}; detailed in ${roster.detailed_in}; detailed out ${roster.detailed_out}; on travel ${roster.on_travel}; teleworking ${roster.teleworking_today}`}>
+                  <Fact label={roster.day ? `In building ${fmtDay(roster.day)}` : "In building today"}>
+                    <span className="tabnum" title={`Assigned ${roster.assigned}; detailed in ${roster.detailed_in}; detailed out ${roster.detailed_out}; on travel ${roster.on_travel}; teleworking ${roster.teleworking_today}; on leave ${roster.on_leave ?? 0}; not scheduled ${roster.not_scheduled ?? 0}. Synthetic roster.`}>
                       {roster.expected_in_building} of {roster.assigned}
                     </span>
-                    <span className="block text-xs font-normal text-muted">+{roster.detailed_in} in · {roster.detailed_out} out · {roster.on_travel} travel · {roster.teleworking_today} telework</span>
+                    <span className="block text-xs font-normal text-muted">
+                      {[roster.detailed_in && `+${roster.detailed_in} in`, roster.detailed_out && `${roster.detailed_out} detailed out`,
+                        roster.on_travel && `${roster.on_travel} travel`, roster.teleworking_today && `${roster.teleworking_today} telework`,
+                        roster.on_leave && `${roster.on_leave} leave`, roster.not_scheduled && `${roster.not_scheduled} off`]
+                        .filter(Boolean).join(" · ") || "everyone on site"}
+                    </span>
                   </Fact>
                 ) : <Fact label="Mode">{snap.mode}</Fact>}
               </dl>

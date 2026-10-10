@@ -20,7 +20,7 @@ Scope: **Iowa only**, one synthetic facility (USDA Service Center, Ames), two ha
 | Real (live APIs or archives) | Synthetic |
 |---|---|
 | NWS active alerts and gridded forecasts (api.weather.gov) | The facility profile (`backend/data/facility.json`) |
-| AMW ASOS observations, Iowa DOT road conditions, RWIS pavement sensors, NWS warning archive, archived NBM forecasts, SPC outlooks, Local Storm Reports (Iowa Environmental Mesonet) | The 25-person roster (`backend/data/employees.json`), including details, travel and telework |
+| AMW ASOS observations, Iowa DOT road conditions, RWIS pavement sensors, NWS warning archive, archived NBM forecasts, SPC outlooks, Local Storm Reports (Iowa Environmental Mesonet) | The 270-person roster (`backend/data/employees.json`, imported from `data/NADC_synthetic_assignments.csv`): schedules, details, scheduled telework, approved leave and emergency-required staff come from the CSV; home towns, commute corridors, contact channels and accessibility needs are generated |
 | Seven historical Story County events, each verified against the NWS VTEC archive | Every "recommended posture" in the backtest (*simulated by rules*, not real USDA decisions) |
 | Decisions recorded through the UI (labelled "real (recorded in this system)") | Commute corridor lines (approximate geometry) |
 
@@ -81,6 +81,20 @@ npm run cache:cameras
 
 That pins the current camera list with every view, plus each historical event's impact day (main view, every
 3 hours). In `DEMO_MODE` only cached images are offered; a camera with no cached image is simply not shown.
+
+### Synthetic roster
+
+`backend/data/employees.json` is generated from `data/NADC_synthetic_assignments.csv` (270 fictitious people):
+
+```bash
+cd backend && .venv/Scripts/python -m scripts.import_roster
+```
+
+Each person keeps the CSV's division, job role, work days and start time, telework eligibility, emergency-required
+status (treated as essential), dated details elsewhere and approved sick leave. Fields the CSV doesn't have (home town,
+commute corridor, contact channels, accessibility needs) are filled deterministically and listed in each record's
+`synthetic_fill`. The header's "in building" count and the notification groups resolve everyone for the decision
+day: details, scheduled telework, leave and days off all apply.
 
 ### Tests
 

@@ -21,7 +21,7 @@ from ai.agent import hazard_sentence
 from app import snapshots
 from app.config import settings
 from app.db import session
-from app.facility import load_employees
+from app.facility import employee_on, load_employees
 from app.models import Decision, NotificationAudit, NotificationClock, NotificationPackage
 
 CONTACT_FILE = settings.data_dir.parent / "notification-contacts.local.json"
@@ -123,19 +123,15 @@ def instruction(kind, posture, eligible):
 def resolve(employees, facility, day, posture, fallback_start, now, previous=None):
     groups, excluded = {}, []
     for original in employees:
-        e = dict(original)
-        # Optional dated assignments override the demonstration's this-week defaults.
-        for assignment in e.get("assignments", []):
-            if assignment["start"] <= day <= assignment["end"]:
-                e.update({k: v for k, v in assignment.items() if k not in {"start", "end"}})
-                break
-        if "telework_dates" in e:
-            e["teleworking_today"] = day in e["telework_dates"]
+        # Dated assignments (details, scheduled telework), leave and work days resolved for the decision day.
+        e = employee_on(original, day)
         loc = e.get("this_week_location", e.get("assigned_facility"))
         belongs = e.get("assigned_facility") == facility["id"] or loc == facility["id"]
-        scheduled = date.fromisoformat(day).weekday() in e.get("workdays", [0, 1, 2, 3, 4])
-        if not belongs or not scheduled:
+        if not belongs or not e["scheduled"]:
             excluded.append({"id": e["id"], "name": e["name"], "reason": "Unaffected facility" if not belongs else "Not scheduled to work on decision day"})
+            continue
+        if e["on_leave"]:
+            excluded.append({"id": e["id"], "name": e["name"], "reason": f"On {e['on_leave'].get('type', 'approved leave')} on decision day"})
             continue
         here = loc == facility["id"] and not e.get("teleworking_today", False)
         if posture == "NORMAL" and previous in (None, "NORMAL"):
@@ -159,6 +155,7 @@ def resolve(employees, facility, day, posture, fallback_start, now, previous=Non
                                         "recipients": [], "approved": False, "approved_by": None,
                                         "schedule_override": None, "scenario": "success", "test_contacts": []})
         group["recipients"].append({"id": e["id"], "name": e["name"], "reason": reason,
+                                    "job_role": e.get("job_role") or e.get("essential_role"), "division": e.get("division"),
                                     "channels": channels, "due_at": due.isoformat(), "synthetic": True,
                                     "work_start": start, "schedule_source": "Employee work_start" if e.get("work_start") else "Configurable fallback (facility opening time by default)",
                                     "accessibility_followup": bool(e.get("accessibility_needs"))})
