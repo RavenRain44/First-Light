@@ -15,3 +15,10 @@ build/
 
 coverage/
 .DS_Store
+
+# Closure Call
+*.db
+*.db-journal
+backend/var/
+.env
+frontend/node_modules/

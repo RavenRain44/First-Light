@@ -1,0 +1,1317 @@
+{
+ "event": {
+  "id": "ice-2023-02-22",
+  "name": "Feb 22, 2023 ice storm",
+  "hazard": "winter",
+  "start": "2023-02-21T11:00:00+00:00",
+  "end": "2023-02-23T00:00:00+00:00",
+  "impact_day": "2023-02-22",
+  "summary": "Freezing rain through the Wednesday morning commute; Ice Storm Warning for Story County."
+ },
+ "verification": {
+  "ok": true,
+  "checks": [
+   {
+    "ugc": "IAZ048",
+    "product": "IS.W",
+    "verified": true,
+    "source_url": "https://mesonet.agron.iastate.edu/json/vtec_events_byugc.php?ugc=IAZ048&sdate=2023-02-20&edate=2023-02-24",
+    "events": [
+     {
+      "name": "Ice Storm Warning",
+      "issue": "2023-02-22T12:00:00Z",
+      "expire": "2023-02-23T08:55:00Z",
+      "product_id": "202302220854-KDMX-WWUS43-WSWDMX",
+      "link": "https://mesonet.agron.iastate.edu/vtec/?year=2023&wfo=KDMX&phenomena=IS&significance=W&eventid=0002"
+     }
+    ]
+   }
+  ]
+ },
+ "outcome": {
+  "summary": "2 storm reports within 25 mi (2 freezing rain); AMW peak gust 36 mph; 8 h of freezing precip at AMW; worst commute corridor: partially covered.",
+  "severe_impact": true,
+  "lsr_count": 2,
+  "lsr_by_type": {
+   "FREEZING RAIN": 2
+  },
+  "lsr_source_url": "https://mesonet.agron.iastate.edu/api/1/nws/lsrs_by_point.json?lat=42.0308&lon=-93.6319&radius_miles=25&begints=2023-02-21T11:00:00Z&endts=2023-02-23T00:00:00Z",
+  "lsrs": [
+   {
+    "valid": "2023-02-22T22:28:00Z",
+    "type": "5",
+    "typetext": "FREEZING RAIN",
+    "magnitude": 0.2,
+    "unit": "INCH",
+    "city": "AMES",
+    "county": "STORY",
+    "remark": "AMOUNTS AROUND .15 TO .25 ON ELEVATED SURFACES. DRIVEWAY/SIDEWALKS HAVE AT LEAST .5 OF ICE DUE TO ALL THE FROZEN PONDING.",
+    "source": "STORM CHASER",
+    "lat": 42.02,
+    "lon": -93.63,
+    "qualifier": "M"
+   },
+   {
+    "valid": "2023-02-22T23:00:00Z",
+    "type": "5",
+    "typetext": "FREEZING RAIN",
+    "magnitude": 0.25,
+    "unit": "INCH",
+    "city": "1 W KELLEY",
+    "county": "STORY",
+    "remark": "AT LEAST A QUARTER INCH OF ICE ON TREES.",
+    "source": "NWS EMPLOYEE",
+    "lat": 41.95,
+    "lon": -93.68,
+    "qualifier": "E"
+   }
+  ],
+  "max_reported_wind_mph": null,
+  "max_reported_snow_in": null,
+  "max_reported_ice_in": null,
+  "amw_peak_gust_mph": 35.7,
+  "amw_peak_gust_time": "2023-02-22T17:00:00+00:00",
+  "amw_freezing_precip_hours": 8,
+  "amw_snow_hours": 0,
+  "worst_corridor_rank": 2.0,
+  "amw_obs_note": null
+ },
+ "backtest": {
+  "at_0400_local": {
+   "as_of": "2023-02-22T10:00:00+00:00",
+   "posture": "CLOSED",
+   "confidence": "high",
+   "decision_day": "2023-02-22"
+  },
+  "first_non_normal": {
+   "as_of": "2023-02-21T18:00:00+00:00",
+   "posture": "TELEWORK"
+  },
+  "peak_posture": {
+   "as_of": "2023-02-22T09:00:00+00:00",
+   "posture": "CLOSED"
+  },
+  "outcome_severe": true,
+  "verdict": "consistent: action recommended before impact",
+  "label": "simulated by rules (backtest)"
+ },
+ "timeline": [
+  {
+   "snapshot_id": "fbabe3419e9c420c893c546a0be23d07",
+   "as_of": "2023-02-21T11:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2023-02-21",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 70
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.1,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 31.0,
+    "max_gust_mph": 33.4,
+    "min_apparent_f": 5.5,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 12.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 2.0
+   }
+  },
+  {
+   "snapshot_id": "815f21ffa45046dd93ed22481eb52ab9",
+   "as_of": "2023-02-21T12:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2023-02-21",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 70
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.1,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 30.0,
+    "max_gust_mph": 29.9,
+    "min_apparent_f": 5.5,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 12.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 2.0
+   }
+  },
+  {
+   "snapshot_id": "477edbedf3cd4c6ab9ea4d3d5e53ed57",
+   "as_of": "2023-02-21T13:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2023-02-21",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 70
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.1,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 29.0,
+    "max_gust_mph": 29.9,
+    "min_apparent_f": 5.5,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 12.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 2.0
+   }
+  },
+  {
+   "snapshot_id": "a181283b87bc4de0843cd97508f7fe56",
+   "as_of": "2023-02-21T14:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2023-02-21",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 70
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.1,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 28.0,
+    "max_gust_mph": 29.9,
+    "min_apparent_f": 13.3,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 12.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 2.0
+   }
+  },
+  {
+   "snapshot_id": "9dc62a6ea81a4381b6e150a376dbe5db",
+   "as_of": "2023-02-21T15:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2023-02-21",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 70
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.1,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 27.0,
+    "max_gust_mph": 31.1,
+    "min_apparent_f": 13.3,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 12.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 2.0
+   }
+  },
+  {
+   "snapshot_id": "42c299d20bbe46aeb73de0d797dd093e",
+   "as_of": "2023-02-21T16:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2023-02-21",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 70
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.1,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 26.0,
+    "max_gust_mph": 31.1,
+    "min_apparent_f": 13.3,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 12.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 2.0
+   }
+  },
+  {
+   "snapshot_id": "38eba1aa65034c69b0807403818cb369",
+   "as_of": "2023-02-21T17:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2023-02-21",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 70
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.1,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 25.0,
+    "max_gust_mph": 31.1,
+    "min_apparent_f": 17.9,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 12.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 2.0
+   }
+  },
+  {
+   "snapshot_id": "141dbdba43324376be13522d43bc8596",
+   "as_of": "2023-02-21T18:00:00+00:00",
+   "posture": "TELEWORK",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 70
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.1,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 24.0,
+    "max_gust_mph": 31.1,
+    "min_apparent_f": 17.9,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 12.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 2.0
+   }
+  },
+  {
+   "snapshot_id": "2f09dfe38d6b499aa6eb43288bdee868",
+   "as_of": "2023-02-21T19:00:00+00:00",
+   "posture": "TELEWORK",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 70
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.1,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 23.0,
+    "max_gust_mph": 31.1,
+    "min_apparent_f": 17.9,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 12.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 2.0
+   }
+  },
+  {
+   "snapshot_id": "465c337b57274373a738b95d5d4a8131",
+   "as_of": "2023-02-21T20:00:00+00:00",
+   "posture": "TELEWORK",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 70
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.1,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 22.0,
+    "max_gust_mph": 31.1,
+    "min_apparent_f": 17.9,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 12.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 2.0
+   }
+  },
+  {
+   "snapshot_id": "f2c155a72d744947b51fcd693998a33e",
+   "as_of": "2023-02-21T21:00:00+00:00",
+   "posture": "DELAYED_ARRIVAL",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 45
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.06,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 18.0,
+    "max_gust_mph": 35.7,
+    "min_apparent_f": 17.5,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 9.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 1.0
+   }
+  },
+  {
+   "snapshot_id": "f8613740fefc44ad85a46633e7d1cf16",
+   "as_of": "2023-02-21T22:00:00+00:00",
+   "posture": "DELAYED_ARRIVAL",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 45
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.06,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 17.0,
+    "max_gust_mph": 35.7,
+    "min_apparent_f": 17.5,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 9.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 1.0
+   }
+  },
+  {
+   "snapshot_id": "0ea118129fb848d8b2b34aabdc943872",
+   "as_of": "2023-02-21T23:00:00+00:00",
+   "posture": "DELAYED_ARRIVAL",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 45
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.06,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 16.0,
+    "max_gust_mph": 35.7,
+    "min_apparent_f": 17.5,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 9.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 1.0
+   }
+  },
+  {
+   "snapshot_id": "0442028a54344785982386b6d2650038",
+   "as_of": "2023-02-22T00:00:00+00:00",
+   "posture": "DELAYED_ARRIVAL",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 45
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.06,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 15.0,
+    "max_gust_mph": 35.7,
+    "min_apparent_f": 17.5,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 9.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 1.0
+   }
+  },
+  {
+   "snapshot_id": "2d87e5cb846b49f29f24c4f5c2860965",
+   "as_of": "2023-02-22T01:00:00+00:00",
+   "posture": "DELAYED_ARRIVAL",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 45
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.062,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 14.0,
+    "max_gust_mph": 35.7,
+    "min_apparent_f": 17.5,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 9.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 1.0
+   }
+  },
+  {
+   "snapshot_id": "7793c75089aa4f0eb192277dea0aa1e8",
+   "as_of": "2023-02-22T02:00:00+00:00",
+   "posture": "DELAYED_ARRIVAL",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 45
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.063,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 13.0,
+    "max_gust_mph": 35.7,
+    "min_apparent_f": 17.5,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 9.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 1.0
+   }
+  },
+  {
+   "snapshot_id": "518f49b19b374c9696031b83a31814fb",
+   "as_of": "2023-02-22T03:00:00+00:00",
+   "posture": "DELAYED_ARRIVAL",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 45
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.095,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 12.0,
+    "max_gust_mph": 36.8,
+    "min_apparent_f": 15.5,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 9.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 1.0
+   }
+  },
+  {
+   "snapshot_id": "a9f8aabd0f9741c7b024042559172613",
+   "as_of": "2023-02-22T04:00:00+00:00",
+   "posture": "DELAYED_ARRIVAL",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 45
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.097,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 11.0,
+    "max_gust_mph": 36.8,
+    "min_apparent_f": 15.5,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 9.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 1.0
+   }
+  },
+  {
+   "snapshot_id": "52f17e36d4f14b51828be13c287f380a",
+   "as_of": "2023-02-22T05:00:00+00:00",
+   "posture": "DELAYED_ARRIVAL",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 45
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.099,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 10.0,
+    "max_gust_mph": 36.8,
+    "min_apparent_f": 15.5,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 9.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 1.0
+   }
+  },
+  {
+   "snapshot_id": "4c05a5d74e7d415eaeee30ee26392ee6",
+   "as_of": "2023-02-22T06:00:00+00:00",
+   "posture": "TELEWORK",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 75
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.1,
+    "fcst_snow_in": 0.1,
+    "hours_to_peak": 12.0,
+    "max_gust_mph": 36.8,
+    "min_apparent_f": -0.4,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 12.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 2.0
+   }
+  },
+  {
+   "snapshot_id": "bda82d9d618740b8a35d73cd661f5aec",
+   "as_of": "2023-02-22T07:00:00+00:00",
+   "posture": "TELEWORK",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 75
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.1,
+    "fcst_snow_in": 0.1,
+    "hours_to_peak": 11.0,
+    "max_gust_mph": 36.8,
+    "min_apparent_f": -0.4,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 12.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 2.0
+   }
+  },
+  {
+   "snapshot_id": "3eff2ccd140f45ab909742b0165d79de",
+   "as_of": "2023-02-22T08:00:00+00:00",
+   "posture": "TELEWORK",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 75
+   },
+   "alerts": [
+    "Winter Weather Advisory"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.1,
+    "fcst_snow_in": 0.1,
+    "hours_to_peak": 10.0,
+    "max_gust_mph": 36.8,
+    "min_apparent_f": -0.4,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 12.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 1.0,
+    "winter_level": 2.0
+   }
+  },
+  {
+   "snapshot_id": "4b4d8b0911474bc99da77b6a992e3ce9",
+   "as_of": "2023-02-22T09:00:00+00:00",
+   "posture": "CLOSED",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 95
+   },
+   "alerts": [
+    "Ice Storm Warning"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.08,
+    "fcst_snow_in": 0.2,
+    "hours_to_peak": 3.0,
+    "max_gust_mph": 35.7,
+    "min_apparent_f": 0.1,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 6.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 3.0,
+    "winter_level": 3.0
+   }
+  },
+  {
+   "snapshot_id": "d2609eeafdbb4ea3b26317a7d003cf76",
+   "as_of": "2023-02-22T10:00:00+00:00",
+   "posture": "CLOSED",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 95
+   },
+   "alerts": [
+    "Ice Storm Warning"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.08,
+    "fcst_snow_in": 0.2,
+    "hours_to_peak": 2.0,
+    "max_gust_mph": 35.7,
+    "min_apparent_f": 0.1,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 6.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 3.0,
+    "winter_level": 3.0
+   }
+  },
+  {
+   "snapshot_id": "4374ab336c584eeb8212b46ee2583f00",
+   "as_of": "2023-02-22T11:00:00+00:00",
+   "posture": "CLOSED",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 95
+   },
+   "alerts": [
+    "Ice Storm Warning"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.08,
+    "fcst_snow_in": 0.2,
+    "hours_to_peak": 1.0,
+    "max_gust_mph": 35.7,
+    "min_apparent_f": 0.1,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 6.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 3.0,
+    "winter_level": 3.0
+   }
+  },
+  {
+   "snapshot_id": "44ea85da5a0143a099b34a6fdacd54f8",
+   "as_of": "2023-02-22T12:00:00+00:00",
+   "posture": "CLOSED",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 95
+   },
+   "alerts": [
+    "Ice Storm Warning"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.08,
+    "fcst_snow_in": 0.2,
+    "hours_to_peak": 0.0,
+    "max_gust_mph": 35.7,
+    "min_apparent_f": 0.1,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 6.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 3.0,
+    "winter_level": 3.0
+   }
+  },
+  {
+   "snapshot_id": "ad6a0774b7f04c94ba944c8683e30d33",
+   "as_of": "2023-02-22T13:00:00+00:00",
+   "posture": "CLOSED",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 95
+   },
+   "alerts": [
+    "Ice Storm Warning"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.075,
+    "fcst_snow_in": 0.2,
+    "hours_to_peak": -1.0,
+    "max_gust_mph": 35.7,
+    "min_apparent_f": 0.1,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 6.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 3.0,
+    "winter_level": 3.0
+   }
+  },
+  {
+   "snapshot_id": "031944753af1435abf5a42fc71a72690",
+   "as_of": "2023-02-22T14:00:00+00:00",
+   "posture": "CLOSED",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 95
+   },
+   "alerts": [
+    "Ice Storm Warning"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.07,
+    "fcst_snow_in": 0.2,
+    "hours_to_peak": -2.0,
+    "max_gust_mph": 35.7,
+    "min_apparent_f": 0.1,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 6.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 3.0,
+    "winter_level": 3.0
+   }
+  },
+  {
+   "snapshot_id": "80eb9265615f49c981f74ad4577499dc",
+   "as_of": "2023-02-22T15:00:00+00:00",
+   "posture": "CLOSED",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 95
+   },
+   "alerts": [
+    "Ice Storm Warning"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.05,
+    "fcst_snow_in": 0.3,
+    "hours_to_peak": -3.0,
+    "max_gust_mph": 35.7,
+    "min_apparent_f": 1.9,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 6.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 3.0,
+    "winter_level": 3.0
+   }
+  },
+  {
+   "snapshot_id": "280eeda1cac546429c658d15f423e2a3",
+   "as_of": "2023-02-22T16:00:00+00:00",
+   "posture": "CLOSED",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 95
+   },
+   "alerts": [
+    "Ice Storm Warning"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.05,
+    "fcst_snow_in": 0.3,
+    "hours_to_peak": -4.0,
+    "max_gust_mph": 35.7,
+    "min_apparent_f": 1.9,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 6.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 3.0,
+    "winter_level": 3.0
+   }
+  },
+  {
+   "snapshot_id": "4cc99e02699a47a88a77f928896c5ae8",
+   "as_of": "2023-02-22T17:00:00+00:00",
+   "posture": "CLOSED",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 100
+   },
+   "alerts": [
+    "Ice Storm Warning"
+   ],
+   "road_worst_rank": 0.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.05,
+    "fcst_snow_in": 0.3,
+    "hours_to_peak": -5.0,
+    "max_gust_mph": 34.5,
+    "min_apparent_f": 1.9,
+    "obs_freezing_hours": 2.0,
+    "peak_local_hour": 6.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 3.0,
+    "winter_level": 3.0
+   }
+  },
+  {
+   "snapshot_id": "e73c9ab407b343d8980038078d939701",
+   "as_of": "2023-02-22T18:00:00+00:00",
+   "posture": "CLOSED",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 100
+   },
+   "alerts": [
+    "Ice Storm Warning"
+   ],
+   "road_worst_rank": 2.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.05,
+    "fcst_snow_in": 0.3,
+    "hours_to_peak": -6.0,
+    "max_gust_mph": 35.7,
+    "min_apparent_f": 1.9,
+    "obs_freezing_hours": 3.0,
+    "peak_local_hour": 6.0,
+    "road_worst_rank": 2.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 3.0,
+    "winter_level": 3.0
+   }
+  },
+  {
+   "snapshot_id": "bd24b86b8d854663ad45600ba8dc3f02",
+   "as_of": "2023-02-22T19:00:00+00:00",
+   "posture": "CLOSED",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 100
+   },
+   "alerts": [
+    "Ice Storm Warning"
+   ],
+   "road_worst_rank": 2.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.044,
+    "fcst_snow_in": 0.267,
+    "hours_to_peak": -7.0,
+    "max_gust_mph": 35.7,
+    "min_apparent_f": 1.9,
+    "obs_freezing_hours": 3.0,
+    "peak_local_hour": 6.0,
+    "road_worst_rank": 2.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 3.0,
+    "winter_level": 3.0
+   }
+  },
+  {
+   "snapshot_id": "1948e1192ae047ef9c00a4347494b299",
+   "as_of": "2023-02-22T20:00:00+00:00",
+   "posture": "CLOSED",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 100
+   },
+   "alerts": [
+    "Ice Storm Warning"
+   ],
+   "road_worst_rank": 2.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.037,
+    "fcst_snow_in": 0.233,
+    "hours_to_peak": -8.0,
+    "max_gust_mph": 35.7,
+    "min_apparent_f": 1.9,
+    "obs_freezing_hours": 4.0,
+    "peak_local_hour": 6.0,
+    "road_worst_rank": 2.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 3.0,
+    "winter_level": 3.0
+   }
+  },
+  {
+   "snapshot_id": "28f8245b4a8043faa69de5cdb69f5bdf",
+   "as_of": "2023-02-22T21:00:00+00:00",
+   "posture": "CLOSED",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 100
+   },
+   "alerts": [
+    "Ice Storm Warning"
+   ],
+   "road_worst_rank": 2.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.02,
+    "fcst_snow_in": 0.2,
+    "hours_to_peak": -9.0,
+    "max_gust_mph": 32.2,
+    "min_apparent_f": 2.4,
+    "obs_freezing_hours": 3.0,
+    "peak_local_hour": 6.0,
+    "road_worst_rank": 2.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 3.0,
+    "winter_level": 3.0
+   }
+  },
+  {
+   "snapshot_id": "3cdce350edff40d3ac23bb05184e9afa",
+   "as_of": "2023-02-22T22:00:00+00:00",
+   "posture": "CLOSED",
+   "decision_day": "2023-02-22",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 100
+   },
+   "alerts": [
+    "Ice Storm Warning"
+   ],
+   "road_worst_rank": 2.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.02,
+    "fcst_snow_in": 0.2,
+    "hours_to_peak": -10.0,
+    "max_gust_mph": 31.1,
+    "min_apparent_f": 2.4,
+    "obs_freezing_hours": 4.0,
+    "peak_local_hour": 6.0,
+    "road_worst_rank": 2.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 3.0,
+    "winter_level": 3.0
+   }
+  },
+  {
+   "snapshot_id": "d07a8591553348fc93b264bf33897637",
+   "as_of": "2023-02-22T23:00:00+00:00",
+   "posture": "DELAYED_ARRIVAL",
+   "decision_day": "2023-02-23",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 100
+   },
+   "alerts": [
+    "Ice Storm Warning"
+   ],
+   "road_worst_rank": 2.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.02,
+    "fcst_snow_in": 0.2,
+    "hours_to_peak": -11.0,
+    "max_gust_mph": 31.1,
+    "min_apparent_f": 2.4,
+    "obs_freezing_hours": 4.0,
+    "peak_local_hour": 6.0,
+    "road_worst_rank": 2.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 3.0,
+    "winter_level": 3.0
+   }
+  },
+  {
+   "snapshot_id": "b9b366143ef145129e9095cf9451f876",
+   "as_of": "2023-02-23T00:00:00+00:00",
+   "posture": "DELAYED_ARRIVAL",
+   "decision_day": "2023-02-23",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 100
+   },
+   "alerts": [
+    "Ice Storm Warning"
+   ],
+   "road_worst_rank": 2.0,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.02,
+    "fcst_snow_in": 0.2,
+    "hours_to_peak": -12.0,
+    "max_gust_mph": 31.1,
+    "min_apparent_f": 2.4,
+    "obs_freezing_hours": 3.0,
+    "peak_local_hour": 6.0,
+    "road_worst_rank": 2.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 3.0,
+    "winter_level": 3.0
+   }
+  }
+ ],
+ "note": "Postures are simulated by the rules engine (backtest), not real USDA decisions."
+}

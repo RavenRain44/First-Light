@@ -1,0 +1,34 @@
+{
+  "_synthetic": "SYNTHETIC facility profile for demonstration. Not a real USDA site record.",
+  "id": "IA-AMES-SC",
+  "name": "USDA Service Center (synthetic), Ames, IA",
+  "synthetic": true,
+  "lat": 42.0308,
+  "lon": -93.6319,
+  "state": "IA",
+  "timezone": "America/Chicago",
+  "asos_station": "AMW",
+  "mos_station": "KAMW",
+  "nws_office": "DMX",
+  "hours": {"open": "07:30", "close": "16:30"},
+  "commute_windows": {"am": ["06:00", "08:00"], "pm": ["16:00", "18:00"]},
+  "building_type": "Single-story leased office with public counter (FSA/NRCS/RD), capacity ~40",
+  "accessibility_notes": [
+    "One ramp entrance (north side); ramp is not heated and ices first",
+    "Parking lot drainage issue on the east side: standing water refreezes overnight",
+    "No backup generator; HVAC and badge readers fail in a power outage",
+    "Interior storm shelter area: central restrooms and records room (no windows)"
+  ],
+  "corridors": [
+    {"id": "i35_ames_dsm", "name": "I-35 Ames - Des Moines (Ankeny)",
+     "coordinates": [[-93.5705, 42.0600], [-93.5700, 41.9600], [-93.5695, 41.8600], [-93.5680, 41.7500], [-93.5660, 41.6600]]},
+    {"id": "i35_ames_storycity", "name": "I-35 Ames - Story City",
+     "coordinates": [[-93.5705, 42.0600], [-93.5730, 42.1200], [-93.5900, 42.1850]]},
+    {"id": "us30_ames_boone", "name": "US-30 Ames - Boone",
+     "coordinates": [[-93.6200, 42.0050], [-93.7000, 42.0050], [-93.8000, 42.0080], [-93.8800, 42.0350]]},
+    {"id": "us30_ames_nevada", "name": "US-30 Ames - Nevada",
+     "coordinates": [[-93.5700, 42.0080], [-93.4800, 42.0100], [-93.4000, 42.0150]]},
+    {"id": "us69_ames_huxley", "name": "US-69 Ames - Huxley",
+     "coordinates": [[-93.6100, 42.0000], [-93.6100, 41.9500], [-93.6050, 41.8950]]}
+  ]
+}

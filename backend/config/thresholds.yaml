@@ -1,0 +1,583 @@
+# Closure Call threshold registry.
+#
+# Every cutoff the engine uses lives here, with where it came from.
+#   basis:    official  = the value is an NWS/OPM criterion
+#             policy    = our facility policy choice built on an official category
+#   verified: true  = we read the cited primary source and it states this value/definition
+#             false = plausible / commonly cited, NOT verified against a primary source;
+#                     the UI shows a warning badge on these
+#   posture_effect: severity level the rule asserts for its hazard
+#             (minor | significant | extreme). The *posture* is then chosen by
+#             timing (engine/posture.py, matrix below), never by the rule alone.
+#   time_window: what part of the timeline the metric is evaluated over.
+#
+# Edit this file, not the code, to change a threshold. The SHA-256 of this file
+# is stored on every snapshot (thresholds_version) so past decisions stay
+# reconstructable after edits.
+
+version: "2026-10-10.1"
+
+sources:
+  nwsi_10_511: &nwsi_10_511 https://www.weather.gov/media/directives/010_pdfs/pd01005011curr.pdf
+  nwsi_10_513: &nwsi_10_513 https://www.weather.gov/media/directives/010_pdfs/pd01005013curr.pdf
+  nwsi_10_515: &nwsi_10_515 https://www.weather.gov/media/directives/010_pdfs/pd01005015curr.pdf
+  opm_dismissal: &opm https://www.opm.gov/policy-data-oversight/pay-leave/reference-materials/handbooks/dcdismissal.pdf
+  nws_snow_criteria: &snow_criteria https://www.weather.gov/snow-criteria
+  iem_roads: &iem_roads https://mesonet.agron.iastate.edu/roads/
+  iowa_511: &ia511 https://www.511ia.org/
+  spc_categories: &spc https://www.spc.noaa.gov/misc/about.html
+  spia: &spia https://www.spia-index.com/
+  metar_key: &metar https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf
+
+postures:
+  NORMAL:
+    opm_label: "Open"
+    opm_section: "IV.B.1 Open"
+  DELAYED_ARRIVAL:
+    opm_label: "Open - Delayed Arrival, with option for unscheduled leave or unscheduled telework"
+    opm_section: "IV.B.3 Delayed Arrival"
+  EARLY_DISMISSAL:
+    opm_label: "Open - Early Departure"
+    opm_section: "IV.B.4 Early Departure"
+  TELEWORK:
+    opm_label: "Open with Option for Unscheduled Leave or Unscheduled Telework"
+    opm_section: "IV.B.2 Open with Option for Unscheduled Leave or Unscheduled Telework"
+  CLOSED:
+    opm_label: "Office Closure (closed to the public); immediate departure or Shelter-In-Place as applicable"
+    opm_section: "IV.B.5 Office Closure / IV.B.6 Shelter-In-Place"
+  _source: *opm
+  _source_title: "OPM, Governmentwide Dismissal and Closure Procedures (December 2025), Section IV"
+  _verified: true
+
+timing:
+  # Local facility times. Commute windows are part of the brief; hours come from facility.json.
+  am_commute: ["06:00", "08:00"]
+  pm_commute: ["16:00", "18:00"]
+  morning_core_end: "11:00"       # hazard still active after this -> the morning is lost, not just delayed
+  winter_road_recovery_hours: 3   # roads stay hazardous this long after ice/snow stops (policy)
+  posture_matrix:
+    minor:       "AM commute -> DELAYED_ARRIVAL; otherwise NORMAL"
+    significant: "AM commute and still active after morning_core_end -> TELEWORK; AM only -> DELAYED_ARRIVAL; midday/PM -> EARLY_DISMISSAL"
+    extreme:     "AM commute or morning -> CLOSED; arriving midday/PM -> EARLY_DISMISSAL; in progress during work hours (tornado/severe t-storm) -> CLOSED with shelter-in-place"
+  combine: "Most severe posture wins (NORMAL < DELAYED_ARRIVAL < EARLY_DISMISSAL < TELEWORK < CLOSED); DELAYED_ARRIVAL + EARLY_DISMISSAL from different hazards -> TELEWORK"
+
+rules:
+  # ------------------------------------------------------------------ winter / ice
+  - id: winter.ice_storm_warning
+    hazard: winter
+    metric: alert_present
+    events: ["Ice Storm Warning"]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: extreme
+    score: 85
+    time_window: "alert onset to end, if it overlaps the next 36 h or the decision day"
+    anchor: "NWSI 10-513: Ice Storm Warning = ice accumulation meeting locally defined warning criteria; significant ice is usually >= 0.25 in on an elevated flat surface."
+    source_url: *nwsi_10_513
+    basis: official
+    verified: true
+
+  - id: winter.blizzard_warning
+    hazard: winter
+    metric: alert_present
+    events: ["Blizzard Warning"]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: extreme
+    score: 85
+    time_window: "alert onset to end, if it overlaps the next 36 h or the decision day"
+    anchor: "NWSI 10-513: Blizzard Warning = sustained wind or frequent gusts >= 35 mph with falling/blowing snow frequently reducing visibility below 1/4 mile for 3+ hours."
+    source_url: *nwsi_10_513
+    basis: official
+    verified: true
+
+  - id: winter.winter_storm_warning
+    hazard: winter
+    metric: alert_present
+    events: ["Winter Storm Warning"]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: significant
+    score: 65
+    time_window: "alert onset to end, if it overlaps the next 36 h or the decision day"
+    anchor: "NWSI 10-513: Winter Storm Warning = snow, ice or sleet meeting locally defined event-based warning criteria (Appendix D)."
+    source_url: *nwsi_10_513
+    basis: official
+    verified: true
+
+  - id: winter.winter_weather_advisory
+    hazard: winter
+    metric: alert_present
+    events: ["Winter Weather Advisory"]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: minor
+    score: 35
+    time_window: "alert onset to end, if it overlaps the next 36 h or the decision day"
+    anchor: "NWSI 10-513: Winter Weather Advisory = winter precipitation below warning criteria that still causes significant inconvenience (Appendix E regional criteria)."
+    source_url: *nwsi_10_513
+    basis: official
+    verified: true
+
+  - id: winter.winter_storm_watch
+    hazard: winter
+    metric: alert_present
+    events: ["Winter Storm Watch", "Ice Storm Watch", "Blizzard Watch"]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: minor
+    score: 30
+    time_window: "alert onset to end, if it overlaps the next 36 h or the decision day"
+    anchor: "NWSI 10-513: a Watch means warning-level winter conditions are possible; treated as minor until upgraded."
+    source_url: *nwsi_10_513
+    basis: official
+    verified: true
+
+  - id: winter.fcst_ice_quarter_inch
+    hazard: winter
+    metric: fcst_ice_24h_in
+    operator: ">="
+    value: 0.25
+    unit: in
+    posture_effect: extreme
+    score: 80
+    time_window: "forecast ice accumulation summed through the decision day (at least the next 24 h)"
+    anchor: "NWSI 10-513 glossary: significant ice accumulations are usually 0.25 in or greater. DMX's local ice criterion is published only as a map image in Appendix D; the national typical value is used."
+    source_url: *nwsi_10_513
+    basis: official
+    verified: true
+
+  - id: winter.fcst_ice_tenth_inch
+    hazard: winter
+    metric: fcst_ice_24h_in
+    operator: ">="
+    value: 0.10
+    unit: in
+    posture_effect: significant
+    score: 60
+    time_window: "forecast ice accumulation summed through the decision day (at least the next 24 h)"
+    anchor: "Sperry-Piltz Ice Accumulation Index: about 0.10 in of ice is where scattered outages and very hazardous travel begin. Policy cut below the ice storm level."
+    source_url: *spia
+    basis: policy
+    verified: false
+
+  - id: winter.fcst_ice_any
+    hazard: winter
+    metric: fcst_ice_24h_in
+    operator: ">="
+    value: 0.01
+    unit: in
+    posture_effect: minor
+    score: 40
+    time_window: "forecast ice accumulation summed through the decision day (at least the next 24 h)"
+    anchor: "Any measurable glaze makes the facility's unheated ramp and lot hazardous (facility.json accessibility notes). NWSI 10-513 advisories cover ice below warning criteria."
+    source_url: *nwsi_10_513
+    basis: policy
+    verified: true
+
+  - id: winter.fcst_snow_warning_12h
+    hazard: winter
+    metric: fcst_snow_12h_in
+    operator: ">="
+    value: 6.0
+    unit: in
+    posture_effect: significant
+    score: 65
+    time_window: "largest forecast snowfall in any 12 h period through the decision day"
+    anchor: "Commonly reported NWS Des Moines winter storm warning snow criterion (6 in in 12 h). NWSI 10-513 Appendix D points to weather.gov/snow-criteria, an interactive map we could not machine-read."
+    source_url: *snow_criteria
+    basis: official
+    verified: false
+
+  - id: winter.fcst_snow_heavy_24h
+    hazard: winter
+    metric: fcst_snow_24h_in
+    operator: ">="
+    value: 12.0
+    unit: in
+    posture_effect: extreme
+    score: 85
+    time_window: "forecast snowfall summed through the decision day (at least the next 24 h)"
+    anchor: "Policy: twice the local warning amount; plows cannot keep commute corridors open."
+    source_url: *snow_criteria
+    basis: policy
+    verified: false
+
+  - id: winter.fcst_snow_advisory_24h
+    hazard: winter
+    metric: fcst_snow_24h_in
+    operator: ">="
+    value: 3.0
+    unit: in
+    posture_effect: minor
+    score: 35
+    time_window: "forecast snowfall summed through the decision day (at least the next 24 h)"
+    anchor: "Commonly reported Central Region winter weather advisory snow amount (3 in). NWSI 10-513 Appendix E shows the regional criteria as an image."
+    source_url: *nwsi_10_513
+    basis: official
+    verified: false
+
+  - id: winter.obs_freezing_precip
+    hazard: winter
+    metric: obs_freezing_precip_hours_3h
+    operator: ">="
+    value: 1
+    unit: hours
+    posture_effect: significant
+    score: 55
+    time_window: "hours in the last 3 h with FZRA/FZDZ/PL reported at the facility ASOS"
+    anchor: "Observed freezing rain/drizzle or ice pellets (METAR present-weather codes) means ice is forming now. Policy: treat as significant."
+    source_url: *metar
+    basis: policy
+    verified: false
+
+  - id: winter.obs_ice_accretion
+    hazard: winter
+    metric: obs_ice_accretion_3h_in
+    operator: ">="
+    value: 0.01
+    unit: in
+    posture_effect: significant
+    score: 60
+    time_window: "ASOS icing sensor, last 3 h (live only)"
+    anchor: "Measured ice accretion at the facility's ASOS. Policy: any measured accretion is significant for walking and driving."
+    source_url: *metar
+    basis: policy
+    verified: false
+
+  - id: winter.road_closed
+    hazard: winter
+    metric: road_worst_rank
+    operator: ">="
+    value: 5
+    unit: rank
+    posture_effect: extreme
+    score: 90
+    time_window: "current Iowa DOT report on any commute corridor"
+    anchor: "Iowa DOT 'Travel not advised' / 'Impassable' / closed on a corridor employees use. Category from Iowa DOT via the IEM archive; ranking is ours."
+    source_url: *ia511
+    basis: policy
+    verified: false
+
+  - id: winter.road_travel_advisory
+    hazard: winter
+    metric: road_worst_rank
+    operator: ">="
+    value: 4
+    unit: rank
+    posture_effect: significant
+    score: 70
+    time_window: "current Iowa DOT report on any commute corridor"
+    anchor: "Iowa DOT 'Travel Advisory' issued on a commute corridor."
+    source_url: *ia511
+    basis: policy
+    verified: false
+
+  - id: winter.road_completely_covered
+    hazard: winter
+    metric: road_worst_rank
+    operator: ">="
+    value: 3
+    unit: rank
+    posture_effect: significant
+    score: 60
+    time_window: "current Iowa DOT report on any commute corridor"
+    anchor: "Iowa DOT 'Completely covered' (snow/ice/mixed/slush) on a commute corridor."
+    source_url: *iem_roads
+    basis: policy
+    verified: false
+
+  - id: winter.road_partially_covered
+    hazard: winter
+    metric: road_worst_rank
+    operator: ">="
+    value: 2
+    unit: rank
+    posture_effect: minor
+    score: 35
+    time_window: "current Iowa DOT report on any commute corridor"
+    anchor: "Iowa DOT 'Partially covered' on a commute corridor."
+    source_url: *iem_roads
+    basis: policy
+    verified: false
+
+  - id: winter.rwis_ice
+    hazard: winter
+    metric: rwis_ice_sensors
+    operator: ">="
+    value: 1
+    unit: sensors
+    posture_effect: minor
+    score: 30
+    time_window: "RWIS pavement sensors within 40 km, latest report"
+    anchor: "Iowa DOT RWIS pavement sensor reporting an ice watch/warning condition near the facility."
+    source_url: *iem_roads
+    basis: policy
+    verified: false
+
+  # ------------------------------------------------------------------ wind / severe thunderstorm
+  - id: wind.tornado_warning
+    hazard: wind
+    metric: alert_present
+    events: ["Tornado Warning"]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: extreme
+    score: 95
+    time_window: "alert in effect now or within the next 36 h"
+    anchor: "NWSI 10-511: Tornado Warning = tornado imminent or occurring. Shelter, do not release staff into the storm."
+    source_url: *nwsi_10_511
+    basis: official
+    verified: true
+
+  - id: wind.severe_tstorm_warning
+    hazard: wind
+    metric: alert_present
+    events: ["Severe Thunderstorm Warning"]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: significant
+    score: 70
+    time_window: "alert in effect now or within the next 36 h"
+    anchor: "NWSI 10-511: Severe Thunderstorm Warning = winds >= 58 mph (50 kt) and/or hail >= 1 in."
+    source_url: *nwsi_10_511
+    basis: official
+    verified: true
+
+  - id: wind.high_wind_warning
+    hazard: wind
+    metric: alert_present
+    events: ["High Wind Warning", "Extreme Wind Warning"]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: significant
+    score: 70
+    time_window: "alert onset to end, if it overlaps the next 36 h or the decision day"
+    anchor: "NWSI 10-515: High Wind Warning typical criteria = sustained >= 40 mph for 1 h or more, or gusts >= 58 mph."
+    source_url: *nwsi_10_515
+    basis: official
+    verified: true
+
+  - id: wind.convective_watch
+    hazard: wind
+    metric: alert_present
+    events: ["Tornado Watch", "Severe Thunderstorm Watch"]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: minor
+    score: 35
+    time_window: "watch in effect now or within the next 36 h"
+    anchor: "SPC watch = conditions favorable for severe storms. Treated as minor: monitor and pre-position, no posture change unless timing hits a commute."
+    source_url: *spc
+    basis: official
+    verified: false
+
+  - id: wind.high_wind_watch
+    hazard: wind
+    metric: alert_present
+    events: ["High Wind Watch"]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: minor
+    score: 30
+    time_window: "alert onset to end, if it overlaps the next 36 h or the decision day"
+    anchor: "NWSI 10-515: High Wind Watch = high wind warning criteria possible."
+    source_url: *nwsi_10_515
+    basis: official
+    verified: true
+
+  - id: wind.wind_advisory
+    hazard: wind
+    metric: alert_present
+    events: ["Wind Advisory"]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: minor
+    score: 25
+    time_window: "alert onset to end, if it overlaps the next 36 h or the decision day"
+    anchor: "NWSI 10-515: Wind Advisory = sustained 30-39 mph for 1 h or more (or locally defined)."
+    source_url: *nwsi_10_515
+    basis: official
+    verified: true
+
+  - id: wind.destructive_gust
+    hazard: wind
+    metric: max_gust_mph
+    operator: ">="
+    value: 80
+    unit: mph
+    posture_effect: extreme
+    score: 90
+    time_window: "max of forecast gust (through the decision day) and observed gust (last 3 h)"
+    anchor: "NWSI 10-511: 'Destructive' severe thunderstorm damage threat starts at 80 mph winds."
+    source_url: *nwsi_10_511
+    basis: official
+    verified: true
+
+  - id: wind.fcst_gust_warning
+    hazard: wind
+    metric: fcst_max_gust_24h_mph
+    operator: ">="
+    value: 58
+    unit: mph
+    posture_effect: significant
+    score: 70
+    time_window: "max forecast gust through the decision day (at least 24 h)"
+    anchor: "NWSI 10-515 high wind warning typical criterion (gusts >= 58 mph); also the NWSI 10-511 severe wind threshold (50 kt)."
+    source_url: *nwsi_10_515
+    basis: official
+    verified: true
+
+  - id: wind.fcst_sustained_warning
+    hazard: wind
+    metric: fcst_max_sustained_24h_mph
+    operator: ">="
+    value: 40
+    unit: mph
+    posture_effect: significant
+    score: 65
+    time_window: "max forecast sustained wind through the decision day (at least 24 h)"
+    anchor: "NWSI 10-515 high wind warning typical criterion (sustained >= 40 mph for 1 h+)."
+    source_url: *nwsi_10_515
+    basis: official
+    verified: true
+
+  - id: wind.fcst_sustained_advisory
+    hazard: wind
+    metric: fcst_max_sustained_24h_mph
+    operator: ">="
+    value: 30
+    unit: mph
+    posture_effect: minor
+    score: 25
+    time_window: "max forecast sustained wind through the decision day (at least 24 h)"
+    anchor: "NWSI 10-515 wind advisory criterion (sustained 30-39 mph)."
+    source_url: *nwsi_10_515
+    basis: official
+    verified: true
+
+  - id: wind.fcst_gust_advisory
+    hazard: wind
+    metric: fcst_max_gust_24h_mph
+    operator: ">="
+    value: 45
+    unit: mph
+    posture_effect: minor
+    score: 25
+    time_window: "max forecast gust through the decision day (at least 24 h)"
+    anchor: "Gusts of 45 mph are a common local wind advisory criterion in the central US; not stated in NWSI 10-515 (which says 'or locally defined')."
+    source_url: *nwsi_10_515
+    basis: official
+    verified: false
+
+  - id: wind.obs_severe_gust
+    hazard: wind
+    metric: obs_max_gust_3h_mph
+    operator: ">="
+    value: 58
+    unit: mph
+    posture_effect: significant
+    score: 75
+    time_window: "max observed gust at the facility ASOS in the last 3 h"
+    anchor: "NWSI 10-511 severe wind threshold (58 mph / 50 kt) measured at the facility."
+    source_url: *nwsi_10_511
+    basis: official
+    verified: true
+
+  - id: wind.spc_moderate
+    hazard: wind
+    metric: spc_day1_rank
+    operator: ">="
+    value: 4
+    unit: SPC category (4 = MDT)
+    posture_effect: significant
+    score: 55
+    time_window: "SPC day-1 categorical outlook at the facility; timed to 12:00-21:00 local of the outlook day (policy: Iowa afternoon/evening convective peak)"
+    anchor: "SPC Moderate (4 of 5) risk: widespread severe storms likely."
+    source_url: *spc
+    basis: official
+    verified: false
+
+  - id: wind.spc_enhanced
+    hazard: wind
+    metric: spc_day1_rank
+    operator: ">="
+    value: 3
+    unit: SPC category (3 = ENH)
+    posture_effect: minor
+    score: 35
+    time_window: "SPC day-1 categorical outlook at the facility; timed to 12:00-21:00 local of the outlook day (policy: Iowa afternoon/evening convective peak)"
+    anchor: "SPC Enhanced (3 of 5) risk: numerous severe storms possible."
+    source_url: *spc
+    basis: official
+    verified: false
+
+  # ------------------------------------------------------------------ extreme cold (optional third hazard)
+  - id: cold.extreme_cold_warning
+    hazard: cold
+    metric: alert_present
+    events: ["Extreme Cold Warning", "Wind Chill Warning"]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: significant
+    score: 65
+    time_window: "alert onset to end, if it overlaps the next 36 h or the decision day"
+    anchor: "NWSI 10-515: Extreme Cold Warning = air temperature or wind chill reaching locally defined warning criteria (Appendix B). Wind Chill Warning is the pre-2024 product name."
+    source_url: *nwsi_10_515
+    basis: official
+    verified: true
+
+  - id: cold.cold_advisory
+    hazard: cold
+    metric: alert_present
+    events: ["Cold Weather Advisory", "Wind Chill Advisory", "Extreme Cold Watch", "Wind Chill Watch"]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: minor
+    score: 30
+    time_window: "alert onset to end, if it overlaps the next 36 h or the decision day"
+    anchor: "NWSI 10-515: Cold Weather Advisory / Extreme Cold Watch = cold below warning criteria, or warning criteria possible."
+    source_url: *nwsi_10_515
+    basis: official
+    verified: true
+
+  - id: cold.fcst_wind_chill_extreme
+    hazard: cold
+    metric: fcst_min_apparent_24h_f
+    operator: "<="
+    value: -35
+    unit: degF
+    posture_effect: significant
+    score: 60
+    time_window: "lowest forecast apparent temperature through the decision day (at least 24 h)"
+    anchor: "Approximate central-Iowa extreme cold warning wind chill. Local value in NWSI 10-515 Appendix B was not machine-verified."
+    source_url: *nwsi_10_515
+    basis: official
+    verified: false
+
+  - id: cold.fcst_wind_chill_advisory
+    hazard: cold
+    metric: fcst_min_apparent_24h_f
+    operator: "<="
+    value: -20
+    unit: degF
+    posture_effect: minor
+    score: 30
+    time_window: "lowest forecast apparent temperature through the decision day (at least 24 h)"
+    anchor: "Approximate central-Iowa cold weather advisory wind chill. Not machine-verified."
+    source_url: *nwsi_10_515
+    basis: official
+    verified: false

@@ -1,0 +1,813 @@
+# Probed response shapes
+
+Generated 2026-10-10T18:13:57Z by scripts/probe_endpoints.py
+
+## nws_points.json
+`https://api.weather.gov/points/42.0308,-93.6319` → HTTP 200
+
+- `@context`: list
+  - [list of 2] first item:
+- `id`: str = 'https://api.weather.gov/points/42.0308,-93.6319'
+- `type`: str = 'Feature'
+- `geometry`: dict
+  - `type`: str = 'Point'
+  - `coordinates`: list
+    - [list of 2] first item:
+- `properties`: dict
+  - `@id`: str = 'https://api.weather.gov/points/42.0308,-93.6319'
+  - `@type`: str = 'wx:Point'
+  - `cwa`: str = 'DMX'
+  - `type`: str = 'land'
+  - `forecastOffice`: str = 'https://api.weather.gov/offices/DMX'
+  - `gridId`: str = 'DMX'
+  - `gridX`: int = '73'
+  - `gridY`: int = '69'
+  - `forecast`: str = 'https://api.weather.gov/gridpoints/DMX/73,69/forecast'
+  - `forecastHourly`: str = 'https://api.weather.gov/gridpoints/DMX/73,69/forecast/hourly'
+  - `forecastGridData`: str = 'https://api.weather.gov/gridpoints/DMX/73,69'
+  - `observationStations`: str = 'https://api.weather.gov/gridpoints/DMX/73,69/stations'
+  - `relativeLocation`: dict
+    - `type`: str = 'Feature'
+    - `geometry`: dict
+      - `type`: str = 'Point'
+      - `coordinates`: list
+    - `properties`: dict
+      - `city`: str = 'Ames'
+      - `state`: str = 'IA'
+      - `distance`: dict
+      - `bearing`: dict
+  - `forecastZone`: str = 'https://api.weather.gov/zones/forecast/IAZ048'
+  - `county`: str = 'https://api.weather.gov/zones/county/IAC169'
+  - `fireWeatherZone`: str = 'https://api.weather.gov/zones/fire/IAZ048'
+  - `timeZone`: str = 'America/Chicago'
+  - `radarStation`: str = 'KDMX'
+  - `astronomicalData`: dict
+    - `sunrise`: str = '2026-10-10T07:21:41-05:00'
+    - `sunset`: str = '2026-10-10T18:41:12-05:00'
+    - `transit`: str = '2026-10-10T13:01:26-05:00'
+    - `civilTwilightBegin`: str = '2026-10-10T06:53:47-05:00'
+    - `civilTwilightEnd`: str = '2026-10-10T19:09:06-05:00'
+    - `nauticalTwilightBegin`: str = '2026-10-10T06:21:27-05:00'
+    - `nauticalTwilightEnd`: str = '2026-10-10T19:41:25-05:00'
+    - `astronomicalTwilightBegin`: str = '2026-10-10T05:49:02-05:00'
+    - `astronomicalTwilightEnd`: str = '2026-10-10T20:13:50-05:00'
+  - `nwr`: dict
+    - `transmitter`: str = 'WXL57'
+    - `sameCode`: str = '019169'
+    - `areaBroadcast`: str = 'https://api.weather.gov/radio/WXL57/broadcast'
+    - `pointBroadcast`: str = 'https://api.weather.gov/points/42.0308,-93.6319/radio'
+
+## nws_alerts_point.json
+`https://api.weather.gov/alerts/active?point=42.0308,-93.6319` → HTTP 200
+
+- `@context`: dict
+  - `@version`: str = '1.1'
+- `type`: str = 'FeatureCollection'
+- `features`: list
+- `title`: str = 'Current watches, warnings, and advisories for 42.0308 N, 93.'
+- `updated`: str = '2026-10-10T18:13:40+00:00'
+
+## nws_alerts_zone.json
+`https://api.weather.gov/alerts/active?zone=IAZ048` → HTTP 200
+
+- `@context`: dict
+  - `@version`: str = '1.1'
+- `type`: str = 'FeatureCollection'
+- `features`: list
+- `title`: str = 'Current watches, warnings, and advisories for Story (IAZ048)'
+- `updated`: str = '2026-10-10T18:13:40+00:00'
+
+## nws_alerts_national.json
+`https://api.weather.gov/alerts/active` → HTTP 200
+
+- `@context`: list
+  - [list of 2] first item:
+- `type`: str = 'FeatureCollection'
+- `features`: list
+  - [list of 60] first item:
+    - `id`: str = 'https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0-KEEPAL'
+    - `type`: str = 'Feature'
+    - `geometry`: NoneType = 'None'
+    - `properties`: dict
+      - `@id`: str = 'https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0-KEEPAL'
+      - `@type`: str = 'wx:Alert'
+      - `id`: str = 'urn:oid:2.49.0.1.840.0-KEEPALIVE-46911'
+      - `areaDesc`: str = 'Montgomery'
+      - `geocode`: dict
+      - `affectedZones`: list
+      - `references`: list
+      - `sent`: str = '2026-10-10T18:13:32+00:00'
+      - `effective`: str = '2026-10-10T18:13:32+00:00'
+      - `onset`: NoneType = 'None'
+      - `expires`: str = '2026-10-10T18:23:32+00:00'
+      - `ends`: NoneType = 'None'
+      - `status`: str = 'Test'
+      - `messageType`: str = 'Alert'
+      - `category`: str = 'Met'
+      - `severity`: str = 'Unknown'
+      - `certainty`: str = 'Unknown'
+      - `urgency`: str = 'Unknown'
+      - `event`: str = 'Test Message'
+      - `sender`: str = 'w-nws.webmaster@noaa.gov'
+      - `senderName`: str = 'NWS'
+      - `headline`: NoneType = 'None'
+      - `description`: str = 'Monitoring message only. Please disregard.'
+      - `instruction`: str = 'Monitoring message only. Please disregard.'
+      - `response`: str = 'None'
+      - `note`: str = 'This is only a test for monitoring of vital dissemination sy'
+      - `parameters`: dict
+      - `scope`: str = 'Public'
+      - `code`: str = 'IPAWSv1.0'
+      - `language`: str = 'en-US'
+      - `web`: str = 'http://www.weather.gov'
+      - `eventCode`: dict
+- `title`: str = 'Current watches, warnings, and advisories'
+- `updated`: str = '2026-10-10T18:13:40+00:00'
+
+## nws_gridpoints.json
+`https://api.weather.gov/gridpoints/DMX/73,69` → HTTP 200
+
+- `@context`: list
+  - [list of 2] first item:
+- `id`: str = 'https://api.weather.gov/gridpoints/DMX/73,69'
+- `type`: str = 'Feature'
+- `geometry`: dict
+  - `type`: str = 'Polygon'
+  - `coordinates`: list
+    - [list of 1] first item:
+      - [list of 5] first item:
+        - [list of 2] first item:
+- `properties`: dict
+  - `@id`: str = 'https://api.weather.gov/gridpoints/DMX/73,69'
+  - `@type`: str = 'wx:Gridpoint'
+  - `updateTime`: str = '2026-10-10T17:16:47+00:00'
+  - `validTimes`: str = '2026-10-10T11:00:00+00:00/P7DT14H'
+  - `elevation`: dict
+    - `unitCode`: str = 'wmoUnit:m'
+    - `value`: float = '274.9296'
+  - `forecastOffice`: str = 'https://api.weather.gov/offices/DMX'
+  - `gridId`: str = 'DMX'
+  - `gridX`: int = '73'
+  - `gridY`: int = '69'
+  - `temperature`: dict
+    - `uom`: str = 'wmoUnit:degC'
+    - `values`: list
+      - [list of 162] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT1H'
+        - `value`: float = '18.333333333333332'
+  - `dewpoint`: dict
+    - `uom`: str = 'wmoUnit:degC'
+    - `values`: list
+      - [list of 79] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT1H'
+        - `value`: float = '14.444444444444445'
+  - `maxTemperature`: dict
+    - `uom`: str = 'wmoUnit:degC'
+    - `values`: list
+      - [list of 8] first item:
+        - `validTime`: str = '2026-10-10T13:00:00+00:00/PT13H'
+        - `value`: float = '31.666666666666668'
+  - `minTemperature`: dict
+    - `uom`: str = 'wmoUnit:degC'
+    - `values`: list
+      - [list of 9] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT4H'
+        - `value`: float = '16.11111111111111'
+  - `relativeHumidity`: dict
+    - `uom`: str = 'wmoUnit:percent'
+    - `values`: list
+      - [list of 143] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT1H'
+        - `value`: int = '78'
+  - `apparentTemperature`: dict
+    - `uom`: str = 'wmoUnit:degC'
+    - `values`: list
+      - [list of 158] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT1H'
+        - `value`: float = '18.333333333333332'
+  - `wetBulbGlobeTemperature`: dict
+    - `uom`: str = 'wmoUnit:degC'
+    - `values`: list
+      - [list of 145] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT2H'
+        - `value`: int = '15'
+  - `heatIndex`: dict
+    - `uom`: str = 'wmoUnit:degC'
+    - `values`: list
+      - [list of 52] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT4H'
+        - `value`: NoneType = 'None'
+  - `windChill`: dict
+    - `uom`: str = 'wmoUnit:degC'
+    - `values`: list
+      - [list of 18] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/P5DT22H'
+        - `value`: NoneType = 'None'
+  - `skyCover`: dict
+    - `uom`: str = 'wmoUnit:percent'
+    - `values`: list
+      - [list of 78] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT3H'
+        - `value`: int = '1'
+  - `windDirection`: dict
+    - `uom`: str = 'wmoUnit:degree_(angle)'
+    - `values`: list
+      - [list of 75] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT1H'
+        - `value`: int = '180'
+  - `windSpeed`: dict
+    - `uom`: str = 'wmoUnit:km_h-1'
+    - `values`: list
+      - [list of 75] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT2H'
+        - `value`: float = '11.112'
+  - `windGust`: dict
+    - `uom`: str = 'wmoUnit:km_h-1'
+    - `values`: list
+      - [list of 102] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT2H'
+        - `value`: float = '11.112'
+  - `weather`: dict
+    - `values`: list
+      - [list of 7] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/P3DT19H'
+        - `value`: list
+  - `hazards`: dict
+    - `values`: list
+  - `heatRisk`: dict
+    - `values`: list
+      - [list of 4] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT19H'
+        - `value`: int = '1'
+  - `probabilityOfPrecipitation`: dict
+    - `uom`: str = 'wmoUnit:percent'
+    - `values`: list
+      - [list of 24] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/P2D'
+        - `value`: int = '0'
+  - `quantitativePrecipitation`: dict
+    - `uom`: str = 'wmoUnit:mm'
+    - `values`: list
+      - [list of 32] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT1H'
+        - `value`: int = '0'
+  - `iceAccumulation`: dict
+    - `uom`: str = 'wmoUnit:mm'
+    - `values`: list
+      - [list of 31] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT1H'
+        - `value`: int = '0'
+  - `snowfallAmount`: dict
+    - `uom`: str = 'wmoUnit:mm'
+    - `values`: list
+      - [list of 31] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT1H'
+        - `value`: int = '0'
+  - `snowLevel`: dict
+    - `values`: list
+  - `ceilingHeight`: dict
+    - `uom`: str = 'wmoUnit:m'
+    - `values`: list
+      - [list of 4] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/P1DT13H'
+        - `value`: NoneType = 'None'
+  - `visibility`: dict
+    - `uom`: str = 'wmoUnit:m'
+    - `values`: list
+      - [list of 3] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT1H'
+        - `value`: float = '15546.26304'
+  - `transportWindSpeed`: dict
+    - `uom`: str = 'wmoUnit:km_h-1'
+    - `values`: list
+      - [list of 88] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT1H'
+        - `value`: float = '22.224'
+  - `transportWindDirection`: dict
+    - `uom`: str = 'wmoUnit:degree_(angle)'
+    - `values`: list
+      - [list of 75] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT2H'
+        - `value`: int = '190'
+  - `mixingHeight`: dict
+    - `uom`: str = 'wmoUnit:m'
+    - `values`: list
+      - [list of 181] first item:
+        - `validTime`: str = '2026-10-10T11:00:00+00:00/PT1H'
+        - `value`: float = '136.8552'
+  - `hainesIndex`: dict
+    - `values`: list
+  - `lightningActivityLevel`: dict
+    - `values`: list
+  - `twentyFootWindSpeed`: dict
+    - `values`: list
+  - `twentyFootWindDirection`: dict
+    - `values`: list
+  - `waveHeight`: dict
+    - `values`: list
+  - `wavePeriod`: dict
+    - `values`: list
+  - `waveDirection`: dict
+    - `values`: list
+  - `primarySwellHeight`: dict
+    - `values`: list
+  - `primarySwellDirection`: dict
+    - `values`: list
+  - `secondarySwellHeight`: dict
+    - `values`: list
+  - `secondarySwellDirection`: dict
+    - `values`: list
+  - `wavePeriod2`: dict
+    - `values`: list
+  - `windWaveHeight`: dict
+    - `values`: list
+  - `dispersionIndex`: dict
+    - `values`: list
+  - `pressure`: dict
+    - `values`: list
+  - `probabilityOfTropicalStormWinds`: dict
+    - `values`: list
+  - `probabilityOfHurricaneWinds`: dict
+    - `values`: list
+  - `potentialOf15mphWinds`: dict
+    - `values`: list
+  - `potentialOf25mphWinds`: dict
+    - `values`: list
+  - `potentialOf35mphWinds`: dict
+    - `values`: list
+  - `potentialOf45mphWinds`: dict
+    - `values`: list
+  - `potentialOf20mphWindGusts`: dict
+    - `values`: list
+  - `potentialOf30mphWindGusts`: dict
+    - `values`: list
+  - `potentialOf40mphWindGusts`: dict
+    - `values`: list
+  - `potentialOf50mphWindGusts`: dict
+    - `values`: list
+
+## nws_stations.json
+`https://api.weather.gov/gridpoints/DMX/73,69/stations` → HTTP 200
+
+- `@context`: list
+  - [list of 2] first item:
+- `type`: str = 'FeatureCollection'
+- `features`: list
+  - [list of 69] first item:
+    - `id`: str = 'https://api.weather.gov/stations/KAMW'
+    - `type`: str = 'Feature'
+    - `geometry`: dict
+      - `type`: str = 'Point'
+      - `coordinates`: list
+    - `properties`: dict
+      - `@id`: str = 'https://api.weather.gov/stations/KAMW'
+      - `@type`: str = 'wx:ObservationStation'
+      - `elevation`: dict
+      - `stationIdentifier`: str = 'KAMW'
+      - `name`: str = 'Ames, Ames Municipal Airport'
+      - `timeZone`: str = 'America/Chicago'
+      - `provider`: str = 'ASOS-HFM'
+      - `subProvider`: str = ''
+      - `distance`: dict
+      - `bearing`: dict
+      - `forecast`: str = 'https://api.weather.gov/zones/forecast/IAZ048'
+      - `county`: str = 'https://api.weather.gov/zones/county/IAC169'
+      - `fireWeatherZone`: str = 'https://api.weather.gov/zones/fire/IAZ048'
+- `observationStations`: list
+  - [list of 69] first item:
+- `pagination`: dict
+  - `next`: str = 'https://api.weather.gov/stations?id%5B0%5D=KADU&id%5B1%5D=KA'
+
+## nws_zone_IAZ048.json
+`https://api.weather.gov/zones/forecast/IAZ048` → HTTP 200
+
+- `@context`: dict
+  - `@version`: str = '1.1'
+- `id`: str = 'https://api.weather.gov/zones/forecast/IAZ048'
+- `type`: str = 'Feature'
+- `geometry`: dict
+  - `type`: str = 'Polygon'
+  - `coordinates`: list
+    - [list of 1] first item:
+      - [list of 42] first item:
+        - [list of 2] first item:
+- `properties`: dict
+  - `@id`: str = 'https://api.weather.gov/zones/forecast/IAZ048'
+  - `@type`: str = 'wx:Zone'
+  - `id`: str = 'IAZ048'
+  - `type`: str = 'public'
+  - `name`: str = 'Story'
+  - `effectiveDate`: str = '2026-04-16T18:00:00+00:00'
+  - `expirationDate`: str = '2200-01-01T00:00:00+00:00'
+  - `state`: str = 'IA'
+  - `forecastOffice`: str = 'https://api.weather.gov/offices/DMX'
+  - `gridIdentifier`: str = 'DMX'
+  - `awipsLocationIdentifier`: str = 'DMX'
+  - `cwa`: list
+    - [list of 1] first item:
+  - `forecastOffices`: list
+    - [list of 1] first item:
+  - `timeZone`: list
+    - [list of 1] first item:
+  - `observationStations`: list
+    - [list of 10] first item:
+  - `radarStation`: str = 'DMX'
+
+## iem_currents_AMW.json
+`https://mesonet.agron.iastate.edu/api/1/currents.json?station=AMW` → HTTP 200
+
+- `schema`: dict
+  - `fields`: list
+    - [list of 70] first item:
+      - `name`: str = 'station'
+      - `type`: str = 'string'
+      - `extDtype`: str = 'str'
+  - `pandas_version`: str = '1.4.0'
+- `data`: list
+  - [list of 2] first item:
+    - `station`: str = 'AMW'
+    - `name`: str = 'Ames'
+    - `county`: str = 'Story'
+    - `state`: str = 'IA'
+    - `network`: str = 'IA_ASOS'
+    - `local_date`: str = '2026-10-10'
+    - `snow`: NoneType = 'None'
+    - `snowd`: NoneType = 'None'
+    - `snoww`: NoneType = 'None'
+    - `utc_valid`: str = '2026-10-10T17:53:00Z'
+    - `local_valid`: str = '2026-10-10T12:53:00'
+    - `tmpf`: float = '83.0'
+    - `max_tmpf`: float = '84.0'
+    - `min_tmpf`: float = '57.0'
+    - `dwpf`: float = '56.0'
+    - `relh`: float = '39.744686'
+    - `vsby`: float = '10.0'
+    - `sknt`: float = '15.0'
+    - `drct`: float = '190.0'
+    - `c1smv`: NoneType = 'None'
+    - `c2smv`: NoneType = 'None'
+    - `c3smv`: NoneType = 'None'
+    - `c4smv`: NoneType = 'None'
+    - `c5smv`: NoneType = 'None'
+    - `c1tmpf`: NoneType = 'None'
+    - `c2tmpf`: NoneType = 'None'
+    - `c3tmpf`: NoneType = 'None'
+    - `c4tmpf`: NoneType = 'None'
+    - `c5tmpf`: NoneType = 'None'
+    - `ob_pday`: NoneType = 'None'
+    - `ob_pmonth`: NoneType = 'None'
+    - `s_pmonth`: NoneType = 'None'
+    - `max_sknt`: float = '15.0'
+    - `max_gust`: float = '22.0'
+    - `gust`: NoneType = 'None'
+    - `mslp`: float = '1011.3'
+    - `pres`: NoneType = 'None'
+    - `scond0`: NoneType = 'None'
+    - `scond1`: NoneType = 'None'
+    - `scond2`: NoneType = 'None'
+    - `scond3`: NoneType = 'None'
+    - `srad`: NoneType = 'None'
+    - `tsf0`: NoneType = 'None'
+    - `tsf1`: NoneType = 'None'
+    - `tsf2`: NoneType = 'None'
+    - `tsf3`: NoneType = 'None'
+    - `rwis_subf`: NoneType = 'None'
+    - `raw`: str = 'KAMW 101753Z AUTO 19015KT 10SM CLR 28/13 A2989 RMK AO2 SLP11'
+    - `phour`: float = '0.0'
+    - `feel`: float = '82.298706'
+    - `ice_accretion_1hr`: NoneType = 'None'
+    - `ice_accretion_3hr`: NoneType = 'None'
+    - `ice_accretion_6hr`: NoneType = 'None'
+    - `skyl1`: NoneType = 'None'
+    - `skyc1`: str = 'CLR'
+    - `skyl2`: NoneType = 'None'
+    - `skyc2`: NoneType = 'None'
+    - `skyl3`: NoneType = 'None'
+    - `skyc3`: NoneType = 'None'
+    - `skyl4`: NoneType = 'None'
+
+## iem_obhistory_AMW.json
+`https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=IA_ASOS&station=AMW&date=2023-02-22&full=true` → HTTP 200
+
+- `schema`: dict
+  - `fields`: list
+    - [list of 36] first item:
+      - `name`: str = 'index'
+      - `type`: str = 'integer'
+  - `primaryKey`: list
+    - [list of 1] first item:
+  - `pandas_version`: str = '1.4.0'
+- `data`: list
+  - [list of 343] first item:
+    - `index`: int = '0'
+    - `utc_valid`: str = '2023-02-22T06:00Z'
+    - `local_valid`: str = '2023-02-22T00:00'
+    - `tmpf`: NoneType = 'None'
+    - `dwpf`: NoneType = 'None'
+    - `sknt`: float = '9.0'
+    - `drct`: float = '60.0'
+    - `vsby`: float = '10.0'
+    - `skyc1`: str = 'CLR'
+    - `skyl1`: NoneType = 'None'
+    - `skyc2`: NoneType = 'None'
+    - `skyl2`: NoneType = 'None'
+    - `skyc3`: NoneType = 'None'
+    - `skyl3`: NoneType = 'None'
+    - `skyc4`: NoneType = 'None'
+    - `skyl4`: NoneType = 'None'
+    - `relh`: NoneType = 'None'
+    - `feel`: NoneType = 'None'
+    - `alti`: float = '29.56'
+    - `mslp`: NoneType = 'None'
+    - `p01i`: NoneType = 'None'
+    - `p03i`: NoneType = 'None'
+    - `p24i`: NoneType = 'None'
+    - `raw`: str = 'KAMW 220600Z AUTO 06009KT 10SM CLR M02/M07 A2956 RMK T102010'
+    - `p06i`: NoneType = 'None'
+    - `max_tmpf_6hr`: NoneType = 'None'
+    - `min_tmpf_6hr`: NoneType = 'None'
+    - `gust`: NoneType = 'None'
+    - `wxcodes`: NoneType = 'None'
+    - `snowdepth`: NoneType = 'None'
+    - `peak_wind_gust`: NoneType = 'None'
+    - `peak_wind_drct`: NoneType = 'None'
+    - `peak_wind_time`: NoneType = 'None'
+    - `phour`: NoneType = 'None'
+
+## iem_roadcond_2023-02-22T20.geojson
+`https://mesonet.agron.iastate.edu/api/1/iowa_winter_roadcond.geojson?valid=2023-02-22T20:00:00Z` → HTTP 200
+
+- `type`: str = 'FeatureCollection'
+- `name`: str = 'pyogrio_82575e4681f34c27955382d1ba41a081'
+- `crs`: dict
+  - `type`: str = 'name'
+  - `properties`: dict
+    - `name`: str = 'urn:ogc:def:crs:OGC:1.3:CRS84'
+- `features`: list
+  - [list of 159] first item:
+    - `type`: str = 'Feature'
+    - `properties`: dict
+      - `utc_valid`: str = '2023-02-17T02:06Z'
+      - `rtype`: int = '1'
+      - `int1`: float = '235.0'
+      - `st1`: NoneType = 'None'
+      - `us1`: NoneType = 'None'
+      - `cond_code`: int = '0'
+      - `color`: str = '#000000'
+      - `label`: str = 'Normal'
+    - `geometry`: dict
+      - `type`: str = 'MultiLineString'
+      - `coordinates`: list
+
+## iem_rwis_2024-01-12T18.json
+`https://mesonet.agron.iastate.edu/api/1/rwis.json?valid=2024-01-12T18:00:00Z` → HTTP 200
+
+- `schema`: dict
+  - `fields`: list
+    - [list of 30] first item:
+      - `name`: str = 'station'
+      - `type`: str = 'string'
+      - `extDtype`: str = 'str'
+  - `primaryKey`: list
+    - [list of 1] first item:
+  - `pandas_version`: str = '1.4.0'
+- `data`: list
+  - [list of 68] first item:
+    - `station`: str = 'RPFI4'
+    - `iemid`: int = '8693'
+    - `rank`: int = '1'
+    - `tzname`: str = 'America/Chicago'
+    - `name`: str = 'Plainfield'
+    - `county`: str = 'Bremer'
+    - `state`: str = 'IA'
+    - `network`: str = 'IA_RWIS'
+    - `utc_valid`: str = '2024-01-12T18:00:00Z'
+    - `local_valid`: str = '2024-01-12T12:00:00'
+    - `tmpf`: float = '30.9'
+    - `dwpf`: float = '30.9'
+    - `relh`: float = '100.0'
+    - `vsby`: NoneType = 'None'
+    - `sknt`: float = '18.2'
+    - `drct`: float = '350.0'
+    - `subf`: NoneType = 'None'
+    - `gust`: float = '22.6'
+    - `tfs0_text`: str = 'Dry'
+    - `tfs1_text`: str = 'Ice Warning'
+    - `tfs2_text`: NoneType = 'None'
+    - `tfs3_text`: NoneType = 'None'
+    - `tfs0`: float = '25.9'
+    - `tfs1`: float = '23.9'
+    - `tfs2`: NoneType = 'None'
+    - `tfs3`: NoneType = 'None'
+    - `pcpn`: float = '0.0'
+    - `feel`: float = '18.235825'
+    - `lon`: float = '-92.5371'
+    - `lat`: float = '42.8332'
+
+## iem_vtec_status_2023-02-22T14.json
+`https://mesonet.agron.iastate.edu/api/1/vtec/events_status.json?valid=2023-02-22T14:00:00Z&wfo=DMX` → HTTP 200
+
+- `schema`: dict
+  - `fields`: list
+    - [list of 20] first item:
+      - `name`: str = 'index'
+      - `type`: str = 'integer'
+  - `primaryKey`: list
+    - [list of 1] first item:
+  - `pandas_version`: str = '1.4.0'
+- `data`: list
+  - [list of 3] first item:
+    - `index`: int = '0'
+    - `wfo`: str = 'DMX'
+    - `eventid`: int = '4'
+    - `phenomena`: str = 'WS'
+    - `significance`: str = 'W'
+    - `ph_sig`: str = 'WS.W'
+    - `year`: int = '2023'
+    - `url`: str = 'https://mesonet.agron.iastate.edu/vtec/#2023-O-NEW-KDMX-WS-W'
+    - `status`: str = 'EXP'
+    - `locations`: str = 'Hancock [IA], Palo Alto [IA], Winnebago [IA], Kossuth [IA], '
+    - `updated`: str = '2023-02-23T18:09:00Z'
+    - `issue`: str = '2023-02-22T12:00:00Z'
+    - `expire`: str = '2023-02-23T18:00:00Z'
+    - `nwsli`: NoneType = 'None'
+    - `product_expires`: str = '2023-02-23T19:15:00Z'
+    - `fcster`: NoneType = 'None'
+    - `issue_product_id`: str = '202302210847-KDMX-WWUS43-WSWDMX'
+    - `last_product_id`: str = '202302231809-KDMX-WWUS43-WSWDMX'
+    - `nws_color`: str = '#FF69B4'
+    - `event_label`: str = 'Winter Storm Warning'
+
+## iem_county_zone_2023-02-22T14.json
+`https://mesonet.agron.iastate.edu/api/1/vtec/county_zone.json?valid=2023-02-22T14:00:00Z` → HTTP 200
+
+- `schema`: dict
+  - `fields`: list
+    - [list of 12] first item:
+      - `name`: str = 'index'
+      - `type`: str = 'integer'
+  - `primaryKey`: list
+    - [list of 1] first item:
+  - `pandas_version`: str = '1.4.0'
+- `data`: list
+  - [list of 71] first item:
+    - `index`: int = '703'
+    - `utc_product_issue`: str = '2023-02-21T08:47:00Z'
+    - `utc_issue`: str = '2023-02-22T12:00:00Z'
+    - `utc_expire`: str = '2023-02-23T18:00:00Z'
+    - `ph_sig`: str = 'WS.W'
+    - `wfo`: str = 'DMX'
+    - `eventid`: int = '4'
+    - `phenomena`: str = 'WS'
+    - `significance`: str = 'W'
+    - `ugc`: str = 'IAZ015'
+    - `nws_color`: str = '#FF69B4'
+    - `event_label`: str = 'Winter Storm Warning'
+
+## iem_lsr_derecho.json
+`https://mesonet.agron.iastate.edu/api/1/nws/lsrs_by_point.json?lat=42.0308&lon=-93.6319&radius_miles=25&begints=2020-08-10T12:00:00Z&endts=2020-08-11T06:00:00Z` → HTTP 200
+
+- `schema`: dict
+  - `fields`: list
+    - [list of 18] first item:
+      - `name`: str = 'index'
+      - `type`: str = 'integer'
+  - `primaryKey`: list
+    - [list of 1] first item:
+  - `pandas_version`: str = '1.4.0'
+- `data`: list
+  - [list of 21] first item:
+    - `index`: int = '0'
+    - `valid`: str = '2020-08-10T15:38:00Z'
+    - `type`: str = 'G'
+    - `magnitude`: float = '65.0'
+    - `city`: str = '2 WSW PILOT MOUND'
+    - `county`: str = 'BOONE'
+    - `state`: str = 'IA'
+    - `source`: str = 'TRAINED SPOTTER'
+    - `remark`: str = 'TREE DAMAGE REPORTED. WINDS GREATER THAN 60 MPH ESTIMATED.'
+    - `wfo`: str = 'DMX'
+    - `typetext`: str = 'TSTM WND GST'
+    - `product_id`: str = '202008102016-KDMX-NWUS53-LSRDMX'
+    - `unit`: str = 'MPH'
+    - `qualifier`: str = 'E'
+    - `ugc`: str = 'IAC015'
+    - `product_id_summary`: str = '202008102016-KDMX-NWUS53-LSRDMX'
+    - `lon`: float = '-94.05'
+    - `lat`: float = '42.15'
+
+## iem_mos_nbs_2023-02-22T01.json
+`https://mesonet.agron.iastate.edu/api/1/mos.json?station=KAMW&model=NBS&runtime=2023-02-22T01:00:00Z` → HTTP 200
+
+- `schema`: dict
+  - `fields`: list
+    - [list of 79] first item:
+      - `name`: str = 'index'
+      - `type`: str = 'integer'
+  - `primaryKey`: list
+    - [list of 1] first item:
+  - `pandas_version`: str = '1.4.0'
+- `data`: list
+  - [list of 23] first item:
+    - `index`: int = '0'
+    - `model`: str = 'NBS'
+    - `runtime`: str = '2023-02-22 01:00'
+    - `ftime`: str = '2023-02-22 06:00'
+    - `n_x`: NoneType = 'None'
+    - `tmp`: int = '29'
+    - `dpt`: int = '20'
+    - `cld`: NoneType = 'None'
+    - `wdr`: int = '80'
+    - `wsp`: int = '14'
+    - `p06`: NoneType = 'None'
+    - `p12`: NoneType = 'None'
+    - `q06`: NoneType = 'None'
+    - `q12`: NoneType = 'None'
+    - `t06_1`: float = '0.0'
+    - `t06_2`: NoneType = 'None'
+    - `t12_1`: NoneType = 'None'
+    - `t12_2`: NoneType = 'None'
+    - `snw`: NoneType = 'None'
+    - `cig`: int = '-88'
+    - `vis`: int = '100'
+    - `obv`: NoneType = 'None'
+    - `poz`: NoneType = 'None'
+    - `pos`: NoneType = 'None'
+    - `typ`: NoneType = 'None'
+    - `sky`: int = '16'
+    - `gst`: int = '21'
+    - `t03`: int = '0'
+    - `pzr`: int = '0'
+    - `psn`: int = '0'
+    - `ppl`: int = '0'
+    - `pra`: int = '0'
+    - `s06`: NoneType = 'None'
+    - `slv`: int = '56'
+    - `i06`: NoneType = 'None'
+    - `lcb`: int = '100'
+    - `swh`: NoneType = 'None'
+    - `station`: str = 'KAMW'
+    - `dur`: NoneType = 'None'
+    - `mht`: int = '5'
+    - `twd`: int = '8'
+    - `tws`: int = '15'
+    - `hid`: NoneType = 'None'
+    - `sol`: int = '0'
+    - `q24`: NoneType = 'None'
+    - `p24`: NoneType = 'None'
+    - `t24`: NoneType = 'None'
+    - `ccg`: NoneType = 'None'
+    - `ppo`: NoneType = 'None'
+    - `pco`: NoneType = 'None'
+    - `cvs`: NoneType = 'None'
+    - `lp1`: NoneType = 'None'
+    - `lc1`: NoneType = 'None'
+    - `cp1`: NoneType = 'None'
+    - `cc1`: NoneType = 'None'
+    - `s12`: NoneType = 'None'
+    - `i12`: NoneType = 'None'
+    - `s24`: NoneType = 'None'
+    - `pzp`: NoneType = 'None'
+    - `prs`: NoneType = 'None'
+
+## iem_outlook_2020-08-10T12.json
+`https://mesonet.agron.iastate.edu/api/1/nws/outlook_by_point.json?lat=42.0308&lon=-93.6319&valid=2020-08-10T12:00:00Z` → HTTP 200
+
+- `schema`: dict
+  - `fields`: list
+    - [list of 8] first item:
+      - `name`: str = 'index'
+      - `type`: str = 'integer'
+  - `primaryKey`: list
+    - [list of 1] first item:
+  - `pandas_version`: str = '1.4.0'
+- `data`: list
+  - [list of 3] first item:
+    - `index`: int = '0'
+    - `day`: int = '1'
+    - `outlook_type`: str = 'C'
+    - `product_issue`: str = '2020-08-10T05:29:00Z'
+    - `issue`: str = '2020-08-10T12:00:00Z'
+    - `expire`: str = '2020-08-11T12:00:00Z'
+    - `threshold`: str = 'MRGL'
+    - `category`: str = 'CATEGORICAL'
+
+## iem_vtec_byugc_IAZ048.json
+`https://mesonet.agron.iastate.edu/json/vtec_events_byugc.php?ugc=IAZ048&sdate=2019-01-01&edate=2026-10-01` → HTTP 200
+
+- `events`: list
+  - [list of 459] first item:
+    - `url`: str = '/vtec/?year=2019&wfo=KDMX&phenomena=WI&significance=Y&eventi'
+    - `issue`: str = '2019-01-08T12:00:00Z'
+    - `expire`: str = '2019-01-09T03:00:00Z'
+    - `eventid`: int = '1'
+    - `phenomena`: str = 'WI'
+    - `hvtec_nwsli`: NoneType = 'None'
+    - `significance`: str = 'Y'
+    - `wfo`: str = 'DMX'
+    - `name`: str = 'Wind Advisory'
+    - `ph_name`: str = 'Wind'
+    - `sig_name`: str = 'Advisory'
+    - `ugc`: str = 'IAZ048'
+    - `product_id`: str = '201901072109-KDMX-WWUS73-NPWDMX'
+- `generated_at`: str = '2026-10-10T18:04:55Z'

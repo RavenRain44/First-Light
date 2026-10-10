@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tokens: dataviz reference palette (light + selected dark steps). */
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface-1: #fcfcfb;
+  --surface-2: #f0efec;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #6b6a65;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.12);
+  --series-1: #2a78d6; /* observed */
+  --series-2: #eb6834; /* forecast */
+  --series-3: #1baf7a;
+  --series-7: #4a3aa7;
+  --good: #0ca30c;
+  --warning: #fab219;
+  --serious: #ec835a;
+  --critical: #d03b3b;
+  --telework: #4a3aa7;
+  --shade-commute: rgba(42, 120, 214, 0.10);
+  --shade-hours: rgba(11, 11, 11, 0.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface-1: #1a1a19;
+    --surface-2: #383835;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #9a9890;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.12);
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-7: #9085e9;
+    --telework: #9085e9;
+    --shade-commute: rgba(57, 135, 229, 0.16);
+    --shade-hours: rgba(255, 255, 255, 0.05);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface-1: #1a1a19;
+  --surface-2: #383835;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #9a9890;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.12);
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-7: #9085e9;
+  --telework: #9085e9;
+  --shade-commute: rgba(57, 135, 229, 0.16);
+  --shade-hours: rgba(255, 255, 255, 0.05);
+}
+
+html, body { background: var(--page); color: var(--text-primary); }
+body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; }
+.tabnum { font-variant-numeric: tabular-nums; }
+.leaflet-container { background: var(--surface-2); border-radius: 10px; }
+details > summary { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; }
