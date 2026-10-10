@@ -16,7 +16,6 @@ from typing import Any
 
 from ai import fallback
 from ai.prompts import SYSTEM_PROMPT, USER_PROMPT, Interpretation
-from ai.tools import VIEWS, build_tools
 from app.config import settings
 
 log = logging.getLogger("closurecall.ai")
@@ -59,6 +58,8 @@ def build_model():
 
 def allowed_numbers(snap: dict) -> set[float]:
     """Every number that appears in what the tools return or in the snapshot's inputs/rules."""
+    from ai.tools import VIEWS
+
     text = json.dumps({name: fn(snap) for name, fn in VIEWS.items()}, default=str)
     text += json.dumps([{k: i.get(k) for k in ("value", "source_time")} for i in snap.get("inputs", []) if i["kind"] != "series"])
     text += json.dumps(snap.get("rules", []), default=str)
@@ -97,6 +98,7 @@ def validate(interp: Interpretation, snap: dict, allowed: set[float]) -> list[st
 
 async def _run_agent(model, snap: dict, feedback: str | None) -> tuple[Interpretation, list[str]]:
     from strands import Agent
+    from ai.tools import build_tools
 
     calls: list[str] = []
     agent = Agent(model=model, system_prompt=SYSTEM_PROMPT, tools=build_tools(snap, calls), callback_handler=None)
