@@ -1,0 +1,182 @@
+{
+  "recorded_at": "2026-10-10T16:50:38.005524+00:00",
+  "source_url": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b475a4875717590f0ce45d15f4daf37ebddfd7e6.001.1",
+  "replay_only": true,
+  "feature": {
+    "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b475a4875717590f0ce45d15f4daf37ebddfd7e6.001.1",
+    "type": "Feature",
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [
+            -82.69,
+            30.6
+          ],
+          [
+            -82.73,
+            30.53
+          ],
+          [
+            -82.66,
+            30.45
+          ],
+          [
+            -82.65,
+            30.4
+          ],
+          [
+            -82.69,
+            30.33
+          ],
+          [
+            -82.79,
+            30.33
+          ],
+          [
+            -82.79,
+            29.99
+          ],
+          [
+            -82.76,
+            29.98
+          ],
+          [
+            -82.8,
+            29.93
+          ],
+          [
+            -82.88,
+            29.88
+          ],
+          [
+            -82.91,
+            29.9
+          ],
+          [
+            -82.91,
+            29.89
+          ],
+          [
+            -82.93,
+            29.96
+          ],
+          [
+            -83.07,
+            30.08
+          ],
+          [
+            -83.22,
+            30.11
+          ],
+          [
+            -83.25,
+            30.25
+          ],
+          [
+            -83.17,
+            30.39
+          ],
+          [
+            -83.24,
+            30.47
+          ],
+          [
+            -83.27,
+            30.63
+          ],
+          [
+            -83.31,
+            30.64
+          ],
+          [
+            -82.69,
+            30.6
+          ]
+        ]
+      ]
+    },
+    "properties": {
+      "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b475a4875717590f0ce45d15f4daf37ebddfd7e6.001.1",
+      "@type": "wx:Alert",
+      "id": "urn:oid:2.49.0.1.840.0.b475a4875717590f0ce45d15f4daf37ebddfd7e6.001.1",
+      "areaDesc": "Suwannee; Eastern Hamilton; Western Hamilton",
+      "geocode": {
+        "SAME": [
+          "012121",
+          "012047"
+        ],
+        "UGC": [
+          "FLZ021",
+          "FLZ120",
+          "FLZ220"
+        ]
+      },
+      "affectedZones": [
+        "https://api.weather.gov/zones/forecast/FLZ021",
+        "https://api.weather.gov/zones/forecast/FLZ120",
+        "https://api.weather.gov/zones/forecast/FLZ220"
+      ],
+      "references": [],
+      "sent": "2026-10-10T12:48:00-04:00",
+      "effective": "2026-10-10T12:48:00-04:00",
+      "onset": "2026-10-10T12:48:00-04:00",
+      "expires": "2026-10-10T13:45:00-04:00",
+      "ends": null,
+      "status": "Actual",
+      "messageType": "Alert",
+      "category": "Met",
+      "severity": "Moderate",
+      "certainty": "Observed",
+      "urgency": "Expected",
+      "event": "Special Weather Statement",
+      "sender": "w-nws.webmaster@noaa.gov",
+      "senderName": "NWS Jacksonville FL",
+      "headline": "Special Weather Statement issued October 10 at 12:48PM EDT by NWS Jacksonville FL",
+      "description": "At 1248 PM EDT, Doppler radar was tracking an area of strong\nthunderstorms near Dowling Park, or 14 miles south of Suwannee River\nState Park, moving northeast at 40 mph.\n\nHAZARD...Landspouts and wind gusts up to 40 mph.\n\nSOURCE...Radar indicated.\n\nIMPACT...Minor damage to outdoor objects is possible. Gusty winds\ncould knock down tree limbs and blow around unsecured\nobjects.\n\nLocations impacted include...\nLive Oak, Jasper, Jennings, White Springs, Suwannee Springs,\nSuwannee River State Park, Wellborn, Mcalpin, Crossroads and\nDowling Park.",
+      "instruction": "Monitor the weather situation closely and be alert for threatening\nweather conditions.\n\nThis storm may intensify, so be certain to monitor local radio\nstations and available television stations for additional information\nand possible warnings from the National Weather Service.",
+      "response": "Execute",
+      "note": null,
+      "parameters": {
+        "AWIPSidentifier": [
+          "SPSJAX"
+        ],
+        "WMOidentifier": [
+          "WWUS82 KJAX 101648"
+        ],
+        "NWSheadline": [
+          "AN AREA OF STRONG THUNDERSTORMS WILL IMPACT HAMILTON AND SUWANNEE COUNTIES UNTIL 145 PM EDT"
+        ],
+        "eventMotionDescription": [
+          "2026-10-10T16:47:00-00:00...storm...207DEG...35KT...30.21,-83.23"
+        ],
+        "maxWindGust": [
+          "40 MPH"
+        ],
+        "maxHailSize": [
+          "0.00"
+        ],
+        "BLOCKCHANNEL": [
+          "EAS",
+          "NWEM",
+          "CMAS"
+        ],
+        "EAS-ORG": [
+          "WXR"
+        ]
+      },
+      "scope": "Public",
+      "code": "IPAWSv1.0",
+      "language": "en-US",
+      "web": "http://www.weather.gov",
+      "eventCode": {
+        "SAME": [
+          "SPS"
+        ],
+        "NationalWeatherService": [
+          "SPS"
+        ]
+      }
+    }
+  }
+}

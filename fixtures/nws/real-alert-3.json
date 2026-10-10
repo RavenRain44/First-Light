@@ -1,0 +1,96 @@
+{
+  "recorded_at": "2026-10-10T16:50:38.006896+00:00",
+  "source_url": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.64aa0f617ff988ff20d73e684f0a983ca04be14a.001.2",
+  "replay_only": true,
+  "feature": {
+    "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.64aa0f617ff988ff20d73e684f0a983ca04be14a.001.2",
+    "type": "Feature",
+    "geometry": null,
+    "properties": {
+      "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.64aa0f617ff988ff20d73e684f0a983ca04be14a.001.2",
+      "@type": "wx:Alert",
+      "id": "urn:oid:2.49.0.1.840.0.64aa0f617ff988ff20d73e684f0a983ca04be14a.001.2",
+      "areaDesc": "Madison; Morgan; Marshall; Jackson; DeKalb; Cullman",
+      "geocode": {
+        "SAME": [
+          "001089",
+          "001103",
+          "001095",
+          "001071",
+          "001049",
+          "001043"
+        ],
+        "UGC": [
+          "ALZ006",
+          "ALZ007",
+          "ALZ008",
+          "ALZ009",
+          "ALZ010",
+          "ALZ016"
+        ]
+      },
+      "affectedZones": [
+        "https://api.weather.gov/zones/forecast/ALZ006",
+        "https://api.weather.gov/zones/forecast/ALZ007",
+        "https://api.weather.gov/zones/forecast/ALZ008",
+        "https://api.weather.gov/zones/forecast/ALZ009",
+        "https://api.weather.gov/zones/forecast/ALZ010",
+        "https://api.weather.gov/zones/forecast/ALZ016"
+      ],
+      "references": [],
+      "sent": "2026-10-10T11:43:00-05:00",
+      "effective": "2026-10-10T11:43:00-05:00",
+      "onset": "2026-10-10T11:43:00-05:00",
+      "expires": "2026-10-10T19:00:00-05:00",
+      "ends": "2026-10-10T19:00:00-05:00",
+      "status": "Actual",
+      "messageType": "Alert",
+      "category": "Met",
+      "severity": "Moderate",
+      "certainty": "Likely",
+      "urgency": "Expected",
+      "event": "Wind Advisory",
+      "sender": "w-nws.webmaster@noaa.gov",
+      "senderName": "NWS Huntsville AL",
+      "headline": "Wind Advisory issued October 10 at 11:43AM CDT until October 10 at 7:00PM CDT by NWS Huntsville AL",
+      "description": "* WHAT...Northeast winds 15 to 25 mph with gusts up to 40 to 50 mph.\n\n* WHERE...Cullman, Madison, Morgan, DeKalb, Jackson, and Marshall\nCounties.\n\n* WHEN...Until 7 PM CDT this evening.\n\n* IMPACTS...Gusty winds will blow around unsecured objects. Tree\nlimbs could be blown down and a few power outages may result.",
+      "instruction": "Winds this strong can make driving difficult, especially for high\nprofile vehicles. Use extra caution.",
+      "response": "Execute",
+      "note": null,
+      "parameters": {
+        "AWIPSidentifier": [
+          "NPWHUN"
+        ],
+        "WMOidentifier": [
+          "WWUS74 KHUN 101643"
+        ],
+        "NWSheadline": [
+          "HIGH WIND WARNING IS CANCELLED... ...WIND ADVISORY IN EFFECT UNTIL 7 PM CDT THIS EVENING"
+        ],
+        "BLOCKCHANNEL": [
+          "EAS",
+          "NWEM",
+          "CMAS"
+        ],
+        "VTEC": [
+          "/O.EXA.KHUN.WI.Y.0002.000000T0000Z-261011T0000Z/"
+        ],
+        "eventEndingTime": [
+          "2026-10-10T19:00:00-05:00"
+        ]
+      },
+      "scope": "Public",
+      "code": "IPAWSv1.0",
+      "language": "en-US",
+      "web": "http://www.weather.gov",
+      "eventCode": {
+        "SAME": [
+          "NWS"
+        ],
+        "NationalWeatherService": [
+          "WIY"
+        ]
+      }
+    }
+  }
+}

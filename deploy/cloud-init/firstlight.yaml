@@ -1,0 +1,21 @@
+#cloud-config
+package_update: true
+packages: [docker.io, docker-compose-v2, ufw, fail2ban]
+users:
+  - name: firstlight
+    groups: [docker]
+    shell: /bin/bash
+    lock_passwd: true
+write_files:
+  - path: /etc/firstlight/README
+    permissions: "0644"
+    content: |
+      Place compose.prod.yaml, Caddyfile, and a mode-0600 .env in /opt/firstlight.
+      Never put secrets into cloud-init user data.
+runcmd:
+  - [ufw, allow, OpenSSH]
+  - [ufw, allow, "80/tcp"]
+  - [ufw, allow, "443/tcp"]
+  - [ufw, --force, enable]
+  - [mkdir, -p, /opt/firstlight]
+  - [chown, "firstlight:firstlight", /opt/firstlight]

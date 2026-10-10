@@ -1,0 +1,1 @@
+{"root":["./app/App.tsx","./app/api.ts","./app/main.tsx","./app/types.ts","./app/components/AnalystPanel.tsx","./app/components/DecisionView.tsx","./app/components/NotificationView.tsx","./app/components/RecordsView.tsx","./app/components/SituationBoard.tsx","./app/components/ThresholdsView.tsx"],"version":"5.7.3"}

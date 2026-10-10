@@ -1,0 +1,11 @@
+.git
+.github
+.venv
+**/__pycache__
+**/.pytest_cache
+ui/node_modules
+ui/dist
+firstlight.db
+data
+.env
+coverage

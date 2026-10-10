@@ -1,0 +1,1 @@
+"""FirstLight application."""
