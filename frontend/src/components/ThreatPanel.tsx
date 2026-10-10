@@ -10,7 +10,7 @@ export function ThreatPanel({ snap }: { snap: Snapshot }) {
   const inputsById = Object.fromEntries(snap.inputs.map((i) => [i.id, i]));
   return (
     <Card title="Threat breakdown" right={<span className="text-xs text-muted">thresholds v{snap.thresholds_version} · {snap.thresholds_sha256.slice(0, 10)}</span>}>
-      <div className="space-y-4">
+      <div className="space-y-6">
         {Object.values(snap.hazards).map((h) => {
           const rules = snap.rules.filter((r) => r.hazard === h.hazard);
           const trig = rules.filter((r) => r.triggered).sort((a, b) => b.level - a.level || b.score - a.score);
@@ -25,8 +25,8 @@ export function ThreatPanel({ snap }: { snap: Snapshot }) {
                 </div>
                 <span className="tabnum text-sm font-semibold">{h.score}/100</span>
               </div>
-              <div className="mt-1 h-2.5 w-full overflow-hidden rounded-full bg-[var(--surface-2)]" role="meter" aria-valuenow={h.score} aria-valuemin={0} aria-valuemax={100} aria-label={`${h.label} score`}>
-                <div className="h-full rounded-full" style={{ width: `${h.score}%`, background: h.level >= 2 ? "var(--critical)" : h.level === 1 ? "var(--warning)" : "var(--good)" }} />
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--surface-2)]" role="meter" aria-valuenow={h.score} aria-valuemin={0} aria-valuemax={100} aria-label={`${h.label} score`}>
+                <div className="h-full rounded-full" style={{ width: `${Math.max(h.score, 2)}%`, background: h.level >= 3 ? "var(--b6)" : h.level === 2 ? "var(--b4)" : h.level === 1 ? "var(--b3)" : "var(--b2)" }} />
               </div>
               {h.level > 0 && (
                 <p className="mt-1 text-xs text-ink2">
@@ -50,7 +50,7 @@ function RuleRow({ r, tz, open, toggle, inputsById }: { r: RuleResult; tz: strin
   const first = inputsById[r.input_ids[0]];
   const isAlert = r.metric === "alert_present";
   return (
-    <li className={`rounded-md border ${r.triggered ? "border-edge" : "border-dashed border-edge opacity-80"}`}>
+    <li className={`rounded-lg border ${r.triggered ? "border-edge" : "border-dashed border-edge opacity-75"}`}>
       <button onClick={toggle} aria-expanded={open} className="flex w-full flex-wrap items-center justify-between gap-2 px-2 py-1.5 text-left text-sm hover:bg-[var(--surface-2)]">
         <span className="flex items-center gap-2">
           <span aria-hidden>{r.triggered ? "▲" : "△"}</span>
@@ -62,7 +62,7 @@ function RuleRow({ r, tz, open, toggle, inputsById }: { r: RuleResult; tz: strin
           {isAlert ? (r.triggered ? "in effect" : "not in effect") : (
             <>
               {first ? <Prov tz={tz} source={first.source} url={first.source_url} fetched={first.fetched_at} sourceTime={first.source_time} note={first.note}>{fmtVal(r.observed_value, r.unit)}</Prov> : fmtVal(r.observed_value, r.unit)}
-              {" "}{r.operator} {fmtVal(r.threshold, r.unit)}
+              {" "}{({">=": "≥", "<=": "≤"} as Record<string, string>)[r.operator] ?? r.operator} {fmtVal(r.threshold, r.unit)}
               {r.margin_abs !== null && <> · margin {r.margin_abs > 0 ? "+" : ""}{fmtVal(r.margin_abs, r.unit === "rank" || r.unit.startsWith("SPC") ? "" : r.unit)}{r.margin_pct !== null ? ` (${r.margin_pct > 0 ? "+" : ""}${r.margin_pct.toFixed(0)}%)` : ""}</>}
             </>
           )}

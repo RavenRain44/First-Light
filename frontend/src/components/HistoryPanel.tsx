@@ -24,7 +24,7 @@ export function AnalogsPanel({ snap }: { snap: Snapshot }) {
       ) : (
         <div className="grid gap-3 md:grid-cols-3">
           {snap.analogs.map((a) => (
-            <article key={a.event_id} className="rounded-lg border border-edge p-3 text-sm">
+            <article key={a.event_id} className="rounded-xl border border-edge p-4 text-sm">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-semibold">{a.name}</h3>
                 <span className="tabnum text-lg font-bold">{a.similarity_pct.toFixed(0)}%</span>
@@ -53,7 +53,7 @@ export function RecordTimeline({ snap, refreshKey, onOpen }: { snap: Snapshot; r
       ) : (
         <ol className="max-h-96 space-y-2 overflow-auto pr-1">
           {rows.map((r) => (
-            <li key={r.snapshot_id} className={`rounded-md border p-2 text-sm ${r.snapshot_id === snap.snapshot_id ? "border-[var(--series-1)]" : "border-edge"}`}>
+            <li key={r.snapshot_id} className={`rounded-md border p-2 text-sm ${r.snapshot_id === snap.snapshot_id ? "border-[var(--accent)] bg-[var(--tint)]" : "border-edge"}`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <button className="text-left underline-offset-2 hover:underline" onClick={() => onOpen(r.snapshot_id)}>
                   <span className="tabnum">{fmtTime(r.as_of, tz)}</span> <Badge>{r.mode}</Badge>

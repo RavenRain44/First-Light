@@ -4,12 +4,13 @@ import type { Posture, Readiness, ReadinessLevel } from "./types";
 export const POSTURES: Posture[] = ["NORMAL", "DELAYED_ARRIVAL", "EARLY_DISMISSAL", "TELEWORK", "CLOSED"];
 
 /** One posture -> one color everywhere. Always shown with its text label, never color alone. */
+// Light -> deep blue as severity rises; the icon and word carry the meaning, the shade reinforces it.
 export const POSTURE_STYLE: Record<Posture, { label: string; color: string; icon: string; ink: string }> = {
-  NORMAL: { label: "Normal", color: "var(--good)", icon: "✓", ink: "#ffffff" },
-  DELAYED_ARRIVAL: { label: "Delayed arrival", color: "var(--warning)", icon: "◷", ink: "#0b0b0b" },
-  EARLY_DISMISSAL: { label: "Early dismissal", color: "var(--serious)", icon: "↧", ink: "#0b0b0b" },
-  TELEWORK: { label: "Telework / unscheduled leave", color: "var(--telework)", icon: "⌂", ink: "#ffffff" },
-  CLOSED: { label: "Closed", color: "var(--critical)", icon: "✕", ink: "#ffffff" },
+  NORMAL: { label: "Normal", color: "var(--b1)", icon: "✓", ink: "var(--b1-ink)" },
+  DELAYED_ARRIVAL: { label: "Delayed arrival", color: "var(--b2)", icon: "◷", ink: "var(--b2-ink)" },
+  EARLY_DISMISSAL: { label: "Early dismissal", color: "var(--b4)", icon: "↧", ink: "var(--b4-ink)" },
+  TELEWORK: { label: "Telework / unscheduled leave", color: "var(--b5)", icon: "⌂", ink: "var(--surface-1)" },
+  CLOSED: { label: "Closed", color: "var(--b6)", icon: "✕", ink: "var(--surface-1)" },
 };
 
 export function fmtTime(iso: string | null | undefined, tz: string, opts: { date?: boolean } = { date: true }): string {
@@ -77,9 +78,9 @@ export function Prov({ children, source, url, fetched, sourceTime, tz, note }: {
 
 export function Card({ title, right, children, className = "", id }: { title: ReactNode; right?: ReactNode; children: ReactNode; className?: string; id?: string }) {
   return (
-    <section id={id} className={`card p-4 ${className}`}>
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink2">{title}</h2>
+    <section id={id} className={`card p-5 ${className}`}>
+      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{title}</h2>
         {right}
       </div>
       {children}
@@ -88,21 +89,22 @@ export function Card({ title, right, children, className = "", id }: { title: Re
 }
 
 export function Badge({ children, tone = "neutral", title }: { children: ReactNode; tone?: "neutral" | "warn" | "bad" | "good" | "info"; title?: string }) {
+  // All-blue tones: neutral (gray-blue), good (tint), warn (soft blue + the caller's ⚠ text), bad (deep), info (accent).
   const map = {
     neutral: "bg-[var(--surface-2)] text-ink2",
-    warn: "bg-[var(--warning)] text-black",
-    bad: "bg-[var(--critical)] text-white",
-    good: "bg-[var(--good)] text-white",
-    info: "bg-[var(--series-1)] text-white",
+    warn: "bg-[var(--tint-strong)] text-ink ring-1 ring-inset ring-[var(--b3)]",
+    bad: "bg-[var(--b5)] text-[var(--surface-1)]",
+    good: "bg-[var(--tint)] text-[var(--accent)]",
+    info: "bg-[var(--accent)] text-[var(--on-accent)]",
   };
-  return <span title={title} className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${map[tone]}`}>{children}</span>;
+  return <span title={title} className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${map[tone]}`}>{children}</span>;
 }
 
 export function PostureBadge({ p, size = "md" }: { p: Posture; size?: "sm" | "md" | "lg" }) {
   const s = POSTURE_STYLE[p];
-  const cls = size === "lg" ? "text-2xl px-4 py-2" : size === "sm" ? "text-xs px-2 py-0.5" : "text-sm px-3 py-1";
+  const cls = size === "lg" ? "text-2xl px-4 py-2 rounded-xl" : size === "sm" ? "text-xs px-2 py-0.5 rounded-md" : "text-sm px-3 py-1 rounded-lg";
   return (
-    <span className={`inline-flex items-center gap-2 rounded-lg font-bold ${cls}`} style={{ background: s.color, color: s.ink }}>
+    <span className={`inline-flex items-center gap-2 whitespace-nowrap font-semibold ${cls}`} style={{ background: s.color, color: s.ink }}>
       <span aria-hidden>{s.icon}</span>{s.label}
     </span>
   );
@@ -113,10 +115,10 @@ export const CONF_TONE = { high: "good", medium: "warn", low: "bad" } as const;
 /** Readiness (adapted Cooper Color Code). Drawn as a 4-step meter, never as a pill, so it is not
  *  mistaken for the posture badge, and always labelled "Condition <color>". */
 export const READINESS: { level: ReadinessLevel; label: string; color: string }[] = [
-  { level: "WHITE", label: "White", color: "#f4f3ef" },
-  { level: "YELLOW", label: "Yellow", color: "var(--warning)" },
-  { level: "ORANGE", label: "Orange", color: "var(--serious)" },
-  { level: "RED", label: "Red", color: "var(--critical)" },
+  { level: "WHITE", label: "White", color: "var(--cooper-white)" },
+  { level: "YELLOW", label: "Yellow", color: "var(--cooper-yellow)" },
+  { level: "ORANGE", label: "Orange", color: "var(--cooper-orange)" },
+  { level: "RED", label: "Red", color: "var(--cooper-red)" },
 ];
 
 export function ReadinessMeter({ r, tz, compact = false }: { r: Readiness; tz: string; compact?: boolean }) {
@@ -125,17 +127,17 @@ export function ReadinessMeter({ r, tz, compact = false }: { r: Readiness; tz: s
   return (
     <div className="flex flex-col gap-1" title={tip}>
       <div className="flex items-center gap-2">
-        <span className="text-xs uppercase tracking-wide text-ink2">Readiness</span>
+        <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Readiness</span>
         <div className="flex" role="meter" aria-valuemin={0} aria-valuemax={3} aria-valuenow={idx} aria-label={`Readiness: Condition ${READINESS[idx].label}`}>
           {READINESS.map((x, i) => (
-            <span key={x.level} className={`h-4 w-6 border border-edge first:rounded-l last:rounded-r ${i === idx ? "ring-2 ring-inset ring-[var(--text-primary)]" : "opacity-35"}`}
+            <span key={x.level} className={`h-3.5 w-6 border border-edge first:rounded-l-full last:rounded-r-full ${i === idx ? "ring-2 ring-inset ring-[var(--text-primary)]" : "opacity-30"}`}
               style={{ background: x.color }} />
           ))}
         </div>
-        <span className="text-sm font-bold">Condition {READINESS[idx].label}</span>
+        <span className="text-sm font-semibold">Condition {READINESS[idx].label}</span>
       </div>
       {!compact && r.decide_by && (
-        <span className={`text-xs ${r.deadline_passed ? "font-semibold text-[var(--critical)]" : "text-ink2"}`}>
+        <span className={`text-xs ${r.deadline_passed ? "font-semibold text-[var(--danger)]" : "text-ink2"}`}>
           {r.deadline_passed ? "Announcement deadline passed: " : "Decide and announce by "}{fmtTime(r.decide_by, tz)}
         </span>
       )}

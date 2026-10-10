@@ -75,7 +75,7 @@ export default function App() {
         <>
           {mode === "replay" && <ReplayPanel onSnapshot={setSnap} busy={busy} setBusy={setBusy} current={snap} />}
           {mode === "livecheck" && <LiveCheckPanel onSnapshot={setSnap} busy={busy} setBusy={setBusy} />}
-          {err && <div role="alert" className="card border-[var(--critical)] p-3 text-sm">Could not load: {err}. The last good snapshot (if any) is still shown.</div>}
+          {err && <div role="alert" className="card border-l-4 border-l-[var(--danger)] p-3 text-sm">Could not load: {err}. The last good snapshot (if any) is still shown.</div>}
           {snap && (mode !== "livecheck" || snap.mode === "livecheck") && (mode !== "replay" || snap.mode !== "live") ? (
             <>
               <div className="grid gap-4 lg:grid-cols-3">

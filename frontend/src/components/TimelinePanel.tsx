@@ -61,8 +61,9 @@ export function TimelinePanel({ snap }: { snap: Snapshot }) {
           const dataMin = Math.min(...vals);
           const lines = (ts.threshold_lines as any[]).filter((l) => l.chart === c.lineChart)
             .filter((l) => c.lines === "always" || (l.value >= dataMin - 15 && l.value <= dataMax + 15));
-          const yMax = Math.max(dataMax, c.minMax ?? dataMax, ...lines.map((l) => l.value)) * 1.08;
-          const yMin = Math.min(c.id === "temp" ? dataMin - 5 : 0, ...lines.map((l) => l.value));
+          const rawMax = Math.max(dataMax, c.minMax ?? dataMax, ...lines.map((l) => l.value)) * 1.08;
+          const yMax = c.unit === "%" ? 100 : niceCeil(rawMax);
+          const yMin = Math.min(c.id === "temp" ? Math.floor((dataMin - 5) / 10) * 10 : 0, ...lines.map((l) => l.value));
           return (
             <figure key={c.id} className="min-w-0">
               <figcaption className="mb-1 flex items-baseline justify-between text-sm">
@@ -78,7 +79,7 @@ export function TimelinePanel({ snap }: { snap: Snapshot }) {
                     ))}
                     <XAxis dataKey="ts" type="number" domain={domain} scale="time" tickFormatter={tick} stroke="var(--axis)"
                       tick={{ fill: "var(--text-muted)", fontSize: 11 }} minTickGap={40} allowDataOverflow />
-                    <YAxis domain={[Math.floor(yMin), c.unit === "in" ? +yMax.toFixed(2) : Math.ceil(yMax)]} stroke="var(--axis)"
+                    <YAxis domain={[yMin, yMax]} tickCount={5} stroke="var(--axis)"
                       tick={{ fill: "var(--text-muted)", fontSize: 11 }} width={44} allowDataOverflow />
                     {lines.map((l) => (
                       <ReferenceLine key={l.rule_id} y={l.value} stroke="var(--text-secondary)" strokeDasharray="6 4" strokeWidth={1}
@@ -127,4 +128,11 @@ function ProvTooltip({ active, payload, label, tz, meta, unit }: any) {
       })}
     </div>
   );
+}
+
+/** Round up to a tidy axis maximum: 1, 2, 2.5 or 5 times a power of ten. */
+function niceCeil(v: number): number {
+  if (v <= 0) return 0;
+  const p = 10 ** Math.floor(Math.log10(v));
+  return ([1, 2, 2.5, 5, 10].find((m) => m * p >= v) ?? 10) * p;
 }
