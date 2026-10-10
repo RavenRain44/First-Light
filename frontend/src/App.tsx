@@ -29,9 +29,22 @@ export default function App() {
   const [mode, setMode] = useState<Mode>("live");
   const [snap, setSnap] = useState<Snapshot | null>(null);
   // Panels show the AI brief once its add-on record arrives; the snapshot itself is unchanged.
-  const shown = useMemo(() => (snap && snap.ai_addon?.status === "ok" && snap.ai_addon.ai
-    ? { ...snap, ai: snap.ai_addon.ai, model_id: snap.ai_addon.model_id ?? snap.model_id, prompt_version: snap.ai_addon.prompt_version ?? snap.prompt_version }
-    : snap), [snap]);
+  const shown = useMemo(() => {
+    // Show the newest finished AI brief; while a regeneration runs, keep showing the previous one.
+    const a = snap?.ai_addon?.status === "ok" ? snap.ai_addon
+      : snap?.ai_addon?.status === "pending" && snap.ai_addon.previous?.status === "ok" ? snap.ai_addon.previous : null;
+    return snap && a?.ai
+      ? { ...snap, ai: a.ai, model_id: a.model_id ?? snap.model_id, prompt_version: a.prompt_version ?? snap.prompt_version }
+      : snap;
+  }, [snap]);
+  const [aiEnabled, setAiEnabled] = useState(false);
+  const regenerate = useCallback(async () => {
+    if (!snap) return;
+    const id = snap.snapshot_id, prev = snap.ai_addon ?? undefined;
+    setSnap((s) => (s && s.snapshot_id === id ? { ...s, ai_addon: { status: "pending", previous: prev } } : s));
+    try { await api.regenerateBrief(id); }
+    catch { setSnap((s) => (s && s.snapshot_id === id ? { ...s, ai_addon: prev ?? { status: "failed" } } : s)); }
+  }, [snap]);
   const pendingId = snap?.ai_addon?.status === "pending" ? snap.snapshot_id : null;
   useEffect(() => {
     if (!pendingId) return;
@@ -43,7 +56,13 @@ export default function App() {
         if (!alive) return;
         if (addon.status !== "pending" || tries > 60) {
           clearInterval(t);
-          setSnap((s) => (s && s.snapshot_id === pendingId ? { ...s, ai_addon: addon.status === "pending" ? { status: "failed" } : addon } : s));
+          setSnap((s) => {
+            if (!s || s.snapshot_id !== pendingId) return s;
+            // A failed regeneration keeps the previous good brief on screen.
+            const prev = s.ai_addon?.previous;
+            const next = addon.status === "pending" ? { status: "failed" as const } : addon;
+            return { ...s, ai_addon: next.status === "failed" && prev?.status === "ok" ? { ...prev, regen_failed: true } as any : next };
+          });
         }
       } catch { /* keep the template brief */ }
     }, 2000);
@@ -62,7 +81,12 @@ export default function App() {
     try { localStorage.setItem("cc-theme", theme); } catch { /* ignore */ }
   }, [theme]);
 
-  useEffect(() => { api.health().then((h) => setDemo(h.demo_mode)).catch(() => {}); }, []);
+  useEffect(() => {
+    api.health().then((h: any) => {
+      setDemo(h.demo_mode);
+      setAiEnabled(h.model_provider !== "none" && !!h.inference?.key_configured);
+    }).catch(() => {});
+  }, []);
 
   const run = useCallback(async (fn: () => Promise<Snapshot>) => {
     setBusy(true); setErr(null);
@@ -113,7 +137,7 @@ export default function App() {
                   so there is no blank gap and nothing scrolls inside a column. */}
               <div className="grid items-stretch gap-4 lg:grid-cols-3">
                 <div className="lg:col-span-2 [&>section]:h-full">
-                  <PanelBoundary name="Interpretation"><AIPanel snap={shown!} /></PanelBoundary>
+                  <PanelBoundary name="Interpretation"><AIPanel snap={shown!} onRegenerate={aiEnabled && shown!.mode !== "backtest" ? regenerate : undefined} /></PanelBoundary>
                 </div>
                 <div className="flex flex-col gap-4 [&>section:last-child]:flex-1">
                   <PanelBoundary name="Alerts"><AlertsPanel snap={shown!} /></PanelBoundary>

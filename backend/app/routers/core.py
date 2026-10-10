@@ -96,6 +96,17 @@ def snapshot_interpretation(snapshot_id: str):
     return snapshots.interpretation(snapshot_id)
 
 
+@router.post("/snapshot/{snapshot_id}/interpretation", status_code=202)
+async def regenerate_snapshot_interpretation(snapshot_id: str):
+    """Regenerate the AI brief for this snapshot now (runs in the background)."""
+    result = snapshots.regenerate_interpretation(snapshot_id)
+    if result is None:
+        raise HTTPException(404, "snapshot not found")
+    if result["status"] == "unavailable":
+        raise HTTPException(409, "AI brief unavailable: no model configured, or this is a simulated backtest snapshot")
+    return result
+
+
 @router.get("/snapshots")
 def snapshot_history(facility_id: str | None = None, limit: int = 50):
     f = _facility(facility_id)

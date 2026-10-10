@@ -192,6 +192,8 @@ export interface AiAddon {
   created_at?: string;
   seconds?: number;
   ai?: Interpretation & Record<string, any>;
+  /** While a regeneration runs, the brief that is still on screen. */
+  previous?: AiAddon;
 }
 
 export type ReadinessLevel = "WHITE" | "YELLOW" | "ORANGE" | "RED";

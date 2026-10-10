@@ -240,3 +240,19 @@ def interpretation(snapshot_id: str) -> dict:
     return {"status": row.status, "model_id": row.model_id, "prompt_version": row.prompt_version,
             "created_at": utc(row.created_at).isoformat(), "seconds": row.seconds,
             "ai": json.loads(row.ai_json), "content_sha256": row.content_sha256}
+
+
+def regenerate_interpretation(snapshot_id: str) -> dict | None:
+    """Ask the model for a fresh brief on an existing snapshot (same recorded facts). The new brief is
+    another append-only add-on; the newest one is shown. Returns None if the snapshot doesn't exist."""
+    from ai import agent as ai_agent
+
+    if snapshot_id in _pending:
+        return interpretation(snapshot_id)
+    snap = get(snapshot_id)
+    if snap is None:
+        return None
+    if snap["mode"] == "backtest" or not ai_agent.model_enabled():
+        return {"status": "unavailable"}
+    _start_enrichment(snap)
+    return interpretation(snapshot_id)
