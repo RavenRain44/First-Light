@@ -376,7 +376,7 @@
  },
  "timeline": [
   {
-   "snapshot_id": "c3db4c481c00440bbfac8d5f9c929f81",
+   "snapshot_id": "f3d52b4c040049c7b66b0fdc03c8f4e9",
    "as_of": "2020-08-09T17:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -407,7 +407,7 @@
    }
   },
   {
-   "snapshot_id": "b8ac482dee964f3580d07c9c9682fa97",
+   "snapshot_id": "1f2c07c7612445d186b22e30aab1e8e0",
    "as_of": "2020-08-09T18:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -438,7 +438,7 @@
    }
   },
   {
-   "snapshot_id": "91d61f9d8bd84cb98c76425fe3118099",
+   "snapshot_id": "3bda9ab7d74b4960a655e4f82ccd9b53",
    "as_of": "2020-08-09T19:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -469,7 +469,7 @@
    }
   },
   {
-   "snapshot_id": "707f9824eeee4f56bc51a4e405f866f1",
+   "snapshot_id": "102053d563374f6292e232556600c799",
    "as_of": "2020-08-09T20:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -500,7 +500,7 @@
    }
   },
   {
-   "snapshot_id": "24e40c29dac74fe4a7651bb801b2dc3c",
+   "snapshot_id": "30a5ebb9dfd04396bfb2f2face6d1c92",
    "as_of": "2020-08-09T21:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -531,7 +531,7 @@
    }
   },
   {
-   "snapshot_id": "cf9d3fd483614e478288650b25ef94b0",
+   "snapshot_id": "f53a851b717a44ddab224f13775b3fa7",
    "as_of": "2020-08-09T22:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -562,7 +562,7 @@
    }
   },
   {
-   "snapshot_id": "3279493724ff420385eed0934eed7641",
+   "snapshot_id": "e3c831dcf64948fcad7768eeae76341e",
    "as_of": "2020-08-09T23:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -593,7 +593,7 @@
    }
   },
   {
-   "snapshot_id": "f5e7655f0a664273ac33b7c8e2f5e660",
+   "snapshot_id": "cd244683f7524d6f960d93b79d1d7ebd",
    "as_of": "2020-08-10T00:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -624,7 +624,7 @@
    }
   },
   {
-   "snapshot_id": "837a4f239ab14fb199f7adbbd089d40a",
+   "snapshot_id": "2bd55ee0ecad4f84918a5abd6e9bad07",
    "as_of": "2020-08-10T01:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -655,7 +655,7 @@
    }
   },
   {
-   "snapshot_id": "220a6e70a6d94fa283e6c97ba87316c8",
+   "snapshot_id": "18cad11982cd41be90ccc3522a3ac713",
    "as_of": "2020-08-10T02:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -686,7 +686,7 @@
    }
   },
   {
-   "snapshot_id": "e172020f5697442a9638008efab32d57",
+   "snapshot_id": "d2c5ff2d9fb447028d6ed9d027259e35",
    "as_of": "2020-08-10T03:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -717,7 +717,7 @@
    }
   },
   {
-   "snapshot_id": "9289b452b09940389bba60a7e240391a",
+   "snapshot_id": "581903ff74c14af39ff2dde960e2245c",
    "as_of": "2020-08-10T04:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -748,7 +748,7 @@
    }
   },
   {
-   "snapshot_id": "b045944d07e640c38f842d7705b585e2",
+   "snapshot_id": "f18f6c0257a1473eb98fc667543df3fd",
    "as_of": "2020-08-10T05:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -779,7 +779,7 @@
    }
   },
   {
-   "snapshot_id": "0e965211efee4758a2ca41635f97fc0c",
+   "snapshot_id": "eca3b0c54336465da2f171c000914ea4",
    "as_of": "2020-08-10T06:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -810,7 +810,7 @@
    }
   },
   {
-   "snapshot_id": "a195369e76cb4985a7ae32b7edf7e16b",
+   "snapshot_id": "0f50b26b1db54f3bab0515cb6988f625",
    "as_of": "2020-08-10T07:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -841,7 +841,7 @@
    }
   },
   {
-   "snapshot_id": "124ce0950e0e448d9ec16786dc2e7803",
+   "snapshot_id": "7732c6c7f2ed415a8e57a1f78a00f574",
    "as_of": "2020-08-10T08:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -872,7 +872,7 @@
    }
   },
   {
-   "snapshot_id": "83fb148b2d51485e877c8e178ef7e865",
+   "snapshot_id": "b9491eb6e46f4e5ca4fcb511cb3d7420",
    "as_of": "2020-08-10T09:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -903,7 +903,7 @@
    }
   },
   {
-   "snapshot_id": "f55d329e0e1b47acbabb8454d54b8f5f",
+   "snapshot_id": "a93af012a5de49329b0f81aefba64d66",
    "as_of": "2020-08-10T10:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -934,7 +934,7 @@
    }
   },
   {
-   "snapshot_id": "d5a6dec22edb45959d85d8f65f76a63f",
+   "snapshot_id": "1ccc1dccf7214825aaa7bf736143281a",
    "as_of": "2020-08-10T11:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -965,7 +965,7 @@
    }
   },
   {
-   "snapshot_id": "18a6e3da0e67433ea219d911a698390e",
+   "snapshot_id": "4e1cc68368ba4ce0b9066a677854038b",
    "as_of": "2020-08-10T12:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -996,7 +996,7 @@
    }
   },
   {
-   "snapshot_id": "c0d117d7310641fb8cd8c763592e2cb6",
+   "snapshot_id": "a828f8df828d4806ac407e64af606458",
    "as_of": "2020-08-10T13:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -1027,7 +1027,7 @@
    }
   },
   {
-   "snapshot_id": "6915a2808dcc42ceb0683ab08578a2c2",
+   "snapshot_id": "b44d677340524c7c90671e8a846eef0c",
    "as_of": "2020-08-10T14:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -1060,7 +1060,7 @@
    }
   },
   {
-   "snapshot_id": "528addeeb8cc49438b625e5996bc9353",
+   "snapshot_id": "78d2bc3009854d7ea09eaee5895d2c71",
    "as_of": "2020-08-10T15:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-10",
@@ -1093,7 +1093,7 @@
    }
   },
   {
-   "snapshot_id": "606d420f4d2b46019abbce661f9ad0b7",
+   "snapshot_id": "1c54fed4630d4743942ae910a161a1bb",
    "as_of": "2020-08-10T16:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2020-08-10",
@@ -1127,7 +1127,7 @@
    }
   },
   {
-   "snapshot_id": "27c6f46adc5f483cbf866e42039bf4d3",
+   "snapshot_id": "a417077b4cc64f27b584d8124f879b35",
    "as_of": "2020-08-10T17:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2020-08-10",
@@ -1160,7 +1160,7 @@
    }
   },
   {
-   "snapshot_id": "719f92d980e84866b59c172531e617d6",
+   "snapshot_id": "3464098af96141ada69e7317f5c2d151",
    "as_of": "2020-08-10T18:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2020-08-10",
@@ -1193,7 +1193,7 @@
    }
   },
   {
-   "snapshot_id": "bf25a24dcb88499cbbcd7a6577aa3eb0",
+   "snapshot_id": "32e1395b63e0410e8d08cf7dfe01f73d",
    "as_of": "2020-08-10T19:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2020-08-10",
@@ -1224,7 +1224,7 @@
    }
   },
   {
-   "snapshot_id": "77854298de854dcd97bba86bb97b2494",
+   "snapshot_id": "f7d6f3dfb8ed47e6bf80655dedeb122f",
    "as_of": "2020-08-10T20:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-11",
@@ -1255,7 +1255,7 @@
    }
   },
   {
-   "snapshot_id": "029102bbc2bf4a0290cedcee4006c85a",
+   "snapshot_id": "6d1206d8d3b64e1b89dc5ad00af38be6",
    "as_of": "2020-08-10T21:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-11",
@@ -1286,7 +1286,7 @@
    }
   },
   {
-   "snapshot_id": "5690c74d02e8459ca94df9806166329b",
+   "snapshot_id": "4a2ffdc5f2884f9e8939e3f9adb1742f",
    "as_of": "2020-08-10T22:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-11",
@@ -1317,7 +1317,7 @@
    }
   },
   {
-   "snapshot_id": "9763d6548cf64d30a8dbc50759208e65",
+   "snapshot_id": "01986af34d8e46669f1f870425c3bf30",
    "as_of": "2020-08-10T23:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-11",
@@ -1348,7 +1348,7 @@
    }
   },
   {
-   "snapshot_id": "454c79dfd5a2448aafeb95085e5432c8",
+   "snapshot_id": "1893588a74794b409a97e6313fb4e7fb",
    "as_of": "2020-08-11T00:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-11",
@@ -1379,7 +1379,7 @@
    }
   },
   {
-   "snapshot_id": "3622afd77cd14f5a84775ace6544fdd7",
+   "snapshot_id": "de4b9a3244ad4139ad153b02f71cb23d",
    "as_of": "2020-08-11T01:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-11",
@@ -1410,7 +1410,7 @@
    }
   },
   {
-   "snapshot_id": "1140f709fd99497eaec2b70809c3ae5a",
+   "snapshot_id": "84c3170723374d7ab450e8fa4700eb8b",
    "as_of": "2020-08-11T02:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-11",
@@ -1441,7 +1441,7 @@
    }
   },
   {
-   "snapshot_id": "3d9534a1067e45bab377d965c9120745",
+   "snapshot_id": "91a9bdb5722b48c180f0553a008c6944",
    "as_of": "2020-08-11T03:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-11",
@@ -1472,7 +1472,7 @@
    }
   },
   {
-   "snapshot_id": "3d9d53b3797640a6a0d57f87eba652c9",
+   "snapshot_id": "886232ae989c499086d08103b83bfd6a",
    "as_of": "2020-08-11T04:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2020-08-11",
