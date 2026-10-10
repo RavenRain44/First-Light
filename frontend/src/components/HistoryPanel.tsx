@@ -1,0 +1,66 @@
+import { useEffect, useState } from "react";
+import { api } from "../api";
+import type { Snapshot } from "../types";
+import { Badge, Card, PostureBadge, fmtTime } from "../util";
+
+export function AnalogsPanel({ snap }: { snap: Snapshot }) {
+  const tz = snap.facility.timezone;
+  return (
+    <Card title="Similar past events" right={<span className="text-xs text-muted">nearest neighbors on the snapshot feature vector</span>}>
+      {snap.analogs.length === 0 ? (
+        <p className="text-sm text-ink2">No backtested history loaded yet. Run <code>python -m scripts.build_history</code> in backend/.</p>
+      ) : (
+        <div className="grid gap-3 md:grid-cols-3">
+          {snap.analogs.map((a) => (
+            <article key={a.event_id} className="rounded-lg border border-edge p-3 text-sm">
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-semibold">{a.name}</h3>
+                <span className="tabnum text-lg font-bold">{a.similarity_pct.toFixed(0)}%</span>
+              </div>
+              <p className="text-xs text-muted">closest hour: {fmtTime(a.matched_as_of, tz)}</p>
+              <div className="mt-2 flex flex-wrap items-center gap-1 text-xs">Rules recommended <PostureBadge p={a.recommended_posture} size="sm" /></div>
+              <Badge tone="neutral">{a.label}</Badge>
+              <p className="mt-2 text-xs"><span className="font-semibold">What happened:</span> {a.outcome_summary}</p>
+            </article>
+          ))}
+        </div>
+      )}
+      {snap.ai.analog_comparison && <p className="mt-3 text-sm"><span className="font-semibold">Comparison: </span>{snap.ai.analog_comparison}</p>}
+    </Card>
+  );
+}
+
+export function RecordTimeline({ snap, refreshKey, onOpen }: { snap: Snapshot; refreshKey: number; onOpen: (id: string) => void }) {
+  const [rows, setRows] = useState<any[] | null>(null);
+  useEffect(() => { api.history().then(setRows).catch(() => setRows([])); }, [refreshKey, snap.snapshot_id]);
+  const tz = snap.facility.timezone;
+  return (
+    <Card title="Decision record (this facility)" right={<span className="text-xs text-muted">immutable snapshots + human decisions</span>}>
+      {!rows ? <div className="h-24 animate-pulse rounded bg-[var(--surface-2)]" /> : rows.length === 0 ? (
+        <p className="text-sm text-ink2">No snapshots yet.</p>
+      ) : (
+        <ol className="max-h-96 space-y-2 overflow-auto pr-1">
+          {rows.map((r) => (
+            <li key={r.snapshot_id} className={`rounded-md border p-2 text-sm ${r.snapshot_id === snap.snapshot_id ? "border-[var(--series-1)]" : "border-edge"}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <button className="text-left underline-offset-2 hover:underline" onClick={() => onOpen(r.snapshot_id)}>
+                  <span className="tabnum">{fmtTime(r.as_of, tz)}</span> <Badge>{r.mode}</Badge>
+                </button>
+                <PostureBadge p={r.posture} size="sm" />
+              </div>
+              <p className="text-xs text-muted">confidence {r.confidence} · {r.model_id} · created {fmtTime(r.created_at, tz)}</p>
+              {r.decisions.map((d: any) => (
+                <div key={d.id} className="mt-1 rounded bg-[var(--surface-2)] p-1.5 text-xs">
+                  <span className="font-semibold">{d.decided_by}</span> decided <strong>{d.decision_posture.replace("_", " ")}</strong>{" "}
+                  {d.agreed_with_recommendation ? <Badge tone="good">agreed</Badge> : <Badge tone="warn">override</Badge>}{" "}
+                  <span className="text-muted">{fmtTime(d.decided_at, tz)} · real (recorded in this system)</span>
+                  {d.override_reason && <p className="mt-0.5 italic">Reason: {d.override_reason}</p>}
+                </div>
+              ))}
+            </li>
+          ))}
+        </ol>
+      )}
+    </Card>
+  );
+}

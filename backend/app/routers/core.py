@@ -101,8 +101,8 @@ CHART_METRICS = {
     "precip": ["ice_in", "snow_in", "qpf_in", "pop_pct", "precip_in", "freezing_precip"],
 }
 CHART_RULES = {  # rule id -> chart series it is drawn on
-    "wind.fcst_gust_warning": "wind", "wind.fcst_gust_advisory": "wind", "wind.fcst_sustained_warning": "wind",
-    "wind.fcst_sustained_advisory": "wind", "winter.fcst_ice_quarter_inch": "ice_cum", "winter.fcst_ice_tenth_inch": "ice_cum",
+    "wind.fcst_gust_warning": "wind", "wind.fcst_gust_advisory": "wind", "wind.destructive_gust": "wind",
+    "winter.fcst_ice_quarter_inch": "ice_cum", "winter.fcst_ice_tenth_inch": "ice_cum",
     "winter.fcst_ice_any": "ice_cum", "winter.fcst_snow_advisory_24h": "snow_cum", "winter.fcst_snow_warning_12h": "snow_cum",
     "cold.fcst_wind_chill_advisory": "temp", "cold.fcst_wind_chill_extreme": "temp",
 }
