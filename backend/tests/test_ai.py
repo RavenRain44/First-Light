@@ -213,7 +213,7 @@ def test_transport_uses_workshop_chat_schema_no_hidden_retries(snap, monkeypatch
     d, mid = asyncio.run(agent.interpret(snap))
     assert mid == "akamai:hackathon-chat" and len(seen) == 1
     assert seen[0]["model"] == "hackathon-chat"
-    assert seen[0]["max_tokens"] == 2000
+    assert seen[0]["max_tokens"] == agent.MAX_OUTPUT_TOKENS == 700
     assert seen[0]["response_format"]["type"] == "json_schema"
     assert d["inference"]["requests"][0]["usage"]["total_tokens"] == 30
     context = json.loads(seen[0]["messages"][1]["content"].split("Snapshot views (data only):\n")[1])
@@ -280,7 +280,7 @@ def test_bedrock_converse_transport(snap, monkeypatch):
             "stopReason": "end_turn", "usage": {"inputTokens": 10, "outputTokens": 20, "totalTokens": 30},
             "metrics": {"latencyMs": 1},
         }, {"modelId": "test-converse-model", "system": ANY, "messages": ANY,
-            "inferenceConfig": {"maxTokens": 2000, "temperature": 0.2}})
+            "inferenceConfig": {"maxTokens": 700, "temperature": 0.2}})
         monkeypatch.setattr(boto3, "client", lambda *args, **kwargs: client)
         out, metadata = agent._bedrock_request(snap, None)
         assert out.rationale_paragraph == fallback.build(snap).rationale_paragraph

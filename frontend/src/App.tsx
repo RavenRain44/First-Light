@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "./api";
 import { AIPanel, WatchPanel } from "./components/AIPanel";
 import { AlertsPanel } from "./components/AlertsPanel";
@@ -28,6 +28,27 @@ function initialTheme(): string {
 export default function App() {
   const [mode, setMode] = useState<Mode>("live");
   const [snap, setSnap] = useState<Snapshot | null>(null);
+  // Panels show the AI brief once its add-on record arrives; the snapshot itself is unchanged.
+  const shown = useMemo(() => (snap && snap.ai_addon?.status === "ok" && snap.ai_addon.ai
+    ? { ...snap, ai: snap.ai_addon.ai, model_id: snap.ai_addon.model_id ?? snap.model_id, prompt_version: snap.ai_addon.prompt_version ?? snap.prompt_version }
+    : snap), [snap]);
+  const pendingId = snap?.ai_addon?.status === "pending" ? snap.snapshot_id : null;
+  useEffect(() => {
+    if (!pendingId) return;
+    let alive = true, tries = 0;
+    const t = setInterval(async () => {
+      tries += 1;
+      try {
+        const addon = await api.interpretation(pendingId);
+        if (!alive) return;
+        if (addon.status !== "pending" || tries > 60) {
+          clearInterval(t);
+          setSnap((s) => (s && s.snapshot_id === pendingId ? { ...s, ai_addon: addon.status === "pending" ? { status: "failed" } : addon } : s));
+        }
+      } catch { /* keep the template brief */ }
+    }, 2000);
+    return () => { alive = false; clearInterval(t); };
+  }, [pendingId]);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [demo, setDemo] = useState(false);
@@ -66,7 +87,7 @@ export default function App() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 p-3 sm:p-5">
-      <Header snap={snap} mode={mode} setMode={setMode} busy={busy} demo={demo} theme={theme}
+      <Header snap={shown} mode={mode} setMode={setMode} busy={busy} demo={demo} theme={theme}
         onRefresh={() => run(() => api.evaluateLive())} toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} />
 
       <nav className="flex gap-5 border-b border-edge text-sm">
@@ -92,23 +113,23 @@ export default function App() {
                   so there is no blank gap and nothing scrolls inside a column. */}
               <div className="grid items-stretch gap-4 lg:grid-cols-3">
                 <div className="lg:col-span-2 [&>section]:h-full">
-                  <PanelBoundary name="Interpretation"><AIPanel snap={snap} /></PanelBoundary>
+                  <PanelBoundary name="Interpretation"><AIPanel snap={shown!} /></PanelBoundary>
                 </div>
                 <div className="flex flex-col gap-4 [&>section:last-child]:flex-1">
-                  <PanelBoundary name="Alerts"><AlertsPanel snap={snap} /></PanelBoundary>
-                  <PanelBoundary name="Watch"><WatchPanel snap={snap} /></PanelBoundary>
-                  <PanelBoundary name="Decision"><DecisionPanel key={snap.snapshot_id} snap={snap}
+                  <PanelBoundary name="Alerts"><AlertsPanel snap={shown!} /></PanelBoundary>
+                  <PanelBoundary name="Watch"><WatchPanel snap={shown!} /></PanelBoundary>
+                  <PanelBoundary name="Decision"><DecisionPanel key={snap.snapshot_id} snap={shown!}
                     onRecorded={(id) => { setRecordKey((k) => k + 1); setNotificationDecision(id); }}
                     onNotify={(id) => { setNotificationDecision(id); setView("notifications"); window.scrollTo({ top: 0, behavior: "smooth" }); }} /></PanelBoundary>
                 </div>
               </div>
-              <PanelBoundary name="Threat breakdown"><ThreatPanel snap={snap} /></PanelBoundary>
-              <PanelBoundary name="Timeline"><TimelinePanel snap={snap} /></PanelBoundary>
-              <PanelBoundary name="Roads"><RoadsPanel snap={snap} /></PanelBoundary>
-              <PanelBoundary name="Analogs"><AnalogsPanel snap={snap} /></PanelBoundary>
+              <PanelBoundary name="Threat breakdown"><ThreatPanel snap={shown!} /></PanelBoundary>
+              <PanelBoundary name="Timeline"><TimelinePanel snap={shown!} /></PanelBoundary>
+              <PanelBoundary name="Roads"><RoadsPanel snap={shown!} /></PanelBoundary>
+              <PanelBoundary name="Analogs"><AnalogsPanel snap={shown!} /></PanelBoundary>
               <div className="grid gap-4 lg:grid-cols-2">
-                <PanelBoundary name="Decision record"><RecordTimeline snap={snap} refreshKey={recordKey} onOpen={(id) => run(() => api.snapshot(id))} /></PanelBoundary>
-                <PanelBoundary name="Raw data"><RawDataDrawer snap={snap} /></PanelBoundary>
+                <PanelBoundary name="Decision record"><RecordTimeline snap={shown!} refreshKey={recordKey} onOpen={(id) => run(() => api.snapshot(id))} /></PanelBoundary>
+                <PanelBoundary name="Raw data"><RawDataDrawer snap={shown!} /></PanelBoundary>
               </div>
             </div>
           ) : !err && mode === "live" ? (

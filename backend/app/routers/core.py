@@ -90,6 +90,12 @@ def snapshot(snapshot_id: str):
     return s
 
 
+@router.get("/snapshot/{snapshot_id}/interpretation")
+def snapshot_interpretation(snapshot_id: str):
+    """AI brief added after the snapshot was saved: pending | ok | failed | none."""
+    return snapshots.interpretation(snapshot_id)
+
+
 @router.get("/snapshots")
 def snapshot_history(facility_id: str | None = None, limit: int = 50):
     f = _facility(facility_id)

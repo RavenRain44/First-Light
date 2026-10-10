@@ -16,14 +16,14 @@ from typing import Any
 from pydantic import ValidationError
 
 from ai import fallback
-from ai.prompts import SYSTEM_PROMPT, USER_PROMPT, Interpretation
+from ai.prompts import SYSTEM_PROMPT, USER_PROMPT, BriefDraft, Interpretation
 from ai.tools import VIEWS
 from app.config import settings
 
 log = logging.getLogger("closurecall.ai")
 FALLBACK_ID = "deterministic-fallback"
 TIMEOUT_S = 60
-MAX_OUTPUT_TOKENS = 2000
+MAX_OUTPUT_TOKENS = 700  # the model writes only the short draft fields
 MAX_CONTEXT_CHARS = 48000
 NUM = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?")
 GENERIC_NUMBERS = {0.0, 1.0, 2.0, 3.0, 6.0, 12.0, 24.0, 36.0, 48.0, 100.0}
@@ -42,13 +42,21 @@ class InvalidModelOutput(ValueError):
         self.metadata = metadata
 
 
-def _parse_output(content: str, metadata: dict) -> Interpretation:
+def _parse_output(content: str, metadata: dict, snap: dict) -> Interpretation:
+    """Parse the model's short draft and merge it onto the rules-based brief."""
     try:
-        return Interpretation.model_validate_json(content)
+        draft = BriefDraft.model_validate_json(content)
     except ValidationError as e:
         problems = [f"{'.'.join(map(str, error['loc'])) or 'JSON'}: {error['msg']}"
                     for error in e.errors(include_input=False, include_url=False, include_context=False)[:6]]
         raise InvalidModelOutput(problems, metadata) from None
+    base = fallback.build(snap, snap.get("analogs"))
+    return base.model_copy(update={
+        "headline": draft.headline, "summary": draft.summary,
+        "uncertainty": draft.uncertainty or base.uncertainty,
+        "evidence_rule_ids": draft.evidence_rule_ids or base.evidence_rule_ids,
+        "alert_summaries": {**base.alert_summaries, **draft.alert_summaries},
+    })
 
 
 def allowed_numbers(snap: dict) -> set[float]:
@@ -75,6 +83,9 @@ def unsupported_numbers(text: str, allowed: set[float]) -> list[str]:
 
 def validate(interp: Interpretation, snap: dict, allowed: set[float]) -> list[str]:
     problems = []
+    posture_words = {snap["posture"]["posture"].lower(), snap["posture"]["posture"].replace("_", " ").lower()}
+    if interp.summary and not any(w in (interp.headline + " " + interp.summary).lower() for w in posture_words)             and snap["posture"]["opm_label"].lower()[:20] not in interp.summary.lower():
+        problems.append(f"summary does not name the recommended posture {snap['posture']['posture']}")
     text = " ".join([interp.headline, interp.summary, interp.uncertainty, interp.rationale_paragraph,
                      *interp.watch_next_6h, *interp.what_would_change,
                      *interp.alert_summaries.values(), interp.analog_comparison])
@@ -116,21 +127,21 @@ def _context(snap: dict) -> str:
 
 
 def _response_schema(snap: dict) -> dict:
-    """Constrain identifiers while generating, rather than asking the model to copy long IDs."""
-    schema = Interpretation.model_json_schema()
+    """Schema for the short draft only; identifiers are constrained while generating."""
+    schema = BriefDraft.model_json_schema()
     schema["required"] = list(schema["properties"])
+    schema["additionalProperties"] = False
     ids = [r["rule_id"] for r in snap["rules"] if r["triggered"]]
     evidence = schema["properties"]["evidence_rule_ids"]
     evidence["maxItems"] = min(3, len(ids))
     if ids:
         evidence["items"]["enum"] = ids
     alerts = schema["properties"]["alert_summaries"]
-    alerts["properties"] = {a["id"]: {"type": "string", "description": f"Summary of {a.get('event', 'alert')}"}
+    alerts["properties"] = {a["id"]: {"type": "string", "maxLength": 200, "description": f"Summary of {a.get('event', 'alert')}"}
                             for a in snap.get("alerts", [])}
     alerts["additionalProperties"] = False
-    for name, limit in {"summary": 500, "uncertainty": 300, "rationale_paragraph": 1600,
-                        "analog_comparison": 400}.items():
-        schema["properties"][name]["maxLength"] = limit
+    schema["properties"]["summary"]["maxLength"] = 500
+    schema["properties"]["uncertainty"]["maxLength"] = 300
     return schema
 
 
@@ -169,7 +180,7 @@ async def _run_akamai(snap: dict, feedback: str | None) -> tuple[Interpretation,
     content = response.choices[0].message.content
     if not content:
         raise InvalidModelOutput(["chat returned no content"], metadata)
-    return _parse_output(content, metadata), metadata
+    return _parse_output(content, metadata, snap), metadata
 
 
 def _bedrock_request(snap: dict, feedback: str | None) -> tuple[Interpretation, dict]:
@@ -197,12 +208,19 @@ def _bedrock_request(snap: dict, feedback: str | None) -> tuple[Interpretation, 
         "usage": {"input_tokens": usage.get("inputTokens", 0), "output_tokens": usage.get("outputTokens", 0),
                   "total_tokens": usage.get("totalTokens", 0)},
     }
-    return _parse_output(text, metadata), metadata
+    return _parse_output(text, metadata, snap), metadata
 
 
 async def _run_agent(provider: str, snap: dict, feedback: str | None) -> tuple[Interpretation, dict]:
     call = _run_akamai(snap, feedback) if provider == "akamai" else asyncio.to_thread(_bedrock_request, snap, feedback)
     return await asyncio.wait_for(call, TIMEOUT_S)
+
+
+def model_enabled() -> bool:
+    """True when an AI brief can be requested (provider on and its credentials present)."""
+    if settings.model_provider == "akamai":
+        return bool(settings.akamai_api_key) or bool(settings.aws_fallback_enabled and settings.aws_bedrock_model_id)
+    return False
 
 
 async def interpret(snap: dict, use_model: bool = True) -> tuple[dict, str]:
