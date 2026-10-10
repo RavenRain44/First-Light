@@ -3,13 +3,16 @@ import { api } from "../api";
 import type { Posture, Snapshot } from "../types";
 import { Card, POSTURES, POSTURE_STYLE, PostureBadge } from "../util";
 
-export function DecisionPanel({ snap, onRecorded }: { snap: Snapshot; onRecorded: () => void }) {
+export function DecisionPanel({ snap, onRecorded, onNotify }: {
+  snap: Snapshot; onRecorded: (id: number) => void; onNotify: (id: number) => void;
+}) {
   const [by, setBy] = useState("");
   const [posture, setPosture] = useState<Posture>(snap.posture.posture);
   const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [recordedId, setRecordedId] = useState<number | null>(null);
   const override = posture !== snap.posture.posture;
   if (snap.mode === "backtest" || snap.facility.hypothetical) {
     return <Card title="Record decision"><p className="text-sm text-ink2">Decisions are recorded only against live or replay snapshots of the real facility profile.</p></Card>;
@@ -17,10 +20,11 @@ export function DecisionPanel({ snap, onRecorded }: { snap: Snapshot; onRecorded
   const submit = async () => {
     setBusy(true); setMsg(null);
     try {
-      await api.decide({ snapshot_id: snap.snapshot_id, decided_by: by, decision_posture: posture, override_reason: override ? reason : undefined, notes: notes || undefined });
+      const recorded = await api.decide({ snapshot_id: snap.snapshot_id, decided_by: by, decision_posture: posture, override_reason: override ? reason : undefined, notes: notes || undefined });
       setMsg("Decision recorded against this snapshot. It cannot be edited; record a new decision to correct it.");
       setReason(""); setNotes("");
-      onRecorded();
+      setRecordedId(recorded.id);
+      onRecorded(recorded.id);
     } catch (e: any) {
       setMsg(`Not recorded: ${e.message}`);
     } finally {
@@ -59,6 +63,9 @@ export function DecisionPanel({ snap, onRecorded }: { snap: Snapshot; onRecorded
           {override ? "Record override" : "Accept recommendation"}
         </button>
         {msg && <p className="cc-rise rounded-lg bg-[var(--tint)] px-2 py-1.5 text-xs">{msg}</p>}
+        {recordedId !== null && (
+          <button onClick={() => onNotify(recordedId)} className="btn btn-primary cc-rise">Send notifications →</button>
+        )}
         <p className="text-xs text-muted">Snapshot {snap.snapshot_id.slice(0, 12)} · content hash {snap.content_sha256.slice(0, 12)} {snap.integrity_ok ? "✓ verified" : ""}</p>
       </div>
     </Card>

@@ -1,0 +1,6 @@
+{
+  "contacts": [
+    {"name": "SMS test contact", "channel": "sms", "address": "+15555550100", "gateway_address": ""},
+    {"name": "Email test contact", "channel": "email", "address": "tester@example.com"}
+  ]
+}

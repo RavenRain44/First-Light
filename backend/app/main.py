@@ -10,10 +10,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from adapters import cache
 from app import snapshots
+from app.notifications import delivery_loop
 from app.config import settings
 from app.db import get_engine
 from app.facility import load_facility
-from app.routers import cameras, core, history, livecheck
+from app.routers import cameras, core, history, livecheck, notifications
 
 log = logging.getLogger("closurecall")
 
@@ -32,7 +33,11 @@ async def _refresh_loop():
 async def lifespan(app: FastAPI):
     get_engine()
     task = asyncio.create_task(_refresh_loop()) if settings.refresh_interval_seconds > 0 and not settings.demo_mode else None
+    delivery_task = asyncio.create_task(delivery_loop())
     yield
+    delivery_task.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await delivery_task
     if task:
         task.cancel()
     await cache.aclose()
@@ -46,3 +51,4 @@ app.include_router(core.router)
 app.include_router(history.router)
 app.include_router(livecheck.router)
 app.include_router(cameras.router)
+app.include_router(notifications.router)
