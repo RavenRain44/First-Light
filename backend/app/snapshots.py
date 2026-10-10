@@ -146,4 +146,7 @@ async def evaluate(facility: Facility, as_of: datetime | None, mode: str, *, eve
     snap["model_id"] = model_id
     from ai.prompts import PROMPT_VERSION
     snap["prompt_version"] = PROMPT_VERSION
-    return store(snap) if persist else snap
+    if not persist:
+        return snap
+    store(snap)
+    return get(snap["snapshot_id"])

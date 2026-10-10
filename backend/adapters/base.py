@@ -35,6 +35,7 @@ class Facility(BaseModel):
     mos_station: str | None = None  # ICAO, e.g. KAMW
     nws_office: str | None = None
     hours: dict[str, str] = Field(default_factory=lambda: {"open": "07:30", "close": "16:30"})
+    workdays: list[int] = Field(default_factory=lambda: [0, 1, 2, 3, 4])  # Mon=0
     commute_windows: dict[str, list[str]] = Field(
         default_factory=lambda: {"am": ["06:00", "08:00"], "pm": ["16:00", "18:00"]}
     )

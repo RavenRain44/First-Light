@@ -36,7 +36,7 @@ class Confidence(BaseModel):
 
 
 def _completeness(statuses: list[SourceStatus], mode: str, as_of: datetime) -> Factor:
-    exp = dict(EXPECTED["live" if mode == "live" else "replay"])
+    exp = dict(EXPECTED["live" if mode in ("live", "livecheck") else "replay"])
     if utc(as_of).month in (5, 6, 7, 8, 9):
         exp.pop("iem_roads", None)  # Iowa DOT winter reporting is seasonal; not expected in summer
     by = {s.adapter: s for s in statuses}

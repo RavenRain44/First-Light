@@ -40,10 +40,10 @@ def candidate_days(as_of: datetime, facility: Facility) -> list[date]:
     """Workdays a decision made at ``as_of`` could be about: today (if still before close) and the next workday."""
     local = utc(as_of).astimezone(ZoneInfo(facility.timezone))
     days = []
-    if local.weekday() < 5 and local.time() < _t(facility.hours["close"]):
+    if local.weekday() in facility.workdays and local.time() < _t(facility.hours["close"]):
         days.append(local.date())
     d = local.date() + timedelta(days=1)
-    while d.weekday() >= 5:
+    while d.weekday() not in facility.workdays:
         d += timedelta(days=1)
     days.append(d)
     return days
