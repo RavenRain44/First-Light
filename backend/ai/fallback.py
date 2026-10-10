@@ -95,6 +95,10 @@ def build(snap: dict, analogs: list[dict] | None = None) -> Interpretation:
     for reason in p["reasons"][:2]:
         if rules:
             parts.append(f"Timing: {reason.rstrip('.')}.")
+    rd = snap.get("readiness")
+    if rd:
+        when = f"; decide and announce by {_local(rd['decide_by'], tz)}" if rd.get("decide_by") else ""
+        parts.append(f"Readiness is Condition {rd['level'].title()}{when}.")
     weakest = min(conf["factors"], key=lambda f: f["score"])
     parts.append(f"Confidence is {conf['level']} ({conf['score']:.2f}); the weakest factor is {weakest['name']}: "
                  f"{weakest['explanation'].rstrip('.')}.")

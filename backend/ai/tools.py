@@ -45,6 +45,11 @@ def snapshot_summary(snap: dict) -> dict:
         "opm_label": p["opm_label"],
         "decision_day": p["decision_day"],
         "posture_reasons": p["reasons"],
+        "readiness": None if not snap.get("readiness") else {
+            "level": snap["readiness"]["level"], "meaning": snap["readiness"]["meaning"],
+            "reasons": snap["readiness"]["reasons"], "decide_by_local": _local(snap["readiness"].get("decide_by"), tz),
+            "recheck_minutes": snap["readiness"]["recheck_minutes"],
+            "note": "Readiness is adapted from Cooper's Color Code; a policy aid, not a federal standard."},
         "safety_guidance": p["guidance"],
         "confidence": {"level": snap["confidence"]["level"], "score": snap["confidence"]["score"],
                        "factors": [{"name": f["name"], "score": f["score"], "explanation": f["explanation"]}

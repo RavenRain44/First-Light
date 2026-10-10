@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
-import { Badge, Card, PostureBadge, fmtTime } from "../util";
+import { Badge, Card, PostureBadge, READINESS, fmtTime } from "../util";
 
 export function ThresholdsView() {
   const [th, setTh] = useState<any>(null);
@@ -61,6 +61,28 @@ export function ThresholdsView() {
           </div>
         ))}
       </Card>
+
+      {th.readiness && (
+        <Card title="Readiness levels (adapted from Cooper's Color Code)" right={<Badge tone="warn">⚠ policy, unverified</Badge>}>
+          <p className="mb-2 text-sm text-ink2">How closely the manager must watch and how soon a decision is due. Separate from the posture, which says what to do.
+            Announce delay/telework/closure by {th.readiness.announce_by}; release staff {th.readiness.release_lead_hours} h before an arriving hazard;
+            Red within {th.readiness.red_within_hours} h of a deadline or hazard.</p>
+          <table className="w-full text-sm"><tbody>
+            {READINESS.map((x) => {
+              const v = th.readiness.levels[x.level];
+              return (
+                <tr key={x.level} className="border-b border-edge/50 align-top">
+                  <td className="py-1.5 pr-2"><span className="inline-flex items-center gap-1.5 font-semibold"><span className="inline-block h-3 w-5 rounded-sm border border-edge" style={{ background: x.color }} />Condition {x.label}</span></td>
+                  <td className="pr-2 text-xs italic text-ink2">Cooper: {v.cooper}</td>
+                  <td className="pr-2 text-xs">{v.meaning}</td>
+                  <td className="text-xs text-muted">re-check {v.recheck_minutes} min</td>
+                </tr>
+              );
+            })}
+          </tbody></table>
+          <p className="mt-2 text-xs text-muted">Source: {th.readiness.source_title}. Not a federal or NWS standard.</p>
+        </Card>
+      )}
 
       <Card title="Posture timing and OPM mapping">
         <ul className="space-y-1 text-sm">

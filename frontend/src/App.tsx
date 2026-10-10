@@ -52,12 +52,14 @@ export default function App() {
     else setSnap((s) => (s && s.mode === "live" ? s : s));
   }, [mode, run]);
 
-  // Keep the live view fresh: re-check every 5 minutes (backend re-evaluates when its snapshot is stale).
+  // Keep the live view fresh. Cadence follows readiness (Red 10 min ... White 6 h), capped at 30 min
+  // so a quiet dashboard still notices change; the backend only re-evaluates when its snapshot is stale.
+  const recheck = Math.min(snap?.readiness?.recheck_minutes ?? 10, 30);
   useEffect(() => {
     if (mode !== "live") return;
-    const t = setInterval(() => api.latest().then(setSnap).catch(() => {}), 5 * 60 * 1000);
+    const t = setInterval(() => api.latest().then(setSnap).catch(() => {}), recheck * 60 * 1000);
     return () => clearInterval(t);
-  }, [mode]);
+  }, [mode, recheck]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 p-3 sm:p-5">

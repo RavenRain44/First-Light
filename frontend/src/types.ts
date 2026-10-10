@@ -164,11 +164,25 @@ export interface Snapshot {
   };
   confidence: { level: "high" | "medium" | "low"; score: number; factors: Factor[] };
   changes: { text: string; kind: string; new_posture: Posture }[];
+  readiness: Readiness | null;
   watch_next_6h: string[];
   analogs: Analog[];
   features: Record<string, number>;
   ai: Interpretation;
   livecheck?: { alert_id: string; event: string; place: string; label: string; assume_workday: boolean };
+}
+
+export type ReadinessLevel = "WHITE" | "YELLOW" | "ORANGE" | "RED";
+
+export interface Readiness {
+  level: ReadinessLevel;
+  cooper: string;
+  meaning: string;
+  reasons: string[];
+  decide_by: string | null;
+  deadline_passed: boolean;
+  recheck_minutes: number;
+  basis: string;
 }
 
 export interface Decision {

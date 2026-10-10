@@ -161,7 +161,12 @@
    "as_of": "2025-03-05T10:00:00+00:00",
    "posture": "CLOSED",
    "confidence": "high",
-   "decision_day": "2025-03-05"
+   "decision_day": "2025-03-05",
+   "readiness": "RED"
+  },
+  "first_orange_or_red": {
+   "as_of": "2025-03-04T09:00:00+00:00",
+   "readiness": "ORANGE"
   },
   "first_non_normal": {
    "as_of": "2025-03-04T18:00:00+00:00",
@@ -177,11 +182,12 @@
  },
  "timeline": [
   {
-   "snapshot_id": "738aea99d09544408c8367f1404c822a",
+   "snapshot_id": "75014754ea5a41d7b83c123e7302870e",
    "as_of": "2025-03-04T06:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
    "confidence": "high",
+   "readiness": "YELLOW",
    "scores": {
     "cold": 0,
     "wind": 40,
@@ -210,11 +216,12 @@
    }
   },
   {
-   "snapshot_id": "5c2a8cc5f02d49c3ac1c06a4ab28dd08",
+   "snapshot_id": "c16fb7fd46f94f408561432a7b6912b7",
    "as_of": "2025-03-04T07:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
    "confidence": "high",
+   "readiness": "YELLOW",
    "scores": {
     "cold": 0,
     "wind": 40,
@@ -243,11 +250,12 @@
    }
   },
   {
-   "snapshot_id": "3a059298c0be43768ad6c275c523be8a",
+   "snapshot_id": "859c33a7fd1b46908925e08b4b67461d",
    "as_of": "2025-03-04T08:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
    "confidence": "high",
+   "readiness": "YELLOW",
    "scores": {
     "cold": 0,
     "wind": 40,
@@ -276,11 +284,12 @@
    }
   },
   {
-   "snapshot_id": "f120c43e28fd4e908f6a76fe566adb86",
+   "snapshot_id": "d97174c56fad4274a20dceda08a1fc0f",
    "as_of": "2025-03-04T09:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -308,11 +317,12 @@
    }
   },
   {
-   "snapshot_id": "12c6b8b4ceed4b6aa7254df3c7e173c7",
+   "snapshot_id": "0e4f5582b77f480da8fdb0f4095d2827",
    "as_of": "2025-03-04T10:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -340,11 +350,12 @@
    }
   },
   {
-   "snapshot_id": "9edb7d39dfec437a893580b473949eb5",
+   "snapshot_id": "198afd61a1944af5a6f380b781fa62b8",
    "as_of": "2025-03-04T11:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -372,11 +383,12 @@
    }
   },
   {
-   "snapshot_id": "1ae0986b6e57473f959948670702e03d",
+   "snapshot_id": "1742440c44b3413a8f20aae0ac7c75af",
    "as_of": "2025-03-04T12:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -404,11 +416,12 @@
    }
   },
   {
-   "snapshot_id": "06537e68378f491a9ec2f7486a080b7d",
+   "snapshot_id": "7cf59a1602eb49fba4ea0e3ce91deca6",
    "as_of": "2025-03-04T13:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -436,11 +449,12 @@
    }
   },
   {
-   "snapshot_id": "13f590701df3479f927303f02bd89879",
+   "snapshot_id": "4cf6662a900c4523ae6e9b3da32f8a3d",
    "as_of": "2025-03-04T14:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -468,11 +482,12 @@
    }
   },
   {
-   "snapshot_id": "a17652a3182f460db3c7af87864200f2",
+   "snapshot_id": "29fa752fc65c400e81b0cfcad552ee2b",
    "as_of": "2025-03-04T15:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -500,11 +515,12 @@
    }
   },
   {
-   "snapshot_id": "7a8683c08503496982e43e88b2d16836",
+   "snapshot_id": "0b3974355bbc42cb919de76f1853b733",
    "as_of": "2025-03-04T16:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -532,11 +548,12 @@
    }
   },
   {
-   "snapshot_id": "95bdefacfbb14892af6579b7a4a44a83",
+   "snapshot_id": "0bbafbbf0102468faa56517fbd1d79ff",
    "as_of": "2025-03-04T17:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -564,11 +581,12 @@
    }
   },
   {
-   "snapshot_id": "8e866e83550d4318bbba05c7f7e26732",
+   "snapshot_id": "224f86fa847940f884676ff48231d331",
    "as_of": "2025-03-04T18:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -597,11 +615,12 @@
    }
   },
   {
-   "snapshot_id": "f6bccbeb3ff84608a26acb155596bfa2",
+   "snapshot_id": "7350566f71be4ea1867c011531050a2b",
    "as_of": "2025-03-04T19:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -630,11 +649,12 @@
    }
   },
   {
-   "snapshot_id": "fda66d3888c64758b3fa7a7e0d517e29",
+   "snapshot_id": "a0caece421e34d68b526aa16f8542040",
    "as_of": "2025-03-04T20:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -663,11 +683,12 @@
    }
   },
   {
-   "snapshot_id": "193f28fc9c754006bddd7b07317f0451",
+   "snapshot_id": "53316b2b4d224f01ae0039067f443395",
    "as_of": "2025-03-04T21:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -696,11 +717,12 @@
    }
   },
   {
-   "snapshot_id": "80c28033c99c47c8b40a3288e3347435",
+   "snapshot_id": "e9174d162fde4983b15a464ec9769beb",
    "as_of": "2025-03-04T22:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -729,11 +751,12 @@
    }
   },
   {
-   "snapshot_id": "ab63bae2a28f453b8442be22515fb0c4",
+   "snapshot_id": "0a3055f3cc0f46f6bd39e59577c67948",
    "as_of": "2025-03-04T23:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -762,11 +785,12 @@
    }
   },
   {
-   "snapshot_id": "5eb403f400e448538fb29a3d04464336",
+   "snapshot_id": "c80645ec8c9f44d1bf1f9970c8bec7c2",
    "as_of": "2025-03-05T00:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -795,11 +819,12 @@
    }
   },
   {
-   "snapshot_id": "2e467e7cfbce494dae9727a9b0d553d8",
+   "snapshot_id": "f5750afca3cb496d907d2a852db3acc2",
    "as_of": "2025-03-05T01:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -828,11 +853,12 @@
    }
   },
   {
-   "snapshot_id": "fa92933488574409a777cba358d63ef3",
+   "snapshot_id": "307c1471e11b4bbeba5f20bcccc5c301",
    "as_of": "2025-03-05T02:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -861,11 +887,12 @@
    }
   },
   {
-   "snapshot_id": "930274539f73446baac72530f1b97586",
+   "snapshot_id": "66261c3b6c8449188f5325de41732e0d",
    "as_of": "2025-03-05T03:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -894,11 +921,12 @@
    }
   },
   {
-   "snapshot_id": "d069bbb542ea4c8f8743835423ca2bdf",
+   "snapshot_id": "7e893ff3c6e740e983d485aee00cd4e3",
    "as_of": "2025-03-05T04:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -927,11 +955,12 @@
    }
   },
   {
-   "snapshot_id": "7495b88dfd474e0d9d413aa88744beee",
+   "snapshot_id": "968dc3aa84104c468a02edb09a4491ac",
    "as_of": "2025-03-05T05:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -960,11 +989,12 @@
    }
   },
   {
-   "snapshot_id": "71dd462fc3634c5bbdedfe082ae7ec88",
+   "snapshot_id": "c126ea3d31e54913900073b28b21e926",
    "as_of": "2025-03-05T06:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -993,11 +1023,12 @@
    }
   },
   {
-   "snapshot_id": "fcbdd13fc2c8431c9517e3ae096d1573",
+   "snapshot_id": "d16ec2afc2d140c0bbde53fc3417d71e",
    "as_of": "2025-03-05T07:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 80,
@@ -1026,11 +1057,12 @@
    }
   },
   {
-   "snapshot_id": "1b85c434b2144d56b72bd8c78422c7df",
+   "snapshot_id": "cdfd4df594df42ff898880e561805f52",
    "as_of": "2025-03-05T08:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 90,
@@ -1059,11 +1091,12 @@
    }
   },
   {
-   "snapshot_id": "6e6704ceb9704eaa98a2b8800e250c27",
+   "snapshot_id": "e28c7f410c054afcac77676a152ba417",
    "as_of": "2025-03-05T09:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 90,
@@ -1092,11 +1125,12 @@
    }
   },
   {
-   "snapshot_id": "aeaae3b5b4b64d97a397cb6eb6c5980a",
+   "snapshot_id": "67d28466f6794e628cf1128e0eb069de",
    "as_of": "2025-03-05T10:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 90,
@@ -1125,11 +1159,12 @@
    }
   },
   {
-   "snapshot_id": "ca74a08acdf948f38d43a2d1fc3455c1",
+   "snapshot_id": "4e5036b7a2e24a46b35d1297a3ff6f4e",
    "as_of": "2025-03-05T11:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 90,
@@ -1158,11 +1193,12 @@
    }
   },
   {
-   "snapshot_id": "b7bcd8044b1b4df9ab8585a8f8ac483b",
+   "snapshot_id": "8eba4fd3171648ab9e5cdd71d7565f03",
    "as_of": "2025-03-05T12:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 90,
@@ -1191,11 +1227,12 @@
    }
   },
   {
-   "snapshot_id": "da11e3d968ac413388e0d522539b70f8",
+   "snapshot_id": "6850face1010475bbac67f216c0a6646",
    "as_of": "2025-03-05T13:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 90,
@@ -1224,11 +1261,12 @@
    }
   },
   {
-   "snapshot_id": "f711e6f95a934b739e2fabee0e2203a4",
+   "snapshot_id": "a35a257bd0ed4b53b2344634191a1a65",
    "as_of": "2025-03-05T14:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 90,
@@ -1257,11 +1295,12 @@
    }
   },
   {
-   "snapshot_id": "ba0f3fbcb25b4bf1bb6c4c9fdde157cc",
+   "snapshot_id": "924967f60b3343b282da16476b26c82d",
    "as_of": "2025-03-05T15:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 90,
@@ -1290,11 +1329,12 @@
    }
   },
   {
-   "snapshot_id": "ebc9745092a3400fa4cba188def57f24",
+   "snapshot_id": "3457dd8eead844908f20020c06d5cb1d",
    "as_of": "2025-03-05T16:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 90,
@@ -1323,11 +1363,12 @@
    }
   },
   {
-   "snapshot_id": "20e28dee1efe4690840684c6515cbe19",
+   "snapshot_id": "d25925f2b59f4fb2878ec1d724c8b337",
    "as_of": "2025-03-05T17:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 90,
@@ -1356,11 +1397,12 @@
    }
   },
   {
-   "snapshot_id": "ab2c1210095642f29f639bcf8fc9ee36",
+   "snapshot_id": "1626845dcdbb4605998eecc61b63c2a3",
    "as_of": "2025-03-05T18:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 90,
@@ -1389,11 +1431,12 @@
    }
   },
   {
-   "snapshot_id": "bd771b6504f743bcb35ceac86101fff8",
+   "snapshot_id": "50408b772bb143f0bd4b05d657ea3c35",
    "as_of": "2025-03-05T19:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 90,
@@ -1422,11 +1465,12 @@
    }
   },
   {
-   "snapshot_id": "0ca4f72a782c491aaba7da0f341635cc",
+   "snapshot_id": "7fabe35ef05948f499aa73bd05a17e6b",
    "as_of": "2025-03-05T20:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 85,

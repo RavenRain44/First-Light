@@ -34,6 +34,8 @@ class Snapshot(SQLModel, table=True):
     posture_json: str
     confidence_json: str
     changes_json: str
+    readiness_level: str = Field(default="", index=True)
+    readiness_json: str = "{}"
     watch_json: str
     analogs_json: str
     features_json: str

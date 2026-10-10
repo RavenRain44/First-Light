@@ -22,6 +22,7 @@ from engine import confidence as conf
 from engine.counterfactual import Change, what_would_change
 from engine.features import Context, Signal, extract
 from engine.posture import PostureResult, decide, horizon_end
+from engine.readiness import Readiness, assess_readiness
 from engine.scoring import HazardResult, RuleResult, Thresholds, evaluate_rules, load_thresholds, score_hazards
 
 
@@ -34,6 +35,7 @@ class Assessment(BaseModel):
     posture: PostureResult
     confidence: conf.Confidence
     changes: list[Change]
+    readiness: Readiness
     watch_next_6h: list[str]
     features: dict[str, float]
     alerts: list[dict]
@@ -149,9 +151,10 @@ def assess(inputs: list[NormalizedInput], statuses: list[SourceStatus], facility
     posture = decide(hazards, rules, ctx.as_of, facility, th)
     confidence = conf.compute(statuses, inputs, ctx, rules, hazards, mode)
     changes = what_would_change(ctx, th, facility, posture.posture, rules)
+    readiness = assess_readiness(hazards, rules, posture, confidence, ctx.alerts, ctx.as_of, facility, th)
     return Assessment(
         as_of=ctx.as_of, mode=mode, signals=ctx.signals, rules=rules, hazards=hazards, posture=posture,
-        confidence=confidence, changes=changes, watch_next_6h=_watch(ctx, rules, facility),
+        confidence=confidence, changes=changes, readiness=readiness, watch_next_6h=_watch(ctx, rules, facility),
         features=feature_vector(ctx, rules, hazards, facility), alerts=ctx.alerts,
     )
 

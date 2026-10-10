@@ -225,7 +225,7 @@ def thresholds():
     backtest = [{"event_id": e.id, "name": e.name, "hazard": e.hazard, "impact_day": e.impact_day,
                  **json.loads(e.backtest_json)} for e in events]
     return {"version": th.version, "sha256": th.sha256, "rules": [r.model_dump() for r in th.rules],
-            "postures": th.postures, "timing": th.timing,
+            "postures": th.postures, "timing": th.timing, "readiness": th.raw.get("readiness"),
             "unverified_count": sum(1 for r in th.rules if not r.verified), "backtest": backtest}
 
 

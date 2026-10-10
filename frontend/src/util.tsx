@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Posture } from "./types";
+import type { Posture, Readiness, ReadinessLevel } from "./types";
 
 export const POSTURES: Posture[] = ["NORMAL", "DELAYED_ARRIVAL", "EARLY_DISMISSAL", "TELEWORK", "CLOSED"];
 
@@ -109,3 +109,40 @@ export function PostureBadge({ p, size = "md" }: { p: Posture; size?: "sm" | "md
 }
 
 export const CONF_TONE = { high: "good", medium: "warn", low: "bad" } as const;
+
+/** Readiness (adapted Cooper Color Code). Drawn as a 4-step meter, never as a pill, so it is not
+ *  mistaken for the posture badge, and always labelled "Condition <color>". */
+export const READINESS: { level: ReadinessLevel; label: string; color: string }[] = [
+  { level: "WHITE", label: "White", color: "#f4f3ef" },
+  { level: "YELLOW", label: "Yellow", color: "var(--warning)" },
+  { level: "ORANGE", label: "Orange", color: "var(--serious)" },
+  { level: "RED", label: "Red", color: "var(--critical)" },
+];
+
+export function ReadinessMeter({ r, tz, compact = false }: { r: Readiness; tz: string; compact?: boolean }) {
+  const idx = Math.max(0, READINESS.findIndex((x) => x.level === r.level));
+  const tip = [r.cooper, r.meaning, ...r.reasons, `(${r.basis})`].join("\n");
+  return (
+    <div className="flex flex-col gap-1" title={tip}>
+      <div className="flex items-center gap-2">
+        <span className="text-xs uppercase tracking-wide text-ink2">Readiness</span>
+        <div className="flex" role="meter" aria-valuemin={0} aria-valuemax={3} aria-valuenow={idx} aria-label={`Readiness: Condition ${READINESS[idx].label}`}>
+          {READINESS.map((x, i) => (
+            <span key={x.level} className={`h-4 w-6 border border-edge first:rounded-l last:rounded-r ${i === idx ? "ring-2 ring-inset ring-[var(--text-primary)]" : "opacity-35"}`}
+              style={{ background: x.color }} />
+          ))}
+        </div>
+        <span className="text-sm font-bold">Condition {READINESS[idx].label}</span>
+      </div>
+      {!compact && r.decide_by && (
+        <span className={`text-xs ${r.deadline_passed ? "font-semibold text-[var(--critical)]" : "text-ink2"}`}>
+          {r.deadline_passed ? "Announcement deadline passed: " : "Decide and announce by "}{fmtTime(r.decide_by, tz)}
+        </span>
+      )}
+    </div>
+  );
+}
+
+export function readinessColor(level: string | null | undefined): string {
+  return READINESS.find((x) => x.level === level)?.color ?? "transparent";
+}

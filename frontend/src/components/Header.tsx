@@ -1,5 +1,5 @@
 import type { Snapshot } from "../types";
-import { Badge, CONF_TONE, PostureBadge, ago, fmtTime } from "../util";
+import { Badge, CONF_TONE, PostureBadge, ReadinessMeter, ago, fmtTime } from "../util";
 
 export type Mode = "live" | "replay" | "livecheck";
 
@@ -40,6 +40,7 @@ export function Header({ snap, mode, setMode, onRefresh, busy, demo, theme, togg
               </div>
               <PostureBadge p={snap.posture.posture} size="lg" />
               <div className="max-w-md text-right text-xs text-ink2">OPM: {snap.posture.opm_label}</div>
+              {snap.readiness && <ReadinessMeter r={snap.readiness} tz={tz} />}
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone={CONF_TONE[snap.confidence.level]} title={snap.confidence.factors.map((f) => `${f.name}: ${f.score} - ${f.explanation}`).join("\n")}>
                   Confidence: {snap.confidence.level} ({snap.confidence.score.toFixed(2)})

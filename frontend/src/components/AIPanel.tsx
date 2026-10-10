@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Snapshot } from "../types";
-import { Badge, Card } from "../util";
+import { Badge, Card, ReadinessMeter } from "../util";
 
 export function AIPanel({ snap }: { snap: Snapshot }) {
   const [copied, setCopied] = useState(false);
@@ -25,6 +25,14 @@ export function AIPanel({ snap }: { snap: Snapshot }) {
       {snap.posture.guidance.length > 0 && (
         <div role="alert" className="mt-2 rounded-lg border-2 border-[var(--critical)] p-2 text-sm font-medium">
           {snap.posture.guidance.map((g) => <p key={g}>⚠ {g}</p>)}
+        </div>
+      )}
+      {snap.readiness && (
+        <div className="mt-3 rounded-lg border border-edge p-3">
+          <ReadinessMeter r={snap.readiness} tz={snap.facility.timezone} />
+          <p className="mt-1 text-sm">{snap.readiness.meaning}</p>
+          <ul className="mt-1 list-disc pl-5 text-xs text-ink2">{snap.readiness.reasons.map((x) => <li key={x}>{x}</li>)}</ul>
+          <p className="mt-1 text-xs text-muted">Re-check every {snap.readiness.recheck_minutes} min at this level. Adapted from Jeff Cooper's Color Code (a policy aid, not a federal standard); it sets urgency, never the posture.</p>
         </div>
       )}
       <div className="mt-3 rounded-lg bg-[var(--surface-2)] p-3">

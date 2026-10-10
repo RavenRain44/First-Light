@@ -41,7 +41,7 @@ def event(event_id: str):
                           .order_by(Snapshot.as_of)).all()
         d = _event_dict(e)
         d["timeline"] = [{"snapshot_id": r.snapshot_id, "as_of": utc(r.as_of).isoformat(), "posture": r.posture,
-                          "confidence": r.confidence, "scores": {k: v["score"] for k, v in json.loads(r.hazards_json).items()},
+                          "confidence": r.confidence, "readiness": r.readiness_level or None, "scores": {k: v["score"] for k, v in json.loads(r.hazards_json).items()},
                           "label": "simulated by rules (backtest)"} for r in timeline]
         return d
 

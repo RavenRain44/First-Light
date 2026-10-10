@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import type { Snapshot } from "../types";
-import { Badge, Card, POSTURE_STYLE, PostureBadge, fmtTime } from "../util";
+import { Badge, Card, POSTURE_STYLE, PostureBadge, fmtTime, readinessColor } from "../util";
 
 const TZ = "America/Chicago";
 
@@ -96,6 +96,14 @@ export function ReplayPanel({ onSnapshot, busy, setBusy, current }: {
                 style={{ background: POSTURE_STYLE[x.posture as keyof typeof POSTURE_STYLE].color }} />
             ))}
           </div>
+          <div className="mt-px flex h-2 w-full gap-px" role="img" aria-label="Readiness (Cooper color) by hour">
+            {ev.timeline.map((x: any, i: number) => (
+              <span key={x.as_of} title={`${fmtTime(x.as_of, TZ)}: Condition ${x.readiness ?? "n/a"}`}
+                className={`h-full flex-1 ${i === idx ? "outline outline-1 outline-[var(--text-primary)]" : ""}`}
+                style={{ background: readinessColor(x.readiness), boxShadow: x.readiness === "WHITE" ? "inset 0 0 0 1px var(--border)" : undefined }} />
+            ))}
+          </div>
+          <div className="mt-0.5 flex gap-3 text-[10px] text-muted"><span>top row: recommended posture</span><span>bottom row: readiness (Cooper color)</span></div>
           <div className="mt-1 flex justify-between text-xs text-muted tabnum">
             <span>{fmtTime(ev.timeline[0].as_of, TZ)}</span>
             <span className="font-semibold text-ink">{t ? fmtTime(t.as_of, TZ) : ""}</span>

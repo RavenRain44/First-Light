@@ -81,7 +81,12 @@
    "as_of": "2023-02-22T10:00:00+00:00",
    "posture": "CLOSED",
    "confidence": "high",
-   "decision_day": "2023-02-22"
+   "decision_day": "2023-02-22",
+   "readiness": "RED"
+  },
+  "first_orange_or_red": {
+   "as_of": "2023-02-21T11:00:00+00:00",
+   "readiness": "ORANGE"
   },
   "first_non_normal": {
    "as_of": "2023-02-21T18:00:00+00:00",
@@ -97,11 +102,12 @@
  },
  "timeline": [
   {
-   "snapshot_id": "fbabe3419e9c420c893c546a0be23d07",
+   "snapshot_id": "48b612ec281a43188e3773b754dde140",
    "as_of": "2023-02-21T11:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2023-02-21",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -129,11 +135,12 @@
    }
   },
   {
-   "snapshot_id": "815f21ffa45046dd93ed22481eb52ab9",
+   "snapshot_id": "ea740bf9ab68456d8b3e843974e20fcc",
    "as_of": "2023-02-21T12:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2023-02-21",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -161,11 +168,12 @@
    }
   },
   {
-   "snapshot_id": "477edbedf3cd4c6ab9ea4d3d5e53ed57",
+   "snapshot_id": "6f37ca111a9c4e98b4b3bba9eb96f5fb",
    "as_of": "2023-02-21T13:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2023-02-21",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -193,11 +201,12 @@
    }
   },
   {
-   "snapshot_id": "a181283b87bc4de0843cd97508f7fe56",
+   "snapshot_id": "e78a4ba7fa6f452dad7836000468c463",
    "as_of": "2023-02-21T14:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2023-02-21",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -225,11 +234,12 @@
    }
   },
   {
-   "snapshot_id": "9dc62a6ea81a4381b6e150a376dbe5db",
+   "snapshot_id": "2f0d37ecc803449eb60f973541cf5084",
    "as_of": "2023-02-21T15:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2023-02-21",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -257,11 +267,12 @@
    }
   },
   {
-   "snapshot_id": "42c299d20bbe46aeb73de0d797dd093e",
+   "snapshot_id": "99814d066023406f8ff56d8a8771b65a",
    "as_of": "2023-02-21T16:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2023-02-21",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -289,11 +300,12 @@
    }
   },
   {
-   "snapshot_id": "38eba1aa65034c69b0807403818cb369",
+   "snapshot_id": "184391b4e64440fda1013ec655a01174",
    "as_of": "2023-02-21T17:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2023-02-21",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -321,11 +333,12 @@
    }
   },
   {
-   "snapshot_id": "141dbdba43324376be13522d43bc8596",
+   "snapshot_id": "f65ec6c8b8804a799e03627c9c322c31",
    "as_of": "2023-02-21T18:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -353,11 +366,12 @@
    }
   },
   {
-   "snapshot_id": "2f09dfe38d6b499aa6eb43288bdee868",
+   "snapshot_id": "d9bdacc7eb5e4459a529e2f178ae84ed",
    "as_of": "2023-02-21T19:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -385,11 +399,12 @@
    }
   },
   {
-   "snapshot_id": "465c337b57274373a738b95d5d4a8131",
+   "snapshot_id": "ba7d809fda3e49709b24d8461a5ce7dc",
    "as_of": "2023-02-21T20:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -417,11 +432,12 @@
    }
   },
   {
-   "snapshot_id": "f2c155a72d744947b51fcd693998a33e",
+   "snapshot_id": "e5ac8022f22a4cd492cc54fc4948cd96",
    "as_of": "2023-02-21T21:00:00+00:00",
    "posture": "DELAYED_ARRIVAL",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -449,11 +465,12 @@
    }
   },
   {
-   "snapshot_id": "f8613740fefc44ad85a46633e7d1cf16",
+   "snapshot_id": "f82332666c234f5d87fa61baad79a30e",
    "as_of": "2023-02-21T22:00:00+00:00",
    "posture": "DELAYED_ARRIVAL",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -481,11 +498,12 @@
    }
   },
   {
-   "snapshot_id": "0ea118129fb848d8b2b34aabdc943872",
+   "snapshot_id": "452b27fd760b447b808d3948167aced6",
    "as_of": "2023-02-21T23:00:00+00:00",
    "posture": "DELAYED_ARRIVAL",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -513,11 +531,12 @@
    }
   },
   {
-   "snapshot_id": "0442028a54344785982386b6d2650038",
+   "snapshot_id": "198fcff01e3d4c17b7dd33ecb9d329e5",
    "as_of": "2023-02-22T00:00:00+00:00",
    "posture": "DELAYED_ARRIVAL",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -545,11 +564,12 @@
    }
   },
   {
-   "snapshot_id": "2d87e5cb846b49f29f24c4f5c2860965",
+   "snapshot_id": "161e4f97b40d4209af24b4b8ddcd6988",
    "as_of": "2023-02-22T01:00:00+00:00",
    "posture": "DELAYED_ARRIVAL",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -577,11 +597,12 @@
    }
   },
   {
-   "snapshot_id": "7793c75089aa4f0eb192277dea0aa1e8",
+   "snapshot_id": "7d5b32feb20b4ac9862296bbbf244019",
    "as_of": "2023-02-22T02:00:00+00:00",
    "posture": "DELAYED_ARRIVAL",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -609,11 +630,12 @@
    }
   },
   {
-   "snapshot_id": "518f49b19b374c9696031b83a31814fb",
+   "snapshot_id": "f653b8f6fff64771bd7a6d2fe5ba5e12",
    "as_of": "2023-02-22T03:00:00+00:00",
    "posture": "DELAYED_ARRIVAL",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -641,11 +663,12 @@
    }
   },
   {
-   "snapshot_id": "a9f8aabd0f9741c7b024042559172613",
+   "snapshot_id": "bb2ce4b576af4d1089ee7a534ceabede",
    "as_of": "2023-02-22T04:00:00+00:00",
    "posture": "DELAYED_ARRIVAL",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -673,11 +696,12 @@
    }
   },
   {
-   "snapshot_id": "52f17e36d4f14b51828be13c287f380a",
+   "snapshot_id": "b29dfe69734c411ba4497226bee1469c",
    "as_of": "2023-02-22T05:00:00+00:00",
    "posture": "DELAYED_ARRIVAL",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -705,11 +729,12 @@
    }
   },
   {
-   "snapshot_id": "4c05a5d74e7d415eaeee30ee26392ee6",
+   "snapshot_id": "fba42eb26ffe4319aa09fd6f4dac133d",
    "as_of": "2023-02-22T06:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -737,11 +762,12 @@
    }
   },
   {
-   "snapshot_id": "bda82d9d618740b8a35d73cd661f5aec",
+   "snapshot_id": "9d5f9805e8eb47dcbfd58a6b0ce9190c",
    "as_of": "2023-02-22T07:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -769,11 +795,12 @@
    }
   },
   {
-   "snapshot_id": "3eff2ccd140f45ab909742b0165d79de",
+   "snapshot_id": "c6e6d013f92d447da903cfd38c59267b",
    "as_of": "2023-02-22T08:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -801,11 +828,12 @@
    }
   },
   {
-   "snapshot_id": "4b4d8b0911474bc99da77b6a992e3ce9",
+   "snapshot_id": "d222af3944be45ccb8325fc39fb12393",
    "as_of": "2023-02-22T09:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -833,11 +861,12 @@
    }
   },
   {
-   "snapshot_id": "d2609eeafdbb4ea3b26317a7d003cf76",
+   "snapshot_id": "a6ad9281c2a646b7bde2c6f68864a453",
    "as_of": "2023-02-22T10:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -865,11 +894,12 @@
    }
   },
   {
-   "snapshot_id": "4374ab336c584eeb8212b46ee2583f00",
+   "snapshot_id": "333f99a729784a9a9b92f2afaa2c91d0",
    "as_of": "2023-02-22T11:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -897,11 +927,12 @@
    }
   },
   {
-   "snapshot_id": "44ea85da5a0143a099b34a6fdacd54f8",
+   "snapshot_id": "aa4c88e8c92b4d8baa9889bdc2f54962",
    "as_of": "2023-02-22T12:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -929,11 +960,12 @@
    }
   },
   {
-   "snapshot_id": "ad6a0774b7f04c94ba944c8683e30d33",
+   "snapshot_id": "2194991497ac4489b4908fb8e4541d00",
    "as_of": "2023-02-22T13:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -961,11 +993,12 @@
    }
   },
   {
-   "snapshot_id": "031944753af1435abf5a42fc71a72690",
+   "snapshot_id": "ea44099f5f56404bbb4caf743b5f29b9",
    "as_of": "2023-02-22T14:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -993,11 +1026,12 @@
    }
   },
   {
-   "snapshot_id": "80eb9265615f49c981f74ad4577499dc",
+   "snapshot_id": "43bf598505c34be2bffd7b2b9b67e543",
    "as_of": "2023-02-22T15:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1025,11 +1059,12 @@
    }
   },
   {
-   "snapshot_id": "280eeda1cac546429c658d15f423e2a3",
+   "snapshot_id": "397ea9006cd44da4b8f73fa15e6f0784",
    "as_of": "2023-02-22T16:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1057,11 +1092,12 @@
    }
   },
   {
-   "snapshot_id": "4cc99e02699a47a88a77f928896c5ae8",
+   "snapshot_id": "803bba8de1dc47b8bdf36a3c0bd7455c",
    "as_of": "2023-02-22T17:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1089,11 +1125,12 @@
    }
   },
   {
-   "snapshot_id": "e73c9ab407b343d8980038078d939701",
+   "snapshot_id": "da57a09920a94f7f9ad9ce0b7565c01a",
    "as_of": "2023-02-22T18:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1121,11 +1158,12 @@
    }
   },
   {
-   "snapshot_id": "bd24b86b8d854663ad45600ba8dc3f02",
+   "snapshot_id": "79cd24e7988340bebfa4f38ae2ffec7e",
    "as_of": "2023-02-22T19:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1153,11 +1191,12 @@
    }
   },
   {
-   "snapshot_id": "1948e1192ae047ef9c00a4347494b299",
+   "snapshot_id": "fa5adfe9c97c443d93b3bf69073b609e",
    "as_of": "2023-02-22T20:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1185,11 +1224,12 @@
    }
   },
   {
-   "snapshot_id": "28f8245b4a8043faa69de5cdb69f5bdf",
+   "snapshot_id": "e22e5a7717d34b56a4a7f9d60b82f2c1",
    "as_of": "2023-02-22T21:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1217,11 +1257,12 @@
    }
   },
   {
-   "snapshot_id": "3cdce350edff40d3ac23bb05184e9afa",
+   "snapshot_id": "b67c921d2eb34250b05414a24748ce72",
    "as_of": "2023-02-22T22:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2023-02-22",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1249,11 +1290,12 @@
    }
   },
   {
-   "snapshot_id": "d07a8591553348fc93b264bf33897637",
+   "snapshot_id": "02538c2c79e74955a3ea766eb5451dd0",
    "as_of": "2023-02-22T23:00:00+00:00",
    "posture": "DELAYED_ARRIVAL",
    "decision_day": "2023-02-23",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1281,11 +1323,12 @@
    }
   },
   {
-   "snapshot_id": "b9b366143ef145129e9095cf9451f876",
+   "snapshot_id": "979a78cc4f234c309575eeed58f88026",
    "as_of": "2023-02-23T00:00:00+00:00",
    "posture": "DELAYED_ARRIVAL",
    "decision_day": "2023-02-23",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,

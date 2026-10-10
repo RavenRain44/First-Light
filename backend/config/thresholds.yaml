@@ -61,6 +61,39 @@ timing:
     extreme:     "AM commute or morning -> CLOSED; arriving midday/PM -> EARLY_DISMISSAL; in progress during work hours (tornado/severe t-storm) -> CLOSED with shelter-in-place"
   combine: "Most severe posture wins (NORMAL < DELAYED_ARRIVAL < EARLY_DISMISSAL < TELEWORK < CLOSED); DELAYED_ARRIVAL + EARLY_DISMISSAL from different hazards -> TELEWORK"
 
+# Decision-maker readiness, adapted from Jeff Cooper's color code. Cooper wrote it as a
+# personal-defense mindset scale (White unprepared, Yellow possible danger, Orange a
+# specific threat with readiness to act, Red committed to act); we borrow only its structure.
+# Cooper's code is not a federal or NWS standard; this adaptation and its cutoffs are
+# our policy. It answers "how closely must the manager watch, and how soon must they
+# decide", separately from the posture ("what to do").
+readiness:
+  source_title: "Jeff Cooper's color code (Cooper's Commentaries Vol. 13 No. 7, July 2005), as summarized on Wikipedia"
+  source_url: https://en.wikipedia.org/wiki/Jeff_Cooper#Combat_mindset_and_the_Cooper_color_code
+  basis: policy
+  verified: false
+  announce_by: "04:30"          # local: delay/telework/closure announced before staff leave for the AM commute (policy)
+  release_lead_hours: 2         # early dismissal: release this long before the hazard arrives (policy)
+  red_within_hours: 2           # Red when the decision deadline is this close, or the hazard is this close / in progress
+  near_miss_fraction: 0.6       # Yellow when a forecast value is within 60% of a threshold
+  levels:
+    WHITE:
+      cooper: "Unprepared; not expecting trouble"
+      meaning: "Nothing in the forecast window approaches a threshold. Routine monitoring."
+      recheck_minutes: 360
+    YELLOW:
+      cooper: "Aware that danger may arise and something may have to be done"
+      meaning: "A watch, advisory, minor hazard, near-miss forecast, or degraded data. Keep an eye on it; no decision needed yet."
+      recheck_minutes: 120
+    ORANGE:
+      cooper: "Focused on a specific threat and prepared to act"
+      meaning: "A warning-level hazard or a non-normal posture is on the table for the decision day. Prepare the announcement and notification list."
+      recheck_minutes: 30
+    RED:
+      cooper: "Committed: will act when the trigger is met"
+      meaning: "The hazard is here or imminent, or the decision deadline is within reach. Decide and announce now."
+      recheck_minutes: 10
+
 rules:
   # ------------------------------------------------------------------ winter / ice
   - id: winter.ice_storm_warning

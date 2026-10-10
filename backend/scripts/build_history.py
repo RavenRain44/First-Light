@@ -162,7 +162,10 @@ def backtest_summary(ev: dict, timeline: list[dict], outcome: dict) -> dict:
     else:
         verdict = "consistent: no action, limited impact"
     return {
-        "at_0400_local": {"as_of": at4["as_of"], "posture": rec, "confidence": at4["confidence"], "decision_day": at4["decision_day"]},
+        "at_0400_local": {"as_of": at4["as_of"], "posture": rec, "confidence": at4["confidence"],
+                          "decision_day": at4["decision_day"], "readiness": at4.get("readiness")},
+        "first_orange_or_red": next(({"as_of": t["as_of"], "readiness": t["readiness"]} for t in timeline
+                                     if t.get("readiness") in ("ORANGE", "RED")), None),
         "first_non_normal": first_non_normal and {"as_of": first_non_normal["as_of"], "posture": first_non_normal["posture"]},
         "peak_posture": {"as_of": peak["as_of"], "posture": peak["posture"]},
         "outcome_severe": outcome["severe_impact"],
@@ -189,12 +192,13 @@ async def build_event(ev: dict, step: int) -> None:
         timeline.append({
             "snapshot_id": snap["snapshot_id"], "as_of": snap["as_of"], "posture": snap["posture"]["posture"],
             "decision_day": snap["posture"]["decision_day"], "confidence": snap["confidence"]["level"],
+            "readiness": snap["readiness"]["level"] if snap.get("readiness") else None,
             "scores": {k: h["score"] for k, h in snap["hazards"].items()},
             "alerts": sorted({a["event"] for a in snap.get("alerts", [])}),
             "road_worst_rank": sig["road_worst_rank"]["value"] if sig["road_worst_rank"]["available"] else None,
             "features": snap["features"],
         })
-        print(f"   {ev['id']} {t:%Y-%m-%d %H:%MZ} -> {timeline[-1]['posture']:<16} {timeline[-1]['confidence']:<6} {timeline[-1]['alerts']}")
+        print(f"   {ev['id']} {t:%Y-%m-%d %H:%MZ} -> {timeline[-1]['posture']:<16} {timeline[-1]['readiness'] or '':<7} {timeline[-1]['confidence']:<6} {timeline[-1]['alerts']}")
         t += timedelta(hours=step)
     out = await outcomes(ev, timeline)
     bt = backtest_summary(ev, timeline, out)

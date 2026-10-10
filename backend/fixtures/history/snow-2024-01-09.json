@@ -571,7 +571,12 @@
    "as_of": "2024-01-09T10:00:00+00:00",
    "posture": "TELEWORK",
    "confidence": "high",
-   "decision_day": "2024-01-09"
+   "decision_day": "2024-01-09",
+   "readiness": "RED"
+  },
+  "first_orange_or_red": {
+   "as_of": "2024-01-08T06:00:00+00:00",
+   "readiness": "ORANGE"
   },
   "first_non_normal": {
    "as_of": "2024-01-08T06:00:00+00:00",
@@ -587,11 +592,12 @@
  },
  "timeline": [
   {
-   "snapshot_id": "8b9d1841383743e1908782ebcafd8ea6",
+   "snapshot_id": "650f7e4ac36a472e9dd4f3ae5c25838a",
    "as_of": "2024-01-08T06:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-08",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -619,11 +625,12 @@
    }
   },
   {
-   "snapshot_id": "ca07e75d31134680863fc5de7062fcfd",
+   "snapshot_id": "17f7ed2da51d4b8799404c6ce763a315",
    "as_of": "2024-01-08T07:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-08",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -651,11 +658,12 @@
    }
   },
   {
-   "snapshot_id": "9026f8ddc5b34b83b6d3cf2dac785344",
+   "snapshot_id": "54626788d4c84b69935c187461152681",
    "as_of": "2024-01-08T08:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-08",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -683,11 +691,12 @@
    }
   },
   {
-   "snapshot_id": "0ab22e3ea04e42e19cbbcd5ea4acb283",
+   "snapshot_id": "ffb76495ebba49268dff7d15551f8b03",
    "as_of": "2024-01-08T09:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-08",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -715,11 +724,12 @@
    }
   },
   {
-   "snapshot_id": "a69397e8d0e44b96a1a44c2815f289c4",
+   "snapshot_id": "db5fc738d9ec4314ba0f0b55efce1868",
    "as_of": "2024-01-08T10:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-08",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -747,11 +757,12 @@
    }
   },
   {
-   "snapshot_id": "75ddd995a16f4c0e9f8e542897616304",
+   "snapshot_id": "83414c00f18a475dad1d11a319f63fa3",
    "as_of": "2024-01-08T11:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-08",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -779,11 +790,12 @@
    }
   },
   {
-   "snapshot_id": "831afb5793574943ad1659332a6ca78e",
+   "snapshot_id": "3eb71f1fffab41319a6e5396e2c49f02",
    "as_of": "2024-01-08T12:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-08",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -811,11 +823,12 @@
    }
   },
   {
-   "snapshot_id": "0098740a640f436e8d4125755e0be044",
+   "snapshot_id": "f79e52f3868041d09f101bd23b61cf6a",
    "as_of": "2024-01-08T13:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-08",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -843,11 +856,12 @@
    }
   },
   {
-   "snapshot_id": "9430bc96f6c8488ea3d8d120648422e0",
+   "snapshot_id": "5f41e20576124250956ca376bbd6e13b",
    "as_of": "2024-01-08T14:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-08",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -875,11 +889,12 @@
    }
   },
   {
-   "snapshot_id": "8b453f3a0a0941ebb009d26509a709da",
+   "snapshot_id": "99eda4ae239847b09ea2956747d303ab",
    "as_of": "2024-01-08T15:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2024-01-08",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -907,11 +922,12 @@
    }
   },
   {
-   "snapshot_id": "e1da6130ecda4bdea36b76c9a81479c7",
+   "snapshot_id": "3be1506005344e2ab585d9e243df4664",
    "as_of": "2024-01-08T16:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2024-01-08",
    "confidence": "high",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -939,11 +955,12 @@
    }
   },
   {
-   "snapshot_id": "9a3304abf21b49048c7fb98c95a99ac6",
+   "snapshot_id": "a519058ddfc140a58895312f36a26203",
    "as_of": "2024-01-08T17:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2024-01-08",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -971,11 +988,12 @@
    }
   },
   {
-   "snapshot_id": "db8cb3a023704d9d81639b24996e6fcf",
+   "snapshot_id": "aa5be32a60e7427e8286582e5445c08f",
    "as_of": "2024-01-08T18:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2024-01-08",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1003,11 +1021,12 @@
    }
   },
   {
-   "snapshot_id": "748ae21fe3794ae7a4a4251cd478ced7",
+   "snapshot_id": "4b109b8b222241e7a287f9b9ad52af23",
    "as_of": "2024-01-08T19:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2024-01-08",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1035,11 +1054,12 @@
    }
   },
   {
-   "snapshot_id": "0fa67d4f97f543b0a9614729494a89ed",
+   "snapshot_id": "4da0064c1cac4e6c81fac44b6a917c04",
    "as_of": "2024-01-08T20:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2024-01-08",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1067,11 +1087,12 @@
    }
   },
   {
-   "snapshot_id": "a83b72fee3a94b498862884d3d0edefe",
+   "snapshot_id": "23ea3ddaf7b3474e816e49562cedc478",
    "as_of": "2024-01-08T21:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2024-01-08",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1099,11 +1120,12 @@
    }
   },
   {
-   "snapshot_id": "07c9ac9020d847ac9b4e691549816da9",
+   "snapshot_id": "ff472a74b6934e6f92f46ccd9cc1caca",
    "as_of": "2024-01-08T22:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2024-01-08",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1131,11 +1153,12 @@
    }
   },
   {
-   "snapshot_id": "ea68b565247844cabfb6fffb45ed7e8d",
+   "snapshot_id": "c80878e73af04f71a3201c88a7b33ac5",
    "as_of": "2024-01-08T23:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1163,11 +1186,12 @@
    }
   },
   {
-   "snapshot_id": "2972e0450fc7405c998a09b6d4a1a516",
+   "snapshot_id": "6c702ce682fb4b839aa4ed85940eee26",
    "as_of": "2024-01-09T00:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1195,11 +1219,12 @@
    }
   },
   {
-   "snapshot_id": "d2c0d1c5ff364f6bb80522a94f98cb7f",
+   "snapshot_id": "f377df989b584d1493b6b63acc84a11b",
    "as_of": "2024-01-09T01:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1227,11 +1252,12 @@
    }
   },
   {
-   "snapshot_id": "70849a433c0d4182a443e9b3a9f38df4",
+   "snapshot_id": "147a07da07244a129fa08170768e6ea8",
    "as_of": "2024-01-09T02:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1259,11 +1285,12 @@
    }
   },
   {
-   "snapshot_id": "fa81025544444855aeb148dece66f7cf",
+   "snapshot_id": "68fc51d12a1742b397bd271824f55b15",
    "as_of": "2024-01-09T03:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1291,11 +1318,12 @@
    }
   },
   {
-   "snapshot_id": "ce98a0ac930e4d5ea5690f30838babdf",
+   "snapshot_id": "8008bd67ed2a4ad6ad881f64de06bb2d",
    "as_of": "2024-01-09T04:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1323,11 +1351,12 @@
    }
   },
   {
-   "snapshot_id": "fdf1a6b36e6647cdb07c16e055df24ee",
+   "snapshot_id": "3dff516e0a1d4f4db252e163206b103e",
    "as_of": "2024-01-09T05:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1355,11 +1384,12 @@
    }
   },
   {
-   "snapshot_id": "e70affd6aa1a457cb737b0a9aac1efe2",
+   "snapshot_id": "faa03ee414a947418943f63c79a504d1",
    "as_of": "2024-01-09T06:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1387,11 +1417,12 @@
    }
   },
   {
-   "snapshot_id": "5762c388c7ca413e867e63dd6a3644a7",
+   "snapshot_id": "35a6c0a320a34d779b38b822ac2ce697",
    "as_of": "2024-01-09T07:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1419,11 +1450,12 @@
    }
   },
   {
-   "snapshot_id": "3e112383090d4f33b9facf438b24639d",
+   "snapshot_id": "9144dda638764109b7ab484ad10248c5",
    "as_of": "2024-01-09T08:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1451,11 +1483,12 @@
    }
   },
   {
-   "snapshot_id": "9c422650db7a4981ba6447d2af7726c6",
+   "snapshot_id": "740f849486554f84a63878a13147bcf3",
    "as_of": "2024-01-09T09:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1483,11 +1516,12 @@
    }
   },
   {
-   "snapshot_id": "cfb61dae18054aa29d2d71c0d4b034f9",
+   "snapshot_id": "4bcc581632cc4d99ad60066a549ccfa4",
    "as_of": "2024-01-09T10:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1515,11 +1549,12 @@
    }
   },
   {
-   "snapshot_id": "be35e1d219814e2b9aceaf8b837e4320",
+   "snapshot_id": "a867ae9822b24a649fba335fdf660749",
    "as_of": "2024-01-09T11:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1547,11 +1582,12 @@
    }
   },
   {
-   "snapshot_id": "e340d39b948246fe8b19cb90022c20e6",
+   "snapshot_id": "32720d903a7d46cda6e2de6bc5feb9ae",
    "as_of": "2024-01-09T12:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1579,11 +1615,12 @@
    }
   },
   {
-   "snapshot_id": "9d9d6db8cb574184a3351bfe5637de94",
+   "snapshot_id": "cf1f5c510d8244b18023f32eaba316cc",
    "as_of": "2024-01-09T13:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1611,11 +1648,12 @@
    }
   },
   {
-   "snapshot_id": "274b072363e04952a62828c6245789ac",
+   "snapshot_id": "780d4da38d154261907b2847ef0473e1",
    "as_of": "2024-01-09T14:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1643,11 +1681,12 @@
    }
   },
   {
-   "snapshot_id": "958f69dea4d44dd595396aac3e93b97a",
+   "snapshot_id": "473d4998321f44879aaf40d0efb3a6be",
    "as_of": "2024-01-09T15:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1675,11 +1714,12 @@
    }
   },
   {
-   "snapshot_id": "1fecba2904bd4126a99b49a4da9f2b35",
+   "snapshot_id": "e1e4d12e9bb8412f99ea3f9130ab6c7e",
    "as_of": "2024-01-09T16:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1707,11 +1747,12 @@
    }
   },
   {
-   "snapshot_id": "597612e54ae54d7d8e742224648eaf39",
+   "snapshot_id": "b8931319601c4a6c81c398eace881201",
    "as_of": "2024-01-09T17:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1739,11 +1780,12 @@
    }
   },
   {
-   "snapshot_id": "2eb616b43f6a49e9a4fe90b2aa1a3784",
+   "snapshot_id": "566c823df3cb4edd89f1f5dd9b96058c",
    "as_of": "2024-01-09T18:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1771,11 +1813,12 @@
    }
   },
   {
-   "snapshot_id": "8977fba0b77c43828d03f276049c562d",
+   "snapshot_id": "875a85b414814e839834c713a0fd5aea",
    "as_of": "2024-01-09T19:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,
@@ -1803,11 +1846,12 @@
    }
   },
   {
-   "snapshot_id": "00ea3fc3cecd41eea4534ec7630f75c2",
+   "snapshot_id": "d3b7f510fb4546c68b184bbcb7aedccb",
    "as_of": "2024-01-09T20:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
    "confidence": "high",
+   "readiness": "RED",
    "scores": {
     "cold": 0,
     "wind": 0,

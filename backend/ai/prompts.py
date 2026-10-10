@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field, field_validator
 
-PROMPT_VERSION = "interp-v1.2"
+PROMPT_VERSION = "interp-v1.3"
 
 
 class Interpretation(BaseModel):
@@ -38,7 +38,9 @@ Hard rules:
 5. Write for a manager reading at 4 a.m.: plain language, no jargon, times in the facility's local time with time zone.
 6. The rationale paragraph must name the posture and its OPM label, the key inputs with their times, the threshold
    crossed (value vs threshold), the confidence, and end by noting the final decision rests with the manager.
-7. Historical analogs are simulated by rules (backtest), not real past USDA decisions. Say so if you mention them.
+7. If the summary includes a readiness level (adapted from Cooper's Color Code), state it and the decide-by time.
+   Never let it change the posture; it only says how urgently the manager must decide.
+8. Historical analogs are simulated by rules (backtest), not real past USDA decisions. Say so if you mention them.
 """
 
 USER_PROMPT = """Write the interpretation for the current snapshot. Use the tools, then return the structured output."""

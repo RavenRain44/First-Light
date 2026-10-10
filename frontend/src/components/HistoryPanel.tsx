@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import type { Snapshot } from "../types";
-import { Badge, Card, PostureBadge, fmtTime } from "../util";
+import { Badge, Card, PostureBadge, fmtTime, readinessColor } from "../util";
 
 export function AnalogsPanel({ snap }: { snap: Snapshot }) {
   const tz = snap.facility.timezone;
@@ -48,7 +48,10 @@ export function RecordTimeline({ snap, refreshKey, onOpen }: { snap: Snapshot; r
                 </button>
                 <PostureBadge p={r.posture} size="sm" />
               </div>
-              <p className="text-xs text-muted">confidence {r.confidence} · {r.model_id} · created {fmtTime(r.created_at, tz)}</p>
+              <p className="flex flex-wrap items-center gap-1 text-xs text-muted">
+                {r.readiness && <><span className="inline-block h-2.5 w-2.5 rounded-sm border border-edge" style={{ background: readinessColor(r.readiness) }} />Condition {r.readiness.toLowerCase()} ·</>}
+                confidence {r.confidence} · {r.model_id} · created {fmtTime(r.created_at, tz)}
+              </p>
               {r.decisions.map((d: any) => (
                 <div key={d.id} className="mt-1 rounded bg-[var(--surface-2)] p-1.5 text-xs">
                   <span className="font-semibold">{d.decided_by}</span> decided <strong>{d.decision_posture.replace("_", " ")}</strong>{" "}

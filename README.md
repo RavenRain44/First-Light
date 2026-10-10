@@ -109,6 +109,24 @@ adapters (NWS, IEM)  ->  normalized inputs (value, unit, source, URL, fetched_at
   returns strict JSON (Pydantic). Every number in the rationale must exist in the snapshot. On failure it retries
   once with feedback, then falls back to the template. The model id and prompt version are stored on the snapshot.
 
+## Readiness (adapted from Cooper's color code)
+
+The posture says **what to do**. Readiness says **how closely to watch and how soon a decision is due**. It's adapted
+from Jeff Cooper's color code, a personal-defense mindset scale, of which we borrow only the structure. It is a policy
+aid, not a federal or NWS standard, and it never changes the posture.
+
+| Level | Meaning here | Dashboard re-check |
+|---|---|---|
+| **White** | Nothing in the window approaches a threshold | 6 h |
+| **Yellow** | Watch, advisory, minor hazard, near-miss forecast, or low-confidence data | 2 h |
+| **Orange** | Warning-level hazard or a non-normal posture for the decision day; prepare the announcement | 30 min |
+| **Red** | Hazard here or within 2 h, safety guidance active, or the announcement deadline within 2 h | 10 min |
+
+Deadlines: delay/telework/closure announced by 04:30 local; early dismissal 2 h before the hazard arrives. All
+cutoffs are in the `readiness` section of `thresholds.yaml` (`verified: false`, basis: policy). In the backtest,
+readiness went Yellow at 08:00 CDT on the derecho morning (rising SPC outlook, then the watch), three hours before the
+posture changed.
+
 ## The decision record
 
 Every evaluation writes an immutable `snapshot` row: all normalized inputs with provenance, source statuses,

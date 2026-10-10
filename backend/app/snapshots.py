@@ -18,7 +18,7 @@ from engine.evaluate import Assessment, assess, gather, json_ready
 from engine.scoring import load_thresholds
 
 CONTENT_FIELDS = ("facility", "roster", "as_of", "mode", "inputs", "sources", "signals", "rules", "hazards",
-                  "posture", "confidence", "changes", "watch_next_6h", "analogs", "features", "ai",
+                  "posture", "confidence", "changes", "readiness", "watch_next_6h", "analogs", "features", "ai",
                   "thresholds_version", "thresholds_sha256", "model_id", "prompt_version")
 
 
@@ -45,6 +45,7 @@ def build_snapshot_dict(facility: Facility, a: Assessment, inputs, statuses, mod
         "posture": a.posture,
         "confidence": a.confidence,
         "changes": a.changes,
+        "readiness": a.readiness,
         "watch_next_6h": a.watch_next_6h,
         "features": a.features,
         "alerts": a.alerts,
@@ -54,8 +55,14 @@ def build_snapshot_dict(facility: Facility, a: Assessment, inputs, statuses, mod
     }) | {"as_of": utc(a.as_of).isoformat(), "created_at": datetime.now(timezone.utc).isoformat()}
 
 
+# Fields added after the first snapshots were written. When absent they are left out of the
+# hash, so older records still verify against the hash they were stored with.
+LATER_FIELDS = {"readiness"}
+
+
 def content_hash(snap: dict) -> str:
-    return hashlib.sha256(_dumps({k: snap.get(k) for k in CONTENT_FIELDS}).encode()).hexdigest()
+    payload = {k: snap.get(k) for k in CONTENT_FIELDS if not (k in LATER_FIELDS and not snap.get(k))}
+    return hashlib.sha256(_dumps(payload).encode()).hexdigest()
 
 
 def store(snap: dict) -> dict:
@@ -71,6 +78,7 @@ def store(snap: dict) -> dict:
         inputs_json=_dumps(snap["inputs"]), sources_json=_dumps(snap["sources"]), signals_json=_dumps(snap["signals"]),
         rules_json=_dumps(snap["rules"]), hazards_json=_dumps(snap["hazards"]), posture_json=_dumps(snap["posture"]),
         confidence_json=_dumps(snap["confidence"]), changes_json=_dumps(snap["changes"]),
+        readiness_level=snap["readiness"]["level"], readiness_json=_dumps(snap["readiness"]),
         watch_json=_dumps(snap["watch_next_6h"]), analogs_json=_dumps(snap["analogs"]),
         features_json=_dumps(snap["features"]), ai_json=_dumps(snap["ai"]),
     )
@@ -92,6 +100,7 @@ def row_to_dict(row: Snapshot, include_inputs: bool = True) -> dict:
         "rules": json.loads(row.rules_json), "hazards": json.loads(row.hazards_json),
         "posture": json.loads(row.posture_json), "confidence": json.loads(row.confidence_json),
         "changes": json.loads(row.changes_json), "watch_next_6h": json.loads(row.watch_json),
+        "readiness": json.loads(row.readiness_json or "{}") or None,
         "analogs": json.loads(row.analogs_json), "features": json.loads(row.features_json),
         "ai": json.loads(row.ai_json),
     }
@@ -125,6 +134,7 @@ def history(facility_id: str, limit: int = 50, modes: tuple[str, ...] = ("live",
         by_snap.setdefault(d.snapshot_id, []).append(d.model_dump(mode="json"))
     return [{"snapshot_id": r.snapshot_id, "as_of": utc(r.as_of).isoformat(), "created_at": utc(r.created_at).isoformat(),
              "mode": r.mode, "posture": r.posture, "confidence": r.confidence, "model_id": r.model_id,
+             "readiness": r.readiness_level or None,
              "decisions": by_snap.get(r.snapshot_id, [])} for r in rows]
 
 
