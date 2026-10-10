@@ -8,7 +8,7 @@ from typing import Literal
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlmodel import select
 
 from adapters.base import utc
@@ -239,6 +239,14 @@ class DecisionIn(BaseModel):
     decision_posture: str
     override_reason: str | None = Field(default=None, max_length=2000)
     notes: str | None = Field(default=None, max_length=2000)
+
+    @field_validator("decided_by")
+    @classmethod
+    def manager_required(cls, value: str) -> str:
+        value = value.strip()
+        if len(value) < 2:
+            raise ValueError("Manager name required")
+        return value
 
 
 @router.post("/decisions", status_code=201)

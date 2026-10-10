@@ -1,4 +1,6 @@
-"""API-level verification of an Akamai brief and the manager's separate decision."""
+"""API verification of Akamai briefs, manager decisions and approval-only notifications."""
+import json
+
 from fastapi.testclient import TestClient
 
 from ai import agent, fallback
@@ -19,6 +21,14 @@ def test_brief_does_not_decide_and_manager_override_is_audited(tmp_path, monkeyp
         return fallback.build(snap), {"provider": "akamai", "model": "hackathon-chat", "usage": {
             "input_tokens": 100, "output_tokens": 200, "total_tokens": 300}}
     monkeypatch.setattr(agent, "_run_agent", inference)
+    notification_calls = []
+    async def notification_inference(system, user, *args):
+        notification_calls.append(user)
+        assert "employees" not in user and "@" not in user
+        return json.dumps({"explanation": "Extreme wind hazards are present."}), {
+            "provider": "akamai", "model": "hackathon-chat", "usage": {
+                "input_tokens": 10, "output_tokens": 20, "total_tokens": 30}}
+    monkeypatch.setattr(agent, "_akamai_chat", notification_inference)
     try:
         with TestClient(app) as client:
             result = client.post("/api/evaluate", json={"mode": "replay", "as_of": "2020-08-10T16:00:00Z"})
@@ -30,9 +40,11 @@ def test_brief_does_not_decide_and_manager_override_is_audited(tmp_path, monkeyp
             assert snap["ai"]["inference"]["requests"][0]["usage"]["total_tokens"] == 300
             assert snap["integrity_ok"]
             assert client.get("/api/decisions").json() == []
+            assert client.post("/api/notifications/packages", json={"decision_id": 999}).status_code == 404
             decision = {"snapshot_id": snap["snapshot_id"], "decided_by": "Test Manager", "decision_posture": "TELEWORK"}
             assert client.post("/api/decisions", json=decision).status_code == 422
             decision["override_reason"] = "Test override after reviewing the recorded evidence"
+            assert client.post("/api/decisions", json={**decision, "decided_by": "  "}).status_code == 422
             accepted = client.post("/api/decisions", json=decision)
             assert accepted.status_code == 201
             assert not accepted.json()["agreed_with_recommendation"]
@@ -41,6 +53,24 @@ def test_brief_does_not_decide_and_manager_override_is_audited(tmp_path, monkeyp
             assert record["snapshot"]["model_id"] == "akamai:hackathon-chat"
             assert record["decisions"][0]["decision_posture"] == "TELEWORK"
             assert record["snapshot"]["posture"]["posture"] == "EARLY_DISMISSAL"
+            did = accepted.json()["id"]
+            result = client.post("/api/notifications/packages", json={"decision_id": did})
+            assert result.status_code == 200
+            package = result.json()
+            assert package["posture"] == "TELEWORK"  # The manager's override, not the AI recommendation.
+            assert package["groups"] and package["messages"] == []
+            assert not any(g["approved"] for g in package["groups"])
+            assert "Powered by Akamai" in package["draft_source"]
+            assert package["draft_inference"]["requests"][0]["usage"]["total_tokens"] == 30
+            assert any("telework" in g["instruction"] for g in package["groups"])
+            action = {"version": package["version"], "actor": "Test Manager"}
+            assert client.post(f"/api/notifications/packages/{package['id']}/send", json=action).status_code == 422
+            assert client.post("/api/notifications/packages", json={"decision_id": did}).json()["id"] == package["id"]
+            assert len(notification_calls) == 1  # Reopening a draft never repeats inference.
+            stored = client.get("/api/notifications").json()["packages"][0]
+            assert stored["draft_inference"] == package["draft_inference"]
+            audit = client.get(f"/api/notifications/packages/{package['id']}/audit").json()
+            assert json.loads(audit[0]["detail_json"])["draft_inference"] == package["draft_inference"]
     finally:
         db.set_engine(old)
         engine.dispose()

@@ -99,7 +99,7 @@ day: details, scheduled telework, leave and days off all apply.
 ### Tests
 
 ```bash
-npm test           # 67 backend tests: interval expansion, units, thresholds and margins, posture timing,
+npm test           # Backend tests: interval expansion, units, thresholds and margins, posture timing,
                    # confidence, counterfactuals, analogs, snapshot immutability, AI validation/fallback,
                    # and an end-to-end evaluation of the 2020 derecho from fixtures (offline)
 ```
@@ -121,7 +121,9 @@ npm test           # 67 backend tests: interval expansion, units, thresholds and
 
 The dashboard works fully with **no API key**: the deterministic template rationale is used and labelled as such.
 With a workshop key, Akamai produces the manager decision brief, alert summaries, watch items and historical
-comparisons. See [Akamai setup, usage bounds and optional cloud deployment](docs/akamai-usage.md).
+comparisons. Akamai also drafts weather-only notification wording after a manager records a decision; each
+notification group still requires manager approval. Provider identity and token usage are recorded with the
+draft. See [Akamai setup, usage bounds and optional cloud deployment](docs/akamai-usage.md).
 
 ## How a recommendation is made
 

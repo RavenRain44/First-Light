@@ -49,7 +49,8 @@ def env(tmp_path, monkeypatch):
 
 
 async def template(snap):
-    return "Weather assessment: winter hazard.", "Template (no model)"
+    return "Weather assessment: winter hazard.", "Template (no model)", {
+        "provider": "template", "fallback_used": True, "requests": [], "failures": []}
 
 
 def decision(posture="CLOSED"):
@@ -216,17 +217,23 @@ def test_no_credentials_template_and_ai_excludes_contacts(env, monkeypatch):
     spec = util.spec_from_file_location("notify_copy", n.__file__)
     copy = util.module_from_spec(spec); spec.loader.exec_module(copy)
     async def no_model(system, user):
-        return None, "none"
+        return None, "none", {"provider": "template", "requests": [], "failures": []}
     monkeypatch.setattr(copy, "hazard_sentence", no_model)
-    wording, source = asyncio.run(copy.weather_wording(env.snap))
+    wording, source, _ = asyncio.run(copy.weather_wording(env.snap))
     assert source == "Template (no model)" and "winter" in wording
     captured = []
-    async def unsafe_model(system, user):
+    from ai import agent
+    monkeypatch.setattr(agent.settings, "model_provider", "akamai")
+    monkeypatch.setattr(agent.settings, "akamai_api_key", "test-team-key")
+    async def unsafe_model(system, user, *args):
         captured.append(user)
-        return "Close the facility and do not report.", "test:model"
-    monkeypatch.setattr(copy, "hazard_sentence", unsafe_model)
-    _, source = asyncio.run(copy.weather_wording({**env.snap, "employees": [{"email": "private@example.com"}]}))
-    assert source == "Template (AI draft rejected)"
+        return json.dumps({"explanation": "Close the facility and do not report."}), {
+            "provider": "akamai", "model": "hackathon-chat", "usage": None}
+    monkeypatch.setattr(agent, "_akamai_chat", unsafe_model)
+    monkeypatch.setattr(copy, "hazard_sentence", agent.hazard_sentence)
+    _, source, inference = asyncio.run(copy.weather_wording({**env.snap, "employees": [{"email": "private@example.com"}]}))
+    assert source == "Template (AI unavailable or draft rejected)"
+    assert inference["provider"] == "template" and len(inference["requests"]) == 1
     assert "private@example.com" not in captured[0]
 
 
@@ -274,6 +281,10 @@ def test_explicit_manual_update_can_create_groups_for_unchanged_decision(env):
     manual = asyncio.run(n.create(did, include_unchanged=True))
     assert manual["id"] == empty["id"] and manual["groups"]
     assert not manual["messages"] and not any(g["approved"] for g in manual["groups"])
+    with db.session() as s:
+        row = s.exec(select(NotificationAudit).where(NotificationAudit.package_id == manual["id"],
+                     NotificationAudit.action == "manual_update_groups_created")).one()
+        assert json.loads(row.detail_json)["draft_inference"] == manual["draft_inference"]
 
 
 def test_one_action_reviews_all_groups_then_sends(env):

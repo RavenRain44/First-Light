@@ -63,7 +63,7 @@ export function AIPanel({ snap }: { snap: Snapshot }) {
         <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">Why this is suggested</h3>
         <p key={snap.snapshot_id} className="cc-fade mt-2 text-[15px] leading-relaxed">{overview || snap.posture.reasons.join(" ") || ai.headline}</p>
         {snap.roster.expected_in_building !== undefined && (
-          <p className="mt-2 text-xs text-muted">{snap.roster.expected_in_building} of {snap.roster.assigned} assigned employees expected on site. Brief as of {fmtTime(snap.as_of, tz)}.</p>
+          <p className="mt-2 text-xs text-muted">{snap.roster.expected_in_building} people expected on site · {snap.roster.assigned} employees assigned to this facility. Brief as of {fmtTime(snap.as_of, tz)}.</p>
         )}
         {snap.roster.essential_in_building !== undefined && <p className="mt-1 text-xs text-muted">
           {snap.roster.essential_in_building} essential staff{snap.roster.accessibility_needs_in_building !== undefined && ` · ${snap.roster.accessibility_needs_in_building} with accessibility needs`}.
