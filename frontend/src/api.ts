@@ -23,6 +23,9 @@ export const api = {
     req<Snapshot>("/api/evaluate", { method: "POST", body: JSON.stringify({ mode: "replay", as_of, event_id }) }),
   timeseries: (snapshot_id: string) => req<any>(`/api/timeseries?snapshot_id=${snapshot_id}`),
   roads: (as_of?: string) => req<any>(`/api/roads${as_of ? `?as_of=${encodeURIComponent(as_of)}` : ""}`),
+  cameras: (as_of?: string) => req<{ status: string; detail: string | null; as_of: string; cameras: import("./types").Camera[]; note: string; source_url?: string; fetched_at?: string }>(
+    `/api/cameras${as_of ? `?as_of=${encodeURIComponent(as_of)}` : ""}`),
+  cameraImage: (url: string) => `/api/cameras/image?u=${encodeURIComponent(url)}`,
   thresholds: () => req<any>("/api/thresholds"),
   history: () => req<any[]>("/api/snapshots?limit=40"),
   decisions: () => req<Decision[]>("/api/decisions"),

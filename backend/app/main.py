@@ -13,7 +13,7 @@ from app import snapshots
 from app.config import settings
 from app.db import get_engine
 from app.facility import load_facility
-from app.routers import core, history, livecheck
+from app.routers import cameras, core, history, livecheck
 
 log = logging.getLogger("closurecall")
 
@@ -45,3 +45,4 @@ app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http
 app.include_router(core.router)
 app.include_router(history.router)
 app.include_router(livecheck.router)
+app.include_router(cameras.router)

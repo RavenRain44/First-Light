@@ -181,3 +181,14 @@ input[type="range"] { accent-color: var(--accent); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* Iowa DOT camera markers */
+.cc-cam {
+  display: grid; place-items: center; width: 26px; height: 26px; border-radius: 9999px;
+  background: #ffffff; color: #1d4ed8; border: 2px solid #1d4ed8;
+  box-shadow: 0 1px 4px rgba(11, 27, 46, 0.35);
+  transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+  animation: cc-pop 0.35s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.cc-cam:hover { transform: scale(1.15); }
+.cc-cam-on { background: #1d4ed8; color: #ffffff; transform: scale(1.2); }

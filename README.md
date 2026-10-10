@@ -61,6 +61,24 @@ In demo mode every source is served from the committed cache. "Live" is pinned t
 was fetched, so the demo is identical days later. **Live Check is the exception: it always calls the real NWS API.**
 To refresh the cached "live" moment before a demo, run once online (`npm run dev`, click *Re-evaluate now*).
 
+### Iowa DOT cameras
+
+The Roads map has a **Map layers** panel. Turn on **DOT cameras** to show the 20 Iowa DOT roadside (RWIS)
+cameras nearest the facility; click one to see its latest still image and switch between its views. In Replay
+the cameras show what they captured at that time (3-hour archive grid, never later than the replay moment).
+Images are stills refreshed every few minutes, not video, and they are for situational awareness only: they are
+not inputs to the recommendation and are not stored on snapshots.
+
+For the offline demo, cache the images first (online, about 1 minute, ~80 MB in the git-ignored
+`backend/var/camera_cache`):
+
+```bash
+npm run cache:cameras
+```
+
+That pins the current camera list with every view, plus each historical event's impact day (main view, every
+3 hours). In `DEMO_MODE` only cached images are offered; a camera with no cached image is simply not shown.
+
 ### Tests
 
 ```bash
@@ -199,6 +217,7 @@ ENH/MDT outlooks; forecast gust >= 45 mph; wind chill <= -20 F and <= -35 F (DMX
 | `POST /api/decisions`, `GET /api/decisions` | record / list human decisions |
 | `GET /api/live-check/alerts`, `POST /api/live-check/evaluate` | national alerts and what-if evaluation |
 | `GET /api/thresholds` | registry with anchors, verified flags, backtest summary |
+| `GET /api/cameras?as_of=`, `GET /api/cameras/image?u=` | 20 nearest Iowa DOT cameras with views; cached image proxy (IEM archive URLs only) |
 | `POST /api/notifications/preview` | **501** stub: the notification package is the next phase |
 
 ## Repository layout

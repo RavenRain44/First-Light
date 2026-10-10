@@ -13,6 +13,7 @@ if (!existsSync(py)) {
 const arg = process.argv[2];
 const args = arg === "--test" ? ["-m", "pytest", "-q"]
   : arg === "--history" ? ["-m", "scripts.build_history"]
+  : arg === "--cameras" ? ["-m", "scripts.cache_cameras"]
   : ["-m", "uvicorn", "app.main:app", "--reload", "--port", "8000"];
 const child = spawn(py, args, { cwd: backend, stdio: "inherit" });
 child.on("exit", (code) => process.exit(code ?? 0));

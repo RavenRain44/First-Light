@@ -197,3 +197,18 @@ export interface Decision {
   decided_at: string;
   label: string;
 }
+
+export interface CameraView { view: number; url: string; time: string; label: string }
+
+export interface Camera {
+  id: string;
+  name: string;
+  lat: number;
+  lon: number;
+  km: number;
+  direction: string;
+  corridor: string | null;
+  corridor_name: string | null;
+  updated: string;
+  views: CameraView[];
+}
