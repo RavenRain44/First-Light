@@ -85,7 +85,7 @@ That pins the current camera list with every view, plus each historical event's 
 ### Tests
 
 ```bash
-npm test           # 50 backend tests: interval expansion, units, thresholds and margins, posture timing,
+npm test           # 67 backend tests: interval expansion, units, thresholds and margins, posture timing,
                    # confidence, counterfactuals, analogs, snapshot immutability, AI validation/fallback,
                    # and an end-to-end evaluation of the 2020 derecho from fixtures (offline)
 ```
@@ -100,11 +100,14 @@ npm test           # 50 backend tests: interval expansion, units, thresholds and
 | `SNAPSHOT_STALE_SECONDS` | `600` | `GET /api/snapshot/latest` re-evaluates when the latest live snapshot is older |
 | `LIVE_CACHE_TTL_SECONDS` | `600` | Live HTTP cache TTL (IEM asks clients not to hammer it; archives are cached forever) |
 | `DATABASE_PATH` | `backend/var/closurecall.db` | SQLite file |
-| `MODEL_PROVIDER` | `none` | `anthropic`, `bedrock`, `openai` (any OpenAI-compatible endpoint) or `none` |
-| `MODEL_ID` | provider default | e.g. `claude-sonnet-5-5`; required for Bedrock |
-| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `OPENAI_BASE_URL` / `AWS_REGION` | | Provider credentials (Bedrock uses the AWS credential chain) |
+| `MODEL_PROVIDER` | `akamai` | Akamai workshop inference; `none` disables inference |
+| `AKAMAI_API_KEY` | | Backend-only workshop team key for `hackathon-chat` |
+| `AWS_FALLBACK_ENABLED` | `false` | Explicit opt-in to AWS Bedrock if Akamai fails |
+| `AWS_BEDROCK_MODEL_ID` / `AWS_REGION` | / `us-east-1` | Optional Bedrock Converse model and region; uses the AWS credential chain |
 
 The dashboard works fully with **no API key**: the deterministic template rationale is used and labelled as such.
+With a workshop key, Akamai produces the manager decision brief, alert summaries, watch items and historical
+comparisons. See [Akamai setup, usage bounds and optional cloud deployment](docs/akamai-usage.md).
 
 ## How a recommendation is made
 
@@ -117,7 +120,7 @@ adapters (NWS, IEM)  ->  normalized inputs (value, unit, source, URL, fetched_at
    -> posture: NORMAL | DELAYED_ARRIVAL | EARLY_DISMISSAL | TELEWORK | CLOSED (with OPM label)
    -> confidence (completeness, freshness, forecast/obs/alert agreement, alert certainty)
    -> "what would change this" (rules re-run with each input moved past its threshold)
-   -> Strands agent explains it (never decides)  ->  immutable snapshot
+   -> Akamai explains it (never decides)  ->  immutable snapshot
 ```
 
 - **Timing matters.** The same hazard maps to different postures by when it hits: warning-level ice from 03:00-05:00
@@ -125,10 +128,13 @@ adapters (NWS, IEM)  ->  normalized inputs (value, unit, source, URL, fetched_at
   dismissal; a Tornado Warning in effect during work hours is a closure with shelter-in-place guidance.
 - **Decision day.** Before noon the decision is about today; after noon (if today is quiet) it is about the next
   workday. Weekends roll to Monday.
-- **The AI never decides.** One Strands agent (`backend/ai/agent.py`) with five read-only tools over the current
-  snapshot (`get_snapshot_summary`, `get_triggered_rules`, `get_alerts`, `get_road_conditions`, `get_analogs`)
-  returns strict JSON (Pydantic). Every number in the rationale must exist in the snapshot. On failure it retries
-  once with feedback, then falls back to the template. The model id and prompt version are stored on the snapshot.
+- **The AI never decides.** Akamai workshop inference (`backend/ai/agent.py`) receives five read-only snapshot
+  views, including the computed posture, triggered rules, alerts, roads and historical analogs. It returns a JSON
+  decision brief with a concise summary, evidence citations, uncertainty and a paste-ready rationale. Every text
+  field is checked for unsupported numbers, citations are checked against the snapshot, and the manager's final
+  authority is explicit. One failed validation can trigger one repair; otherwise a labeled template is used.
+  AWS Bedrock is an optional fallback, disabled for judging. Provider, token usage, prompt version and validation
+  outcomes are stored with the immutable snapshot.
 
 ## Readiness (adapted from Cooper's color code)
 
@@ -230,7 +236,7 @@ backend/
   app/        FastAPI app, routers, SQLModel tables, snapshot service, facility/roster
   adapters/   base interface + nws, iem_obs, iem_roads (roads + RWIS), iem_vtec (archive + SPC), iem_mos, iem_lsr, cache
   engine/     normalize, features, scoring, posture, confidence, counterfactual, analogs, evaluate
-  ai/         Strands agent, snapshot tools, prompts/schema, deterministic fallback
+  ai/         Akamai briefs, grounded snapshot views, prompts/schema, optional AWS fallback
   config/     thresholds.yaml
   data/       facility.json, employees.json (synthetic)
   fixtures/   probe/ (real samples), http_cache/ (gzip cache, demo mode), history/ (event exports)

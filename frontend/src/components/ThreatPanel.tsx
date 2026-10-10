@@ -71,7 +71,7 @@ function RuleRow({ r, tz, open, toggle, inputsById }: { r: RuleResult; tz: strin
       <div className="cc-collapse" data-open={open} aria-hidden={!open}>
         <div><div className="space-y-1 border-t border-edge px-3 py-2 text-xs text-ink2">
           <p><span className="font-semibold text-ink">Anchor:</span> {r.anchor}</p>
-          <p><span className="font-semibold text-ink">Source:</span> <a className="underline" href={r.source_url} target="_blank" rel="noreferrer">{r.source_url}</a> · basis: {r.basis} · {r.verified ? "verified against source" : "NOT verified"}</p>
+          <p><span className="font-semibold text-ink">Source:</span> <a className="break-all underline" href={r.source_url} target="_blank" rel="noreferrer">{r.source_url}</a> · basis: {r.basis} · {r.verified ? "verified against source" : "NOT verified"}</p>
           <p><span className="font-semibold text-ink">Window:</span> {r.time_window}{r.window_start ? ` · exceeded ${fmtTime(r.window_start, tz)} → ${fmtTime(r.window_end, tz)}` : ""}</p>
           {r.detail && <p><span className="font-semibold text-ink">Detail:</span> {r.detail}</p>}
           <p><span className="font-semibold text-ink">Inputs:</span> {r.input_ids.join(", ") || "—"} · rule id <code>{r.rule_id}</code></p>

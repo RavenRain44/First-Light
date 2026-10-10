@@ -215,18 +215,16 @@ def test_no_credentials_template_and_ai_excludes_contacts(env, monkeypatch):
     from importlib import util
     spec = util.spec_from_file_location("notify_copy", n.__file__)
     copy = util.module_from_spec(spec); spec.loader.exec_module(copy)
-    monkeypatch.setattr(copy, "build_model", lambda: (None, "none"))
+    async def no_model(system, user):
+        return None, "none"
+    monkeypatch.setattr(copy, "hazard_sentence", no_model)
     wording, source = asyncio.run(copy.weather_wording(env.snap))
     assert source == "Template (no model)" and "winter" in wording
     captured = []
-    class Agent:
-        def __init__(self, **kw): pass
-        async def invoke_async(self, prompt, **kw):
-            captured.append(prompt)
-            return SimpleNamespace(structured_output={"explanation": "Close the facility and do not report."})
-    import strands
-    monkeypatch.setattr(strands, "Agent", Agent)
-    monkeypatch.setattr(copy, "build_model", lambda: (object(), "test:model"))
+    async def unsafe_model(system, user):
+        captured.append(user)
+        return "Close the facility and do not report.", "test:model"
+    monkeypatch.setattr(copy, "hazard_sentence", unsafe_model)
     _, source = asyncio.run(copy.weather_wording({**env.snap, "employees": [{"email": "private@example.com"}]}))
     assert source == "Template (AI draft rejected)"
     assert "private@example.com" not in captured[0]
