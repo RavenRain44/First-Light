@@ -6,7 +6,8 @@ produced it and (for forecasts) the hourly series, so a rule can work out
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
+from zoneinfo import ZoneInfo
 from typing import Any
 
 from pydantic import BaseModel
@@ -61,7 +62,7 @@ def _missing(sid: str, label: str, unit: str, role: str, why: str) -> Signal:
 
 
 def extract(inputs_list: list[NormalizedInput], as_of: datetime, employees: list[dict] | None = None,
-            horizon_end: datetime | None = None) -> Context:
+            horizon_end: datetime | None = None, tz_name: str = "America/Chicago") -> Context:
     as_of = utc(as_of)
     inputs = {i.id: i for i in inputs_list}
     h0 = as_of.replace(minute=0, second=0, microsecond=0)
@@ -199,8 +200,13 @@ def extract(inputs_list: list[NormalizedInput], as_of: datetime, employees: list
         d = spc.data or {}
         start = datetime.fromisoformat(d["issue"].replace("Z", "+00:00")) if d.get("issue") else as_of
         end = datetime.fromisoformat(d["expire"].replace("Z", "+00:00")) if d.get("expire") else as_of + timedelta(hours=24)
+        # The outlook covers 12Z-12Z but says nothing about timing. Policy: time it to the local
+        # afternoon/evening convective peak (12:00-21:00) of the outlook day.
+        day = (utc(start) + timedelta(hours=12)).astimezone(ZoneInfo(tz_name)).date()
+        w0 = max(utc(start), datetime.combine(day, time(12), ZoneInfo(tz_name)).astimezone(timezone.utc))
+        w1 = min(utc(end), datetime.combine(day, time(21), ZoneInfo(tz_name)).astimezone(timezone.utc))
         sig["spc_day1_rank"] = Signal(id="spc_day1_rank", label="SPC day-1 convective outlook", value=float(d.get("rank", -1)),
-                                      unit="category", role="outlook", peak_time=None, window=(utc(start), utc(end)),
+                                      unit="category", role="outlook", peak_time=w0, window=(w0, w1),
                                       input_ids=[spc.id], detail=str(spc.value))
     else:
         sig["spc_day1_rank"] = _missing("spc_day1_rank", "SPC day-1 convective outlook", "category", "outlook", "no SPC outlook")

@@ -1,0 +1,1466 @@
+{
+ "event": {
+  "id": "derecho-2020-08-10",
+  "name": "Aug 10, 2020 derecho",
+  "hazard": "wind",
+  "start": "2020-08-09T17:00:00+00:00",
+  "end": "2020-08-11T04:00:00+00:00",
+  "impact_day": "2020-08-10",
+  "summary": "Fast-moving derecho crossed central Iowa late morning; widespread 70-100+ mph gusts and tree/power damage."
+ },
+ "verification": {
+  "ok": true,
+  "checks": [
+   {
+    "ugc": "IAC169",
+    "product": "SV.W",
+    "verified": true,
+    "source_url": "https://mesonet.agron.iastate.edu/json/vtec_events_byugc.php?ugc=IAC169&sdate=2020-08-08&edate=2020-08-12",
+    "events": [
+     {
+      "name": "Severe Thunderstorm Warning",
+      "issue": "2020-08-10T15:39:00Z",
+      "expire": "2020-08-10T16:30:00Z",
+      "product_id": "202008101539-KDMX-WUUS53-SVRDMX",
+      "link": "https://mesonet.agron.iastate.edu/vtec/?year=2020&wfo=KDMX&phenomena=SV&significance=W&eventid=0144"
+     },
+     {
+      "name": "Severe Thunderstorm Warning",
+      "issue": "2020-08-10T16:19:00Z",
+      "expire": "2020-08-10T17:00:00Z",
+      "product_id": "202008101619-KDMX-WUUS53-SVRDMX",
+      "link": "https://mesonet.agron.iastate.edu/vtec/?year=2020&wfo=KDMX&phenomena=SV&significance=W&eventid=0148"
+     }
+    ]
+   }
+  ]
+ },
+ "outcome": {
+  "summary": "21 storm reports within 25 mi (11 tstm wnd gst, 10 tstm wnd dmg); max reported wind 85 mph; AMW peak gust 24 mph.",
+  "severe_impact": true,
+  "lsr_count": 21,
+  "lsr_by_type": {
+   "TSTM WND GST": 11,
+   "TSTM WND DMG": 10
+  },
+  "lsr_source_url": "https://mesonet.agron.iastate.edu/api/1/nws/lsrs_by_point.json?lat=42.0308&lon=-93.6319&radius_miles=25&begints=2020-08-09T17:00:00Z&endts=2020-08-11T04:00:00Z",
+  "lsrs": [
+   {
+    "valid": "2020-08-10T15:38:00Z",
+    "type": "G",
+    "typetext": "TSTM WND GST",
+    "magnitude": 65.0,
+    "unit": "MPH",
+    "city": "2 WSW PILOT MOUND",
+    "county": "BOONE",
+    "remark": "TREE DAMAGE REPORTED. WINDS GREATER THAN 60 MPH ESTIMATED.",
+    "source": "TRAINED SPOTTER",
+    "lat": 42.15,
+    "lon": -94.05,
+    "qualifier": "E"
+   },
+   {
+    "valid": "2020-08-10T15:52:00Z",
+    "type": "D",
+    "typetext": "TSTM WND DMG",
+    "magnitude": null,
+    "unit": null,
+    "city": "3 ESE BOONE",
+    "county": "BOONE",
+    "remark": "SEMI BLOWN OVER AT US30/HIGHWAY 17 INTERCHANGE. TIME ESTIMATED BY RADAR.",
+    "source": "PUBLIC",
+    "lat": 42.03,
+    "lon": -93.82,
+    "qualifier": null
+   },
+   {
+    "valid": "2020-08-10T15:54:00Z",
+    "type": "D",
+    "typetext": "TSTM WND DMG",
+    "magnitude": null,
+    "unit": null,
+    "city": "LUTHER",
+    "county": "BOONE",
+    "remark": "SEVERAL LARGE TREE LIMBS DOWN, POWER OUT.",
+    "source": "TRAINED SPOTTER",
+    "lat": 41.97,
+    "lon": -93.82,
+    "qualifier": null
+   },
+   {
+    "valid": "2020-08-10T15:57:00Z",
+    "type": "D",
+    "typetext": "TSTM WND DMG",
+    "magnitude": null,
+    "unit": null,
+    "city": "BOONE",
+    "county": "BOONE",
+    "remark": "POWER OUT, TREES DOWN.",
+    "source": "PUBLIC",
+    "lat": 42.05,
+    "lon": -93.88,
+    "qualifier": null
+   },
+   {
+    "valid": "2020-08-10T16:00:00Z",
+    "type": "D",
+    "typetext": "TSTM WND DMG",
+    "magnitude": null,
+    "unit": null,
+    "city": "1 N BONDURANT",
+    "county": "POLK",
+    "remark": "NUMEROUS TREES AND POWERLINES DOWN. TIME ESTIMATED.",
+    "source": "TRAINED SPOTTER",
+    "lat": 41.7,
+    "lon": -93.46,
+    "qualifier": null
+   },
+   {
+    "valid": "2020-08-10T16:01:00Z",
+    "type": "G",
+    "typetext": "TSTM WND GST",
+    "magnitude": 69.0,
+    "unit": "MPH",
+    "city": "3 NE ANKENY",
+    "county": "POLK",
+    "remark": "MESONET STATION RAKI4 ANKENY - I35 AND NE 36TH.",
+    "source": "MESONET",
+    "lat": 41.76,
+    "lon": -93.57,
+    "qualifier": "M"
+   },
+   {
+    "valid": "2020-08-10T16:06:00Z",
+    "type": "G",
+    "typetext": "TSTM WND GST",
+    "magnitude": 59.0,
+    "unit": "MPH",
+    "city": "MADRID",
+    "county": "BOONE",
+    "remark": "MESONET STATION CW2001 MADRID.",
+    "source": "MESONET",
+    "lat": 41.87,
+    "lon": -93.81,
+    "qualifier": "M"
+   },
+   {
+    "valid": "2020-08-10T16:07:00Z",
+    "type": "G",
+    "typetext": "TSTM WND GST",
+    "magnitude": 70.0,
+    "unit": "MPH",
+    "city": "GILBERT",
+    "county": "STORY",
+    "remark": null,
+    "source": "TRAINED SPOTTER",
+    "lat": 42.11,
+    "lon": -93.65,
+    "qualifier": "E"
+   },
+   {
+    "valid": "2020-08-10T16:10:00Z",
+    "type": "D",
+    "typetext": "TSTM WND DMG",
+    "magnitude": null,
+    "unit": null,
+    "city": "1 W JOHNSTON",
+    "county": "POLK",
+    "remark": "NW JOHNSTON TREE UPROOTED. TIME ESTIMATED.",
+    "source": "NWS EMPLOYEE",
+    "lat": 41.68,
+    "lon": -93.75,
+    "qualifier": null
+   },
+   {
+    "valid": "2020-08-10T16:10:00Z",
+    "type": "D",
+    "typetext": "TSTM WND DMG",
+    "magnitude": null,
+    "unit": null,
+    "city": "2 WNW ANKENY",
+    "county": "POLK",
+    "remark": "6 IN LARGER TREE LIMBS DOWN. POWER OUTAGES. TIME ESTIMATED BY RADAR. WIND GUSTS OF 50 MPH LASTED 30 MINUTES. REPORT 11:40 AM.",
+    "source": "TRAINED SPOTTER",
+    "lat": 41.74,
+    "lon": -93.64,
+    "qualifier": null
+   },
+   {
+    "valid": "2020-08-10T16:10:00Z",
+    "type": "G",
+    "typetext": "TSTM WND GST",
+    "magnitude": 62.0,
+    "unit": "MPH",
+    "city": "3 ENE AMES",
+    "county": "STORY",
+    "remark": "MESONET STATION RAMI4 2 E AMES.",
+    "source": "MESONET",
+    "lat": 42.03,
+    "lon": -93.57,
+    "qualifier": "M"
+   },
+   {
+    "valid": "2020-08-10T16:10:00Z",
+    "type": "G",
+    "typetext": "TSTM WND GST",
+    "magnitude": 85.0,
+    "unit": "MPH",
+    "city": "1 W ELKHART",
+    "county": "POLK",
+    "remark": "MESONET STATION UP752 0.6 W ELKHART (UPR).",
+    "source": "MESONET",
+    "lat": 41.79,
+    "lon": -93.53,
+    "qualifier": "M"
+   },
+   {
+    "valid": "2020-08-10T16:11:00Z",
+    "type": "G",
+    "typetext": "TSTM WND GST",
+    "magnitude": 70.0,
+    "unit": "MPH",
+    "city": "1 N AMES",
+    "county": "STORY",
+    "remark": "ESTIMATED OVER 70 MPH WINDS IN AMES.",
+    "source": "TRAINED SPOTTER",
+    "lat": 42.04,
+    "lon": -93.63,
+    "qualifier": "E"
+   },
+   {
+    "valid": "2020-08-10T16:15:00Z",
+    "type": "D",
+    "typetext": "TSTM WND DMG",
+    "magnitude": null,
+    "unit": null,
+    "city": "ZEARING",
+    "county": "STORY",
+    "remark": "TREE AND BIN DAMAGE. TIME ESTIMATED.",
+    "source": "TRAINED SPOTTER",
+    "lat": 42.16,
+    "lon": -93.3,
+    "qualifier": null
+   },
+   {
+    "valid": "2020-08-10T16:15:00Z",
+    "type": "G",
+    "typetext": "TSTM WND GST",
+    "magnitude": 78.0,
+    "unit": "MPH",
+    "city": "3 E SAYLORVILLE",
+    "county": "POLK",
+    "remark": "AWOS STATION KIKV ANKENY AIRPORT.",
+    "source": "AWOS",
+    "lat": 41.68,
+    "lon": -93.57,
+    "qualifier": "M"
+   },
+   {
+    "valid": "2020-08-10T16:20:00Z",
+    "type": "D",
+    "typetext": "TSTM WND DMG",
+    "magnitude": null,
+    "unit": null,
+    "city": "NEVADA",
+    "county": "STORY",
+    "remark": "TREES DOWN WITH HIGH WINDS. POWER ON/OFF.",
+    "source": "PUBLIC",
+    "lat": 42.02,
+    "lon": -93.45,
+    "qualifier": null
+   },
+   {
+    "valid": "2020-08-10T16:24:00Z",
+    "type": "G",
+    "typetext": "TSTM WND GST",
+    "magnitude": 70.0,
+    "unit": "MPH",
+    "city": "1 WSW AMES",
+    "county": "STORY",
+    "remark": "IOWA STATE CAMPUS. 65 TO 75 MPH WINDS ESTIMATED. EXTENSIVE TREE DAMAGE THROUGHOUT AMES. NO POWER.",
+    "source": "TRAINED SPOTTER",
+    "lat": 42.02,
+    "lon": -93.64,
+    "qualifier": "E"
+   },
+   {
+    "valid": "2020-08-10T16:26:00Z",
+    "type": "D",
+    "typetext": "TSTM WND DMG",
+    "magnitude": null,
+    "unit": null,
+    "city": "2 W ANKENY",
+    "county": "POLK",
+    "remark": "MAILBOXES BLOWN DOWN, ALONG WITH TREES AND BRANCHES OF UNDETERMINED SIZE.",
+    "source": "PUBLIC",
+    "lat": 41.74,
+    "lon": -93.64,
+    "qualifier": null
+   },
+   {
+    "valid": "2020-08-10T16:30:00Z",
+    "type": "G",
+    "typetext": "TSTM WND GST",
+    "magnitude": 77.0,
+    "unit": "MPH",
+    "city": "2 E SAYLORVILLE",
+    "county": "POLK",
+    "remark": "PEAK WIND GUST OF 77 MPH VIA DAVIS WEATHER STATION. TREE BRANCHES OF 2-3 INCH DIAMETER BROKEN AND ON THE GROUND. 4 INCH TREE BROKE OFF AT THE GROUND.",
+    "source": "PUBLIC",
+    "lat": 41.69,
+    "lon": -93.59,
+    "qualifier": "M"
+   },
+   {
+    "valid": "2020-08-10T16:38:00Z",
+    "type": "G",
+    "typetext": "TSTM WND GST",
+    "magnitude": 77.0,
+    "unit": "MPH",
+    "city": "3 S HUBBARD",
+    "county": "HARDIN",
+    "remark": "MESONET STATION FW1669 HUBBARD.",
+    "source": "MESONET",
+    "lat": 42.27,
+    "lon": -93.3,
+    "qualifier": "M"
+   },
+   {
+    "valid": "2020-08-10T16:58:00Z",
+    "type": "D",
+    "typetext": "TSTM WND DMG",
+    "magnitude": null,
+    "unit": null,
+    "city": "STATE CENTER",
+    "county": "MARSHALL",
+    "remark": "SIGNIFICANT DAMAGE IN STATE CENTER. NUMEROUS CARS BLOWN OFF US30 AND FLIPPED.",
+    "source": "EMERGENCY MNGR",
+    "lat": 42.02,
+    "lon": -93.17,
+    "qualifier": null
+   }
+  ],
+  "max_reported_wind_mph": 85.0,
+  "max_reported_snow_in": null,
+  "max_reported_ice_in": null,
+  "amw_peak_gust_mph": 24.2,
+  "amw_peak_gust_time": "2020-08-10T15:00:00+00:00",
+  "amw_freezing_precip_hours": 0,
+  "amw_snow_hours": 0,
+  "worst_corridor_rank": null,
+  "amw_obs_note": "AMW ASOS stopped reporting during the derecho (power loss); LSRs are the ground truth."
+ },
+ "backtest": {
+  "at_0400_local": {
+   "as_of": "2020-08-10T09:00:00+00:00",
+   "posture": "NORMAL",
+   "confidence": "high",
+   "decision_day": "2020-08-10"
+  },
+  "first_non_normal": {
+   "as_of": "2020-08-10T16:00:00+00:00",
+   "posture": "EARLY_DISMISSAL"
+  },
+  "peak_posture": {
+   "as_of": "2020-08-10T16:00:00+00:00",
+   "posture": "EARLY_DISMISSAL"
+  },
+  "outcome_severe": true,
+  "verdict": "missed at 04:00; first non-normal at Mon 11:00 CDT",
+  "label": "simulated by rules (backtest)"
+ },
+ "timeline": [
+  {
+   "snapshot_id": "176a3234b05d4634937ac40fa6adfbef",
+   "as_of": "2020-08-09T17:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 18.4,
+    "min_apparent_f": 71.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "affcb684c8eb43bdbf23ea4110c72ee5",
+   "as_of": "2020-08-09T18:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 18.4,
+    "min_apparent_f": 71.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "716ef58e7e334e03b29e3fdcea48be34",
+   "as_of": "2020-08-09T19:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 19.6,
+    "min_apparent_f": 71.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "83c8283e50c5489fa81f183840962336",
+   "as_of": "2020-08-09T20:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 19.6,
+    "min_apparent_f": 71.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "d17f1ff8934c489e918b449a866ef737",
+   "as_of": "2020-08-09T21:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 19.6,
+    "min_apparent_f": 71.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "201a498f64824f6fa136b8826bbca2ba",
+   "as_of": "2020-08-09T22:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 19.6,
+    "min_apparent_f": 71.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "32fae5af263d41279b6a25635a13a6f3",
+   "as_of": "2020-08-09T23:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 21.9,
+    "min_apparent_f": 71.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "6a24ca4840644898b31a806b3ea13963",
+   "as_of": "2020-08-10T00:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 21.9,
+    "min_apparent_f": 71.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "7d00bf1dd87245bfb0d6091d24f95f9e",
+   "as_of": "2020-08-10T01:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 21.9,
+    "min_apparent_f": 71.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "375443ed7d504d15b20db72678816425",
+   "as_of": "2020-08-10T02:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "medium",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 17.3,
+    "min_apparent_f": 71.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "3104659a42aa4e37b00ed8bb3054ca60",
+   "as_of": "2020-08-10T03:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 17.3,
+    "min_apparent_f": 67.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "d891255ef7744fcab5c2a51280d28287",
+   "as_of": "2020-08-10T04:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 17.3,
+    "min_apparent_f": 67.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "9cf13842df08477b85786277f9d37c42",
+   "as_of": "2020-08-10T05:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 17.3,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "662ee55cad594420ad8546f023f14a89",
+   "as_of": "2020-08-10T06:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 17.3,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "e591448ee36b4b198f718a9d3c4e1e63",
+   "as_of": "2020-08-10T07:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 17.3,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "77503f7bb208411fa1c4af1c6fc98ce5",
+   "as_of": "2020-08-10T08:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 17.3,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "ad0ea4cd02884988ae5179fa81d7027f",
+   "as_of": "2020-08-10T09:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 16.1,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "72d9d4bca7de45dcad4da7623ea0eaf0",
+   "as_of": "2020-08-10T10:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 16.1,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "a09c08a58abf44bb94ef3dbfb7ae5b1e",
+   "as_of": "2020-08-10T11:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 16.1,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "10e1cea5c56f474aba550d5b99692227",
+   "as_of": "2020-08-10T12:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 16.1,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "2fa9445049bd45a18ed814bc3ed0648f",
+   "as_of": "2020-08-10T13:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 16.1,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 2.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "827f494ce41e4d21a716ebeeb25db5f5",
+   "as_of": "2020-08-10T14:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 35,
+    "winter": 0
+   },
+   "alerts": [
+    "Severe Thunderstorm Watch"
+   ],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": -0.06666666666666667,
+    "max_gust_mph": 16.1,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 8.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 2.0,
+    "wind_alert_level": 1.0,
+    "wind_level": 1.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "9fd0f27c7f26494da672e7ecdb9f6280",
+   "as_of": "2020-08-10T15:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 35,
+    "winter": 0
+   },
+   "alerts": [
+    "Severe Thunderstorm Watch"
+   ],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": -1.0666666666666667,
+    "max_gust_mph": 17.3,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 8.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 2.0,
+    "wind_alert_level": 1.0,
+    "wind_level": 1.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "0ff9fe952e1c4798aefd5c23c3b96b72",
+   "as_of": "2020-08-10T16:00:00+00:00",
+   "posture": "EARLY_DISMISSAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 85,
+    "winter": 0
+   },
+   "alerts": [
+    "Severe Thunderstorm Warning",
+    "Severe Thunderstorm Watch"
+   ],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": -0.35,
+    "max_gust_mph": 24.2,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 10.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 4.0,
+    "wind_alert_level": 2.0,
+    "wind_level": 2.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "6471585e345848249f069a6e1207dc93",
+   "as_of": "2020-08-10T17:00:00+00:00",
+   "posture": "EARLY_DISMISSAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 65,
+    "winter": 0
+   },
+   "alerts": [
+    "Severe Thunderstorm Watch"
+   ],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 0.0,
+    "max_gust_mph": 24.2,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 12.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 4.0,
+    "wind_alert_level": 1.0,
+    "wind_level": 2.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "3e0d0b7628434a11a1cf3ffb54a05a81",
+   "as_of": "2020-08-10T18:00:00+00:00",
+   "posture": "EARLY_DISMISSAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 65,
+    "winter": 0
+   },
+   "alerts": [
+    "Severe Thunderstorm Watch"
+   ],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": -1.0,
+    "max_gust_mph": 24.2,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 12.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 4.0,
+    "wind_alert_level": 1.0,
+    "wind_level": 2.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "06c9f2a94ae345959f6d20a456baec39",
+   "as_of": "2020-08-10T19:00:00+00:00",
+   "posture": "EARLY_DISMISSAL",
+   "decision_day": "2020-08-10",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 60,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": -2.0,
+    "max_gust_mph": 24.2,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": 12.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 4.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 2.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "43a3877a47604e7fa05d15b60d9a45b6",
+   "as_of": "2020-08-10T20:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-11",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 15.0,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 0.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "819aad979f0d4cf9bc3a469d0d0fb131",
+   "as_of": "2020-08-10T21:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-11",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 15.0,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 0.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "777c27a7cef742d89c3c1eef2a932b58",
+   "as_of": "2020-08-10T22:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-11",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 15.0,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 0.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "4cf0582bcfab40adba21b06c769d212b",
+   "as_of": "2020-08-10T23:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-11",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 12.7,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 0.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "899703f3f18c418bb6c237998f9588b3",
+   "as_of": "2020-08-11T00:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-11",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 12.7,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": 0.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "1cc761884de3419eb69bfa7d1b749389",
+   "as_of": "2020-08-11T01:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-11",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 12.7,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "7eaee19b938647cd9c10de5d2c7002af",
+   "as_of": "2020-08-11T02:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-11",
+   "confidence": "medium",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 10.4,
+    "min_apparent_f": 60.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "1698681bff60468fbb21eac4fa4c2d74",
+   "as_of": "2020-08-11T03:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-11",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 10.4,
+    "min_apparent_f": 58.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  },
+  {
+   "snapshot_id": "7d626f82a22644ee9db0144664dd6944",
+   "as_of": "2020-08-11T04:00:00+00:00",
+   "posture": "NORMAL",
+   "decision_day": "2020-08-11",
+   "confidence": "high",
+   "scores": {
+    "cold": 0,
+    "wind": 0,
+    "winter": 0
+   },
+   "alerts": [],
+   "road_worst_rank": null,
+   "features": {
+    "cold_alert_level": 0.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "hours_to_peak": 48.0,
+    "max_gust_mph": 10.4,
+    "min_apparent_f": 58.0,
+    "obs_freezing_hours": 0.0,
+    "peak_local_hour": -1.0,
+    "road_worst_rank": 0.0,
+    "spc_rank": -1.0,
+    "wind_alert_level": 0.0,
+    "wind_level": 0.0,
+    "winter_alert_level": 0.0,
+    "winter_level": 0.0
+   }
+  }
+ ],
+ "note": "Postures are simulated by the rules engine (backtest), not real USDA decisions."
+}

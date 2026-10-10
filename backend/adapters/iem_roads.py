@@ -95,20 +95,45 @@ def match_corridors(geom: dict, corridors: list[Corridor]) -> list[str]:
     return out
 
 
+def _thin(line: list, max_pts: int = 40) -> list:
+    step = max(1, len(line) // max_pts)
+    keep = line[::step]
+    if keep[-1] != line[-1]:
+        keep.append(line[-1])
+    return [[round(x, 4), round(y, 4)] for x, y in keep]
+
+
+def simplify(geom: dict) -> dict:
+    """Round to ~10 m and keep <= ~40 vertices per line: plenty for corridor matching and the map."""
+    if geom["type"] == "LineString":
+        return {"type": "LineString", "coordinates": _thin(geom["coordinates"])}
+    if geom["type"] == "MultiLineString":
+        return {"type": "MultiLineString", "coordinates": [_thin(line) for line in geom["coordinates"]]}
+    return geom
+
+
 def _trim_near(lat: float, lon: float):
     def trim(data: dict) -> dict:
         feats = []
         for f in data.get("features", []):
             pts = _flatten(f.get("geometry") or {"type": "x", "coordinates": []})
             if any(abs(p[1] - lat) < TRIM_DEG and abs(p[0] - lon) < TRIM_DEG for p in pts):
-                feats.append(f)
+                feats.append({**f, "geometry": simplify(f["geometry"])})
         return {"type": "FeatureCollection", "features": feats}
     return trim
 
 
+ARCHIVE_STEP_HOURS = 3  # archive lookups are floored to a 3-hour grid to keep backtests light on IEM
+
+
+def archive_time(as_of: datetime) -> datetime:
+    t = utc(as_of).replace(minute=0, second=0, microsecond=0)
+    return t.replace(hour=t.hour - t.hour % ARCHIVE_STEP_HOURS)
+
+
 def roads_url(as_of: datetime) -> str:
     base = f"{IEM}/iowa_winter_roadcond.geojson"
-    return f"{base}?valid={iso_z(as_of)}" if is_historical(as_of) else base
+    return f"{base}?valid={iso_z(archive_time(as_of))}" if is_historical(as_of) else base
 
 
 async def fetch_road_geojson(facility: Facility, as_of: datetime) -> tuple[dict, cache.CachedResponse]:
@@ -186,7 +211,7 @@ class IEMRWISAdapter(Adapter):
 
     async def fetch(self, facility: Facility, as_of: datetime) -> list[NormalizedInput]:
         hist = is_historical(as_of)
-        url = f"{IEM}/rwis.json" + (f"?valid={iso_z(as_of)}" if hist else "")
+        url = f"{IEM}/rwis.json" + (f"?valid={iso_z(archive_time(as_of))}" if hist else "")
         self._urls.append(url)
         r = await cache.get_json(url, historical=hist,
                                  trim=(f"ia_near:{facility.lat:.2f},{facility.lon:.2f}", _trim_rwis(facility.lat, facility.lon)))

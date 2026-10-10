@@ -12,7 +12,7 @@ from zoneinfo import ZoneInfo
 from pydantic import BaseModel
 
 from adapters.base import Facility, utc
-from engine.scoring import HazardResult, RuleResult, Thresholds
+from engine.scoring import LEVEL_NAMES, HazardResult, RuleResult, Thresholds
 
 ORDER = ["NORMAL", "DELAYED_ARRIVAL", "EARLY_DISMISSAL", "TELEWORK", "CLOSED"]
 RANK = {p: i for i, p in enumerate(ORDER)}
@@ -69,19 +69,19 @@ def _overlap(a0, a1, b0, b1) -> bool:
     return a0 < b1 and a1 > b0
 
 
-def hazard_posture(hz: HazardResult, rules: list[RuleResult], as_of: datetime, facility: Facility,
-                   timing: dict, D: date) -> tuple[str, str, list[str]]:
-    """Return (posture, reason, guidance) for one hazard on workday D."""
-    if hz.level == 0:
-        return "NORMAL", f"{hz.label}: no thresholds crossed", []
+def _tier_posture(hz: HazardResult, level: int, ctrl: list[RuleResult], as_of: datetime, facility: Facility,
+                  timing: dict, D: date) -> tuple[str, str, list[str]]:
+    """Posture implied by the rules at one severity level of one hazard, from their combined time window."""
     tz = ZoneInfo(facility.timezone)
     am0, am1 = _at(D, timing["am_commute"][0], tz), _at(D, timing["am_commute"][1], tz)
     pm0, pm1 = _at(D, timing["pm_commute"][0], tz), _at(D, timing["pm_commute"][1], tz)
     open_, close = _at(D, facility.hours["open"], tz), _at(D, facility.hours["close"], tz)
     core_end = _at(D, timing["morning_core_end"], tz)
 
-    ws = hz.window_start or utc(as_of)
-    we = hz.window_end or ws + timedelta(hours=6)
+    starts = [r.window_start for r in ctrl if r.window_start]
+    ends = [r.window_end for r in ctrl if r.window_end]
+    ws = min(starts) if starts else utc(as_of)
+    we = max(ends) if ends else ws + timedelta(hours=6)
     if hz.hazard == "winter":
         we = we + timedelta(hours=int(timing.get("winter_road_recovery_hours", 0)))
     ws, we = utc(ws), utc(we)
@@ -93,11 +93,10 @@ def hazard_posture(hz: HazardResult, rules: list[RuleResult], as_of: datetime, f
     now = utc(as_of)
     in_progress_at_work = open_ <= now < close and ws <= now < we
 
-    ctrl = [r for r in rules if r.rule_id in hz.controlling_rule_ids]
     names = ", ".join(sorted({str(r.observed_value) if r.metric == "alert_present" else r.label for r in ctrl}))
     local = lambda dt: dt.astimezone(tz).strftime("%a %H:%M")  # noqa: E731
     when = f"{local(ws)} to {local(we)}{' (incl. road recovery)' if hz.hazard == 'winter' else ''}"
-    lvl = hz.level_name
+    lvl = LEVEL_NAMES[level]
     guidance: list[str] = []
     convective_now = any(r.metric == "alert_present" and r.triggered and r.window_start and r.window_start <= now
                          and (r.window_end is None or now < r.window_end)
@@ -107,11 +106,11 @@ def hazard_posture(hz: HazardResult, rules: list[RuleResult], as_of: datetime, f
         guidance.append("A convective warning is in effect now: shelter in place in the interior storm area; "
                         "do not release employees into the storm. Release only after the warning expires.")
 
-    if hz.level == 1:
+    if level == 1:
         if am:
             return "DELAYED_ARRIVAL", f"{hz.label} is {lvl} ({names}) and overlaps the AM commute ({when})", guidance
         return "NORMAL", f"{hz.label} is {lvl} ({names}) but misses the AM commute ({when}); monitor", guidance
-    if hz.level == 2:
+    if level == 2:
         if am and late_morning:
             return "TELEWORK", f"{hz.label} is {lvl} ({names}) through the AM commute and past {timing["morning_core_end"]} ({when})", guidance
         if am:
@@ -128,6 +127,25 @@ def hazard_posture(hz: HazardResult, rules: list[RuleResult], as_of: datetime, f
     if workday or pm:
         return "EARLY_DISMISSAL", f"{hz.label} is {lvl} ({names}) and arrives later in the workday ({when}); release staff before it arrives", guidance
     return "NORMAL", f"{hz.label} is {lvl} ({names}) but outside facility hours on {D:%a %b %d} ({when})", guidance
+
+
+def hazard_posture(hz: HazardResult, rules: list[RuleResult], as_of: datetime, facility: Facility,
+                   timing: dict, D: date) -> tuple[str, str, list[str]]:
+    """Return (posture, reason, guidance) for one hazard on workday D.
+
+    Each severity tier is timed separately and the most severe result wins, so an extreme
+    hazard arriving at noon cannot hide a significant one already covering the AM commute.
+    """
+    if hz.level == 0:
+        return "NORMAL", f"{hz.label}: no thresholds crossed", []
+    trig = [r for r in rules if r.hazard == hz.hazard and r.triggered]
+    tiers = []
+    for level in sorted({r.level for r in trig}, reverse=True):
+        tiers.append(_tier_posture(hz, level, [r for r in trig if r.level == level], as_of, facility, timing, D))
+    final = combine([p for p, _, _ in tiers])
+    reasons = [why for p, why, _ in tiers if p == final or (final == "TELEWORK" and p != "NORMAL")] or [tiers[0][1]]
+    guidance = [g for _, _, gs in tiers for g in gs]
+    return final, "; ".join(dict.fromkeys(reasons)), list(dict.fromkeys(guidance))
 
 
 def combine(postures: list[str]) -> str:

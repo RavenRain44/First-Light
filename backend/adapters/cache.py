@@ -16,6 +16,7 @@ stored (e.g. keep only road segments near the facility).
 from __future__ import annotations
 
 import asyncio
+import gzip
 import hashlib
 import json
 import time
@@ -62,7 +63,22 @@ def cache_key(url: str, trim: str | None) -> str:
 
 def _path(key: str):
     settings.cache_dir.mkdir(parents=True, exist_ok=True)
-    return settings.cache_dir / f"{key}.json"
+    return settings.cache_dir / f"{key}.json.gz"
+
+
+def _read(path) -> dict | None:
+    try:
+        with gzip.open(path, "rt", encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, json.JSONDecodeError, EOFError):
+        return None
+
+
+def _write(path, obj: dict) -> None:
+    tmp = path.with_suffix(".tmp")
+    with gzip.open(tmp, "wt", encoding="utf-8", compresslevel=6) as fh:
+        json.dump(obj, fh, separators=(",", ":"))
+    tmp.replace(path)
 
 
 async def get_json(
@@ -78,12 +94,7 @@ async def get_json(
     path = _path(key)
     lock = _locks.setdefault(key, asyncio.Lock())
     async with lock:
-        cached = None
-        if path.exists():
-            try:
-                cached = json.loads(path.read_text(encoding="utf-8"))
-            except json.JSONDecodeError:
-                cached = None
+        cached = _read(path) if path.exists() else None
         demo = settings.demo_mode and not allow_demo_bypass
         if cached is not None and "error" in cached and (historical or demo):
             raise SourceUnavailable(cached["error"])
@@ -118,7 +129,7 @@ async def get_json(
             msg = f"HTTP {resp.status_code} from {url}: {resp.text[:200]}"
             if historical and 400 <= resp.status_code < 500 and resp.status_code != 429:
                 # Archives don't change: remember "no data for this run/time" instead of re-asking.
-                path.write_text(json.dumps({"url": url, "trim": trim_name, "fetched_at_epoch": time.time(), "error": msg}), encoding="utf-8")
+                _write(path, {"url": url, "trim": trim_name, "fetched_at_epoch": time.time(), "error": msg})
             raise SourceUnavailable(msg)
         try:
             data = resp.json()
@@ -127,7 +138,7 @@ async def get_json(
         if trim:
             data = trim[1](data)
         now = time.time()
-        path.write_text(json.dumps({"url": url, "trim": trim_name, "fetched_at_epoch": now, "data": data}), encoding="utf-8")
+        _write(path, {"url": url, "trim": trim_name, "fetched_at_epoch": now, "data": data})
         return CachedResponse(url, datetime.fromtimestamp(now, timezone.utc), data, False)
 
 

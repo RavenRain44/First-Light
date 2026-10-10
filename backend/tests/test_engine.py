@@ -234,3 +234,13 @@ def test_decisions_are_append_only(temp_db):
         s.commit()
     with temp_db.get_engine().begin() as c, pytest.raises(DBAPIError, match="append-only"):
         c.execute(text("UPDATE decision SET decision_posture='CLOSED'"))
+
+
+def test_lower_tier_on_the_am_commute_is_not_hidden_by_a_later_extreme_tier():
+    # Winter Storm Warning through the morning, Blizzard Warning starting at noon (Dec 22, 2022 pattern)
+    as_of = local(2026, 1, 13, 4)
+    inputs = [alert_input("Winter Storm Warning", local(2026, 1, 12, 12), local(2026, 1, 13, 12)),
+              alert_input("Blizzard Warning", local(2026, 1, 13, 12), local(2026, 1, 15, 6))]
+    p = run(inputs, as_of)[3]
+    assert p.posture in ("TELEWORK", "CLOSED")
+    assert p.posture != "EARLY_DISMISSAL"

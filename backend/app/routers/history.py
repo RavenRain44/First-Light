@@ -12,6 +12,7 @@ from app import snapshots
 from app.db import session
 from app.facility import load_facility
 from app.models import HistoryEvent, Snapshot
+from ai import fallback
 from engine import analogs
 
 router = APIRouter(prefix="/api")
@@ -56,12 +57,15 @@ async def replay(event_id: str, as_of: datetime):
     with session() as s:
         if not s.get(HistoryEvent, event_id):
             raise HTTPException(404, "event not found")
-        row = s.exec(select(Snapshot).where(Snapshot.event_id == event_id, Snapshot.as_of == as_of.replace(tzinfo=None))
+        row = s.exec(select(Snapshot).where(Snapshot.event_id == event_id, Snapshot.as_of == as_of)
                      .order_by(Snapshot.created_at.desc())).first()
     if row is not None:
         snap = snapshots.row_to_dict(row)
         if not snap["analogs"]:
+            # Backtest rows are built before the library exists; analogs are attached at read time
+            # (not stored, so the snapshot itself stays untouched).
             snap["analogs"] = analogs.find_analogs(snap["features"], exclude_event=event_id)
+            snap["ai"]["analog_comparison"] = fallback.build(snap, snap["analogs"]).analog_comparison
         return snap
     return await snapshots.evaluate(load_facility(), as_of, "replay", event_id=event_id)
 

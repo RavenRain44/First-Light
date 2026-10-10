@@ -143,7 +143,7 @@ def feature_vector(ctx: Context, rules: list[RuleResult], hazards: dict[str, Haz
 def assess(inputs: list[NormalizedInput], statuses: list[SourceStatus], facility: Facility, as_of: datetime,
            mode: str, th: Thresholds | None = None, employees: list[dict] | None = None) -> Assessment:
     th = th or load_thresholds()
-    ctx = extract(inputs, as_of, employees, horizon_end(utc(as_of), facility, th.timing))
+    ctx = extract(inputs, as_of, employees, horizon_end(utc(as_of), facility, th.timing), facility.timezone)
     rules = evaluate_rules(ctx, th)
     hazards = score_hazards(rules)
     posture = decide(hazards, rules, ctx.as_of, facility, th)

@@ -503,7 +503,7 @@ rules:
     unit: SPC category (4 = MDT)
     posture_effect: significant
     score: 55
-    time_window: "SPC day-1 categorical outlook at the facility"
+    time_window: "SPC day-1 categorical outlook at the facility; timed to 12:00-21:00 local of the outlook day (policy: Iowa afternoon/evening convective peak)"
     anchor: "SPC Moderate (4 of 5) risk: widespread severe storms likely."
     source_url: *spc
     basis: official
@@ -517,7 +517,7 @@ rules:
     unit: SPC category (3 = ENH)
     posture_effect: minor
     score: 35
-    time_window: "SPC day-1 categorical outlook at the facility"
+    time_window: "SPC day-1 categorical outlook at the facility; timed to 12:00-21:00 local of the outlook day (policy: Iowa afternoon/evening convective peak)"
     anchor: "SPC Enhanced (3 of 5) risk: numerous severe storms possible."
     source_url: *spc
     basis: official
