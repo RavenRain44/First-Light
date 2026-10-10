@@ -18,3 +18,4 @@ execFileSync(venvPy, ["-m", "scripts.build_history"], {
   env: { ...process.env, DEMO_MODE: "true" },
 });
 console.log("\nSetup done. Run `npm run dev` -> API on :8000, dashboard on http://localhost:5173");
+console.log("Optional, for offline demos: `npm run cache:cameras` (online, ~1 min) caches Iowa DOT camera images.");
