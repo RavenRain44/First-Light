@@ -28,6 +28,12 @@ def vtec_row_to_alert(row: dict) -> dict:
     sev, cert, urg = SIG_MAP.get(row["significance"], ("Unknown", "Unknown", "Unknown"))
     if row["significance"] == "W" and row["phenomena"] in EXTREME_PH:
         sev = "Extreme"
+    ends = row["utc_expire"]
+    note = None
+    if ends and row["utc_issue"] and ends < row["utc_issue"]:
+        # Upgraded or cancelled before it began. The archive keeps the final expire time,
+        # which would leak hindsight, so the planned end is treated as unknown.
+        ends, note = None, "replaced or cancelled before its start time; planned end unknown in archive"
     aid = f"{row['wfo']}.{row['phenomena']}.{row['significance']}.{row['eventid']:04d}.{row['utc_issue'][:4]}"
     return {
         "id": aid,
@@ -36,8 +42,9 @@ def vtec_row_to_alert(row: dict) -> dict:
         "certainty": cert,
         "urgency": urg,
         "onset": row["utc_issue"],
-        "ends": row["utc_expire"],
-        "expires": row["utc_expire"],
+        "ends": ends,
+        "expires": ends,
+        "archive_note": note,
         "effective": row.get("utc_product_issue"),
         "sent": row.get("utc_product_issue"),
         "headline": f"{row['event_label']} ({row['ph_sig']}) for {row['ugc']}",

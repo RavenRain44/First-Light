@@ -69,22 +69,30 @@ class IEMMOSAdapter(Adapter):
     async def fetch(self, facility: Facility, as_of: datetime) -> list[NormalizedInput]:
         if not facility.mos_station:
             return []
-        rows, url, r, runtime = [], None, None, None
-        for rt in runtime_candidates(as_of):
+        # NBS's first projection is 6 h after issue, so the newest run leaves a gap right after
+        # as_of. Fill it from the previous run; newer values win wherever both exist.
+        runs = []
+        for rt in runtime_candidates(as_of, n=5):
             url = f"{IEM}/mos.json?station={facility.mos_station}&model=NBS&runtime={iso_z(rt)}"
             self._urls.append(url)
             try:
                 r = await cache.get_json(url, historical=is_historical(rt))
             except cache.SourceUnavailable:
                 continue  # IEM returns 422 when a run is missing; try the previous cycle
-            rows = r.data.get("data", [])
-            if rows:
-                runtime = rt
+            if r.data.get("data"):
+                runs.append((rt, url, r))
+            if len(runs) == 2:
                 break
-        if not rows:
+        if not runs:
             return []
+        runtime, url, r = runs[0]
+        merged: dict[str, dict] = {}
+        for _, _, rr in reversed(runs):
+            for row in rr.data["data"]:
+                merged[row["ftime_utc"]] = row
+        rows = sorted(merged.values(), key=lambda x: x["ftime_utc"])
         start = utc(as_of).replace(minute=0, second=0, microsecond=0) - timedelta(hours=1)
-        end = start + timedelta(hours=50)
+        end = start + timedelta(hours=74)
         out = []
         units = {"wind_gust_mph": "mph", "wind_speed_mph": "mph", "temp_f": "degF", "ice_in": "in",
                  "snow_in": "in", "qpf_in": "in", "pop_pct": "%"}
@@ -95,7 +103,7 @@ class IEMMOSAdapter(Adapter):
             out.append(NormalizedInput(
                 id=f"fcst.{metric}", kind="series", role="forecast", metric=metric, unit=units[metric],
                 series=[Point(t=t, v=v) for t, v in pts],
-                source=f"NBM NBS {facility.mos_station} run {iso_z(runtime)} (IEM archive)", source_url=url,
+                source=f"NBM NBS {facility.mos_station} run {iso_z(runtime)}" + (f" + {iso_z(runs[1][0])}" if len(runs) > 1 else "") + " (IEM archive)", source_url=url,
                 fetched_at=r.fetched_at, source_time=runtime,
                 note="forecast as issued before as_of; 3-hourly values held, 6-h amounts spread hourly",
             ))

@@ -115,7 +115,7 @@ class NWSGridAdapter(Adapter):
     supports_historical = False
     coverage = "US"
 
-    def __init__(self, allow_demo_bypass: bool = False, hours_ahead: int = 48):
+    def __init__(self, allow_demo_bypass: bool = False, hours_ahead: int = 72):
         self.allow_demo_bypass = allow_demo_bypass
         self.hours_ahead = hours_ahead
 
