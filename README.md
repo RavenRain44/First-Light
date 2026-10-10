@@ -29,11 +29,14 @@ Scope: **Iowa only**, one synthetic facility (USDA Service Center, Ames), two ha
 Prerequisites: Python 3.11+ (tested on 3.14), Node 18+ (tested on 24).
 
 ```bash
-npm run setup      # backend/.venv + pip install, frontend npm install, .env from .env.example
+npm run setup      # dependencies, .env, and historical library for Replay
 npm run dev        # API on http://localhost:8000, dashboard on http://localhost:5173
 ```
 
 `make setup` / `make dev` do the same where GNU make exists. Windows has no make; use the npm scripts.
+
+Setup also builds the historical library from the committed cache, so Replay, analogs and backtests
+are ready on first launch. This build runs offline and does not change `DEMO_MODE` in your `.env`.
 
 Set `NWS_USER_AGENT` in `.env` to your app name and a contact (NWS asks every client to identify itself).
 
