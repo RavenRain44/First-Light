@@ -9,7 +9,8 @@ export function Header({ snap, mode, setMode, onRefresh, busy, demo, theme, togg
 }) {
   const tz = snap?.facility.timezone ?? "America/Chicago";
   const ok = snap?.sources.filter((s) => s.status === "ok" || s.status === "empty").length ?? 0;
-  const total = snap?.sources.filter((s) => s.status !== "not_applicable").length ?? 0;
+  const total = snap?.sources.length ?? 0;
+  const na = snap?.sources.filter((s) => s.status === "not_applicable").length ?? 0;
   const newest = snap?.sources.map((s) => s.fetched_at).filter(Boolean).sort().at(-1) ?? null;
   const roster = snap?.roster;
   return (
@@ -44,7 +45,7 @@ export function Header({ snap, mode, setMode, onRefresh, busy, demo, theme, togg
                   Confidence: {snap.confidence.level} ({snap.confidence.score.toFixed(2)})
                 </Badge>
                 <Badge tone="neutral" title={snap.sources.map((s) => `${s.label}: ${s.status}${s.detail ? ` (${s.detail})` : ""}`).join("\n")}>
-                  Sources {ok}/{total} · newest fetch {ago(newest)}
+                  Sources {ok}/{total}{na ? ` (${na} n/a here)` : ""} · newest fetch {ago(newest)}
                 </Badge>
               </div>
             </>

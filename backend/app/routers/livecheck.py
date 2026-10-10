@@ -18,7 +18,7 @@ from app.facility import load_facility
 router = APIRouter(prefix="/api/live-check")
 
 MARINE_PREFIXES = ("AM", "AN", "GM", "LC", "LE", "LH", "LM", "LO", "LS", "PH", "PK", "PM", "PS", "PZ", "SL")
-HANDLED = ("Winter", "Ice", "Blizzard", "Snow", "Wind", "Thunderstorm", "Tornado", "Cold", "Freeze", "Chill")
+HANDLED = ("Winter", "Ice", "Blizzard", "Snow", "Wind", "Thunderstorm", "Tornado", "Cold", "Chill")
 SEV_ORDER = {"Extreme": 0, "Severe": 1, "Moderate": 2, "Minor": 3, "Unknown": 4}
 
 
