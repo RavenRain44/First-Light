@@ -84,12 +84,13 @@ export default function App() {
           {err && <div role="alert" className="card border-l-4 border-l-[var(--danger)] p-3 text-sm">Could not load: {err}. The last good snapshot (if any) is still shown.</div>}
           {snap && (mode !== "livecheck" || snap.mode === "livecheck") && (mode !== "replay" || snap.mode !== "live") ? (
             <div className="cc-stagger space-y-4">
-              <div className="grid items-start gap-4 lg:grid-cols-3">
-                <div className="lg:col-span-2">
+              {/* Both columns stretch to the same height: whichever side is shorter grows its last card,
+                  so there is no blank gap and nothing scrolls inside a column. */}
+              <div className="grid items-stretch gap-4 lg:grid-cols-3">
+                <div className="lg:col-span-2 [&>section]:h-full">
                   <PanelBoundary name="Interpretation"><AIPanel snap={snap} /></PanelBoundary>
                 </div>
-                {/* side column stays in view while the longer interpretation scrolls past */}
-                <div className="space-y-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+                <div className="flex flex-col gap-4 [&>section:last-child]:flex-1">
                   <PanelBoundary name="Alerts"><AlertsPanel snap={snap} /></PanelBoundary>
                   <PanelBoundary name="Watch"><WatchPanel snap={snap} /></PanelBoundary>
                   <PanelBoundary name="Decision"><DecisionPanel key={snap.snapshot_id} snap={snap} onRecorded={() => setRecordKey((k) => k + 1)} /></PanelBoundary>
