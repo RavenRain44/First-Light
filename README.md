@@ -209,3 +209,74 @@ frontend/     React + Vite + TypeScript + Tailwind + Recharts + React-Leaflet
 Hooks are in place: the roster model separates *assigned* from *where people actually are this week* (details in and
 out, travel, telework), each employee has contact channels and accessibility needs, and every send will be logged
 against a snapshot and decision id. `POST /api/notifications/preview` describes the planned shape.
+
+### Notification review and delivery simulation
+
+Open **Notifications** after recording a live or replay decision on the Dashboard.
+Choose the decision, create drafts, review each group's recipients and SMS/email
+previews, edit the explanations if needed, and approve each group. One send action
+simulates immediate delivery and queues informational updates. Creating a draft or
+recording a decision never sends anything. Editing text, timing, test recipients,
+or a simulated delivery outcome clears that group's approval. Unsaved edits block send.
+
+All delivery is **simulation only**: there is no SMS/email network adapter or credential
+requirement. The outbox tracks simulated success, failure, delay, retry, cancellation
+and scheduling. Recipient inbox previews show successful simulated deliveries.
+The SQLite database persists queues and audit records; the API checks due deliveries
+every two seconds. Repeated sends are idempotent. A newly dispatched decision for the
+same facility/date supersedes older packages and cancels their pending deliveries.
+Sent messages and all approval/edit/delivery audit entries remain available.
+
+Essential personnel receive immediate reporting clarification; closure never automatically
+excuses essential duties. Employees working onsite receive immediate changes. Remote,
+travel and detailed-out team members receive informational updates at `work_start`
+(`HH:MM`, facility local time). Missing schedules fall back to facility opening time,
+configurable when creating the package; managers can override each group's delivery
+with an ISO timestamp containing an offset. Unsupported contact channels are listed
+for manager follow-up. `workdays` defaults to Monday–Friday. This demonstration's
+`this_week_location` and `teleworking_today` apply to the selected decision date unless
+an employee has `assignments` entries with inclusive ISO `start`/`end` dates and overridden
+roster fields, or a `telework_dates` list. Historical replay uses this synthetic roster
+scenario; it does not claim to reconstruct a historical employee assignment.
+
+AI uses the existing model configuration to draft a short weather explanation from
+hazard categories only, without names or contact details. Reporting instructions,
+posture and routing are deterministic. With no configured model or an invalid response,
+clearly labeled templates are used. Manager-approved explanations are combined with
+fixed reporting instructions and personalized recipient names. Delays/dismissals do not
+invent a clock time absent from the decision; the message directs staff to obtain it
+from their supervisor. Accessibility follow-up is flagged privately in recipient review.
+
+For separate test contacts, copy `backend/notification-contacts.example.json` to
+`backend/notification-contacts.local.json` and enter consented addresses there. This local
+file is ignored by Git. Select test contacts per group before approval; even these
+addresses receive simulated delivery only. Synthetic employees always use synthetic
+routing identifiers, never these test addresses. The provider interface in
+`backend/app/notifications.py` is the extension point for future real delivery.
+
+Use the notification **Simulation clock** to set an ISO timestamp (for example,
+`2026-10-12T04:00:00-05:00`) before creating drafts, then advance it to test scheduled
+messages. This clock persists separately from weather evaluation time. Reset returns
+the delivery simulation to wall-clock time. A failure can be retried as simulated
+success; a delayed message completes after five simulated minutes. Acknowledgments
+are deliberately not implemented.
+
+Sent packages have a **Create editable follow-up draft** action. Follow-up revisions
+preserve delivered messages and require fresh approvals before sending. Select all or
+choose several employees using the checkboxes within each group; save recipient edits
+before approval. Groups with no selected employees or test contacts are skipped.
+If unchanged reporting instructions produced an empty package, **Create groups for
+another update** lets a manager deliberately draft an informational follow-up.
+
+### Simple alert workflow and real test delivery
+
+The default UI now follows **Decision → Review alerts → Send & done**. Recording a
+human decision opens group drafts automatically. One **Approve and alert people**
+button saves your edits, approves the reviewed groups and sends/schedules the whole
+simulated package. Recipient changes, history and simulation tools are expandable.
+
+Real tests are separate: **Send real test emails / gateway texts** uses the SMTP service for locally configured email test contacts and explicit email-to-SMS gateway destinations. Phone delivery requires a gateway account. Configure the fields in
+`.env.example` in your ignored `.env`, restart the API, then explicitly approve a real
+test. Missing credentials show **Not configured**, rather than simulated success.
+See [delivery setup](docs/notification-delivery-setup.md). No real delivery was attempted
+while developing this feature; provider integration tests use mocks.

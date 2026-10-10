@@ -13,6 +13,10 @@ _engine = None
 # deleted (so build_history.py can be re-run); live/replay/livecheck rows and
 # all human decisions are permanent.
 IMMUTABLE_TRIGGERS = [
+    """CREATE TRIGGER IF NOT EXISTS notificationaudit_no_update BEFORE UPDATE ON notificationaudit
+       BEGIN SELECT RAISE(ABORT, 'notification audit is append-only'); END""",
+    """CREATE TRIGGER IF NOT EXISTS notificationaudit_no_delete BEFORE DELETE ON notificationaudit
+       BEGIN SELECT RAISE(ABORT, 'notification audit is append-only'); END""",
     """CREATE TRIGGER IF NOT EXISTS snapshot_no_update BEFORE UPDATE ON snapshot
        BEGIN SELECT RAISE(ABORT, 'snapshots are immutable'); END""",
     """CREATE TRIGGER IF NOT EXISTS snapshot_no_delete BEFORE DELETE ON snapshot

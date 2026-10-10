@@ -68,3 +68,25 @@ class HistoryEvent(SQLModel, table=True):
     verification_json: str
     outcome_json: str
     backtest_json: str
+
+
+class NotificationPackage(SQLModel, table=True):
+    id: str = Field(primary_key=True)
+    decision_id: int = Field(unique=True, foreign_key="decision.id")
+    facility_id: str = Field(index=True)
+    decision_day: str = Field(index=True)
+    state_json: str
+
+
+class NotificationClock(SQLModel, table=True):
+    id: int = Field(default=1, primary_key=True)
+    simulated_now: datetime | None = None
+
+
+class NotificationAudit(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    package_id: str = Field(index=True)
+    at: datetime
+    actor: str
+    action: str
+    detail_json: str

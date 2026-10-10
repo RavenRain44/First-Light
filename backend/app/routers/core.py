@@ -1,4 +1,4 @@
-"""Facility, snapshots, evaluation, charts, roads, thresholds, decisions, notification stub."""
+"""Facility, snapshots, evaluation, charts, roads, thresholds, decisions."""
 from __future__ import annotations
 
 import asyncio
@@ -8,7 +8,6 @@ from typing import Literal
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlmodel import select
 
@@ -279,19 +278,3 @@ def decision_record(snapshot_id: str):
     return {"snapshot": snap, "decisions": [d.model_dump(mode="json") for d in ds],
             "thresholds_current_sha256": load_thresholds().sha256,
             "thresholds_changed_since": load_thresholds().sha256 != snap["thresholds_sha256"]}
-
-
-# ----------------------------------------------------------------------------- notifications (later phase)
-
-@router.post("/notifications/preview")
-def notifications_preview():
-    return JSONResponse(status_code=501, content={
-        "detail": "Notification package is a later phase.",
-        "planned": {
-            "recipients": "people physically expected at the facility this week (this_week_location), "
-                          "not the assigned roster; includes detailees in, excludes details out/travel",
-            "variants": ["all staff", "essential personnel", "teleworkers", "accessibility follow-up"],
-            "channels": "per-employee contact_channels (sms/email/phone)",
-            "hooks": "snapshot_id + decision id are the inputs; every send will be logged against the decision",
-        },
-    })

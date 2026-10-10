@@ -18,7 +18,15 @@ export function Header({ snap, mode, setMode, onRefresh, busy, demo, theme, togg
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-bold">Closure Call</h1>
+            <h1 className="flex items-center gap-2 text-xl font-bold">
+              <svg viewBox="0 0 40 40" className="h-9 w-9 shrink-0" aria-hidden="true" focusable="false">
+                <circle cx="27" cy="12" r="6" fill="#fbbf24" />
+                <path d="M27 2v2m0 16v2M17 12h2m16 0h2M20 5l1.5 1.5M33 18l1.5 1.5M34 5l-1.5 1.5" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" />
+                <path d="M11 29a7 7 0 0 1-1-14 10 10 0 0 1 19-1 7.5 7.5 0 0 1 1 15Z" fill="#e0f2fe" stroke="#0284c7" strokeWidth="2" strokeLinejoin="round" />
+                <path d="m14 33-1 3m8-3-1 3m8-3-1 3" stroke="#0284c7" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              Closure Call
+            </h1>
             <span className="text-sm text-ink2">Weather decision support</span>
             {demo && <Badge tone="warn" title="DEMO_MODE=true: sources served from cached fixtures">Demo mode (cached data)</Badge>}
           </div>

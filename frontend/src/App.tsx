@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "./api";
+import { NotificationsView } from "./components/NotificationsView";
 import { AIPanel } from "./components/AIPanel";
 import { AlertsPanel } from "./components/AlertsPanel";
 import { DecisionPanel } from "./components/DecisionPanel";
@@ -30,8 +31,9 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [demo, setDemo] = useState(false);
   const [theme, setTheme] = useState(initialTheme);
+  const [notificationDecision, setNotificationDecision] = useState<number | null>(null);
   const [recordKey, setRecordKey] = useState(0);
-  const [view, setView] = useState<"dashboard" | "thresholds">("dashboard");
+  const [view, setView] = useState<"dashboard" | "thresholds" | "notifications">("dashboard");
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -67,15 +69,17 @@ export default function App() {
       <nav className="flex gap-2 text-sm">
         <button onClick={() => setView("dashboard")} className={`rounded-md px-3 py-1 ${view === "dashboard" ? "bg-[var(--surface-2)] font-semibold" : "text-ink2"}`}>Dashboard</button>
         <button onClick={() => setView("thresholds")} className={`rounded-md px-3 py-1 ${view === "thresholds" ? "bg-[var(--surface-2)] font-semibold" : "text-ink2"}`}>Thresholds & backtest</button>
+        <button onClick={() => setView("notifications")} className={`rounded-md px-3 py-1 ${view === "notifications" ? "bg-[var(--surface-2)] font-semibold" : "text-ink2"}`}>Notifications</button>
       </nav>
 
-      {view === "thresholds" ? <ThresholdsView /> : (
+      {view === "notifications" ? <NotificationsView decisionId={notificationDecision} onBack={() => setView("dashboard")} /> : view === "thresholds" ? <ThresholdsView /> : (
         <>
           {mode === "replay" && <ReplayPanel onSnapshot={setSnap} busy={busy} setBusy={setBusy} current={snap} />}
           {mode === "livecheck" && <LiveCheckPanel onSnapshot={setSnap} busy={busy} setBusy={setBusy} />}
           {err && <div role="alert" className="card border-[var(--critical)] p-3 text-sm">Could not load: {err}. The last good snapshot (if any) is still shown.</div>}
           {snap && (mode !== "livecheck" || snap.mode === "livecheck") && (mode !== "replay" || snap.mode !== "live") ? (
             <>
+              <PanelBoundary name="Decision"><DecisionPanel key={snap.snapshot_id} snap={snap} onRecorded={(id) => { setRecordKey(k => k + 1); setNotificationDecision(id); setView("notifications"); }} /></PanelBoundary>
               <div className="grid gap-4 lg:grid-cols-3">
                 <div className="space-y-4 lg:col-span-2">
                   <PanelBoundary name="Interpretation"><AIPanel snap={snap} /></PanelBoundary>
@@ -83,7 +87,7 @@ export default function App() {
                 </div>
                 <div className="space-y-4">
                   <PanelBoundary name="Alerts"><AlertsPanel snap={snap} /></PanelBoundary>
-                  <PanelBoundary name="Decision"><DecisionPanel key={snap.snapshot_id} snap={snap} onRecorded={() => setRecordKey((k) => k + 1)} /></PanelBoundary>
+
                 </div>
               </div>
               <PanelBoundary name="Timeline"><TimelinePanel snap={snap} /></PanelBoundary>

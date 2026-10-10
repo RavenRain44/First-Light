@@ -3,7 +3,7 @@ import { api } from "../api";
 import type { Posture, Snapshot } from "../types";
 import { Card, POSTURES, POSTURE_STYLE, PostureBadge } from "../util";
 
-export function DecisionPanel({ snap, onRecorded }: { snap: Snapshot; onRecorded: () => void }) {
+export function DecisionPanel({ snap, onRecorded }: { snap: Snapshot; onRecorded: (id: number) => void }) {
   const [by, setBy] = useState("");
   const [posture, setPosture] = useState<Posture>(snap.posture.posture);
   const [reason, setReason] = useState("");
@@ -12,15 +12,15 @@ export function DecisionPanel({ snap, onRecorded }: { snap: Snapshot; onRecorded
   const [busy, setBusy] = useState(false);
   const override = posture !== snap.posture.posture;
   if (snap.mode === "backtest" || snap.facility.hypothetical) {
-    return <Card title="Record decision"><p className="text-sm text-ink2">Decisions are recorded only against live or replay snapshots of the real facility profile.</p></Card>;
+    return <Card title="1 · Make the decision"><p className="text-sm text-ink2">Decisions are recorded only against live or replay snapshots of the real facility profile.</p></Card>;
   }
   const submit = async () => {
     setBusy(true); setMsg(null);
     try {
-      await api.decide({ snapshot_id: snap.snapshot_id, decided_by: by, decision_posture: posture, override_reason: override ? reason : undefined, notes: notes || undefined });
+      const recorded = await api.decide({ snapshot_id: snap.snapshot_id, decided_by: by, decision_posture: posture, override_reason: override ? reason : undefined, notes: notes || undefined });
       setMsg("Decision recorded against this snapshot. It cannot be edited; record a new decision to correct it.");
       setReason(""); setNotes("");
-      onRecorded();
+      onRecorded(recorded.id);
     } catch (e: any) {
       setMsg(`Not recorded: ${e.message}`);
     } finally {
@@ -28,7 +28,7 @@ export function DecisionPanel({ snap, onRecorded }: { snap: Snapshot; onRecorded
     }
   };
   return (
-    <Card title="Record decision">
+    <Card title="1 · Make the decision">
       <div className="mb-2 flex flex-wrap items-center gap-2 text-sm">Recommendation: <PostureBadge p={snap.posture.posture} size="sm" /></div>
       <div className="grid gap-2 text-sm">
         <label className="grid gap-1">Decided by
@@ -56,7 +56,7 @@ export function DecisionPanel({ snap, onRecorded }: { snap: Snapshot; onRecorded
         </label>
         <button onClick={submit} disabled={busy || by.trim().length < 2 || (override && !reason.trim())}
           className="mt-1 rounded-lg bg-[var(--series-1)] px-3 py-1.5 font-semibold text-white disabled:opacity-40">
-          {override ? "Record override" : "Accept recommendation"}
+          {busy ? "Preparing alerts…" : "Continue to alert team →"}
         </button>
         {msg && <p className="text-xs">{msg}</p>}
         <p className="text-xs text-muted">Snapshot {snap.snapshot_id.slice(0, 12)} · content hash {snap.content_sha256.slice(0, 12)} {snap.integrity_ok ? "✓ verified" : ""}</p>
