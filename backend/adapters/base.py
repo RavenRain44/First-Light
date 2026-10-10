@@ -151,5 +151,12 @@ def floor_hour(dt: datetime) -> datetime:
     return utc(dt).replace(minute=0, second=0, microsecond=0)
 
 
+def reference_now() -> datetime:
+    """'Now' for deciding live vs. archive requests. In DEMO_MODE this is the time the cached live data
+    was fetched, so a demo run days later still asks for exactly the URLs that are in the cache."""
+    from app.config import settings
+    return settings.demo_reference_now if settings.demo_mode and settings.demo_reference_now else datetime.now(timezone.utc)
+
+
 def is_historical(as_of: datetime, slack: timedelta = timedelta(hours=2)) -> bool:
-    return utc(as_of) < datetime.now(timezone.utc) - slack
+    return utc(as_of) < reference_now() - slack

@@ -35,6 +35,8 @@ class Settings:
     openai_base_url: str = os.environ.get("OPENAI_BASE_URL", "")
     aws_region: str = os.environ.get("AWS_REGION", "us-east-1")
 
+    demo_reference_now = None  # set at runtime in DEMO_MODE (see app.snapshots.demo_live_as_of)
+
     data_dir: Path = BACKEND_DIR / "data"
     config_dir: Path = BACKEND_DIR / "config"
     fixtures_dir: Path = BACKEND_DIR / "fixtures"

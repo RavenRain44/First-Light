@@ -10,6 +10,7 @@ from typing import Any
 from sqlmodel import select
 
 from adapters.base import Facility, utc
+from app.config import settings
 from app.db import session
 from app.facility import load_employees, roster_summary
 from app.models import Decision, Snapshot
@@ -127,12 +128,28 @@ def history(facility_id: str, limit: int = 50, modes: tuple[str, ...] = ("live",
              "decisions": by_snap.get(r.snapshot_id, [])} for r in rows]
 
 
+async def demo_live_as_of(facility: Facility) -> datetime | None:
+    """DEMO_MODE: evaluate "live" at the moment the cached live forecast was fetched, so every
+    date-keyed request (e.g. today's observations) matches what is in the cache."""
+    from adapters import cache
+    from adapters.nws import resolve_point
+    try:
+        meta, _ = await resolve_point(facility.lat, facility.lon)
+    except cache.SourceUnavailable:
+        return None
+    t = cache.cached_fetched_at(meta["forecastGridData"])
+    settings.demo_reference_now = t
+    return t
+
+
 async def evaluate(facility: Facility, as_of: datetime | None, mode: str, *, event_id: str | None = None,
                    use_ai: bool = True, persist: bool = True) -> dict:
     """Full pipeline: fetch -> assess -> analogs -> interpretation -> immutable snapshot."""
     from ai import agent as ai_agent
     from engine import analogs as analog_engine
 
+    if as_of is None and mode == "live" and settings.demo_mode:
+        as_of = await demo_live_as_of(facility)
     as_of = utc(as_of or datetime.now(timezone.utc))
     inputs, statuses = await gather(facility, as_of, mode)
     employees = None if facility.hypothetical else load_employees()

@@ -3,6 +3,7 @@ import { api } from "./api";
 import { AIPanel } from "./components/AIPanel";
 import { AlertsPanel } from "./components/AlertsPanel";
 import { DecisionPanel } from "./components/DecisionPanel";
+import { PanelBoundary } from "./components/ErrorBoundary";
 import { Header, type Mode } from "./components/Header";
 import { AnalogsPanel, RecordTimeline } from "./components/HistoryPanel";
 import { LiveCheckPanel } from "./components/LiveCheckPanel";
@@ -77,20 +78,20 @@ export default function App() {
             <>
               <div className="grid gap-4 lg:grid-cols-3">
                 <div className="space-y-4 lg:col-span-2">
-                  <AIPanel snap={snap} />
-                  <ThreatPanel snap={snap} />
+                  <PanelBoundary name="Interpretation"><AIPanel snap={snap} /></PanelBoundary>
+                  <PanelBoundary name="Threat breakdown"><ThreatPanel snap={snap} /></PanelBoundary>
                 </div>
                 <div className="space-y-4">
-                  <AlertsPanel snap={snap} />
-                  <DecisionPanel key={snap.snapshot_id} snap={snap} onRecorded={() => setRecordKey((k) => k + 1)} />
+                  <PanelBoundary name="Alerts"><AlertsPanel snap={snap} /></PanelBoundary>
+                  <PanelBoundary name="Decision"><DecisionPanel key={snap.snapshot_id} snap={snap} onRecorded={() => setRecordKey((k) => k + 1)} /></PanelBoundary>
                 </div>
               </div>
-              <TimelinePanel snap={snap} />
-              <RoadsPanel snap={snap} />
-              <AnalogsPanel snap={snap} />
+              <PanelBoundary name="Timeline"><TimelinePanel snap={snap} /></PanelBoundary>
+              <PanelBoundary name="Roads"><RoadsPanel snap={snap} /></PanelBoundary>
+              <PanelBoundary name="Analogs"><AnalogsPanel snap={snap} /></PanelBoundary>
               <div className="grid gap-4 lg:grid-cols-2">
-                <RecordTimeline snap={snap} refreshKey={recordKey} onOpen={(id) => run(() => api.snapshot(id))} />
-                <RawDataDrawer snap={snap} />
+                <PanelBoundary name="Decision record"><RecordTimeline snap={snap} refreshKey={recordKey} onOpen={(id) => run(() => api.snapshot(id))} /></PanelBoundary>
+                <PanelBoundary name="Raw data"><RawDataDrawer snap={snap} /></PanelBoundary>
               </div>
             </>
           ) : !err && mode === "live" ? (

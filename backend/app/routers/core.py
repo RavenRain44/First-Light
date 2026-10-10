@@ -55,7 +55,8 @@ async def snapshot_latest(facility_id: str | None = None, max_age_seconds: int |
     max_age = settings.snapshot_stale_seconds if max_age_seconds is None else max_age_seconds
     async with _live_lock:
         snap = snapshots.latest(f.id, "live")
-        if snap is None or (datetime.now(timezone.utc) - datetime.fromisoformat(snap["created_at"])).total_seconds() > max_age:
+        stale = snap is None or (datetime.now(timezone.utc) - datetime.fromisoformat(snap["created_at"])).total_seconds() > max_age
+        if snap is None or (stale and not settings.demo_mode):  # demo data never changes; reuse it
             snap = await snapshots.evaluate(f, None, "live")
     return snap
 

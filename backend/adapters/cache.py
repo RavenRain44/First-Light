@@ -145,3 +145,10 @@ async def get_json(
 async def aclose() -> None:
     if _client is not None:
         await _client.aclose()
+
+
+def cached_fetched_at(url: str, trim: str | None = None) -> datetime | None:
+    """When the cached copy of ``url`` was fetched (None if not cached)."""
+    path = _path(cache_key(url, trim))
+    d = _read(path) if path.exists() else None
+    return datetime.fromtimestamp(d["fetched_at_epoch"], timezone.utc) if d and "data" in d else None
