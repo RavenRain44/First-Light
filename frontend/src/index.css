@@ -2,75 +2,182 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Tokens: dataviz reference palette (light + selected dark steps). */
+/* Blue / white theme. Severity is carried by light -> deep blue and always paired with an icon + word.
+   Two exceptions keep their own hues on purpose: the Cooper readiness meter, and --danger for
+   life-safety messages and errors. */
 :root {
   color-scheme: light;
-  --page: #f9f9f7;
-  --surface-1: #fcfcfb;
-  --surface-2: #f0efec;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #6b6a65;
-  --grid: #e1e0d9;
-  --axis: #c3c2b7;
-  --border: rgba(11, 11, 11, 0.12);
-  --series-1: #2a78d6; /* observed */
-  --series-2: #eb6834; /* forecast */
-  --series-3: #1baf7a;
-  --series-7: #4a3aa7;
-  --good: #0ca30c;
-  --warning: #fab219;
-  --serious: #ec835a;
-  --critical: #d03b3b;
-  --telework: #4a3aa7;
-  --shade-commute: rgba(42, 120, 214, 0.10);
-  --shade-hours: rgba(11, 11, 11, 0.04);
+  --page: #f5f8fc;
+  --surface-1: #ffffff;
+  --surface-2: #eef3fa;
+  --text-primary: #0b1b2e;
+  --text-secondary: #44566c;
+  --text-muted: #6b7c93;
+  --grid: #e3eaf3;
+  --axis: #c9d5e3;
+  --border: #dce5f0;
+  --shadow: 0 1px 2px rgba(15, 40, 80, 0.04), 0 1px 1px rgba(15, 40, 80, 0.02);
+
+  --accent: #1d4ed8;
+  --accent-hover: #1e40af;
+  --tint: #e8effc;
+  --tint-strong: #dbeafe;
+
+  /* charts: observed (deep) vs forecast (mid) */
+  --series-1: #1e3a8a;
+  --series-2: #3b82f6;
+  --shade-commute: rgba(59, 130, 246, 0.10);
+  --shade-hours: rgba(11, 27, 46, 0.035);
+
+  /* ordinal blue scale, light -> deep (postures, scores, roads) */
+  --b1: #dbeafe;
+  --b2: #93c5fd;
+  --b3: #60a5fa;
+  --b4: #2563eb;
+  --b5: #1e3a8a;
+  --b6: #0b1b2e;
+  --b1-ink: #1d4ed8;
+  --b2-ink: #0b1b2e;
+  --b4-ink: #ffffff;
+
+  --danger: #c2410c;
+  --on-accent: #ffffff;
+
+  /* Cooper readiness (fixed, theme-independent) */
+  --cooper-white: #f4f3ef;
+  --cooper-yellow: #fab219;
+  --cooper-orange: #ec835a;
+  --cooper-red: #d03b3b;
 }
+
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --page: #0d0d0d;
-    --surface-1: #1a1a19;
-    --surface-2: #383835;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --text-muted: #9a9890;
-    --grid: #2c2c2a;
-    --axis: #383835;
-    --border: rgba(255, 255, 255, 0.12);
-    --series-1: #3987e5;
-    --series-2: #d95926;
-    --series-3: #199e70;
-    --series-7: #9085e9;
-    --telework: #9085e9;
-    --shade-commute: rgba(57, 135, 229, 0.16);
-    --shade-hours: rgba(255, 255, 255, 0.05);
+    --page: #0a1422;
+    --surface-1: #111e30;
+    --surface-2: #172840;
+    --text-primary: #eaf1fb;
+    --text-secondary: #a9b8cc;
+    --text-muted: #8496ad;
+    --grid: #1c2c43;
+    --axis: #2a3d58;
+    --border: #1f3048;
+    --shadow: none;
+    --accent: #60a5fa;
+    --accent-hover: #93c5fd;
+    --tint: #16294a;
+    --tint-strong: #1b3361;
+    --series-1: #93c5fd;
+    --series-2: #3b82f6;
+    --shade-commute: rgba(96, 165, 250, 0.12);
+    --shade-hours: rgba(255, 255, 255, 0.04);
+    --b1: #1b3361;
+    --b2: #1e40af;
+    --b3: #2563eb;
+    --b4: #3b82f6;
+    --b5: #93c5fd;
+    --b6: #dbeafe;
+    --b1-ink: #bfdbfe;
+    --b2-ink: #eaf1fb;
+    --b4-ink: #0b1b2e;
+    --danger: #fb923c;
+    --on-accent: #0b1b2e;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --page: #0d0d0d;
-  --surface-1: #1a1a19;
-  --surface-2: #383835;
-  --text-primary: #ffffff;
-  --text-secondary: #c3c2b7;
-  --text-muted: #9a9890;
-  --grid: #2c2c2a;
-  --axis: #383835;
-  --border: rgba(255, 255, 255, 0.12);
-  --series-1: #3987e5;
-  --series-2: #d95926;
-  --series-3: #199e70;
-  --series-7: #9085e9;
-  --telework: #9085e9;
-  --shade-commute: rgba(57, 135, 229, 0.16);
-  --shade-hours: rgba(255, 255, 255, 0.05);
+  --page: #0a1422;
+  --surface-1: #111e30;
+  --surface-2: #172840;
+  --text-primary: #eaf1fb;
+  --text-secondary: #a9b8cc;
+  --text-muted: #8496ad;
+  --grid: #1c2c43;
+  --axis: #2a3d58;
+  --border: #1f3048;
+  --shadow: none;
+  --accent: #60a5fa;
+  --accent-hover: #93c5fd;
+  --tint: #16294a;
+  --tint-strong: #1b3361;
+  --series-1: #93c5fd;
+  --series-2: #3b82f6;
+  --shade-commute: rgba(96, 165, 250, 0.12);
+  --shade-hours: rgba(255, 255, 255, 0.04);
+  --b1: #1b3361;
+  --b2: #1e40af;
+  --b3: #2563eb;
+  --b4: #3b82f6;
+  --b5: #93c5fd;
+  --b6: #dbeafe;
+  --b1-ink: #bfdbfe;
+  --b2-ink: #eaf1fb;
+  --b4-ink: #0b1b2e;
+  --danger: #fb923c;
+  --on-accent: #0b1b2e;
 }
 
 html, body { background: var(--page); color: var(--text-primary); }
-body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
-.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-size: 15px;
+  line-height: 1.5;
+}
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); }
 .tabnum { font-variant-numeric: tabular-nums; }
 .leaflet-container { background: var(--surface-2); border-radius: 10px; }
 details > summary { cursor: pointer; }
-:focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; }
+details > summary::marker { color: var(--text-muted); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn { border: 1px solid var(--border); border-radius: 10px; padding: 0.35rem 0.8rem; font-size: 0.875rem; background: var(--surface-1); color: var(--text-primary); }
+.btn:hover:not(:disabled) { background: var(--surface-2); }
+.btn:disabled { opacity: 0.45; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+input, select, textarea { border-radius: 10px !important; }
+input[type="range"] { accent-color: var(--accent); }
+
+/* ---------------------------------------------------------------- motion */
+@keyframes cc-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes cc-pop { 0% { opacity: 0.3; transform: scale(0.92); } 60% { transform: scale(1.04); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes cc-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cc-pulse { 0% { box-shadow: 0 0 0 0 rgba(208, 59, 59, 0.5); } 70% { box-shadow: 0 0 0 7px rgba(208, 59, 59, 0); } 100% { box-shadow: 0 0 0 0 rgba(208, 59, 59, 0); } }
+@keyframes cc-shimmer { from { background-position: -400px 0; } to { background-position: 400px 0; } }
+
+.cc-rise { animation: cc-rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.cc-pop { animation: cc-pop 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.cc-fade { animation: cc-fade 0.35s ease-out both; }
+.cc-pulse { animation: cc-pulse 2.2s ease-out infinite; }
+
+/* staggered entrance for the dashboard's panels */
+.cc-stagger > * { animation: cc-rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.cc-stagger > *:nth-child(2) { animation-delay: 60ms; }
+.cc-stagger > *:nth-child(3) { animation-delay: 120ms; }
+.cc-stagger > *:nth-child(4) { animation-delay: 180ms; }
+.cc-stagger > *:nth-child(5) { animation-delay: 240ms; }
+.cc-stagger > *:nth-child(6) { animation-delay: 300ms; }
+.cc-stagger > *:nth-child(n+7) { animation-delay: 360ms; }
+
+.card { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
+.card:hover { box-shadow: 0 4px 16px rgba(15, 40, 80, 0.06); }
+.btn, button, a { transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease; }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+
+.cc-bar { transition: width 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), background-color 0.4s ease; }
+
+/* smooth height for expanding rows */
+.cc-collapse { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.28s ease; }
+.cc-collapse[data-open="true"] { grid-template-rows: 1fr; }
+.cc-collapse > div { overflow: hidden; }
+
+.skeleton {
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--surface-2) 0%, var(--tint) 50%, var(--surface-2) 100%);
+  background-size: 800px 100%;
+  animation: cc-shimmer 1.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
+}

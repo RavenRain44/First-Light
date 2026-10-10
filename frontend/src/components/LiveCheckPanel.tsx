@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import type { Snapshot } from "../types";
-import { Badge, Card, ago, fmtTime } from "../util";
+import { Badge, Card, Skeleton, ago, fmtTime } from "../util";
 
 const SEV_TONE: Record<string, "bad" | "warn" | "neutral"> = { Extreme: "bad", Severe: "bad", Moderate: "warn" };
 
@@ -30,7 +30,7 @@ export function LiveCheckPanel({ onSnapshot, busy, setBusy }: { onSnapshot: (s: 
   return (
     <Card title="Live Check: run the engine on a real active NWS alert anywhere in the US"
       right={list && <span className="text-xs text-muted">{list.count} land alerts · fetched {ago(list.fetched_at)} · <button className="underline" onClick={load}>refresh</button></span>}>
-      <div role="note" className="mb-3 rounded-lg border-2 border-dashed border-[var(--serious)] p-2 text-sm">
+      <div role="note" className="mb-4 rounded-xl border border-dashed border-[var(--accent)] bg-[var(--tint)] p-3 text-sm">
         <strong>What-if, outside Iowa scope; NWS-only data, lower confidence.</strong> A hypothetical copy of the Ames facility is placed at the
         alert's location. Iowa-only sources (ASOS obs via IEM, Iowa DOT roads, RWIS) show as unavailable, which lowers confidence. Always live, even in demo mode.
       </div>
@@ -41,8 +41,8 @@ export function LiveCheckPanel({ onSnapshot, busy, setBusy }: { onSnapshot: (s: 
           <input type="checkbox" checked={assumeWorkday} onChange={(e) => setAssumeWorkday(e.target.checked)} /> treat today as a workday
         </label>
       </div>
-      {err && <p className="mb-2 text-sm text-[var(--critical)]">{err}</p>}
-      {!list && !err && <div className="h-40 animate-pulse rounded bg-[var(--surface-2)]" />}
+      {err && <p className="mb-2 text-sm text-[var(--danger)]">{err}</p>}
+      {!list && !err && <Skeleton className="h-40" />}
       {list && (
         <div className="max-h-80 overflow-auto rounded-md border border-edge">
           {alerts.length === 0 && <p className="p-3 text-sm text-ink2">No matching active alerts right now.</p>}
@@ -58,7 +58,7 @@ export function LiveCheckPanel({ onSnapshot, busy, setBusy }: { onSnapshot: (s: 
                   <p className="truncate text-xs text-ink2" title={a.areaDesc}>{a.areaDesc}</p>
                   <p className="text-xs text-muted tabnum">{fmtTime(a.onset, "UTC")} → {fmtTime(a.ends ?? a.expires, "UTC")} · {a.senderName}</p>
                 </div>
-                <button onClick={() => run(a.id)} disabled={busy} className="rounded-lg bg-[var(--series-1)] px-3 py-1 text-xs font-semibold text-white disabled:opacity-40">
+                <button onClick={() => run(a.id)} disabled={busy} className="btn btn-primary !py-1 !text-xs">
                   {busy && picked === a.id ? "Evaluating…" : "Evaluate here"}
                 </button>
               </li>

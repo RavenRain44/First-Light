@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
-import { Badge, Card, PostureBadge, READINESS, fmtTime } from "../util";
+import { Badge, Card, PostureBadge, READINESS, Skeleton, fmtTime } from "../util";
 
 export function ThresholdsView() {
   const [th, setTh] = useState<any>(null);
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => { api.thresholds().then(setTh).catch((e) => setErr(e.message)); }, []);
   if (err) return <Card title="Thresholds"><p className="text-sm">{err}</p></Card>;
-  if (!th) return <Card title="Thresholds"><div className="h-40 animate-pulse rounded bg-[var(--surface-2)]" /></Card>;
+  if (!th) return <Card title="Thresholds"><Skeleton className="h-40" /></Card>;
   const hazards = ["winter", "wind", "cold"];
   return (
     <div className="space-y-4">

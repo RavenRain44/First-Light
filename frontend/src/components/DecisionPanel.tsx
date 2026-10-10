@@ -55,10 +55,10 @@ export function DecisionPanel({ snap, onRecorded }: { snap: Snapshot; onRecorded
           <input value={notes} onChange={(e) => setNotes(e.target.value)} className="rounded-md border border-edge bg-surface px-2 py-1" />
         </label>
         <button onClick={submit} disabled={busy || by.trim().length < 2 || (override && !reason.trim())}
-          className="mt-1 rounded-lg bg-[var(--series-1)] px-3 py-1.5 font-semibold text-white disabled:opacity-40">
+          className="btn btn-primary mt-1">
           {override ? "Record override" : "Accept recommendation"}
         </button>
-        {msg && <p className="text-xs">{msg}</p>}
+        {msg && <p className="cc-rise rounded-lg bg-[var(--tint)] px-2 py-1.5 text-xs">{msg}</p>}
         <p className="text-xs text-muted">Snapshot {snap.snapshot_id.slice(0, 12)} · content hash {snap.content_sha256.slice(0, 12)} {snap.integrity_ok ? "✓ verified" : ""}</p>
       </div>
     </Card>

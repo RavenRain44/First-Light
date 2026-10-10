@@ -68,18 +68,18 @@ export function ReplayPanel({ onSnapshot, busy, setBusy, current }: {
             {events?.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
           </select>
         </label>
-        <button onClick={() => setPlaying(!playing)} disabled={!ev} className="rounded-lg border border-edge px-3 py-1 text-sm">{playing ? "❚❚ Pause" : "▶ Play"}</button>
-        <button onClick={() => setIdx((i) => Math.max(0, i - 1))} disabled={!ev} className="rounded-lg border border-edge px-2 py-1 text-sm" aria-label="Previous hour">◀ 1h</button>
-        <button onClick={() => setIdx((i) => Math.min((ev?.timeline.length ?? 1) - 1, i + 1))} disabled={!ev} className="rounded-lg border border-edge px-2 py-1 text-sm" aria-label="Next hour">1h ▶</button>
+        <button onClick={() => setPlaying(!playing)} disabled={!ev} className="btn">{playing ? "❚❚ Pause" : "▶ Play"}</button>
+        <button onClick={() => setIdx((i) => Math.max(0, i - 1))} disabled={!ev} className="btn" aria-label="Previous hour">◀ 1h</button>
+        <button onClick={() => setIdx((i) => Math.min((ev?.timeline.length ?? 1) - 1, i + 1))} disabled={!ev} className="btn" aria-label="Next hour">1h ▶</button>
         {ev?.backtest?.at_0400_local && (
           <button onClick={() => setIdx(Math.max(0, ev.timeline.findIndex((x: any) => x.as_of === ev.backtest.at_0400_local.as_of)))}
-            className="rounded-lg border border-edge px-2 py-1 text-sm">Jump to 04:00 on impact day</button>
+            className="btn">Jump to 04:00 on impact day</button>
         )}
         <span className="ml-auto flex items-end gap-2 text-sm">
           <label className="grid gap-1">Any moment (Central time)
             <input type="datetime-local" value={custom} onChange={(e) => setCustom(e.target.value)} className="rounded-md border border-edge bg-surface px-2 py-1" />
           </label>
-          <button onClick={runCustom} disabled={busy} className="rounded-lg border border-edge px-3 py-1">Evaluate</button>
+          <button onClick={runCustom} disabled={busy} className="btn">Evaluate</button>
         </span>
       </div>
 
@@ -92,7 +92,7 @@ export function ReplayPanel({ onSnapshot, busy, setBusy, current }: {
             {ev.timeline.map((x: any, i: number) => (
               <button key={x.as_of} title={`${fmtTime(x.as_of, TZ)}: ${POSTURE_STYLE[x.posture as keyof typeof POSTURE_STYLE].label}`}
                 onClick={() => { setPlaying(false); setIdx(i); }}
-                className={`h-full flex-1 ${i === idx ? "outline outline-2 outline-[var(--text-primary)]" : ""}`}
+                className={`h-full flex-1 origin-bottom transition-transform duration-150 hover:scale-y-125 ${i === idx ? "outline outline-2 outline-[var(--text-primary)]" : ""}`}
                 style={{ background: POSTURE_STYLE[x.posture as keyof typeof POSTURE_STYLE].color }} />
             ))}
           </div>
@@ -132,7 +132,7 @@ export function ReplayPanel({ onSnapshot, busy, setBusy, current }: {
         </>
       )}
       {current && current.mode !== "live" && current.event_id === null && <p className="mt-2 text-xs text-muted">Showing a free-form replay at {fmtTime(current.as_of, TZ)}.</p>}
-      {err && <p className="mt-2 text-sm text-[var(--critical)]">{err}</p>}
+      {err && <p className="mt-2 text-sm text-[var(--danger)]">{err}</p>}
     </Card>
   );
 }

@@ -3,11 +3,12 @@ import { useEffect, useState } from "react";
 import { CircleMarker, GeoJSON, MapContainer, Polyline, TileLayer, Tooltip as LTooltip } from "react-leaflet";
 import { api } from "../api";
 import type { Snapshot } from "../types";
-import { Card, Prov, fmtTime } from "../util";
+import { Card, Prov, Skeleton, fmtTime } from "../util";
 
 // Ordinal road severity: one consistent scale, always shown with its text label.
 export const RANK_COLOR: Record<number, string> = {
-  0: "var(--good)", 1: "#7a9cc6", 2: "var(--warning)", 3: "var(--serious)", 4: "var(--critical)", 5: "#6b0f1a",
+  // ordinal blue scale: pale = normal ... navy = not advised / closed (always labelled in the table/legend)
+  0: "#bfdbfe", 1: "#93c5fd", 2: "#60a5fa", 3: "#2563eb", 4: "#1e3a8a", 5: "#0b1b2e",
 };
 const cssVar = (c: string) => c.startsWith("var(") ? getComputedStyle(document.documentElement).getPropertyValue(c.slice(4, -1)).trim() || "#888" : c;
 
@@ -25,7 +26,7 @@ export function RoadsPanel({ snap }: { snap: Snapshot }) {
     return <Card title="Roads"><p className="text-sm text-ink2">Iowa DOT road conditions are Iowa-only. Unavailable for this what-if location, which lowers confidence.</p></Card>;
   }
   if (err) return <Card title="Roads"><p className="text-sm">Road data unavailable: {err}</p></Card>;
-  if (!data) return <Card title="Roads"><div className="h-72 animate-pulse rounded bg-[var(--surface-2)]" /></Card>;
+  if (!data) return <Card title="Roads"><Skeleton className="h-80" /></Card>;
   const tz = snap.facility.timezone;
   const center: [number, number] = [data.facility.lat - 0.12, data.facility.lon];
 
@@ -41,7 +42,7 @@ export function RoadsPanel({ snap }: { snap: Snapshot }) {
             <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
             {data.corridors.map((c: any) => (
               <Polyline key={c.id} positions={c.coordinates.map((p: number[]) => [p[1], p[0]])}
-                pathOptions={{ color: cssVar("var(--series-1)"), weight: 12, opacity: 0.25 }}>
+                pathOptions={{ color: "#3b82f6", weight: 14, opacity: 0.15 }}>
                 <LTooltip sticky>{c.name}: {c.worst_label ?? "no report"} · {c.commuters_in_building} commuting today</LTooltip>
               </Polyline>
             ))}
