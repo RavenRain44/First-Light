@@ -58,7 +58,7 @@ export function DecisionPanel({ snap, onRecorded }: { snap: Snapshot; onRecorded
           className="btn btn-primary mt-1">
           {override ? "Record override" : "Accept recommendation"}
         </button>
-        {msg && <p className="text-xs">{msg}</p>}
+        {msg && <p className="cc-rise rounded-lg bg-[var(--tint)] px-2 py-1.5 text-xs">{msg}</p>}
         <p className="text-xs text-muted">Snapshot {snap.snapshot_id.slice(0, 12)} · content hash {snap.content_sha256.slice(0, 12)} {snap.integrity_ok ? "✓ verified" : ""}</p>
       </div>
     </Card>

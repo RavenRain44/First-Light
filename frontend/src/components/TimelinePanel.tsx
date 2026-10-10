@@ -4,7 +4,7 @@ import {
 } from "recharts";
 import { api } from "../api";
 import type { Snapshot } from "../types";
-import { Card, fmtTime } from "../util";
+import { Card, Skeleton, fmtTime } from "../util";
 
 type Row = Record<string, number | string> & { ts: number };
 
@@ -39,18 +39,19 @@ export function TimelinePanel({ snap }: { snap: Snapshot }) {
   const rows: Row[] = useMemo(() => (ts?.rows ?? []).map((r: any) => ({ ...r, ts: new Date(r.t).getTime() })), [ts]);
   const asOf = new Date(snap.as_of).getTime();
   if (err) return <Card title="Conditions timeline"><p className="text-sm">Could not load chart data: {err}</p></Card>;
-  if (!ts) return <Card title="Conditions timeline"><div className="h-64 animate-pulse rounded bg-[var(--surface-2)]" /></Card>;
+  if (!ts) return <Card title="Conditions timeline"><div className="grid gap-6 lg:grid-cols-2"><Skeleton className="h-52" /><Skeleton className="h-52" /></div></Card>;
   const domain: [number, number] = [asOf - 12 * 3600e3, asOf + 48 * 3600e3];
   const tick = (v: number) => new Date(v).toLocaleString("en-US", { timeZone: tz, weekday: "short", hour: "2-digit", hour12: false });
 
   return (
     <Card title="Conditions timeline" right={<span className="text-xs text-muted">past 12 h observed (IEM ASOS) · next 48 h forecast · shaded: commute windows (blue), facility hours (gray)</span>}>
-      <div className="grid gap-4 lg:grid-cols-2">
-        {CHARTS.map((c) => {
+      <div className="grid gap-6 lg:grid-cols-6">
+        {CHARTS.map((c, ci) => {
+          const span = ci < 2 ? "lg:col-span-3" : "lg:col-span-2";
           const present = c.series.filter((s) => rows.some((r) => typeof r[s.key] === "number"));
           if (!present.length) {
             return (
-              <div key={c.id} className="rounded-lg border border-dashed border-edge p-3 text-sm text-ink2">
+              <div key={c.id} className={`rounded-xl border border-dashed border-edge p-3 text-sm text-ink2 ${span}`}>
                 <h3 className="font-semibold text-ink">{c.title}</h3>
                 No data for this series from the available sources.
               </div>
@@ -65,7 +66,7 @@ export function TimelinePanel({ snap }: { snap: Snapshot }) {
           const yMax = c.unit === "%" ? 100 : niceCeil(rawMax);
           const yMin = Math.min(c.id === "temp" ? Math.floor((dataMin - 5) / 10) * 10 : 0, ...lines.map((l) => l.value));
           return (
-            <figure key={c.id} className="min-w-0">
+            <figure key={c.id} className={`min-w-0 ${span}`}>
               <figcaption className="mb-1 flex items-baseline justify-between text-sm">
                 <span className="font-semibold">{c.title} <span className="font-normal text-muted">({c.unit})</span></span>
               </figcaption>
@@ -91,7 +92,7 @@ export function TimelinePanel({ snap }: { snap: Snapshot }) {
                     {present.length > 1 && <Legend wrapperStyle={{ fontSize: 12, color: "var(--text-secondary)" }} />}
                     {present.map((s) => (
                       <Line key={s.key} dataKey={s.key} name={s.name} stroke={s.color} strokeWidth={2} strokeDasharray={s.dash}
-                        dot={false} activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface-1)" }} connectNulls isAnimationActive={false} />
+                        dot={false} activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--surface-1)" }} connectNulls isAnimationActive animationDuration={700} animationEasing="ease-out" />
                     ))}
                   </LineChart>
                 </ResponsiveContainer>

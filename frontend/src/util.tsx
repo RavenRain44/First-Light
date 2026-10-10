@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Posture, Readiness, ReadinessLevel } from "./types";
 
 export const POSTURES: Posture[] = ["NORMAL", "DELAYED_ARRIVAL", "EARLY_DISMISSAL", "TELEWORK", "CLOSED"];
@@ -104,7 +104,7 @@ export function PostureBadge({ p, size = "md" }: { p: Posture; size?: "sm" | "md
   const s = POSTURE_STYLE[p];
   const cls = size === "lg" ? "text-2xl px-4 py-2 rounded-xl" : size === "sm" ? "text-xs px-2 py-0.5 rounded-md" : "text-sm px-3 py-1 rounded-lg";
   return (
-    <span className={`inline-flex items-center gap-2 whitespace-nowrap font-semibold ${cls}`} style={{ background: s.color, color: s.ink }}>
+    <span key={p} className={`inline-flex items-center gap-2 whitespace-nowrap font-semibold ${size === "lg" ? "cc-pop" : ""} ${cls}`} style={{ background: s.color, color: s.ink }}>
       <span aria-hidden>{s.icon}</span>{s.label}
     </span>
   );
@@ -130,7 +130,7 @@ export function ReadinessMeter({ r, tz, compact = false }: { r: Readiness; tz: s
         <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Readiness</span>
         <div className="flex" role="meter" aria-valuemin={0} aria-valuemax={3} aria-valuenow={idx} aria-label={`Readiness: Condition ${READINESS[idx].label}`}>
           {READINESS.map((x, i) => (
-            <span key={x.level} className={`h-3.5 w-6 border border-edge first:rounded-l-full last:rounded-r-full ${i === idx ? "ring-2 ring-inset ring-[var(--text-primary)]" : "opacity-30"}`}
+            <span key={x.level} className={`h-3.5 w-6 border border-edge transition-opacity duration-500 first:rounded-l-full last:rounded-r-full ${i === idx ? `ring-2 ring-inset ring-[var(--text-primary)] ${x.level === "RED" ? "cc-pulse" : ""}` : "opacity-30"}`}
               style={{ background: x.color }} />
           ))}
         </div>
@@ -147,4 +147,30 @@ export function ReadinessMeter({ r, tz, compact = false }: { r: Readiness; tz: s
 
 export function readinessColor(level: string | null | undefined): string {
   return READINESS.find((x) => x.level === level)?.color ?? "transparent";
+}
+
+/** Number that eases to its new value (used for scores and confidence). */
+export function AnimatedNumber({ value, decimals = 0 }: { value: number; decimals?: number }) {
+  const [shown, setShown] = useState(value);
+  const from = useRef(value);
+  useEffect(() => {
+    const start = performance.now();
+    const a = from.current;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduce || a === value) { setShown(value); from.current = value; return; }
+    let raf = 0;
+    const step = (t: number) => {
+      const k = Math.min(1, (t - start) / 600);
+      const e = 1 - Math.pow(1 - k, 3);
+      setShown(a + (value - a) * e);
+      if (k < 1) raf = requestAnimationFrame(step); else from.current = value;
+    };
+    raf = requestAnimationFrame(step);
+    return () => { cancelAnimationFrame(raf); from.current = value; };
+  }, [value]);
+  return <>{shown.toFixed(decimals)}</>;
+}
+
+export function Skeleton({ className = "" }: { className?: string }) {
+  return <div className={`skeleton ${className}`} aria-hidden />;
 }

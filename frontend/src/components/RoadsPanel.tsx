@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { CircleMarker, GeoJSON, MapContainer, Polyline, TileLayer, Tooltip as LTooltip } from "react-leaflet";
 import { api } from "../api";
 import type { Snapshot } from "../types";
-import { Card, Prov, fmtTime } from "../util";
+import { Card, Prov, Skeleton, fmtTime } from "../util";
 
 // Ordinal road severity: one consistent scale, always shown with its text label.
 export const RANK_COLOR: Record<number, string> = {
@@ -26,7 +26,7 @@ export function RoadsPanel({ snap }: { snap: Snapshot }) {
     return <Card title="Roads"><p className="text-sm text-ink2">Iowa DOT road conditions are Iowa-only. Unavailable for this what-if location, which lowers confidence.</p></Card>;
   }
   if (err) return <Card title="Roads"><p className="text-sm">Road data unavailable: {err}</p></Card>;
-  if (!data) return <Card title="Roads"><div className="h-72 animate-pulse rounded bg-[var(--surface-2)]" /></Card>;
+  if (!data) return <Card title="Roads"><Skeleton className="h-80" /></Card>;
   const tz = snap.facility.timezone;
   const center: [number, number] = [data.facility.lat - 0.12, data.facility.lon];
 

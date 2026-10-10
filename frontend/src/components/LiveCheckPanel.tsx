@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import type { Snapshot } from "../types";
-import { Badge, Card, ago, fmtTime } from "../util";
+import { Badge, Card, Skeleton, ago, fmtTime } from "../util";
 
 const SEV_TONE: Record<string, "bad" | "warn" | "neutral"> = { Extreme: "bad", Severe: "bad", Moderate: "warn" };
 
@@ -42,7 +42,7 @@ export function LiveCheckPanel({ onSnapshot, busy, setBusy }: { onSnapshot: (s: 
         </label>
       </div>
       {err && <p className="mb-2 text-sm text-[var(--danger)]">{err}</p>}
-      {!list && !err && <div className="h-40 animate-pulse rounded bg-[var(--surface-2)]" />}
+      {!list && !err && <Skeleton className="h-40" />}
       {list && (
         <div className="max-h-80 overflow-auto rounded-md border border-edge">
           {alerts.length === 0 && <p className="p-3 text-sm text-ink2">No matching active alerts right now.</p>}

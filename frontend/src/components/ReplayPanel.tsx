@@ -92,7 +92,7 @@ export function ReplayPanel({ onSnapshot, busy, setBusy, current }: {
             {ev.timeline.map((x: any, i: number) => (
               <button key={x.as_of} title={`${fmtTime(x.as_of, TZ)}: ${POSTURE_STYLE[x.posture as keyof typeof POSTURE_STYLE].label}`}
                 onClick={() => { setPlaying(false); setIdx(i); }}
-                className={`h-full flex-1 ${i === idx ? "outline outline-2 outline-[var(--text-primary)]" : ""}`}
+                className={`h-full flex-1 origin-bottom transition-transform duration-150 hover:scale-y-125 ${i === idx ? "outline outline-2 outline-[var(--text-primary)]" : ""}`}
                 style={{ background: POSTURE_STYLE[x.posture as keyof typeof POSTURE_STYLE].color }} />
             ))}
           </div>

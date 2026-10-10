@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "./api";
-import { AIPanel } from "./components/AIPanel";
+import { AIPanel, WatchPanel } from "./components/AIPanel";
 import { AlertsPanel } from "./components/AlertsPanel";
 import { DecisionPanel } from "./components/DecisionPanel";
 import { PanelBoundary } from "./components/ErrorBoundary";
@@ -14,6 +14,7 @@ import { ThreatPanel } from "./components/ThreatPanel";
 import { ThresholdsView } from "./components/ThresholdsView";
 import { TimelinePanel } from "./components/TimelinePanel";
 import type { Snapshot } from "./types";
+import { Skeleton } from "./util";
 
 function initialTheme(): string {
   try {
@@ -66,28 +67,35 @@ export default function App() {
       <Header snap={snap} mode={mode} setMode={setMode} busy={busy} demo={demo} theme={theme}
         onRefresh={() => run(() => api.evaluateLive())} toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} />
 
-      <nav className="flex gap-2 text-sm">
-        <button onClick={() => setView("dashboard")} className={`rounded-md px-3 py-1 ${view === "dashboard" ? "bg-[var(--surface-2)] font-semibold" : "text-ink2"}`}>Dashboard</button>
-        <button onClick={() => setView("thresholds")} className={`rounded-md px-3 py-1 ${view === "thresholds" ? "bg-[var(--surface-2)] font-semibold" : "text-ink2"}`}>Thresholds & backtest</button>
+      <nav className="flex gap-5 border-b border-edge text-sm">
+        {(["dashboard", "thresholds"] as const).map((v) => (
+          <button key={v} onClick={() => setView(v)}
+            className={`relative px-1 pb-1.5 ${view === v ? "font-semibold text-ink" : "text-ink2 hover:text-ink"}`}>
+            {v === "dashboard" ? "Dashboard" : "Thresholds & backtest"}
+            <span className={`absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-[var(--accent)] transition-transform duration-300 ${view === v ? "scale-x-100" : "scale-x-0"}`} />
+          </button>
+        ))}
       </nav>
 
-      {view === "thresholds" ? <ThresholdsView /> : (
+      {view === "thresholds" ? <div className="cc-fade"><ThresholdsView /></div> : (
         <>
           {mode === "replay" && <ReplayPanel onSnapshot={setSnap} busy={busy} setBusy={setBusy} current={snap} />}
           {mode === "livecheck" && <LiveCheckPanel onSnapshot={setSnap} busy={busy} setBusy={setBusy} />}
           {err && <div role="alert" className="card border-l-4 border-l-[var(--danger)] p-3 text-sm">Could not load: {err}. The last good snapshot (if any) is still shown.</div>}
           {snap && (mode !== "livecheck" || snap.mode === "livecheck") && (mode !== "replay" || snap.mode !== "live") ? (
-            <>
-              <div className="grid gap-4 lg:grid-cols-3">
-                <div className="space-y-4 lg:col-span-2">
+            <div className="cc-stagger space-y-4">
+              <div className="grid items-start gap-4 lg:grid-cols-3">
+                <div className="lg:col-span-2">
                   <PanelBoundary name="Interpretation"><AIPanel snap={snap} /></PanelBoundary>
-                  <PanelBoundary name="Threat breakdown"><ThreatPanel snap={snap} /></PanelBoundary>
                 </div>
-                <div className="space-y-4">
+                {/* side column stays in view while the longer interpretation scrolls past */}
+                <div className="space-y-4 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
                   <PanelBoundary name="Alerts"><AlertsPanel snap={snap} /></PanelBoundary>
+                  <PanelBoundary name="Watch"><WatchPanel snap={snap} /></PanelBoundary>
                   <PanelBoundary name="Decision"><DecisionPanel key={snap.snapshot_id} snap={snap} onRecorded={() => setRecordKey((k) => k + 1)} /></PanelBoundary>
                 </div>
               </div>
+              <PanelBoundary name="Threat breakdown"><ThreatPanel snap={snap} /></PanelBoundary>
               <PanelBoundary name="Timeline"><TimelinePanel snap={snap} /></PanelBoundary>
               <PanelBoundary name="Roads"><RoadsPanel snap={snap} /></PanelBoundary>
               <PanelBoundary name="Analogs"><AnalogsPanel snap={snap} /></PanelBoundary>
@@ -95,9 +103,9 @@ export default function App() {
                 <PanelBoundary name="Decision record"><RecordTimeline snap={snap} refreshKey={recordKey} onOpen={(id) => run(() => api.snapshot(id))} /></PanelBoundary>
                 <PanelBoundary name="Raw data"><RawDataDrawer snap={snap} /></PanelBoundary>
               </div>
-            </>
+            </div>
           ) : !err && mode === "live" ? (
-            <div className="card h-64 animate-pulse" />
+            <div className="space-y-4"><Skeleton className="h-48" /><Skeleton className="h-96" /></div>
           ) : null}
         </>
       )}

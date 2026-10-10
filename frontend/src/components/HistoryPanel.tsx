@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import type { Snapshot } from "../types";
-import { Badge, Card, PostureBadge, fmtTime, readinessColor } from "../util";
+import { Badge, Card, PostureBadge, Skeleton, fmtTime, readinessColor } from "../util";
 
 export function AnalogsPanel({ snap }: { snap: Snapshot }) {
   const tz = snap.facility.timezone;
@@ -24,7 +24,7 @@ export function AnalogsPanel({ snap }: { snap: Snapshot }) {
       ) : (
         <div className="grid gap-3 md:grid-cols-3">
           {snap.analogs.map((a) => (
-            <article key={a.event_id} className="rounded-xl border border-edge p-4 text-sm">
+            <article key={a.event_id} className="cc-rise rounded-xl border border-edge p-4 text-sm transition-colors hover:border-[var(--b3)]">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-semibold">{a.name}</h3>
                 <span className="tabnum text-lg font-bold">{a.similarity_pct.toFixed(0)}%</span>
@@ -48,7 +48,7 @@ export function RecordTimeline({ snap, refreshKey, onOpen }: { snap: Snapshot; r
   const tz = snap.facility.timezone;
   return (
     <Card title="Decision record (this facility)" right={<span className="text-xs text-muted">immutable snapshots + human decisions</span>}>
-      {!rows ? <div className="h-24 animate-pulse rounded bg-[var(--surface-2)]" /> : rows.length === 0 ? (
+      {!rows ? <Skeleton className="h-24" /> : rows.length === 0 ? (
         <p className="text-sm text-ink2">No snapshots yet.</p>
       ) : (
         <ol className="max-h-96 space-y-2 overflow-auto pr-1">

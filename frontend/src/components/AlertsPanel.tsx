@@ -23,7 +23,7 @@ export function AlertsPanel({ snap }: { snap: Snapshot }) {
           const a = inp.data as any;
           const summary = snap.ai.alert_summaries?.[a.id];
           return (
-            <article key={inp.id} className="rounded-lg border border-edge p-3">
+            <article key={inp.id} className="cc-rise rounded-xl border border-edge p-3">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-semibold">
                   <Prov tz={tz} source={inp.source} url={a.web ?? inp.source_url} fetched={inp.fetched_at} sourceTime={inp.source_time} note={inp.note}>{a.event}</Prov>
