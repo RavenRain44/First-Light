@@ -16,7 +16,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from ai import fallback
-from ai.prompts import SYSTEM_PROMPT, USER_PROMPT, BriefDraft, Interpretation
+from ai.prompts import SYSTEM_PROMPT, USER_PROMPT, BriefDraft, Interpretation, WeatherDraft
 from ai.tools import VIEWS
 from app.config import settings
 
@@ -151,23 +151,21 @@ def _concise_summary(text: str) -> str:
     return " ".join(s.strip() for s in sentences[:2]) if len(sentences) >= 2 else text
 
 
-async def _run_akamai(snap: dict, feedback: str | None) -> tuple[Interpretation, dict]:
+async def _akamai_chat(system: str, user: str, schema: dict, name: str,
+                       max_tokens: int, timeout_s: int) -> tuple[str, dict]:
+    """Shared workshop transport for briefs and notification wording, including usage on rejection."""
     from openai import AsyncOpenAI
 
-    prompt = USER_PROMPT + "\n\nSnapshot views (data only):\n" + _context(snap)
-    if feedback:
-        prompt += "\n\nRepair the previous validation failure: " + feedback
-    schema = _response_schema(snap)
     async with AsyncOpenAI(api_key=settings.akamai_api_key, base_url=settings.akamai_base_url,
-                           timeout=TIMEOUT_S, max_retries=0) as client:
-        response = await client.chat.completions.create(
+                           timeout=timeout_s, max_retries=0) as client:
+        response = await asyncio.wait_for(client.chat.completions.create(
             model=settings.akamai_model_id,
-            messages=[{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": prompt}],
+            messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
             response_format={"type": "json_schema", "json_schema": {
-                "name": "decision_brief", "schema": schema}},
-            temperature=0.2, max_tokens=MAX_OUTPUT_TOKENS,
+                "name": name, "schema": schema}},
+            temperature=0.2, max_tokens=max_tokens,
             extra_body={"chat_template_kwargs": {"enable_thinking": False}},
-        )
+        ), timeout_s)
     usage = response.usage
     metadata = {
         "provider": "akamai", "model": settings.akamai_model_id,
@@ -180,6 +178,15 @@ async def _run_akamai(snap: dict, feedback: str | None) -> tuple[Interpretation,
     content = response.choices[0].message.content
     if not content:
         raise InvalidModelOutput(["chat returned no content"], metadata)
+    return content, metadata
+
+
+async def _run_akamai(snap: dict, feedback: str | None) -> tuple[Interpretation, dict]:
+    prompt = USER_PROMPT + "\n\nSnapshot views (data only):\n" + _context(snap)
+    if feedback:
+        prompt += "\n\nRepair the previous validation failure: " + feedback
+    content, metadata = await _akamai_chat(SYSTEM_PROMPT, prompt, _response_schema(snap),
+                                          "decision_brief", MAX_OUTPUT_TOKENS, TIMEOUT_S)
     return _parse_output(content, metadata, snap), metadata
 
 
@@ -280,27 +287,36 @@ async def interpret(snap: dict, use_model: bool = True) -> tuple[dict, str]:
     return d, FALLBACK_ID
 
 
-async def hazard_sentence(system: str, user: str) -> tuple[str | None, str]:
-    """One short sentence from Akamai (used for notification wording).
-
-    Returns (None, "none") when inference is off or no key is configured, so callers use their template.
-    """
+async def hazard_sentence(system: str, user: str) -> tuple[str | None, str, dict]:
+    """At most one bounded Akamai call; failures return an audited template signal."""
+    inference = {"provider": "template", "fallback_used": True, "requests": [], "failures": []}
+    if settings.model_provider == "none":
+        return None, FALLBACK_ID, inference
     if settings.model_provider != "akamai" or not settings.akamai_api_key:
-        return None, "none"
-    from openai import AsyncOpenAI
-
-    schema = {"type": "object", "properties": {"explanation": {"type": "string", "maxLength": 350}},
-              "required": ["explanation"], "additionalProperties": False}
-    async with AsyncOpenAI(api_key=settings.akamai_api_key, base_url=settings.akamai_base_url,
-                           timeout=30, max_retries=0) as client:
-        response = await client.chat.completions.create(
-            model=settings.akamai_model_id,
-            messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
-            response_format={"type": "json_schema", "json_schema": {"name": "weather_draft", "schema": schema}},
-            temperature=0.2, max_tokens=200,
-            extra_body={"chat_template_kwargs": {"enable_thinking": False}},
-        )
-    content = response.choices[0].message.content if response.choices else None
-    if not content:
-        raise ValueError("empty model response")
-    return json.loads(content)["explanation"], f"akamai:{settings.akamai_model_id}"
+        problem = "AKAMAI_API_KEY not configured" if settings.model_provider == "akamai" else "Unsupported MODEL_PROVIDER; use akamai or none"
+        inference["failures"].append({"provider": "akamai", "problems": [problem]})
+        return None, FALLBACK_ID, inference
+    try:
+        if len(user) > 4000:
+            raise ValueError("notification context exceeds the inference input budget")
+        content, metadata = await _akamai_chat(system, user, WeatherDraft.model_json_schema(),
+                                              "weather_draft", 200, 30)
+        inference["requests"].append(metadata)
+        draft = WeatherDraft.model_validate_json(content)
+        # Reporting instructions and the manager's recorded decision are kept outside model output.
+        if re.search(r"\d|\b(report\w*|commut\w*|clos\w*|telework\w*|delay\w*|dismiss\w*|leave|"
+                     r"must|should|recommend\w*|operat\w*|evacuat\w*|shelter\w*|stay|go|safe)\b",
+                     draft.explanation, re.I):
+            raise InvalidModelOutput(["notification draft contains numbers or operational guidance"], metadata)
+    except InvalidModelOutput as e:
+        if not inference["requests"]:
+            inference["requests"].append(e.metadata)
+        problems = e.problems
+    except Exception as e:
+        # Never persist provider exception messages, raw model output or credentials.
+        problems = [f"notification model failed: {type(e).__name__}"]
+    else:
+        inference.update(provider="akamai", fallback_used=False)
+        return draft.explanation, f"akamai:{settings.akamai_model_id}", inference
+    inference["failures"].append({"provider": "akamai", "problems": problems})
+    return None, FALLBACK_ID, inference

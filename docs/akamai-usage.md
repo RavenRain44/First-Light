@@ -37,6 +37,15 @@ Use **Re-evaluate now** for a new live decision brief. Replay playback reuses re
 model calls; pause at an hour and click **Generate Akamai brief** for a fresh, recorded Akamai interpretation.
 Existing immutable snapshots keep their original provider and are never relabeled as Akamai output.
 
+After recording a decision, **Send notifications** creates an editable draft. Akamai supplies only a short
+weather sentence from the snapshot's hazard names and severity levels. Employee names, contacts, recipient
+selection and reporting instructions stay outside inference. The recorded manager decision determines the
+notification status, including overrides of the AI brief. Each group requires manager review and approval
+before dispatch. The default delivery provider is simulation; generating a draft transmits no messages.
+Notification drafts show **Powered by Akamai** only after validation and retain `draft_inference` provider,
+token usage and safe failure details in the package and creation audit. Reopening an existing draft makes no
+additional inference call. Existing packages remain readable without this new audit field.
+
 ## Decision brief and grounding
 
 The brief leads with operating status and the manager's final authority, immediate safety guidance, the decide-by
@@ -67,6 +76,13 @@ and a 60-second deadline. Optional Bedrock gets at most one additional request. 
 provider identity, validation outcomes and fallback reasons are stored with the immutable snapshot.
 Network/auth failures stop that provider immediately. History builds, replay playback and existing snapshot reads
 make no inference requests. Avoid leaving repeated evaluation or background refresh running during a demo.
+
+Creating a new notification package makes at most one additional Akamai request with 200 output tokens,
+4,000 input-context characters and a 30-second deadline, with no repair or SDK retry. Truncated responses,
+malformed JSON, extra fields, empty wording, multiple sentences, numbers and operational guidance are rejected.
+Failures preserve template weather wording and the manager's recorded instructions. Notification wording
+uses the template on failure even when optional AWS brief fallback is enabled. Test contacts and credentials
+are excluded from Git, inference context and the production image.
 
 The workshop documents shared team limits of 60 requests/minute and 100,000 chat tokens/minute (confirm with the
 organizers). On rate limiting, the application uses the template; it does not keep retrying. Team activity in other
@@ -113,8 +129,9 @@ DEMO_MODE=true MODEL_PROVIDER=none npm test
 npm --prefix frontend run build
 ```
 
-Tests cover workshop URL/auth/alias/JSON-schema wiring, evidence validation, bounded repair, missing keys,
-network failure, opt-in AWS fallback, preserved safety watch items, immutable records and manager overrides.
+Tests cover workshop URL/auth/alias/JSON-schema wiring for briefs and notification wording, evidence validation,
+bounded repair, missing keys, rate limiting, network failure, opt-in AWS fallback, preserved safety watch items,
+immutable records, manager overrides and approval-only notification drafting.
 Mock transport tests do not establish live endpoint availability. A real successful brief must have
 `model_id=akamai:hackathon-chat`, `ai.validation.ok=true` and Akamai token usage in `ai.inference.requests`.
 
@@ -124,3 +141,9 @@ Initial live tests exercised headline/citation rejection and timeouts before the
 The local production container also passed dashboard/API, seven-event history and replay checks. AWS fallback was
 tested with SDK stubs; it was not activated against a paid AWS endpoint. No Linode or other billable cloud resource
 was provisioned. These results establish the tested operations, not future shared-service availability or a billing balance.
+
+After the branch integration, the same replay with the 270-person roster passed again on the live service:
+one accepted brief request (3,554 input + 871 output tokens) and one accepted notification request
+(66 input + 33 output tokens), totaling 4,524 tokens. Both used `hackathon-chat` on Akamai with no repair or
+fallback. The integration suite covers 114 tests, including notification failure handling and the manager's
+override flowing into an unapproved draft.

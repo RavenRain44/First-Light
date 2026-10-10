@@ -33,6 +33,12 @@ class BriefDraft(BaseModel):
     evidence_rule_ids: list[str] = Field(default_factory=list, description="Up to three triggered rule IDs supporting the recommendation, strongest first")
     alert_summaries: dict[str, str] = Field(default_factory=dict, description="NWS alert id -> one-line plain summary")
 
+class WeatherDraft(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    explanation: str = Field(min_length=1, max_length=350, pattern=r"^[^\s.!?][^\n.!?]*[.!?]?$",
+                             description="One short weather-only sentence; no reporting instructions or numbers")
+
 
 SYSTEM_PROMPT = """You are the interpretation assistant inside "Closure Call", a decision-support dashboard for a
 federal facility manager deciding whether to change the facility's operating status for weather.
