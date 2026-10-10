@@ -1,4 +1,4 @@
-"""Read-only views of ONE snapshot, exposed to the Strands agent as tools.
+"""Read-only views of ONE snapshot, supplied as grounded inference context.
 
 Each function returns plain JSON-able data with times already formatted in the
 facility's local time zone, so the model can copy values verbatim. The same
@@ -9,8 +9,6 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Callable
 from zoneinfo import ZoneInfo
-
-from strands import tool
 
 
 def _local(ts: str | None, tz: ZoneInfo) -> str | None:
@@ -110,41 +108,3 @@ VIEWS: dict[str, Callable[[dict], Any]] = {
     "get_snapshot_summary": snapshot_summary, "get_triggered_rules": triggered_rules, "get_alerts": alerts,
     "get_road_conditions": road_conditions, "get_analogs": analogs,
 }
-
-
-def build_tools(snap: dict, calls: list[str]) -> list:
-    """Strands tools bound to this snapshot. ``calls`` records which tools the model used."""
-
-    @tool
-    def get_snapshot_summary() -> dict:
-        """Recommended posture, OPM label, decision day, timing reasons, confidence and its factors, hazard scores,
-        people expected on site, and source status for the current snapshot."""
-        calls.append("get_snapshot_summary")
-        return snapshot_summary(snap)
-
-    @tool
-    def get_triggered_rules() -> dict:
-        """Every threshold rule that fired: observed value, threshold, margin, peak time (local), the official
-        anchor and whether it is verified; plus the computed 'what would change this' statements."""
-        calls.append("get_triggered_rules")
-        return triggered_rules(snap)
-
-    @tool
-    def get_alerts() -> list:
-        """NWS alerts in the snapshot with id, event, severity, certainty, urgency, local onset/end and text."""
-        calls.append("get_alerts")
-        return alerts(snap)
-
-    @tool
-    def get_road_conditions() -> dict:
-        """Worst Iowa DOT road condition per commute corridor and RWIS pavement sensor readings."""
-        calls.append("get_road_conditions")
-        return road_conditions(snap)
-
-    @tool
-    def get_analogs() -> list:
-        """Closest past events from the backtest, with what the rules recommended then and what happened."""
-        calls.append("get_analogs")
-        return analogs(snap)
-
-    return [get_snapshot_summary, get_triggered_rules, get_alerts, get_road_conditions, get_analogs]

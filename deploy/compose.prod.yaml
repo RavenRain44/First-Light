@@ -1,0 +1,26 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    env_file:
+      - ../.env
+    environment:
+      MODEL_PROVIDER: akamai
+      # Cached weather makes the judging demo repeatable; AI still calls Akamai.
+      DEMO_MODE: "true"
+      AWS_FALLBACK_ENABLED: "false"
+      DATABASE_PATH: /app/backend/var/closurecall.db
+      HTTP_CACHE_DIR: /app/backend/var/http_cache
+    command:
+      - sh
+      - -c
+      - "mkdir -p var/http_cache && cp -n fixtures/http_cache/* var/http_cache/ && exec python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - closurecall-data:/app/backend/var
+    restart: unless-stopped
+    init: true
+volumes:
+  closurecall-data:

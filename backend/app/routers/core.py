@@ -37,6 +37,9 @@ def _facility(facility_id: str | None):
 @router.get("/health")
 def health():
     return {"ok": True, "demo_mode": settings.demo_mode, "model_provider": settings.model_provider,
+            "inference": {"provider": "akamai", "model": settings.akamai_model_id,
+                          "key_configured": bool(settings.akamai_api_key),
+                          "aws_fallback_enabled": settings.aws_fallback_enabled},
             "time": datetime.now(timezone.utc).isoformat()}
 
 

@@ -120,6 +120,10 @@ def build(snap: dict, analogs: list[dict] | None = None) -> Interpretation:
                        f"simulated) recommended {a['recommended_posture']} then; outcome: {a['outcome_summary']}")
     return Interpretation(
         headline=headline,
+        summary=(f"{posture.replace('_', ' ').title()} is recommended. "
+                 + (p["reasons"][0] if p["reasons"] else "No operating-status threshold is crossed for the decision day.")),
+        evidence_rule_ids=[r["rule_id"] for r in key[:3]],
+        uncertainty=f"Confidence is {conf['level']}; {weakest['explanation']}",
         rationale_paragraph=" ".join(parts),
         what_would_change=[c["text"] for c in snap.get("changes", [])],
         watch_next_6h=snap.get("watch_next_6h", []),

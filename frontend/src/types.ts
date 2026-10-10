@@ -97,12 +97,22 @@ export interface Factor { name: string; score: number; weight: number; explanati
 
 export interface Interpretation {
   headline: string;
+  // Optional so previously recorded immutable snapshots still render.
+  summary?: string;
+  evidence_rule_ids?: string[];
+  uncertainty?: string;
   rationale_paragraph: string;
   what_would_change: string[];
   watch_next_6h: string[];
   alert_summaries: Record<string, string>;
   analog_comparison: string;
   validation?: { ok: boolean; attempts: number; problems: string[] };
+  inference?: {
+    provider: "akamai" | "bedrock" | "template";
+    fallback_used: boolean;
+    requests: { provider: string; model: string; usage: { input_tokens: number; output_tokens: number; total_tokens: number } | null }[];
+    failures: { provider: string; problems: string[] }[];
+  };
 }
 
 export interface Analog {
