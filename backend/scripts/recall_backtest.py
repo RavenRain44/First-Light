@@ -125,7 +125,7 @@ async def run(forecasts: bool, checks: tuple[str, ...] = ("04:00",)) -> dict:
             print(f"{i + 1}/{len(manifest['entries'])}", flush=True)
 
     report = {"thresholds_version": th.version, "thresholds_sha256": th.sha256, "forecasts": forecasts, "checks": list(checks),
-              "label": "AMW-local-disruption-v1 with present-weather parsing (remarks excluded)", "periods": {}}
+              "label": "AMW-local-disruption-v2 (present-weather group only; remarks excluded)", "periods": {}}
     for name, lo, hi in PERIODS:
         part = [r for r in rows_out if lo <= r["day"] < hi]
         report["periods"][name] = metrics([(r["caught"] if r["disruptive"] else r["flagged"], r["disruptive"]) for r in part])

@@ -30,7 +30,7 @@ from engine import error_analysis
 from engine.evaluate import assess, gather, json_ready
 from engine.scoring import load_thresholds
 
-OUTCOME_VERSION = 'AMW-local-disruption-v1'
+OUTCOME_VERSION = 'AMW-local-disruption-v2'  # v2: weather codes from the METAR present-weather group only
 TASKS = {}
 _day_lock = asyncio.Lock()
 

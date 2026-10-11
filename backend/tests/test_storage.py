@@ -28,6 +28,9 @@ class FakeBucket:
     def link(self, key, seconds):
         return f"https://bucket.example/{key}?expires={seconds}"
 
+    def delete(self, key):
+        self.objects.pop(key, None)
+
 
 def _setup(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "demo_mode", True)
@@ -168,15 +171,74 @@ def test_fresh_machine_loads_the_frozen_dataset_from_the_bucket(tmp_path, monkey
     bucket, old = _setup(tmp_path, monkeypatch)
     repo = RepositoryBucket(REPO_DIR / "backend/data/backtesting")
     try:
-        assert dataset_cloud.ensure_local() is None  # nothing published yet: no error, nothing loaded
-        assert upload(repo)["datasets"] == ["ames-7470-v1"]
+        v = "ames-7470-v1"
+        assert dataset_cloud.ensure_local(v) is None  # nothing published yet: no error, nothing loaded
+        assert dataset_cloud.ensure_local() is None  # the configured forecast dataset isn't in this bucket either
+        assert upload(repo)["datasets"] == [v]
         assert bucket.objects == {k: repo.get(k) for k in repo.list("datasets/")}
-        result = dataset_cloud.ensure_local()
+        result = dataset_cloud.ensure_local(v)
         assert result["evaluations"] == result["cohort_n"] == 7470 and manifest_path().exists()
-        assert dataset_cloud.ensure_local() is None  # already present: not reloaded
+        assert dataset_cloud.ensure_local(v) is None  # already present: not reloaded
         import sqlite3
         with sqlite3.connect(tmp_path / "s.db") as c:
             assert c.execute("select count(*) from historicalevaluation").fetchone()[0] == 7470
+    finally:
+        storage.set_bucket(None)
+        db.set_engine(old)
+
+
+def test_forecast_dataset_publish_and_fresh_machine_restore(tmp_path, monkeypatch):
+    """Only same-day 04:00 forecast-enabled (archive) evaluations under the current rules form the forecast cohort;
+    it publishes to the bucket and a fresh machine loads it as the configured dataset."""
+    import gzip
+    from app import dataset_cloud, historical
+    from app.models import HistoricalArtifact, HistoricalEvaluation
+
+    bucket, old = _setup(tmp_path, monkeypatch)
+    try:
+        def add(day, mode, decision_day=None):
+            as_of = historical.local_instant(day, "04:00")
+            id_, rules, config = historical.identity(as_of, mode)
+            payload = gzip.compress(json.dumps({"snapshot_id": id_, "day": day}).encode())
+            sha = dataset_cloud.sha(payload)
+            summary = {"id": id_, "day": day, "as_of": as_of.isoformat(), "requested_mode": mode, "recommendation": "NORMAL",
+                       "decision_day": decision_day or day, "outcome": {"gradable": True, "disruptive": False}}
+            with db.session() as s:
+                s.add(HistoricalArtifact(sha256=sha, payload=payload))
+                s.add(HistoricalEvaluation(id=id_, day=day, as_of=as_of.isoformat(), rules_sha=rules.sha256, config_sha=config,
+                                           reconstruction="archived forecast reconstruction", status="partial",
+                                           summary_json=json.dumps(summary), artifact_sha=sha))
+                s.commit()
+        add("2024-01-16", "archive")
+        add("2024-01-17", "archive")
+        add("2024-01-18", "observation")                   # not forecast-enabled
+        add("2024-01-19", "archive", decision_day="2024-01-22")  # targets another day
+        add("2018-06-01", "archive")                      # before archived forecasts
+        m = dataset_cloud.forecast_cohort()
+        assert [e["day"] for e in m["entries"]] == ["2024-01-16", "2024-01-17"] and m["version"] == settings.dataset_version
+        out = dataset_cloud.publish(manifest=m, sources_from=dataset_cloud.FORECAST_SOURCES_FROM, extras=False)
+        assert out["n"] == 2 and any(k.endswith("ames-forecast-v1/latest.json") for k in bucket.objects)
+
+        # Retiring an older version removes only what the configured dataset doesn't use, and only when asked.
+        older = {**m, "version": "old-v0"}  # same evaluations: its year bundle is shared with the new release
+        dataset_cloud.publish(manifest=older, extras=False)
+        before = dict(bucket.objects)
+        plan = dataset_cloud.retire("old-v0")
+        assert plan["dry_run"] and bucket.objects == before and plan["shared_objects_kept"] >= 1
+        assert all(k.startswith("datasets/old-v0/") or k.startswith("datasets/objects/") for k in plan["keys"])
+        dataset_cloud.retire("old-v0", dry_run=False)
+        assert not any(k.startswith("datasets/old-v0/") for k in bucket.objects)
+        assert dataset_cloud.catalog("ames-forecast-v1")["n"] == 2  # still complete and verified
+        for item in dataset_cloud.catalog("ames-forecast-v1")["items"].values():
+            assert item["key"] in bucket.objects
+
+        fresh = tmp_path / "fresh"
+        fresh.mkdir()
+        monkeypatch.setattr(settings, "db_path", fresh / "s.db")
+        db.set_engine(db.make_engine(f"sqlite:///{fresh / 's.db'}"))
+        result = dataset_cloud.ensure_local()
+        assert result["evaluations"] == result["cohort_n"] == 2 and dataset_cloud.cohort_path("ames-forecast-v1").exists()
+        assert dataset_cloud.ensure_local() is None
     finally:
         storage.set_bucket(None)
         db.set_engine(old)
