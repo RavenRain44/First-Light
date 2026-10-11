@@ -18,6 +18,10 @@ export interface ReplayTimeline {
 
 export interface ReplayEvent {
   id: string;
+  facility_id?: string;
+  impact_day?: string;
+  timezone?: string;
+  partial?: boolean;
   kind?: "normal-control";
   name: string;
   summary: string;
@@ -158,12 +162,18 @@ export interface Analog {
 export interface Facility {
   id: string;
   name: string;
+  city?: string;
   synthetic: boolean;
   lat: number;
   lon: number;
   state: string;
   timezone: string;
   hours: { open: string; close: string };
+  asos_station?: string;
+  mos_station?: string;
+  nws_office?: string;
+  commute_windows?: { am: string[]; pm: string[] };
+  policy_profile?: string;
   building_type?: string;
   accessibility_notes: string[];
   corridors: { id: string; name: string; coordinates: number[][] }[];
@@ -267,6 +277,7 @@ export interface Readiness {
 export interface Decision {
   id: number;
   snapshot_id: string;
+  facility_id?: string;
   decided_by: string;
   decision_posture: Posture;
   recommended_posture: Posture;
@@ -309,7 +320,7 @@ export interface Timeseries {
   as_of: string;
   timezone: string;
   rows: ({ t: string } & Record<string, number | string | null>)[];
-  meta: Record<string, { source: string; source_time: string | null; fetched_at: string | null; source_url: string; note?: string; derived?: boolean; input_ids?: string[]; provenance?: Record<string, any> }>;
+  meta: Record<string, { unit?: string | null; metric?: string; role?: string; station_id?: string; station_name?: string; datum?: string | null; source: string; source_time: string | null; fetched_at: string | null; source_url: string; note?: string; derived?: boolean; input_ids?: string[]; provenance?: Record<string, any> }>;
   threshold_lines: { chart: string; value: number; label: string; rule_id: string; verified: boolean; level: string }[];
   windows: { kind: string; label: string; start: string; end: string }[];
 }
@@ -331,6 +342,7 @@ export interface DecisionReview {
 export interface PastDecision {
   decision_id: number;
   snapshot_id: string;
+  facility_id?: string;
   decided_by: string;
   decided_at: string;
   decision_day: string;

@@ -32,13 +32,14 @@ def env(tmp_path, monkeypatch):
     monkeypatch.setattr(n, "CONTACT_FILE", tmp_path / "contacts.json")
     employees = [employee(), employee("essential", essential=True), employee("remote", teleworking_today=True)]
     monkeypatch.setattr(n, "load_employees", lambda: employees)
-    snap = {"snapshot_id": "snapshot", "facility": FAC, "mode": "replay", "posture": {"decision_day": "2026-10-12"},
+    snap = {"snapshot_id": "snapshot", "facility": FAC, "mode": "live", "posture": {"decision_day": "2026-10-12"},
             "hazards": {"winter": {"level": "extreme"}}}
     monkeypatch.setattr(n.snapshots, "get", lambda sid: snap)
     monkeypatch.setattr(n, "weather_wording", template)
+    monkeypatch.setattr("app.routers.notifications.get_facility", lambda facility_id=None: SimpleNamespace(**FAC))
     with db.session() as s:
         values = {field: "{}" for field in Snapshot.model_fields if field.endswith("_json")}
-        s.add(Snapshot(**values, snapshot_id="snapshot", facility_id="F", as_of=NOW, created_at=NOW, mode="replay",
+        s.add(Snapshot(**values, snapshot_id="snapshot", facility_id="F", as_of=NOW, created_at=NOW, mode="live",
                        posture="CLOSED", opm_label="Closed", confidence="high", confidence_score=1,
                        thresholds_version="v1", thresholds_sha256="hash", model_id="none", prompt_version="v1", content_sha256="hash"))
         s.commit()
@@ -461,7 +462,7 @@ def test_decision_camera_frames_are_saved_once_and_survive_restart(env, monkeypa
     monkeypatch.setattr(ca, 'fetch_traffic_cameras', empty)
     monkeypatch.setattr(ca,'fetch_cameras',cameras)
     monkeypatch.setattr(ca,'get_image',image)
-    monkeypatch.setattr(ca,'get_facility',lambda _:FAC)
+    monkeypatch.setattr(ca,'get_facility',lambda _:SimpleNamespace(**FAC, state='IA'))
     asyncio.run(ca.capture(did,'F',NOW))
     archive = ca.saved(did)
     assert len(archive['cameras']) == 1 and len(archive['cameras'][0]['views']) == 2
@@ -502,7 +503,7 @@ def test_live_traffic_photo_saved_without_live_links_or_stale_fallback(env, monk
     monkeypatch.setattr(ca,'fetch_webcams',empty)
     monkeypatch.setattr(ca,'fetch_traffic_cameras',traffic)
     monkeypatch.setattr(ca,'get_image',image)
-    monkeypatch.setattr(ca,'get_facility',lambda _:FAC)
+    monkeypatch.setattr(ca,'get_facility',lambda _:SimpleNamespace(**FAC, state='IA'))
     monkeypatch.setattr(ca.settings,'demo_mode',False)
     asyncio.run(ca.capture(did,'F',NOW))
     cam=ca.saved(did)['cameras'][0]
@@ -526,7 +527,7 @@ def test_cancelled_capture_cleans_up_image_tasks(env, monkeypatch):
     monkeypatch.setattr(ca,'fetch_cameras',cams)
     monkeypatch.setattr(ca,'fetch_webcams',empty)
     monkeypatch.setattr(ca,'fetch_traffic_cameras',empty)
-    monkeypatch.setattr(ca,'get_facility',lambda _:FAC)
+    monkeypatch.setattr(ca,'get_facility',lambda _:SimpleNamespace(**FAC, state='IA'))
     async def verify():
         started=asyncio.Event(); stopped=asyncio.Event()
         async def image(*a,**kw):

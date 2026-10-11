@@ -99,6 +99,9 @@ function watchMessage(snap: Snapshot, event: string | null, title: string): stri
   if (snap.confidence.level === "low") return "Confidence is low. Verify the latest local warnings and forecast before deciding.";
   // The hazard responsible for readiness takes priority over background weather.
   const concern = event ?? reasons;
+  if (/storm surge|coastal flood/i.test(concern)) return "Watch official surge and coastal flood updates, tide timing, and access-road closures. Follow local emergency instructions; a regional gauge does not establish flooding at this facility.";
+  if (/hurricane|tropical storm/i.test(concern)) return "Review the next 72 hours of local wind, rain and road access. Prepare staffing and communication before travel becomes unsafe; follow official evacuation instructions.";
+  if (/flood|heavy rain|rainfall/i.test(concern)) return "Watch flood warnings, rising water and closures along staff commute routes. Do not travel through flooded roads; rainfall alone does not confirm flooding at the facility.";
   if (/tornado|severe thunderstorm|convective/i.test(concern)) return "Watch for new tornado or severe thunderstorm warnings; be ready to shelter before staff travel or leave the building.";
   if (/ice|snow|winter|freezing/i.test(concern)) return "Watch for ice or snow affecting commute routes; recheck road reports before staff travel.";
   const cold = "Watch for falling feels-like temperatures before staff travel or work outdoors.";

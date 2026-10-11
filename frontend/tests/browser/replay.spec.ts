@@ -132,6 +132,7 @@ async function mockApp(page: Page, options: { pendingAi?: boolean; failFirstEven
         const contentType = path.endsWith(".js") ? "text/javascript" : path.endsWith(".css") ? "text/css" : path.endsWith(".png") ? "image/png" : "text/html";
         return await route.fulfill({ contentType, body: await readFile(`${dist}${path}`) });
       }
+      if (url.pathname === "/api/facilities") return await route.fulfill({ json: [snapshot("2026-10-11T10:00:00Z", { as_of: "2026-10-11T10:00:00Z", posture: "NORMAL", readiness: "WHITE" }, null).facility] });
       if (url.pathname === "/api/health") return await route.fulfill({ json: { demo_mode: true, inference: { enabled: false }, model_provider: "none" } });
       if (url.pathname === "/api/snapshot/latest") return await route.fulfill({ json: { ...snapshot("2026-10-11T10:00:00Z", { as_of: "2026-10-11T10:00:00Z", posture: "NORMAL", readiness: "WHITE" }, null), mode: "live" } });
       if (url.pathname === "/api/risk-tradeoffs") return await route.fulfill({ json: { errors: {} } });

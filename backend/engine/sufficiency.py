@@ -41,7 +41,7 @@ from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel
 
-from adapters.base import NormalizedInput, SourceStatus, utc
+from adapters.base import Facility, NormalizedInput, SourceStatus, utc
 from engine.posture import PostureResult, _at
 from engine.scoring import HazardResult, RuleResult
 
@@ -53,7 +53,7 @@ COVERAGE_MIN = 0.8
 CORE_FORECAST = {"temp_f", "apparent_temp_f", "wind_gust_mph", "wind_speed_mph", "qpf_in", "snow_in", "ice_in"}
 FORECAST_ADAPTERS = {"live": "nws_grid", "replay": "iem_mos"}
 ALERT_ADAPTERS = {"live": "nws_alerts", "replay": "iem_vtec"}
-OPTIONAL = {"iem_roads", "iem_rwis", "iem_outlook"}
+OPTIONAL = {"iem_roads", "iem_rwis", "iem_outlook", "ncdot_roads", "nws_hurricane_local"}
 
 Status = Literal["sufficient", "limited", "insufficient"]
 
@@ -233,7 +233,7 @@ def credible_hazards(hazards: dict[str, HazardResult], rules: list[RuleResult], 
 
 def assess_sufficiency(inputs: list[NormalizedInput], statuses: list[SourceStatus], hazards: dict[str, HazardResult],
                        rules: list[RuleResult], posture: PostureResult, as_of: datetime, mode: str, timezone: str,
-                       timing: dict) -> Sufficiency:
+                       timing: dict, facility: Facility | None = None) -> Sufficiency:
     tz = ZoneInfo(timezone)
     live = _family(mode) == "live"
     by = {s.adapter: s for s in statuses}
@@ -242,12 +242,33 @@ def assess_sufficiency(inputs: list[NormalizedInput], statuses: list[SourceStatu
     alerts = _alert_check(inputs, by, as_of, live)
     obs = _obs_check(inputs, by, as_of, live)
     optional = _optional_checks(by)
+    coastal_checks = []
+    is_nc = facility is not None and facility.state == "NC"
+    if is_nc:
+        alerts.required = True
+        coastal_threat = any(hazards.get(h) and hazards[h].level > 0 for h in ("tropical", "coastal", "flood"))
+        water_status = by.get("nwps_water")
+        water = [i for i in inputs if i.metric == "water_level_ft" and i.series and i.source_time
+                 and utc(i.source_time) <= utc(as_of) and _input_fresh(i, as_of, live)]
+        status = "ok" if water else ("not_applicable" if water_status and water_status.status == "not_applicable" else "missing")
+        if coastal_threat and not water:
+            status = "missing"
+        coastal_checks.append(EvidenceCheck(
+            name="coastal_water", label=water_status.label if water_status else "Regional coastal water levels", status=status,
+            required=coastal_threat,
+            detail="Regional gauge checked; its height is not facility flood depth." if water
+            else "No usable originally issued coastal water-level evidence. Regional surge and flooding remain unknown; no site inundation or all-clear is inferred."))
+        roads = by.get("ncdot_roads")
+        if coastal_threat and (roads is None or roads.status not in ("ok", "empty")):
+            coastal_checks.append(EvidenceCheck(name="coastal_roads", label="NCDOT commute access", status="missing", required=True,
+                                                detail="Affected bridge and commute access could not be verified. Reopening or safe travel is not inferred from warning expiry."))
     hazard_evidence = credible_hazards(hazards, rules, inputs, as_of, live)
     backup_inputs = [i for i in inputs if i.role == "forecast" and (i.data or {}).get("weather_fallback")]
     provisional = bool(backup_inputs)
 
     core_ok = forecast.status == "ok"
-    support_gaps = [c for c in (alerts, obs) if c.status in ("missing", "stale")]
+    support_gaps = [c for c in (alerts, obs, *[x for x in coastal_checks if x.required])
+                    if c.status in ("missing", "stale", "partial") or (is_nc and c.required and c.status == "not_applicable")]
     if core_ok and not support_gaps and not provisional:
         status: Status = "sufficient"
     elif core_ok or hazard_evidence:
@@ -286,12 +307,13 @@ def assess_sufficiency(inputs: list[NormalizedInput], statuses: list[SourceStatu
         headline = "Provisional recommendation · backup forecast"
     return Sufficiency(
         status=status, headline=headline, reasons=reasons,
-        missing_sources=[c.label for c in (forecast, alerts, obs) if c.status in ("missing", "partial")],
-        stale_sources=[c.label for c in (forecast, alerts, obs) if c.status == "stale"],
-        checks=[forecast, alerts, obs, *optional], supports_all_clear=core_ok and not provisional,
-        reason_required=status == "insufficient" or provisional, hazard_evidence=hazard_evidence,
+        missing_sources=[c.label for c in (forecast, alerts, obs, *coastal_checks) if c.status in ("missing", "partial")],
+        stale_sources=[c.label for c in (forecast, alerts, obs, *coastal_checks) if c.status == "stale"],
+        checks=[forecast, alerts, obs, *optional, *coastal_checks], supports_all_clear=core_ok and not provisional and (not is_nc or not support_gaps),
+        reason_required=status == "insufficient" or provisional or (is_nc and bool(support_gaps)), hazard_evidence=hazard_evidence,
         window_start=start, window_end=end, forecast_coverage=None if coverage is None else round(coverage, 2),
         evaluated_as_of=utc(as_of), mode=mode, mode_note=mode_note,
+        policy_version="wilmington-evidence-v1" if is_nc else POLICY_VERSION,
         provisional=provisional, forecast_sources=list(dict.fromkeys(i.source for i in backup_inputs)),
     )
 

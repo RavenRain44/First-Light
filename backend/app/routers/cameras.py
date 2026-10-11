@@ -26,14 +26,31 @@ async def _live_time(facility) -> datetime:
         return datetime.now(timezone.utc)
     # Demo "live" = when the cached live camera list was fetched (scripts/cache_cameras.py),
     # so the list and its cached images always come from the same moment.
-    cached = cached_fetched_at(cameras_url(datetime.now(timezone.utc), live=True))
-    return cached or settings.demo_reference_now or await snapshots.demo_live_as_of(facility) or datetime.now(timezone.utc)
+    cached = cached_fetched_at(cameras_url(datetime.now(timezone.utc), live=True)) if facility.state == "IA" else None
+    return cached or await snapshots.demo_live_as_of(facility) or datetime.now(timezone.utc)
 
 
 @router.get("")
 async def cameras(as_of: datetime | None = None, facility_id: str | None = None):
-    f = get_facility(facility_id)
+    try:
+        f = get_facility(facility_id)
+    except KeyError:
+        raise HTTPException(404, "unknown facility") from None
     live = as_of is None
+    if f.state == "NC":
+        t = await _live_time(f) if live else utc(as_of)
+        if not live:
+            return {"facility_id": f.id, "status": "unavailable", "detail": "No verified NCDOT camera archive is available at this replay time; live images are not substituted.",
+                    "cameras": [], "as_of": t.isoformat()}
+        from adapters.ncdot_cameras import fetch_traffic_cameras as fetch_nc_cameras
+        try:
+            cams, response = await fetch_nc_cameras(f)
+        except SourceUnavailable as exc:
+            return {"facility_id": f.id, "status": "unavailable", "detail": str(exc), "cameras": [], "as_of": t.isoformat()}
+        return {"facility_id": f.id, "status": "ok" if cams else "empty", "detail": None if cams else "No camera images reported near this facility.",
+                "as_of": t.isoformat(), "source": "NCDOT traffic cameras", "source_url": response.url,
+                "fetched_at": response.fetched_at.isoformat(), "cameras": cams,
+                "note": "Camera imagery supports human situational awareness; it does not determine the recommendation. Retrieval time is not the image capture time."}
     pinned = load_demo_list() if (live and settings.demo_mode) else None
     if pinned:
         cams, t = pinned
@@ -68,6 +85,7 @@ async def cameras(as_of: datetime | None = None, facility_id: str | None = None)
             c["views"] = [v for v in c["views"] if is_cached(v["url"])]
         cams = [c for c in cams if c["views"]]
     return {
+        "facility_id": f.id,
         "status": "ok" if cams else "empty",
         "detail": None if cams else "No camera images available for this time.",
         "as_of": t.isoformat(), "source": ("Iowa DOT traffic cameras (511); Iowa DOT RWIS and ISU/KCCI webcams via IEM" if live
@@ -81,18 +99,27 @@ async def cameras(as_of: datetime | None = None, facility_id: str | None = None)
 @router.get("/image")
 async def image(u: str = Query(..., description="IEM camera image URL")):
     try:
-        data = await get_image(u)
+        from adapters.ncdot_cameras import get_image as get_nc_image, is_snapshot as is_nc_snapshot
+        nc_image = is_nc_snapshot(u)
+        data = await get_nc_image(u) if nc_image else await get_image(u)
     except ValueError:
-        raise HTTPException(400, "only IEM camera archive images and Iowa DOT camera snapshots are served")
+        raise HTTPException(400, "only allowlisted IEM, Iowa DOT and NCDOT camera images are served")
     if data is None:
         raise HTTPException(404, "image unavailable")
     # Archived frames never change, so browsers may keep them; traffic snapshots are overwritten every few minutes.
-    max_age = 30 if is_snapshot(u) else 86400
+    max_age = 30 if nc_image or is_snapshot(u) else 86400
     return Response(content=data, media_type="image/jpeg", headers={"Cache-Control": f"public, max-age={max_age}"})
 
 
 @router.get("/decision/{decision_id}")
-def decision_cameras(decision_id: int):
+def decision_cameras(decision_id: int, facility_id: str | None = None):
+    if facility_id is not None:
+        from app.db import session
+        from app.models import Decision
+        with session() as s:
+            decision = s.get(Decision, decision_id)
+            if not decision or decision.facility_id != facility_id:
+                raise HTTPException(404, "Decision does not belong to the selected facility")
     from app.camera_archive import saved
     return saved(decision_id)
 

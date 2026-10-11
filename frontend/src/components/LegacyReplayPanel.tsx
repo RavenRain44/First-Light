@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useFacility } from "../facility";
 import { api } from "../api";
 import { parseReplayTime } from "../replay";
 import type { ReplayEvent, ReplayPoint, Snapshot } from "../types";
@@ -12,10 +13,11 @@ type LoadedSelection = { selection: Selection; snapshot: Snapshot };
 export function LegacyReplayPanel({ onSnapshot, busy, setBusy, current }: {
   onSnapshot: (s: Snapshot) => void; busy: boolean; setBusy: (b: boolean) => void; current?: Snapshot | null;
 }) {
+  const facility = useFacility();
   const [events, setEvents] = useState<ReplayEvent[] | null>(null);
   const [selection, setSelection] = useState<Selection | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [custom, setCustom] = useState("2023-02-22T05:00");
+  const [custom, setCustom] = useState(facility.state === "NC" ? "2018-09-14T04:00" : "2023-02-22T05:00");
   const [err, setErr] = useState<string | null>(null);
   const [catalogErr, setCatalogErr] = useState<string | null>(null);
   const [pending, setPending] = useState<string | null>(null);
@@ -59,8 +61,8 @@ export function LegacyReplayPanel({ onSnapshot, busy, setBusy, current }: {
     const four = event.timeline.findIndex((t) => t.as_of === event.backtest?.at_0400_local?.as_of);
     const index = four >= 0 ? four : 0;
     const snapshot = await api.replay(id, event.timeline[index].as_of, signal);
-    return { selection: { event, timeline: event.timeline, index, timezone: snapshot.facility?.timezone ?? TZ }, snapshot };
-  }, label), [loadSelection]);
+    return { selection: { event, timeline: event.timeline, index, timezone: snapshot.facility?.timezone ?? facility.timezone }, snapshot };
+  }, label), [loadSelection, facility.timezone]);
 
   // Catalog loading must not supersede a custom selection made while it loads.
   useEffect(() => {
@@ -95,7 +97,7 @@ export function LegacyReplayPanel({ onSnapshot, busy, setBusy, current }: {
     return () => clearTimeout(timer);
   }, [playing, selection, pending, loadPoint]);
 
-  const tz = selection?.timezone ?? current?.facility?.timezone ?? TZ;
+  const tz = selection?.timezone ?? current?.facility?.timezone ?? facility.timezone;
   const runCustom = () => {
     interacted.current = true; setPlaying(false);
     let parsed: ReturnType<typeof parseReplayTime>;
@@ -143,13 +145,17 @@ export function LegacyReplayPanel({ onSnapshot, busy, setBusy, current }: {
             className="btn">{ev.kind === "normal-control" ? "Jump to 04:00 on control day" : "Jump to 04:00 on impact day"}</button>
         )}
         <span className="ml-auto flex items-end gap-2 text-sm">
-          <label className="grid gap-1">{tz === TZ ? "Any moment (Central time)" : `Any moment (${tz})`}
+          <label className="grid gap-1">{tz === TZ ? "Any moment (Central time)" : tz === "America/New_York" ? "Any moment (Eastern time)" : `Any moment (${tz})`}
             <input type="datetime-local" value={custom} onChange={(e) => setCustom(e.target.value)} className="rounded-md border border-edge bg-surface px-2 py-1" />
           </label>
           <button onClick={runCustom} className="btn">Evaluate</button>
         </span>
       </div>
       <p className="mt-2 text-xs text-muted">Hourly colors use historical evidence and the rules engine. Only the selected report generates an AI brief; the manager makes the final decision.</p>
+      {facility.state === "NC" && <p role="status" data-testid="coastal-replay-coverage" className="mt-3 rounded-lg bg-[var(--surface-2)] p-3 text-sm">
+        Retained curated coastal replays have partial coverage. Original station forecasts and observations do not include all hurricane advisories, surge, flood, or road evidence.
+        A modest station forecast or a Normal posture does not establish safe coastal conditions. Missing evidence remains unknown; these events are not graded as complete hurricane predictions.
+      </p>}
       {pending && <p role="status" className="mt-2 text-sm text-muted">Loading {pending}… The report and timeline will update together.</p>}
       {events?.length === 0 && <p className="mt-2 text-xs text-muted">No catalog events are available. You can still evaluate a custom date.</p>}
       {catalogErr && <p className="mt-2 text-xs text-muted">Event catalog unavailable: {catalogErr}. You can still evaluate a custom date.</p>}
@@ -192,12 +198,12 @@ export function LegacyReplayPanel({ onSnapshot, busy, setBusy, current }: {
               ))}</p>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase text-ink2">What actually happened</p>
+              <p className="text-xs font-semibold uppercase text-ink2">{facility.state === "NC" ? "Independent recorded outcome" : "What actually happened"}</p>
               <p>{ev.outcome.summary}</p>
               {ev.outcome.amw_obs_note && <p className="text-xs italic text-muted">{ev.outcome.amw_obs_note}</p>}
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase text-ink2">{ev.kind === "normal-control" ? "Evaluation at 04:00 on control day" : "Backtest at 04:00 on impact day"}</p>
+              <p className="text-xs font-semibold uppercase text-ink2">{ev.kind === "normal-control" ? "Evaluation at 04:00 on control day" : facility.state === "NC" ? "Recorded evaluation at 04:00 on impact day" : "Backtest at 04:00 on impact day"}</p>
               <div className="mt-1 flex flex-wrap items-center gap-2"><PostureBadge p={ev.backtest.at_0400_local.posture} size="sm" />{ev.kind === "normal-control" ? <p className="basis-full text-xs text-ink2">{ev.backtest.verdict}</p> : <Badge>{ev.backtest.verdict}</Badge>}</div>
               <p className="mt-1 text-xs text-muted">{ev.backtest.label}</p>
             </div>

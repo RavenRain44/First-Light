@@ -43,7 +43,11 @@ async def capture(decision_id, facility_id, as_of, replay=False):
         async def angle(view):
             async with sem:
                 try:
-                    data = await get_image(view['url'], allow_stale=False) if cam.get('kind') == 'traffic' else await get_image(view['url'])
+                    if cam.get("provider") == "ncdot":
+                        from adapters.ncdot_cameras import get_image as get_nc_image
+                        data = await get_nc_image(view["url"])
+                    else:
+                        data = await get_image(view['url'], allow_stale=False) if cam.get('kind') == 'traffic' else await get_image(view['url'])
                 except Exception: data = None
             if not data:
                 unavailable.append({"id": cam['id'], "name": cam['name'], "view": view['view'], "label": view.get('label'), "reason": "Angle frame could not be saved."})
@@ -67,11 +71,16 @@ async def capture(decision_id, facility_id, as_of, replay=False):
             except Exception:
                 unavailable.append({'id':fetch.__name__, 'name':fetch.__name__, 'reason':'Camera network unavailable during capture.'})
                 return []
-        rwis, webcams, traffic = await asyncio.gather(
-            network(fetch_cameras, facility, as_of, live=not replay),
-            network(fetch_webcams, facility, as_of, live=not replay),
-            network(fetch_traffic_cameras, facility) if not replay and not settings.demo_mode else asyncio.sleep(0, result=[]))
-        cams = merge_live(rwis, traffic, webcams)
+        if facility.state == "NC":
+            from adapters.ncdot_cameras import fetch_traffic_cameras as fetch_nc_cameras
+            traffic = await network(fetch_nc_cameras, facility) if not replay else []
+            cams = [{**c, "provider": "ncdot"} for c in traffic]
+        else:
+            rwis, webcams, traffic = await asyncio.gather(
+                network(fetch_cameras, facility, as_of, live=not replay),
+                network(fetch_webcams, facility, as_of, live=not replay),
+                network(fetch_traffic_cameras, facility) if not replay and not settings.demo_mode else asyncio.sleep(0, result=[]))
+            cams = merge_live(rwis, traffic, webcams)
         tasks = {asyncio.create_task(one(c)): c for c in cams}
         done, incomplete = await asyncio.wait(tasks, timeout=30) if tasks else (set(), set())
         for task in incomplete:

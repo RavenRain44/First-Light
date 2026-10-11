@@ -14,6 +14,7 @@ from adapters import cache
 from adapters.nws import API, alert_from_feature, resolve_point
 from app import snapshots
 from app.facility import load_facility
+from engine.scoring import load_thresholds
 
 router = APIRouter(prefix="/api/live-check")
 
@@ -48,7 +49,12 @@ async def _national() -> tuple[list[dict], datetime]:
 
 
 @router.get("/alerts")
-async def alerts(limit: int = 150):
+async def alerts(limit: int = 150, facility_id: str | None = None):
+    try:
+        facility = load_facility(facility_id)
+    except KeyError:
+        raise HTTPException(404, "Unknown facility") from None
+    configured_events = {event for rule in load_thresholds(facility=facility).rules for event in rule.events or []}
     try:
         feats, fetched = await _national()
     except cache.SourceUnavailable as e:
@@ -66,20 +72,27 @@ async def alerts(limit: int = 150):
         c = _centroid(f.get("geometry"))
         out.append({k: a[k] for k in ("id", "event", "severity", "certainty", "urgency", "onset", "ends", "expires",
                                       "headline", "areaDesc", "senderName")} |
-                   {"has_geometry": c is not None, "handled_hazard": any(h in a["event"] for h in HANDLED),
+                   {"has_geometry": c is not None, "handled_hazard": a["event"] in configured_events,
                     "n_zones": len(zones)})
     out.sort(key=lambda a: (not a["handled_hazard"], SEV_ORDER.get(a["severity"] or "Unknown", 4), a["event"]))
-    return {"fetched_at": fetched.isoformat(), "source_url": f"{API}/alerts/active?status=actual",
+    return {"facility_id": facility.id, "fetched_at": fetched.isoformat(), "source_url": f"{API}/alerts/active?status=actual",
             "count": len(out), "alerts": out[:limit]}
 
 
 class LiveCheckIn(BaseModel):
+    facility_id: str | None = None
     alert_id: str
     assume_workday: bool = True  # what-if: treat every day (incl. weekends) as a workday
 
 
 @router.post("/evaluate")
-async def evaluate(req: LiveCheckIn):
+async def evaluate(req: LiveCheckIn, facility_id: str | None = None):
+    if req.facility_id and facility_id and req.facility_id != facility_id:
+        raise HTTPException(422, "Facility identifiers disagree")
+    try:
+        base = load_facility(req.facility_id or facility_id)
+    except KeyError:
+        raise HTTPException(404, "Unknown facility") from None
     try:
         feats, _ = await _national()
     except cache.SourceUnavailable as e:
@@ -106,18 +119,22 @@ async def evaluate(req: LiveCheckIn):
         meta, _ = await resolve_point(lat, lon, allow_demo_bypass=True)
     except cache.SourceUnavailable as e:
         raise HTTPException(422, f"NWS /points has no forecast grid at {lat},{lon}: {e}")
-    base = load_facility()
     place = ", ".join(x for x in (meta.get("city"), meta.get("state")) if x) or f"{lat},{lon}"
     what_if = base.model_copy(update={
-        "id": "WHATIF-" + hashlib.sha1(req.alert_id.encode()).hexdigest()[:10],
+        "id": "WHATIF-" + hashlib.sha1(f"{base.id}:{req.alert_id}".encode()).hexdigest()[:10],
         "name": f"What-if copy of {base.name.split(' (')[0]} placed near {place}",
         "lat": lat, "lon": lon, "state": meta.get("state") or "US", "timezone": meta.get("timeZone") or base.timezone,
         "asos_station": None, "mos_station": None, "nws_office": meta.get("cwa"), "corridors": [],
         "accessibility_notes": [], "hypothetical": True,
+        "warning_ugcs": [meta["forecastZone"], meta["county"]],
+        "forecast_zone": meta["forecastZone"], "county_ugc": meta["county"],
+        "water_gauges": [], "coastal_gauge_ids": [],
+        "provider_settings": {"origin_facility_id": base.id},
         "workdays": list(range(7)) if req.assume_workday else base.workdays,
     })
     snap = await snapshots.evaluate(what_if, datetime.now(timezone.utc), "livecheck")
     snap["livecheck"] = {"alert_id": req.alert_id, "event": feat["properties"]["event"], "place": place,
-                         "label": "what-if, outside Iowa scope; NWS-only data, lower confidence",
+                         "base_facility_id": base.id,
+                         "label": "Hypothetical location; source coverage and confidence follow the evaluated location",
                          "assume_workday": req.assume_workday}
     return snap

@@ -12,7 +12,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from adapters.base import NormalizedInput, utc
+from adapters.base import Facility, NormalizedInput, utc
 
 FORECAST_HOURS = 24
 OBS_LOOKBACK = timedelta(hours=3)
@@ -62,12 +62,13 @@ def _missing(sid: str, label: str, unit: str, role: str, why: str) -> Signal:
 
 
 def extract(inputs_list: list[NormalizedInput], as_of: datetime, employees: list[dict] | None = None,
-            horizon_end: datetime | None = None, tz_name: str = "America/Chicago") -> Context:
+            horizon_end: datetime | None = None, tz_name: str = "America/Chicago", facility: Facility | None = None) -> Context:
     as_of = utc(as_of)
     inputs = {i.id: i for i in inputs_list}
     h0 = as_of.replace(minute=0, second=0, microsecond=0)
     h_end = max(utc(horizon_end), as_of + timedelta(hours=FORECAST_HOURS)) if horizon_end else as_of + timedelta(hours=FORECAST_HOURS)
     sig: dict[str, Signal] = {}
+    coastal_planning = facility is not None and facility.state == "NC"
 
     def fwin(key):
         return [(t, v) for t, v in _series(inputs, key) if h0 <= t < h_end]
@@ -79,10 +80,16 @@ def extract(inputs_list: list[NormalizedInput], as_of: datetime, employees: list
         if not pts:
             sig[sid] = _missing(sid, label, "in", "forecast", "no forecast series available")
             continue
+        accumulation_window = None
+        if coastal_planning:
+            windows = [(t, [(u, v) for u, v in pts if t <= u < t + timedelta(hours=24)]) for t, _ in pts]
+            start, pts = max(windows, key=lambda item: sum(v for _, v in item[1]))
+            accumulation_window = (start, start + timedelta(hours=24))
+            label = "Forecast ice accumulation, heaviest 24 h" if metric == "ice_in" else "Forecast snowfall, heaviest 24 h"
         peak = max(pts, key=lambda x: x[1])
         sig[sid] = Signal(id=sid, label=label, value=round(sum(v for _, v in pts), 3), unit="in", role="forecast",
                           peak_time=peak[0] if peak[1] > 0 else None, hourly=pts, accumulation=True,
-                          input_ids=[f"fcst.{metric}"])
+                          window=accumulation_window, input_ids=[f"fcst.{metric}"])
     snow = fwin("fcst.snow_in")
     if snow:
         best, best_t, best_win = 0.0, None, None
@@ -98,9 +105,25 @@ def extract(inputs_list: list[NormalizedInput], as_of: datetime, employees: list
         sig["fcst_snow_12h_in"] = _missing("fcst_snow_12h_in", "Forecast snowfall, heaviest 12 h", "in", "forecast",
                                            "no forecast series available")
 
+    # Rain is a monitoring signal, not a claim of flooding. Use a rolling 24 h,
+    # rather than summing an entire multi-day hurricane planning horizon.
+    rain = fwin("fcst.qpf_in")
+    if rain:
+        windows = [(t, [(u, v) for u, v in rain if t <= u < t + timedelta(hours=24)]) for t, _ in rain]
+        start, wettest = max(windows, key=lambda item: sum(v for _, v in item[1]))
+        sig["fcst_rain_24h_in"] = Signal(
+            id="fcst_rain_24h_in", label="Forecast rainfall, heaviest 24 h", value=round(sum(v for _, v in wettest), 3),
+            unit="in", role="forecast", peak_time=start, hourly=wettest, accumulation=True,
+            window=(start, start + timedelta(hours=24)), input_ids=["fcst.qpf_in"],
+            detail="Rainfall alone does not establish flooding at the facility.")
+    else:
+        sig["fcst_rain_24h_in"] = _missing("fcst_rain_24h_in", "Forecast rainfall, heaviest 24 h", "in", "forecast", "no quantitative rainfall forecast")
+
     # ---- forecast maxima / minima
     for metric, sid, label in (("wind_gust_mph", "fcst_max_gust_24h_mph", "Forecast max wind gust (24 h)"),
                                ("wind_speed_mph", "fcst_max_sustained_24h_mph", "Forecast max sustained wind (24 h)")):
+        if coastal_planning:
+            label = label.replace("(24 h)", "(planning window)")
         pts = fwin(f"fcst.{metric}")
         if not pts:
             sig[sid] = _missing(sid, label, "mph", "forecast", "no forecast series available")
@@ -120,7 +143,7 @@ def extract(inputs_list: list[NormalizedInput], as_of: datetime, employees: list
     if app:
         low = min(app, key=lambda x: x[1])
         sig["fcst_min_apparent_24h_f"] = Signal(
-            id="fcst_min_apparent_24h_f", label="Forecast lowest feels-like temperature (24 h)", value=round(low[1], 1),
+            id="fcst_min_apparent_24h_f", label="Forecast lowest feels-like temperature (planning window)" if coastal_planning else "Forecast lowest feels-like temperature (24 h)", value=round(low[1], 1),
             unit="degF", role="forecast", peak_time=low[0], hourly=app, input_ids=app_ids, detail=detail)
     else:
         sig["fcst_min_apparent_24h_f"] = _missing("fcst_min_apparent_24h_f", "Forecast lowest feels-like temperature (24 h)",
@@ -172,22 +195,27 @@ def extract(inputs_list: list[NormalizedInput], as_of: datetime, employees: list
         sig["max_gust_mph"] = _missing("max_gust_mph", "Max gust (forecast or observed)", "mph", "observation", "no wind data")
 
     # ---- roads / RWIS
-    roads = [i for i in inputs_list if i.kind == "road" and i.value is not None]
+    roads = [i for i in inputs_list if i.kind == "road" and i.role == "observation"
+             and i.metric == "road_condition_rank" and isinstance(i.value, (int, float))]
     if roads:
         worst = max(roads, key=lambda i: i.value)
         commuters: dict[str, int] = {}
         for e in employees or []:
+            if facility is not None and e.get("assigned_facility") not in (None, facility.id) and e.get("this_week_location", e.get("current_location")) != facility.id:
+                continue
             commuters[e.get("commute_corridor", "")] = commuters.get(e.get("commute_corridor", ""), 0) + 1
         bad = [r.data["corridor"] for r in roads if r.value >= 3]
+        provider = (worst.data or {}).get("provider") or "Iowa DOT"
         sig["road_worst_rank"] = Signal(
-            id="road_worst_rank", label="Worst Iowa DOT condition on a commute corridor", value=worst.value, unit="rank",
+            id="road_worst_rank", label=f"Worst {provider} condition on a commute corridor", value=worst.value, unit="rank",
             role="observation", peak_time=worst.source_time, window=obs_win, input_ids=[r.id for r in roads],
             detail=f"{worst.data['label']} on {worst.data['name']}",
             data={"corridor": worst.data["corridor"], "label": worst.data["label"],
                   "commuters_on_covered_corridors": sum(commuters.get(c, 0) for c in bad)})
     else:
-        sig["road_worst_rank"] = _missing("road_worst_rank", "Worst Iowa DOT condition on a commute corridor", "rank",
-                                          "observation", "no Iowa DOT road reports (out of season, out of Iowa, or unavailable)")
+        nc = facility is not None and facility.state == "NC"
+        sig["road_worst_rank"] = _missing("road_worst_rank", "Worst NCDOT condition on a commute corridor" if nc else "Worst Iowa DOT condition on a commute corridor", "rank",
+                                          "observation", "no matched NCDOT commute reports available" if nc else "no Iowa DOT road reports (out of season, out of Iowa, or unavailable)")
     rw = inputs.get("rwis.ice_condition_sensors")
     if rw is not None:
         sig["rwis_ice_sensors"] = Signal(id="rwis_ice_sensors", label="RWIS sensors reporting ice", value=float(rw.value),
@@ -196,6 +224,49 @@ def extract(inputs_list: list[NormalizedInput], as_of: datetime, employees: list
     else:
         sig["rwis_ice_sensors"] = _missing("rwis_ice_sensors", "RWIS sensors reporting ice", "sensors", "observation",
                                            "no RWIS data")
+
+    # Gauge heights remain in their native datum. Compare only a gauge's own
+    # published stage in the same datum; never interpret regional feet as site depth.
+    margins = []
+    for water in inputs_list:
+        if water.metric != "water_level_ft" or water.unit != "ft" or not water.series:
+            continue
+        meta = water.data or {}
+        station = meta.get("station_id") or meta.get("gauge_id")
+        datum = meta.get("datum")
+        if not station or not datum or water.source_time is None or utc(water.source_time) > as_of:
+            continue
+        if water.role == "observation" and as_of - utc(water.source_time) > timedelta(hours=3):
+            continue
+        if water.role == "forecast" and as_of - utc(water.source_time) > timedelta(hours=12):
+            continue
+        generated = meta.get("generated_times", {})
+        points = [(utc(p.t), p.v) for p in water.series if p.v is not None
+                  and (not generated.get(utc(p.t).isoformat()) or parse_ts(generated[utc(p.t).isoformat()]) <= as_of) and (
+            as_of - timedelta(hours=3) <= utc(p.t) <= as_of if water.role == "observation"
+            else as_of <= utc(p.t) <= h_end)]
+        if not points:
+            continue
+        peak = max(points, key=lambda p: p[1])
+        sid = f"water_level_max_ft.{station}.{water.role}"
+        sig[sid] = Signal(id=sid, label=f"{station} regional water level ({datum})", value=peak[1], unit="ft",
+                          role=water.role, peak_time=peak[0], hourly=points, input_ids=[water.id], data=meta,
+                          detail=meta.get("scope") or "Regional gauge; not a facility inundation forecast.")
+        stage = meta.get("flood_stage_ft")
+        if not isinstance(stage, (int, float)) or meta.get("flood_stage_datum", datum) != datum:
+            continue
+        margins.append((peak[1] - stage, peak[0], water, points))
+    if margins:
+        value, peak_time, water, points = max(margins, key=lambda item: item[0])
+        meta = water.data or {}
+        stage = float(meta["flood_stage_ft"])
+        sid = "water_above_flood_stage_ft"
+        sig[sid] = Signal(id=sid, label="Regional gauge height above its minor flood stage", value=round(value, 3),
+                          unit="ft", role=water.role, peak_time=peak_time,
+                          hourly=[(t, v - stage) for t, v in points], input_ids=[water.id], data=meta,
+                          detail=f"Gauge {meta.get('station_id') or meta.get('gauge_id')}: compared with published minor stage {stage:g} ft {meta['datum']}. This does not prove inundation at the facility.")
+    else:
+        sig["water_above_flood_stage_ft"] = _missing("water_above_flood_stage_ft", "Regional gauge height above its minor flood stage", "ft", "observation", "No fresh same-datum gauge and official flood-stage comparison available.")
 
     # ---- SPC outlook
     spc = inputs.get("spc.day1_category")
@@ -214,7 +285,8 @@ def extract(inputs_list: list[NormalizedInput], as_of: datetime, employees: list
     else:
         sig["spc_day1_rank"] = _missing("spc_day1_rank", "SPC day-1 convective outlook", "category", "outlook", "no SPC outlook")
 
-    alerts = [i.data for i in inputs_list if i.kind == "alert" and i.data]
+    alerts = [i.data for i in inputs_list if i.kind == "alert" and i.data
+              and (not i.data.get("sent") or parse_ts(i.data["sent"]) <= as_of)]
     return Context(as_of=as_of, horizon_end=h_end, signals=sig, alerts=alerts,
                    alert_input_ids={i.data["id"]: i.id for i in inputs_list if i.kind == "alert" and i.data})
 

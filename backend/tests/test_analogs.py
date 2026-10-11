@@ -26,6 +26,14 @@ def test_quiet_day_returns_no_analogs():
     assert analogs.find_analogs(QUIET) == []
 
 
+def test_strict_replay_does_not_consult_retrospective_outcome_library(monkeypatch):
+    def forbidden(*args, **kwargs):
+        raise AssertionError("Historical outcome publication times are not verified")
+    monkeypatch.setattr(analogs, "_library", forbidden)
+    for mode in ("replay", "backtest"):
+        assert analogs.find_analogs(ICE, mode=mode) == []
+
+
 def test_find_analogs_ranks_library(monkeypatch):
     from datetime import datetime
     lib = [

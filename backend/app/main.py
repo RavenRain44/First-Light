@@ -14,7 +14,7 @@ from app import snapshots, storage, historical
 from app.notifications import delivery_loop
 from app.config import REPO_DIR, settings
 from app.db import get_engine
-from app.facility import load_facility
+from app.facility import list_facilities
 from app.routers import backtesting, cameras, core, history, livecheck, notifications, past, risk
 from app.routers import storage as storage_routes
 
@@ -25,10 +25,11 @@ async def _refresh_loop():
     """Optional periodic live refresh (REFRESH_INTERVAL_SECONDS > 0)."""
     while True:
         await asyncio.sleep(settings.refresh_interval_seconds)
-        try:
-            await snapshots.evaluate(load_facility(), None, "live")
-        except Exception:  # noqa: BLE001
-            log.exception("scheduled refresh failed")
+        for facility in list_facilities():
+            try:
+                await snapshots.evaluate(facility, None, "live")
+            except Exception:  # noqa: BLE001
+                log.exception("scheduled refresh failed for %s", facility.id)
 
 
 async def _load_dataset():

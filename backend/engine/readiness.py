@@ -37,10 +37,12 @@ def decision_deadline(posture: PostureResult, hazards: dict[str, HazardResult], 
     if p in ("DELAYED_ARRIVAL", "TELEWORK", "CLOSED"):
         return _at(posture.decision_day, cfg["announce_by"], ZoneInfo(facility.timezone))
     if p == "EARLY_DISMISSAL":
-        starts = [r.window_start for r in rules if r.triggered and r.level >= 2 and r.window_start
+        starts = [r.window_start for r in rules if r.triggered and not r.planning_only and r.level >= 2 and r.window_start
                   and r.hazard in posture.contributing_hazards]
         if starts:
-            return max(utc(as_of), utc(min(starts)) - timedelta(hours=int(cfg["release_lead_hours"])))
+            coastal = any(h in posture.contributing_hazards for h in ("tropical", "coastal", "flood"))
+            lead = cfg.get("coastal_departure_lead_hours", cfg["release_lead_hours"]) if coastal else cfg["release_lead_hours"]
+            return max(utc(as_of), utc(min(starts)) - timedelta(hours=float(lead)))
         return utc(as_of)
     return None
 
@@ -61,6 +63,8 @@ def assess_readiness(hazards: dict[str, HazardResult], rules: list[RuleResult], 
                      confidence: Confidence, alerts: list[dict], as_of: datetime, facility: Facility,
                      th: Thresholds, sufficiency: Sufficiency | None = None) -> Readiness:
     cfg = th.raw["readiness"]
+    if "coastal_departure_lead_hours" in th.timing:
+        cfg = {**cfg, "coastal_departure_lead_hours": th.timing["coastal_departure_lead_hours"]}
     now = utc(as_of)
     tz = ZoneInfo(facility.timezone)
     red_h = timedelta(hours=float(cfg["red_within_hours"]))
@@ -71,10 +75,11 @@ def assess_readiness(hazards: dict[str, HazardResult], rules: list[RuleResult], 
     passed = deadline is not None and deadline <= now
 
     # RED: act now
-    if posture.guidance:
-        found["RED"].append("Safety guidance is active: " + posture.guidance[0])
+    immediate_guidance = [g for g in posture.guidance if not g.startswith(("A tropical warning", "A coastal warning"))]
+    if immediate_guidance:
+        found["RED"].append("Safety guidance is active: " + immediate_guidance[0])
     for r in rules:
-        if r.triggered and r.level >= 2 and r.window_start:
+        if r.triggered and not r.planning_only and r.hazard_timing_known and r.level >= 2 and r.window_start:
             end = r.window_end or r.window_start + timedelta(hours=6)
             if utc(r.window_start) <= now < utc(end):
                 found["RED"].append(f"{r.observed_value if r.metric == 'alert_present' else r.label} is happening now")

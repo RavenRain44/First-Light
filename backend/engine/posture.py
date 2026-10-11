@@ -58,7 +58,9 @@ def decision_day(as_of: datetime, facility: Facility) -> date:
 
 def horizon_end(as_of: datetime, facility: Facility, timing: dict) -> datetime:
     """End of the last candidate day's PM commute: forecasts and alerts are judged through this time."""
-    return _at(candidate_days(as_of, facility)[-1], timing["pm_commute"][1], ZoneInfo(facility.timezone))
+    pm = facility.commute_windows.get("pm", timing["pm_commute"])
+    end = _at(candidate_days(as_of, facility)[-1], pm[1], ZoneInfo(facility.timezone))
+    return max(end, utc(as_of) + timedelta(hours=float(timing.get("planning_horizon_hours", 0))))
 
 
 def _at(d: date, hhmm: str, tz: ZoneInfo) -> datetime:
@@ -73,8 +75,10 @@ def _tier_posture(hz: HazardResult, level: int, ctrl: list[RuleResult], as_of: d
                   timing: dict, D: date) -> tuple[str, str, list[str]]:
     """Posture implied by the rules at one severity level of one hazard, from their combined time window."""
     tz = ZoneInfo(facility.timezone)
-    am0, am1 = _at(D, timing["am_commute"][0], tz), _at(D, timing["am_commute"][1], tz)
-    pm0, pm1 = _at(D, timing["pm_commute"][0], tz), _at(D, timing["pm_commute"][1], tz)
+    am_window = facility.commute_windows.get("am", timing["am_commute"])
+    pm_window = facility.commute_windows.get("pm", timing["pm_commute"])
+    am0, am1 = _at(D, am_window[0], tz), _at(D, am_window[1], tz)
+    pm0, pm1 = _at(D, pm_window[0], tz), _at(D, pm_window[1], tz)
     open_, close = _at(D, facility.hours["open"], tz), _at(D, facility.hours["close"], tz)
     core_end = _at(D, timing["morning_core_end"], tz)
 
@@ -111,6 +115,12 @@ def _tier_posture(hz: HazardResult, level: int, ctrl: list[RuleResult], as_of: d
             return "DELAYED_ARRIVAL", f"{hz.label} is {lvl} ({names}) and overlaps the AM commute ({when})", guidance
         return "NORMAL", f"{hz.label} is {lvl} ({names}) but misses the AM commute ({when}); monitor", guidance
     if level == 2:
+        if in_progress_at_work and hz.hazard in ("coastal", "flood", "tropical"):
+            if hz.hazard == "tropical":
+                guidance.append("A tropical warning affects this area: verify official arrival timing and safe access before travel; follow local emergency instructions.")
+            else:
+                guidance.append("A flood warning affects this area: avoid flooded routes and follow local emergency instructions. Arrange departure only when a safe route is verified.")
+            return "TELEWORK", f"{hz.label} has an active warning during work hours ({names}; {when}); remote operations avoid additional affected commutes", guidance
         if am and late_morning:
             return "TELEWORK", f"{hz.label} is {lvl} ({names}) through the AM commute and past {timing["morning_core_end"]} ({when})", guidance
         if am:
@@ -120,8 +130,20 @@ def _tier_posture(hz: HazardResult, level: int, ctrl: list[RuleResult], as_of: d
         return "NORMAL", f"{hz.label} is {lvl} ({names}) but falls outside facility hours and commutes ({when})", guidance
     # extreme
     if in_progress_at_work:
-        guidance.append("Hazard is in progress during work hours: Shelter-In-Place per OPM IV.B.6 if travel is unsafe.")
-        return "CLOSED", f"{hz.label} is {lvl} ({names}) and is happening now during work hours ({when})", guidance
+        if hz.hazard in ("coastal", "flood"):
+            if not all(r.hazard_timing_known for r in ctrl):
+                guidance.append("A coastal warning affects this area: verify official water-arrival timing and low-lying routes; follow local emergency instructions. Regional warnings do not establish site inundation.")
+            else:
+                guidance.append("Flooding risk affects the area: avoid flooded routes and follow local emergency instructions. "
+                                "Do not release staff into floodwater or assume warning expiry makes travel safe.")
+        elif hz.hazard == "tropical":
+            guidance.append("A tropical warning affects this area: follow official emergency instructions and verify safe routes. "
+                            "Verify a safe protective action before any departure; warning time alone does not establish local wind arrival.")
+        else:
+            guidance.append("Hazard is in progress during work hours: Shelter-In-Place per OPM IV.B.6 if travel is unsafe.")
+        arrival = "hazardous-wind arrival" if hz.hazard == "tropical" else "hazard onset"
+        condition = f"has an active warning; local {arrival} is not established" if not all(r.hazard_timing_known for r in ctrl) else "is happening now during work hours"
+        return "CLOSED", f"{hz.label} is {lvl} ({names}) and {condition} ({when})", guidance
     if am or _overlap(ws, we, am1, core_end):
         return "CLOSED", f"{hz.label} is {lvl} ({names}) during the AM commute/morning ({when})", guidance
     if workday or pm:
@@ -138,7 +160,9 @@ def hazard_posture(hz: HazardResult, rules: list[RuleResult], as_of: datetime, f
     """
     if hz.level == 0:
         return "NORMAL", f"{hz.label}: no thresholds crossed", []
-    trig = [r for r in rules if r.hazard == hz.hazard and r.triggered]
+    trig = [r for r in rules if r.hazard == hz.hazard and r.triggered and not r.planning_only]
+    if not trig:
+        return "NORMAL", f"{hz.label}: preparation and monitoring evidence; no operating restriction triggered", []
     tiers = []
     for level in sorted({r.level for r in trig}, reverse=True):
         tiers.append(_tier_posture(hz, level, [r for r in trig if r.level == level], as_of, facility, timing, D))
@@ -163,14 +187,29 @@ def _day_result(D, hazards, rules, as_of, facility, th):
 def decide(hazards: dict[str, HazardResult], rules: list[RuleResult], as_of: datetime, facility: Facility,
            th: Thresholds) -> PostureResult:
     days = candidate_days(as_of, facility)
+    planning_hours = float(th.timing.get("planning_horizon_hours", 0))
+    if planning_hours:
+        end_day = (utc(as_of) + timedelta(hours=planning_hours)).astimezone(ZoneInfo(facility.timezone)).date()
+        day = days[0]
+        while day <= end_day:
+            if day.weekday() in facility.workdays and day not in days:
+                days.append(day)
+            day += timedelta(days=1)
+        days.sort()
     results = {D: _day_result(D, hazards, rules, as_of, facility, th) for D in days}
     local = utc(as_of).astimezone(ZoneInfo(facility.timezone))
-    today = days[0] if len(days) > 1 else None
+    today = local.date() if local.date() in days and len(days) > 1 else None
     # Today wins if something affects the rest of today, or if it's still morning; otherwise look at tomorrow.
     if today is not None and (results[today][0] != "NORMAL" or local.time() < AFTERNOON):
         D = today
     else:
-        D = days[-1]
+        D = decision_day(as_of, facility) if planning_hours else days[-1]
+    if planning_hours and results[D][0] == "NORMAL":
+        # A coastal plan can be about a workday 48-72 h away. Pick the first
+        # affected day while showing actual near-term conditions separately.
+        affected = [day for day in days if results[day][0] != "NORMAL"]
+        if affected:
+            D = affected[0]
     final, per_full = results[D]
     reasons, guidance, per = [], [], {}
     for h, (p, why, g) in per_full.items():

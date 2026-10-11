@@ -9,12 +9,15 @@ from __future__ import annotations
 
 import time
 from abc import ABC, abstractmethod
+from contextvars import ContextVar
 from datetime import datetime, timedelta, timezone
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
 from adapters.cache import SourceUnavailable
+
+demo_reference_time: ContextVar[datetime | None] = ContextVar("facility_demo_reference_time", default=None)
 
 
 class Corridor(BaseModel):
@@ -34,6 +37,14 @@ class Facility(BaseModel):
     asos_station: str | None = None  # IEM id, e.g. AMW
     mos_station: str | None = None  # ICAO, e.g. KAMW
     nws_office: str | None = None
+    region_label: str | None = None
+    forecast_zone: str | None = None
+    county_ugc: str | None = None
+    warning_ugcs: list[str] = Field(default_factory=list)
+    policy_profile: str = "ames"
+    water_gauges: list[dict] = Field(default_factory=list)
+    coastal_gauge_ids: list[str] = Field(default_factory=list)
+    provider_settings: dict = Field(default_factory=dict)
     hours: dict[str, str] = Field(default_factory=lambda: {"open": "07:30", "close": "16:30"})
     workdays: list[int] = Field(default_factory=lambda: [0, 1, 2, 3, 4])  # Mon=0
     commute_windows: dict[str, list[str]] = Field(
@@ -155,7 +166,9 @@ def reference_now() -> datetime:
     """'Now' for deciding live vs. archive requests. In DEMO_MODE this is the time the cached live data
     was fetched, so a demo run days later still asks for exactly the URLs that are in the cache."""
     from app.config import settings
-    return settings.demo_reference_now if settings.demo_mode and settings.demo_reference_now else datetime.now(timezone.utc)
+    if settings.demo_mode:
+        return demo_reference_time.get() or settings.demo_reference_now or datetime.now(timezone.utc)
+    return datetime.now(timezone.utc)
 
 
 def is_historical(as_of: datetime, slack: timedelta = timedelta(hours=2)) -> bool:

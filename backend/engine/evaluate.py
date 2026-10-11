@@ -19,6 +19,9 @@ from adapters.iem_roads import IEMRoadsAdapter, IEMRWISAdapter
 from adapters.iem_vtec import IEMOutlookAdapter, IEMVTECAdapter
 from adapters.nws import NWSAlertsAdapter, NWSGridAdapter, resolve_point
 from adapters.secondary_forecast import ArchivedGFSAdapter, OpenMeteoAdapter
+from adapters.ncdot import NCDOTRoadsAdapter
+from adapters.nwps import NWPSWaterAdapter
+from adapters.nws_hurricane import NWSHurricaneLocalAdapter
 from engine import confidence as conf
 from engine.counterfactual import Change, what_would_change
 from engine.features import Context, Signal, extract
@@ -51,6 +54,18 @@ async def facility_ugcs(facility: Facility, allow_demo_bypass: bool = False) -> 
 
 
 async def adapters_for(facility: Facility, mode: str) -> list[Adapter]:
+    if facility.state == "NC":
+        demo_bypass = mode == "livecheck"
+        common = [IEMObsAdapter(), NCDOTRoadsAdapter(allow_demo_bypass=demo_bypass),
+                  NWPSWaterAdapter(allow_demo_bypass=demo_bypass),
+                  NWSHurricaneLocalAdapter(allow_demo_bypass=demo_bypass), IEMOutlookAdapter()]
+        if mode in ("live", "livecheck"):
+            return [NWSAlertsAdapter(allow_demo_bypass=demo_bypass), NWSGridAdapter(allow_demo_bypass=demo_bypass)] + common
+        try:
+            ugcs = await facility_ugcs(facility)
+        except Exception:  # noqa: BLE001 - original source unavailable; use verified site metadata
+            ugcs = list(getattr(facility, "warning_ugcs", []))
+        return [IEMVTECAdapter(ugcs), IEMMOSAdapter()] + common
     if mode == "livecheck":
         return [NWSAlertsAdapter(allow_demo_bypass=True), NWSGridAdapter(allow_demo_bypass=True),
                 IEMObsAdapter(), IEMRoadsAdapter(), IEMRWISAdapter(), IEMOutlookAdapter()]
@@ -59,8 +74,10 @@ async def adapters_for(facility: Facility, mode: str) -> list[Adapter]:
         return [NWSAlertsAdapter(), NWSGridAdapter()] + common
     try:
         ugcs = await facility_ugcs(facility)
-    except Exception:  # noqa: BLE001 - fall back to the ids recorded during the Phase 1 probe
-        ugcs = ["IAZ048", "IAC169"]
+    except Exception:  # noqa: BLE001 - verified facility metadata, never another state's alert zone
+        ugcs = list(getattr(facility, "warning_ugcs", []))
+        if not ugcs:
+            ugcs = ["IAZ048", "IAC169"] if facility.state == "IA" else (["NCZ107", "NCC129"] if facility.id == "NC-WILMINGTON-SC" else [])
     return [IEMVTECAdapter(ugcs), IEMMOSAdapter()] + common
 
 
@@ -114,7 +131,13 @@ def _watch(ctx: Context, rules: list[RuleResult], facility: Facility, sufficienc
                     items.append(f"Forecast {word} {total:.2f} in between {fmt(nxt[0][0])} and {fmt(nxt[-1][0] + timedelta(hours=1))}")
     road = s.get("road_worst_rank")
     if road and road.available and road.value and road.value >= 2:
-        items.append(f"Roads: {road.detail}; re-check Iowa DOT reports before the next commute window")
+        items.append(f"Roads: {road.detail}; re-check {'NCDOT' if facility.state == 'NC' else 'Iowa DOT'} reports before the next commute window")
+    rain = s.get("fcst_rain_24h_in")
+    if facility.state == "NC" and rain and rain.available and rain.value is not None and rain.value >= 3:
+        items.append(f"Heaviest forecast 24-hour rainfall is {rain.value:.2f} in; check drainage, official flood warnings, and affected roads")
+    for r in rules:
+        if r.triggered and r.planning_only and r.hazard in ("tropical", "coastal", "flood"):
+            items.append(f"Prepare for {r.observed_value if r.metric == 'alert_present' else r.label}; verify official timing and safe commute routes")
     for r in rules:
         if r.triggered and r.metric == "obs_freezing_precip_hours_3h":
             items.append("Freezing precipitation observed at the facility ASOS in the last 3 h")
@@ -142,7 +165,7 @@ def feature_vector(ctx: Context, rules: list[RuleResult], hazards: dict[str, Haz
     peak = [h.time_of_peak for h in hazards.values() if h.level > 0 and h.time_of_peak]
     peak_hour = float(utc(min(peak)).astimezone(tz).hour) if peak else -1.0
     hours_to_peak = (utc(min(peak)) - ctx.as_of).total_seconds() / 3600 if peak else 48.0
-    return {
+    result = {
         "winter_alert_level": alert_level("winter"),
         "wind_alert_level": alert_level("wind"),
         "cold_alert_level": alert_level("cold"),
@@ -158,18 +181,35 @@ def feature_vector(ctx: Context, rules: list[RuleResult], hazards: dict[str, Haz
         "winter_level": float(hazards["winter"].level),
         "wind_level": float(hazards["wind"].level),
     }
+    if facility.state == "NC":
+        result.update({"rain_24h_in": val("fcst_rain_24h_in"),
+                       "tropical_alert_level": alert_level("tropical"), "coastal_alert_level": alert_level("coastal"),
+                       "flood_alert_level": alert_level("flood"),
+                       "tropical_level": float(hazards.get("tropical").level) if "tropical" in hazards else 0.0,
+                       "coastal_level": float(hazards.get("coastal").level) if "coastal" in hazards else 0.0,
+                       "flood_level": float(hazards.get("flood").level) if "flood" in hazards else 0.0})
+    return result
 
 
 def assess(inputs: list[NormalizedInput], statuses: list[SourceStatus], facility: Facility, as_of: datetime,
            mode: str, th: Thresholds | None = None, employees: list[dict] | None = None) -> Assessment:
-    th = th or load_thresholds()
-    ctx = extract(inputs, as_of, employees, horizon_end(utc(as_of), facility, th.timing), facility.timezone)
+    th = th or load_thresholds(facility=facility)
+    timing = {**th.timing, "am_commute": facility.commute_windows.get("am", th.timing["am_commute"]),
+              "pm_commute": facility.commute_windows.get("pm", th.timing["pm_commute"])}
+    th = th.model_copy(update={"timing": timing})
+    ctx = extract(inputs, as_of, employees, horizon_end(utc(as_of), facility, timing), facility.timezone, facility)
     rules = evaluate_rules(ctx, th)
     hazards = score_hazards(rules)
     posture = decide(hazards, rules, ctx.as_of, facility, th)
-    confidence = conf.compute(statuses, inputs, ctx, rules, hazards, mode)
+    confidence = conf.compute(statuses, inputs, ctx, rules, hazards, mode, facility)
     changes = what_would_change(ctx, th, facility, posture.posture, rules)
-    sufficiency = assess_sufficiency(inputs, statuses, hazards, rules, posture, ctx.as_of, mode, facility.timezone, th.timing)
+    sufficiency = assess_sufficiency(inputs, statuses, hazards, rules, posture, ctx.as_of, mode, facility.timezone, timing, facility)
+    if facility.state == "NC" and sufficiency.status != "sufficient":
+        cap = 0.49 if sufficiency.status == "insufficient" else 0.65
+        confidence.score = min(confidence.score, cap)
+        confidence.level = "low" if confidence.score < 0.5 else "medium"
+        confidence.factors.append(conf.Factor(name="coastal_evidence_gaps", score=cap, weight=0,
+                                              explanation="Wilmington has incomplete local weather or coastal evidence; confidence is capped. This is not an accuracy probability."))
     readiness = assess_readiness(hazards, rules, posture, confidence, ctx.alerts, ctx.as_of, facility, th, sufficiency)
     return Assessment(
         as_of=ctx.as_of, mode=mode, signals=ctx.signals, rules=rules, hazards=hazards, posture=posture,

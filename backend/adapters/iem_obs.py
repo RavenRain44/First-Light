@@ -27,7 +27,8 @@ def _kt(v):
     return None if v is None else v * KT_TO_MPH
 
 
-async def fetch_obhistory(station: str, start: datetime, end: datetime, tz: str, urls: list[str] | None = None):
+async def fetch_obhistory(station: str, start: datetime, end: datetime, tz: str, urls: list[str] | None = None,
+                          network: str = "IA_ASOS"):
     """All observations in [start, end] (UTC), fetching each local day once."""
     zone = ZoneInfo(tz)
     d = start.astimezone(zone).date()
@@ -35,7 +36,7 @@ async def fetch_obhistory(station: str, start: datetime, end: datetime, tz: str,
     rows, fetched = [], []
     today_local = datetime.now(zone).date()
     while d <= last:
-        url = f"{IEM}/obhistory.json?network=IA_ASOS&station={station}&date={d.isoformat()}&full=true"
+        url = f"{IEM}/obhistory.json?network={network}&station={station}&date={d.isoformat()}&full=true"
         if urls is not None:
             urls.append(url)
         r = await cache.get_json(url, historical=d < today_local)
@@ -108,17 +109,28 @@ class IEMObsAdapter(Adapter):
     name = "iem_obs"
     label = "IEM ASOS observations"
     supports_historical = True
-    coverage = "IA"  # we only configure Iowa ASOS (network IA_ASOS)
+    coverage = "US"
 
     def __init__(self, hours_back: int = 12):
         self.hours_back = hours_back
+        self._availability_lag = timedelta()
+        self._nc_replay = False
+
+    async def run(self, facility: Facility, as_of: datetime, mode: str):
+        # New historical facilities use the same conservative latency assumption
+        # as station-year replay. Original receipt times are not archived.
+        self._nc_replay = facility.state == "NC" and mode != "live"
+        self._availability_lag = timedelta(minutes=15) if self._nc_replay else timedelta()
+        return await super().run(facility, as_of, mode)
 
     async def fetch(self, facility: Facility, as_of: datetime) -> list[NormalizedInput]:
         if not facility.asos_station:
             return []
-        end = utc(as_of)
+        end = utc(as_of) - self._availability_lag
         start = end - timedelta(hours=self.hours_back)
-        rows, fetched = await fetch_obhistory(facility.asos_station, start, end, facility.timezone, self._urls)
+        network = (getattr(facility, "provider_settings", {}) or {}).get("asos_network", f"{facility.state}_ASOS")
+        rows, fetched = await fetch_obhistory(facility.asos_station, start, end, facility.timezone, self._urls,
+                                             network=network)
         if not rows:
             return []
         latest = _t(rows[-1]["utc_valid"])
@@ -131,13 +143,14 @@ class IEMObsAdapter(Adapter):
                 source=f"IEM ASOS {facility.asos_station} (obhistory)", source_url=url,
                 fetched_at=fetched, source_time=latest,
                 note=("highest gust in any report during the hour (5-minute obs + peak-wind remark)" if metric == "peak_gust_mph"
-                      else "from the routine hourly METAR, as listed on weather.gov (knots converted to mph)"),
+                      else "from the routine hourly METAR, as listed on weather.gov (knots converted to mph)")
+                     + ("; replay assumes 15-minute availability latency; original receipt times are not archived" if self._availability_lag else ""),
             ))
-        if not is_historical(as_of):
-            out += await self._currents(facility)
+        if not is_historical(as_of) and not self._nc_replay:
+            out += await self._currents(facility, as_of)
         return out
 
-    async def _currents(self, facility: Facility) -> list[NormalizedInput]:
+    async def _currents(self, facility: Facility, as_of: datetime | None = None) -> list[NormalizedInput]:
         url = f"{IEM}/currents.json?station={facility.asos_station}"
         self._urls.append(url)
         try:
@@ -149,6 +162,8 @@ class IEMObsAdapter(Adapter):
             return []
         x = rows[0]
         valid = _t(x["utc_valid"])
+        if as_of is not None and valid > utc(as_of) - self._availability_lag:
+            return []
         out = []
         for key in ("ice_accretion_1hr", "ice_accretion_3hr", "ice_accretion_6hr"):
             out.append(NormalizedInput(

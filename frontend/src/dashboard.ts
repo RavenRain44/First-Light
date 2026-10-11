@@ -54,11 +54,13 @@ export interface MetricDefinition {
   contextHazards?: string[];
   /** A recorded observation aggregate, plotted once rather than as a forecast. */
   signal?: string;
-  series: { key: string; name: string; color: string; forecast?: boolean }[];
+  /** One provider's gauge, in one vertical datum. Never a depth at the facility. */
+  waterLevel?: { stationId: string; stationName: string; datum: string | null; floodStage: number | null; source: string; inputIds: string[] };
+  series: { key: string; name: string; color: string; forecast?: boolean; inputIds?: string[] }[];
 }
 
 export const METRICS: MetricDefinition[] = [
-  { id: "wind", title: "Wind and gusts", unit: "mph", hazard: "wind", series: [
+  { id: "wind", title: "Wind and gusts", unit: "mph", hazard: "wind", contextHazards: ["tropical"], series: [
     { key: "obs_wind_speed_mph", name: "Observed wind (hourly report)", color: "var(--series-1)" },
     { key: "obs_peak_gust_mph", name: "Observed peak gust in hour", color: "var(--series-3)" },
     { key: "obs_wind_gust_mph", name: "Observed gust (archived)", color: "var(--series-3)" },
@@ -76,6 +78,8 @@ export const METRICS: MetricDefinition[] = [
     { key: "fcst_apparent_temp_f", name: "Forecast feels-like", color: "var(--series-3)", forecast: true }] },
   { id: "pop", title: "Precipitation probability", unit: "%", hazard: "winter", contextHazards: ["wind"], series: [
     { key: "fcst_pop_pct", name: "Forecast probability", color: "var(--series-2)", forecast: true }] },
+  { id: "rain", title: "Forecast rainfall accumulation", unit: "in", hazard: "flood", contextHazards: ["tropical", "coastal"], series: [
+    { key: "fcst_rain_cum", name: "Forecast rainfall", color: "var(--series-2)", forecast: true }] },
   { id: "rwis", title: "Pavement ice alerts", unit: "sensors", hazard: "winter", signal: "rwis_ice_sensors", series: [
     { key: "obs_rwis_ice_sensors", name: "Sensors reporting an ice watch/warning", color: "var(--series-1)" }] },
   { id: "freezing", title: "Observed freezing precipitation (last 3 hours)", unit: "hours", hazard: "winter", signal: "obs_freezing_precip_hours_3h", series: [
@@ -86,6 +90,45 @@ export const METRICS: MetricDefinition[] = [
     { key: "obs_road_worst_rank", name: "Worst reported commute-corridor condition", color: "var(--series-1)" }] },
 ];
 
+/** Water series are discovered from saved provenance rather than a shared station-less key.
+ *  Observed and forecast values may share a chart only for the same gauge, datum and provider. */
+export function metricDefinitions(snap: Snapshot, data: Timeseries): MetricDefinition[] {
+  const gauges = new Map<string, MetricDefinition>();
+  for (const [key, meta] of Object.entries(data.meta ?? {})) {
+    if (!key.includes("water_level_ft")) continue;
+    if (key.startsWith("fcst_") && meta.source_time && Date.parse(meta.source_time) > Date.parse(snap.as_of)) continue;
+    const provenance = meta.provenance ?? {};
+    const stationId = meta.station_id ?? provenance.station_id ?? provenance.gauge_id;
+    const datum = meta.datum ?? provenance.datum ?? null;
+    const unit = meta.unit ?? "ft";
+    if (!stationId || unit !== "ft") continue;
+    const group = `${stationId}|${datum ?? "unknown"}|${meta.source}`;
+    let metric = gauges.get(group);
+    if (!metric) {
+      const stage = provenance.flood_stage_ft;
+      metric = { id: `water-${gauges.size}-${stationId}`, title: `${meta.station_name ?? provenance.station_name ?? stationId} water level`,
+        unit: "ft", hazard: "coastal", contextHazards: ["flood", "tropical"], series: [],
+        waterLevel: { stationId, stationName: meta.station_name ?? provenance.station_name ?? stationId,
+          datum, floodStage: datum && typeof stage === "number" && Number.isFinite(stage) ? stage : null,
+          source: meta.source, inputIds: [] } };
+      gauges.set(group, metric);
+    }
+    const forecast = key.startsWith("fcst_");
+    const inputIds = meta.input_ids ?? snap.inputs.filter((input) => input.metric === "water_level_ft"
+      && (input.data?.station_id ?? input.data?.gauge_id) === stationId && input.source === meta.source
+      && (input.data?.datum ?? null) === datum).map((input) => input.id);
+    metric.series.push({ key, name: `${forecast ? "Issued forecast" : "Observed"} water level`,
+      color: forecast ? "var(--series-2)" : "var(--series-1)", forecast, inputIds });
+    metric.waterLevel!.inputIds.push(...inputIds);
+  }
+  return [...METRICS, ...gauges.values()];
+}
+
+export function coastalEvidence(snap: Snapshot): RuleResult[] {
+  return supportingRules(snap).filter((rule) => ["tropical", "coastal", "flood"].includes(rule.hazard)
+    || (snap.facility?.state === "NC" && rule.hazard === "access"));
+}
+
 export function metricForRule(rule: RuleResult): string | undefined {
   if (rule.metric.includes("gust")) return "wind";
   if (rule.metric.startsWith("fcst_ice")) return "ice";
@@ -94,11 +137,14 @@ export function metricForRule(rule: RuleResult): string | undefined {
   if (rule.metric === "obs_freezing_precip_hours_3h") return "freezing";
   if (rule.metric === "obs_ice_accretion_3h_in") return "observed-ice";
   if (rule.metric === "road_worst_rank") return "roads";
+  if (rule.metric === "fcst_rain_24h_in") return "rain";
+  if (rule.metric === "water_above_flood_stage_ft") return "water";
   if (rule.metric.includes("apparent")) return "temp";
   return undefined;
 }
 
 export function metricHasData(snap: Snapshot, metric: MetricDefinition, data: Timeseries): boolean {
+  if (metric.id === "rain") return data.rows.some((row) => typeof row.fcst_rain_in === "number" && Number.isFinite(row.fcst_rain_in));
   return metricRows(snap, metric, data).some((row) => metric.series.some((s) =>
     typeof row[s.key] === "number" && Number.isFinite(row[s.key])));
 }
@@ -124,12 +170,16 @@ function winterMetrics(snap: Snapshot, rule: RuleResult, data: Timeseries): stri
 
 function ruleMetrics(snap: Snapshot, rule: RuleResult, data: Timeseries): string[] {
   const direct = metricForRule(rule);
+  const water = metricDefinitions(snap, data).filter((metric) => metric.waterLevel && metricHasData(snap, metric, data));
+  if (direct === "water") return water.filter((metric) => rule.input_ids?.some((id) => metric.waterLevel!.inputIds.includes(id))).map((metric) => metric.id);
   if (direct) return [direct];
   if (rule.hazard === "winter") return rule.metric === "alert_present" ? winterMetrics(snap, rule, data) : [];
-  return ({ wind: ["wind"], cold: ["temp"] } as Record<string, string[]>)[rule.hazard] ?? [];
+  return ({ wind: ["wind"], cold: ["temp"], tropical: ["wind", "rain", ...water.map((metric) => metric.id)],
+    coastal: [...water.map((metric) => metric.id)], flood: ["rain", ...water.map((metric) => metric.id)] } as Record<string, string[]>)[rule.hazard] ?? [];
 }
 
 export function relevantMetrics(snap: Snapshot, data: Timeseries): MetricDefinition[] {
+  const definitions = metricDefinitions(snap, data);
   if (snap.historical_context?.control?.kind === "normal-weather") {
     return ["temp", "wind"].map((id) => METRICS.find((metric) => metric.id === id)!);
   }
@@ -153,13 +203,18 @@ export function relevantMetrics(snap: Snapshot, data: Timeseries): MetricDefinit
     .sort((a, b) => Math.abs(a.margin_pct!) - Math.abs(b.margin_pct!));
   const hazards = [...new Set(supporting.map((r) => r.hazard))];
   // Supporting context stays relevant to the active hazard, even when it has no numeric rule.
-  const contextMetrics: Record<string, string[]> = { wind: ["pop", "temp"], winter: ["temp", "pop"], cold: ["wind"] };
+  const contextMetrics: Record<string, string[]> = { wind: ["pop", "temp"], winter: ["temp", "pop"], cold: ["wind"],
+    tropical: ["rain", "roads"], coastal: ["roads"], flood: ["roads"], access: ["roads"] };
   for (const hazard of hazards) for (const metricId of contextMetrics[hazard] ?? []) {
-    const metric = METRICS.find((m) => m.id === metricId)!;
+    const metric = definitions.find((m) => m.id === metricId)!;
     if (hasData(metric)) add(metric.id);
   }
   // Do not pad an active event with unrelated hazards or an all-zero snow/ice forecast.
   if (hazards.length) {
+    if (hazards.some((hazard) => ["tropical", "coastal", "flood", "access"].includes(hazard))) {
+      // Alert-only coastal evidence gets an evidence panel, not an unrelated zero snow chart.
+      return ids.map((id) => definitions.find((m) => m.id === id)!).filter((metric) => metric && hasData(metric)).slice(0, 3);
+    }
     for (const hazard of hazards) if (!ids.length) add(contextMetrics[hazard]?.[0]);
     return ids.slice(0, 2).map((id) => METRICS.find((m) => m.id === id)!);
   }
@@ -182,7 +237,8 @@ export function hasBlizzardWarning(snap: Snapshot): boolean {
 /** Keep a timestamped single observation inside the default view, even when its
  *  report precedes the commute window where the rules apply its condition. */
 export function metricDomain(snap: Snapshot, metric: MetricDefinition, evidence: ReturnType<typeof metricEvidence>, full = false): [number, number] {
-  const asOf = Date.parse(snap.as_of), start = asOf - 12 * 3600e3, end = asOf + 48 * 3600e3;
+  const horizon = snap.facility?.state === "NC" || coastalEvidence(snap).length ? 72 : 48;
+  const asOf = Date.parse(snap.as_of), start = asOf - 12 * 3600e3, end = asOf + horizon * 3600e3;
   if (full) return [start, end];
   const window = evidence.window;
   const domain: [number, number] = window ? [Math.max(start, Math.min(window.start - 3 * 3600e3, asOf - 2 * 3600e3)),
@@ -214,10 +270,15 @@ function metricRows(snap: Snapshot, metric: MetricDefinition, data: Timeseries):
     const ts = metric.id === "freezing" ? asOf : Date.parse(signal?.peak_time ?? rule?.time_of_peak ?? "");
     if (signal?.available !== false) add(ts, metric.series[0].key, signal?.value ?? rule?.observed_value);
   }
-  return [...byTime.values()].filter((r) => Number.isFinite(r.ts));
+  return [...byTime.values()].filter((r) => Number.isFinite(r.ts)).map((row) => {
+    if (!metric.waterLevel) return row;
+    // A malformed response cannot turn a future water observation into replay evidence.
+    return Object.fromEntries(Object.entries(row).filter(([key]) => !key.startsWith("obs_") || row.ts <= asOf)) as ChartRow;
+  });
 }
 
 function seriesForRule(r: RuleResult, snap: Snapshot, metric: MetricDefinition): string[] {
+  if (metric.waterLevel) return metric.series.filter((series) => series.inputIds?.some((id) => r.input_ids?.includes(id))).map((series) => series.key);
   const observedGust = r.input_ids?.includes("obs.peak_gust_mph") || snap.inputs.some((i) => i.id === "obs.peak_gust_mph")
     ? "obs_peak_gust_mph" : "obs_wind_gust_mph";
   if (r.metric === "max_gust_mph") return [snap.signals[r.metric]?.role === "observation" ? observedGust : "fcst_wind_gust_mph"];
@@ -250,21 +311,28 @@ export function metricEvidence(snap: Snapshot, metric: MetricDefinition, data: T
   const byTime = new Map(rows.map((row) => [row.ts, row]));
   const asOf = new Date(snap.as_of).getTime();
   for (const input of snap.inputs) {
-    const key = `${input.role === "observation" ? "obs" : "fcst"}_${input.metric}`;
+    const key = `${input.role === "observation" ? "obs" : "fcst"}_${metric.id === "rain" && input.metric === "qpf_in" ? "rain_in" : input.metric}`;
     if (input.kind !== "series" || !baseKeys.includes(key)) continue;
     for (const point of input.series ?? []) {
       const ts = new Date(point.t).getTime();
-      if (point.v !== null || ts < asOf - 12 * 3600e3 || ts > asOf + 48 * 3600e3 || !Number.isFinite(ts)) continue;
+      if (point.v !== null || ts < asOf - 12 * 3600e3 || ts > asOf + (snap.facility?.state === "NC" ? 72 : 48) * 3600e3 || !Number.isFinite(ts)) continue;
       byTime.set(ts, { ...(byTime.get(ts) ?? { ts }), [key]: null });
     }
   }
   rows = [...byTime.values()].sort((a, b) => a.ts - b.ts);
   const ranked = supportingRules(snap);
-  const matching = snap.rules.filter((r) => r.available && metricForRule(r) === metric.id)
+  const matching = snap.rules.filter((r) => r.available && (metricForRule(r) === metric.id || (metric.waterLevel
+    && metricForRule(r) === "water" && metric.waterLevel.floodStage !== null
+    && r.input_ids?.some((id) => metric.waterLevel!.inputIds.includes(id)))))
     .sort((a, b) => Number(b.triggered) - Number(a.triggered) ||
       (!a.triggered && !b.triggered ? Math.abs(a.margin_pct ?? Infinity) - Math.abs(b.margin_pct ?? Infinity) : 0) ||
       b.level - a.level || b.score - a.score);
-  const rule = matching.find((r) => seriesForRule(r, snap, metric).some((key) => rows.some((row) => typeof row[key] === "number")));
+  const recordedRule = matching.find((r) => seriesForRule(r, snap, metric).some((key) => rows.some((row) => typeof row[key] === "number"
+    || (metric.id === "rain" && typeof row[key.replace("_cum", "_in")] === "number"))));
+  const rule = recordedRule && metric.waterLevel ? { ...recordedRule,
+    threshold: metric.waterLevel.floodStage! + recordedRule.threshold,
+    observed_value: typeof recordedRule.observed_value === "number" ? metric.waterLevel.floodStage! + recordedRule.observed_value : recordedRule.observed_value,
+    label: `Gauge level relative to the official minor flood stage (${metric.waterLevel.stationId}, ${metric.waterLevel.datum})` } : recordedRule;
   const context = ranked.find((r) => ruleMetrics(snap, r, data).includes(metric.id) || metric.contextHazards?.includes(r.hazard)
     || (metric.id === "pop" && (r.hazard === "winter" || r.hazard === "wind")));
   const driver = rule?.triggered ? rule : context;
@@ -272,11 +340,13 @@ export function metricEvidence(snap: Snapshot, metric: MetricDefinition, data: T
     start: new Date(driver.window_start).getTime(), end: new Date(driver.window_end).getTime(),
   } : null;
   // Use the recorded accumulation window, especially the heaviest 12 h snow rule.
-  if (rule && (metric.id === "ice" || metric.id === "snow")) {
-    const start = rule.metric === "fcst_snow_12h_in" && rule.time_of_peak ? new Date(rule.time_of_peak).getTime()
+  if ((rule && (metric.id === "ice" || metric.id === "snow")) || metric.id === "rain") {
+    const rolling = rule?.metric === "fcst_snow_12h_in" || rule?.metric === "fcst_rain_24h_in"
+      || (snap.facility?.state === "NC" && (rule?.metric === "fcst_snow_24h_in" || rule?.metric === "fcst_ice_24h_in"));
+    const start = rolling && rule?.time_of_peak ? new Date(rule.time_of_peak).getTime()
       : Math.floor(new Date(snap.as_of).getTime() / 3600e3) * 3600e3;
-    const end = rule.metric === "fcst_snow_12h_in" ? start + 12 * 3600e3
-      : rule.window_end ? new Date(rule.window_end).getTime() : start + 24 * 3600e3;
+    const end = rule?.metric === "fcst_snow_12h_in" ? start + 12 * 3600e3
+      : metric.id === "rain" ? start + 24 * 3600e3 : rule?.window_end ? new Date(rule.window_end).getTime() : start + 24 * 3600e3;
     let total = 0;
     const raw = `fcst_${metric.id}_in`, key = `fcst_${metric.id}_cum`;
     rows = rows.map((row) => {

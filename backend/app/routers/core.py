@@ -11,13 +11,13 @@ from fastapi import BackgroundTasks, APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field, field_validator
 from sqlmodel import select
 
-from adapters.base import utc
+from adapters.base import Facility, utc
 from adapters.cache import SourceUnavailable
 from adapters.iem_roads import RANK_LABELS, fetch_road_geojson
 from app import snapshots
 from app.config import settings
 from app.db import session
-from app.facility import get_facility, load_employees, roster_summary
+from app.facility import get_facility, list_facilities, load_employees, roster_summary
 from app.models import Decision, DecisionContext, HistoryEvent
 from engine import sufficiency
 from engine.features import wind_chill_f
@@ -25,7 +25,11 @@ from engine.posture import ORDER
 from engine.scoring import load_thresholds
 
 router = APIRouter(prefix="/api")
-_live_lock = asyncio.Lock()
+_facility_live_locks: dict[str, asyncio.Lock] = {}
+
+
+def _live_lock_for(facility_id: str) -> asyncio.Lock:
+    return _facility_live_locks.setdefault(facility_id, asyncio.Lock())
 
 
 def _facility(facility_id: str | None):
@@ -33,6 +37,17 @@ def _facility(facility_id: str | None):
         return get_facility(facility_id)
     except KeyError:
         raise HTTPException(404, f"unknown facility {facility_id}")
+
+
+def _check_snapshot_facility(snap: dict, facility_id: str | None) -> dict:
+    if facility_id is not None:
+        selected = _facility(facility_id).id
+        facility = snap["facility"]
+        own_hypothetical = snap.get("mode") == "livecheck" and facility.get("hypothetical") is True \
+            and (facility.get("provider_settings") or {}).get("origin_facility_id") == selected
+        if selected != facility["id"] and not own_hypothetical:
+            raise HTTPException(404, "Snapshot does not belong to the selected facility")
+    return snap
 
 
 @router.get("/health")
@@ -45,6 +60,11 @@ def health():
                           "strands_fallback_enabled": settings.strands_fallback_enabled,
                           "strands_model": settings.strands_model_id},
             "time": datetime.now(timezone.utc).isoformat()}
+
+
+@router.get("/facilities")
+def facilities():
+    return [f.model_dump() for f in list_facilities()]
 
 
 @router.get("/facility")
@@ -60,7 +80,7 @@ async def snapshot_latest(facility_id: str | None = None, max_age_seconds: int |
     """Latest live snapshot; re-evaluates when older than SNAPSHOT_STALE_SECONDS."""
     f = _facility(facility_id)
     max_age = settings.snapshot_stale_seconds if max_age_seconds is None else max_age_seconds
-    async with _live_lock:
+    async with _live_lock_for(f.id):
         snap = snapshots.latest(f.id, "live")
         stale = snap is None or (datetime.now(timezone.utc) - datetime.fromisoformat(snap["created_at"])).total_seconds() > max_age
         if snap is None or (stale and not settings.demo_mode):  # demo data never changes; reuse it
@@ -77,33 +97,47 @@ class EvaluateRequest(BaseModel):
 
 
 @router.post("/evaluate")
-async def evaluate(req: EvaluateRequest):
-    f = _facility(req.facility_id)
+async def evaluate(req: EvaluateRequest, facility_id: str | None = None):
+    if req.facility_id and facility_id and req.facility_id != facility_id:
+        raise HTTPException(422, "Conflicting facility IDs")
+    f = _facility(req.facility_id or facility_id)
     if req.mode == "replay" and req.as_of is None:
         raise HTTPException(422, "replay requires as_of")
     if req.mode == "live":
-        async with _live_lock:
+        if req.as_of is not None:
+            raise HTTPException(422, "Live evaluation uses current facility weather; use read-only replay for a selected time")
+        async with _live_lock_for(f.id):
             return await snapshots.evaluate(f, None, "live", use_ai=req.use_ai)
     return await snapshots.evaluate(f, utc(req.as_of), "replay", event_id=req.event_id, use_ai=req.use_ai)
 
 
 @router.get("/snapshot/{snapshot_id}")
-async def snapshot(snapshot_id: str):
+async def snapshot(snapshot_id: str, facility_id: str | None = None):
     s = snapshots.get(snapshot_id)
     if not s:
         raise HTTPException(404, "snapshot not found")
-    return snapshots.ensure_interpretation(s)
+    return snapshots.ensure_interpretation(_check_snapshot_facility(s, facility_id))
 
 
 @router.get("/snapshot/{snapshot_id}/interpretation")
-def snapshot_interpretation(snapshot_id: str):
+def snapshot_interpretation(snapshot_id: str, facility_id: str | None = None):
     """AI brief added after the snapshot was saved: pending | ok | failed | none."""
+    if facility_id is not None:
+        saved = snapshots.get(snapshot_id)
+        if not saved:
+            raise HTTPException(404, "snapshot not found")
+        _check_snapshot_facility(saved, facility_id)
     return snapshots.interpretation(snapshot_id)
 
 
 @router.post("/snapshot/{snapshot_id}/interpretation", status_code=202)
-async def regenerate_snapshot_interpretation(snapshot_id: str):
+async def regenerate_snapshot_interpretation(snapshot_id: str, facility_id: str | None = None):
     """Regenerate the AI brief for this snapshot now (runs in the background)."""
+    if facility_id is not None:
+        saved = snapshots.get(snapshot_id)
+        if not saved:
+            raise HTTPException(404, "snapshot not found")
+        _check_snapshot_facility(saved, facility_id)
     result = snapshots.regenerate_interpretation(snapshot_id)
     if result is None:
         raise HTTPException(404, "snapshot not found")
@@ -130,12 +164,13 @@ CHART_RULES = {  # rule id -> chart series it is drawn on
     "winter.fcst_ice_quarter_inch": "ice_cum", "winter.fcst_ice_tenth_inch": "ice_cum",
     "winter.fcst_ice_any": "ice_cum", "winter.fcst_snow_advisory_24h": "snow_cum", "winter.fcst_snow_warning_12h": "snow_cum",
     "cold.fcst_wind_chill_advisory": "temp", "cold.fcst_wind_chill_extreme": "temp",
+    "flood.heavy_rain_monitor": "rain_cum",
 }
 
 
 def windows_for(start: datetime, end: datetime, f) -> list[dict]:
     tz = ZoneInfo(f.timezone)
-    th = load_thresholds()
+    th = load_thresholds(facility=f)
     out = []
     d = start.astimezone(tz).date()
     while d <= end.astimezone(tz).date():
@@ -144,17 +179,20 @@ def windows_for(start: datetime, end: datetime, f) -> list[dict]:
             return datetime(d.year, d.month, d.day, h, m, tzinfo=tz).astimezone(timezone.utc).isoformat()
         if d.weekday() in getattr(f, 'workdays', [0, 1, 2, 3, 4]):
             out.append({"kind": "hours", "label": "Facility hours", "start": at(f.hours["open"]), "end": at(f.hours["close"])})
-        out.append({"kind": "am_commute", "label": "AM commute", "start": at(th.timing["am_commute"][0]), "end": at(th.timing["am_commute"][1])})
-        out.append({"kind": "pm_commute", "label": "PM commute", "start": at(th.timing["pm_commute"][0]), "end": at(th.timing["pm_commute"][1])})
+        am = f.commute_windows.get("am", th.timing["am_commute"])
+        pm = f.commute_windows.get("pm", th.timing["pm_commute"])
+        out.append({"kind": "am_commute", "label": "AM commute", "start": at(am[0]), "end": at(am[1])})
+        out.append({"kind": "pm_commute", "label": "PM commute", "start": at(pm[0]), "end": at(pm[1])})
         d += timedelta(days=1)
     return out
 
 
 def build_timeseries(snap: dict) -> dict:
-    f = _facility(snap["facility"]["id"]) if not snap["facility"].get("hypothetical") else None
-    fac = f or type("F", (), snap["facility"])  # hypothetical copies carry their own hours/timezone
+    # Charts describe the immutable record, including its saved site and hours.
+    # Editing the registry later must not move an old decision's commute windows.
+    fac = Facility(**snap["facility"])
     as_of = datetime.fromisoformat(snap["as_of"])
-    start, end = as_of - timedelta(hours=12), as_of + timedelta(hours=48)
+    start, end = as_of - timedelta(hours=12), as_of + timedelta(hours=72 if fac.state == "NC" else 48)
     rows: dict[str, dict] = {}
     meta = {}
     for inp in snap["inputs"]:
@@ -162,9 +200,20 @@ def build_timeseries(snap: dict) -> dict:
             continue
         prefix = "obs" if inp["role"] == "observation" else "fcst"
         key = f"{prefix}_{inp['metric']}"
+        data = inp.get("data") or {}
+        station = data.get("station_id") or data.get("gauge_id")
+        if inp["metric"] == "water_level_ft" and station:
+            key += f"_{station}"
         meta[key] = {k: inp.get(k) for k in ("id", "source", "source_url", "fetched_at", "source_time", "unit", "note")}
-        if (inp.get("data") or {}).get("weather_fallback"):
-            meta[key]["provenance"] = inp["data"]
+        meta[key].update(metric=inp["metric"], role=inp["role"], input_ids=[inp["id"]])
+        if data:
+            meta[key]["provenance"] = data
+            for field in ("station_id", "gauge_id", "station_name", "datum", "flood_stage_ft", "flood_thresholds_ft", "scope"):
+                if field in data:
+                    meta[key][field] = data[field]
+        rain_alias = "fcst_rain_in" if fac.state == "NC" and prefix == "fcst" and inp["metric"] == "qpf_in" else None
+        if rain_alias:
+            meta[rain_alias] = {**meta[key], "metric": "rain_in"}
         for p in inp["series"]:
             t = datetime.fromisoformat(p["t"])
             if not (start <= t <= end) or p["v"] is None:
@@ -173,7 +222,10 @@ def build_timeseries(snap: dict) -> dict:
                 continue
             if prefix == "obs" and t > as_of:
                 continue
-            rows.setdefault(utc(t).isoformat(), {"t": utc(t).isoformat()})[key] = p["v"]
+            row = rows.setdefault(utc(t).isoformat(), {"t": utc(t).isoformat()})
+            row[key] = p["v"]
+            if rain_alias:
+                row[rain_alias] = p["v"]
     ordered = sorted(rows.values(), key=lambda r: r["t"])
     # Archived NBS has temperature and wind but no separate feels-like series.
     # Render the same derived quantity the recorded cold signal used, from saved
@@ -201,10 +253,12 @@ def build_timeseries(snap: dict) -> dict:
             if "fcst_snow_in" in r:
                 snow += r["fcst_snow_in"]
                 r["fcst_snow_cum"] = round(snow, 2)
-    th = load_thresholds()
-    lines = [{"chart": CHART_RULES[r.id], "value": r.value, "label": f"{r.id.split('.', 1)[1].replace('_', ' ')} ({r.value:g} {r.unit})",
-              "rule_id": r.id, "verified": r.verified, "level": r.posture_effect}
-             for r in th.rules if r.id in CHART_RULES]
+    # Thresholds were saved with the assessment; use those values rather than
+    # today's policy when opening a historical decision.
+    lines = [{"chart": CHART_RULES[r["rule_id"]], "value": r["threshold"],
+              "label": f"{r['rule_id'].split('.', 1)[1].replace('_', ' ')} ({r['threshold']:g} {r['unit']})",
+              "rule_id": r["rule_id"], "verified": r["verified"], "level": r["posture_effect"]}
+             for r in snap.get("rules", []) if r["rule_id"] in CHART_RULES]
     return {"snapshot_id": snap["snapshot_id"], "as_of": snap["as_of"], "timezone": snap["facility"]["timezone"],
             "rows": ordered, "meta": meta, "threshold_lines": lines, "windows": windows_for(start, end, fac)}
 
@@ -215,6 +269,7 @@ async def timeseries(facility_id: str | None = None, snapshot_id: str | None = N
         snap = snapshots.get(snapshot_id)
         if not snap:
             raise HTTPException(404, "snapshot not found")
+        _check_snapshot_facility(snap, facility_id)
     elif as_of:
         snap = await snapshots.evaluate(_facility(facility_id), utc(as_of), "replay")
     else:
@@ -231,11 +286,19 @@ async def roads(facility_id: str | None = None, as_of: datetime | None = None):
     emps = load_employees()
     here = [e for e in emps if e["this_week_location"] == f.id and not e["teleworking_today"]]
     corridors = []
+    source = "Iowa DOT winter road conditions via IEM"
+    ranks = RANK_LABELS
+    fetch = fetch_road_geojson
+    if f.state == "NC":
+        from adapters.ncdot import fetch_road_geojson as fetch_nc_roads
+        fetch, source = fetch_nc_roads, "NCDOT reported incidents and restrictions"
+        ranks = {0: "No restriction reported", 4: "Reported restriction", 5: "Reported closure"}
     try:
-        gj, r = await fetch_road_geojson(f, t)
+        gj, r = await fetch(f, t)
         status, detail, url, fetched = "ok", None, r.url, r.fetched_at.isoformat()
         if not gj["features"]:
-            status, detail = "empty", "Iowa DOT reports no winter road conditions for this time (reporting is seasonal, roughly Nov-Apr)."
+            status, detail = "empty", ("No NCDOT incident returned for these corridors; unreported flooding and access remain unknown."
+                                       if f.state == "NC" else "Iowa DOT reports no winter road conditions for this time (reporting is seasonal, roughly Nov-Apr).")
     except SourceUnavailable as e:
         gj, status, detail, url, fetched = {"type": "FeatureCollection", "features": []}, "unavailable", str(e), None, None
     for c in f.corridors:
@@ -245,7 +308,7 @@ async def roads(facility_id: str | None = None, as_of: datetime | None = None):
             "id": c.id, "name": c.name, "coordinates": c.coordinates,
             "worst_rank": worst["rank"] if worst else None,
             "worst_label": worst["label"] if worst else None,
-            "worst_rank_label": RANK_LABELS.get(worst["rank"]) if worst else "No report",
+            "worst_rank_label": ranks.get(worst["rank"], worst["label"]) if worst else "No report",
             "worst_updated": worst.get("utc_valid") if worst else None,
             "n_segments": len(segs),
             "commuters_in_building": sum(1 for e in here if e["commute_corridor"] == c.id),
@@ -253,7 +316,7 @@ async def roads(facility_id: str | None = None, as_of: datetime | None = None):
         })
     local = sum(1 for e in here if e["commute_corridor"] == "local")
     return {"as_of": t.isoformat(), "status": status, "detail": detail, "source_url": url, "fetched_at": fetched,
-            "source": "Iowa DOT winter road conditions via IEM", "rank_labels": RANK_LABELS,
+            "source": source, "rank_labels": ranks,
             "geojson": gj, "corridors": corridors, "local_commuters_in_building": local,
             "facility": {"lat": f.lat, "lon": f.lon, "name": f.name}}
 
@@ -261,13 +324,14 @@ async def roads(facility_id: str | None = None, as_of: datetime | None = None):
 # ----------------------------------------------------------------------------- thresholds
 
 @router.get("/thresholds")
-def thresholds():
-    th = load_thresholds()
+def thresholds(facility_id: str | None = None):
+    f = _facility(facility_id)
+    th = load_thresholds(facility=f)
     with session() as s:
-        events = s.exec(select(HistoryEvent).order_by(HistoryEvent.start)).all()
+        events = s.exec(select(HistoryEvent).where(HistoryEvent.facility_id == f.id).order_by(HistoryEvent.start)).all()
     backtest = [{"event_id": e.id, "name": e.name, "hazard": e.hazard, "impact_day": e.impact_day,
                  **json.loads(e.backtest_json)} for e in events]
-    return {"version": th.version, "sha256": th.sha256, "rules": [r.model_dump() for r in th.rules],
+    return {"facility_id": f.id, "version": th.version, "sha256": th.sha256, "rules": [r.model_dump() for r in th.rules],
             "postures": th.postures, "timing": th.timing, "readiness": th.raw.get("readiness"),
             "unverified_count": sum(1 for r in th.rules if not r.verified), "backtest": backtest}
 
@@ -276,6 +340,7 @@ def thresholds():
 
 class DecisionIn(BaseModel):
     snapshot_id: str
+    facility_id: str | None = None
     decided_by: str = Field(min_length=2, max_length=120)
     decision_posture: str
     override_reason: str | None = Field(default=None, max_length=2000)
@@ -291,14 +356,17 @@ class DecisionIn(BaseModel):
 
 
 @router.post("/decisions", status_code=201)
-def record_decision(d: DecisionIn, background_tasks: BackgroundTasks):
+def record_decision(d: DecisionIn, background_tasks: BackgroundTasks, facility_id: str | None = None):
     snap = snapshots.get(d.snapshot_id)
     if not snap:
         raise HTTPException(404, "snapshot not found")
     if d.decision_posture not in ORDER:
         raise HTTPException(422, f"decision_posture must be one of {ORDER}")
-    if snap["mode"] == "backtest":
-        raise HTTPException(422, "Historical backtesting cannot record a human operating decision")
+    if d.facility_id and facility_id and d.facility_id != facility_id:
+        raise HTTPException(422, "Conflicting facility IDs")
+    _check_snapshot_facility(snap, d.facility_id or facility_id)
+    if snap["mode"] != "live" or snap.get("historical_context") or snap["facility"].get("hypothetical"):
+        raise HTTPException(422, "Historical replay and hypothetical assessments are read-only; record a decision from live facility weather")
     evidence = sufficiency.for_snapshot(snap)
     reason = (d.override_reason or "").strip() or None
     manual = bool(evidence.get("reason_required"))
@@ -346,13 +414,15 @@ def list_decisions(facility_id: str | None = None):
 
 
 @router.get("/record/{snapshot_id}")
-async def decision_record(snapshot_id: str):
+async def decision_record(snapshot_id: str, facility_id: str | None = None):
     """Everything needed to reconstruct one decision: the snapshot plus the human decisions against it."""
     snap = snapshots.get(snapshot_id)
     if not snap:
         raise HTTPException(404, "snapshot not found")
+    _check_snapshot_facility(snap, facility_id)
+    th = load_thresholds(facility=_facility(snap["facility"]["id"]))
     with session() as s:
         ds = _with_context(s.exec(select(Decision).where(Decision.snapshot_id == snapshot_id).order_by(Decision.decided_at)).all(), s)
     return {"snapshot": snapshots.ensure_interpretation(snap), "decisions": ds,
-            "thresholds_current_sha256": load_thresholds().sha256,
-            "thresholds_changed_since": load_thresholds().sha256 != snap["thresholds_sha256"]}
+            "thresholds_current_sha256": th.sha256,
+            "thresholds_changed_since": th.sha256 != snap["thresholds_sha256"]}

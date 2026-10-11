@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { METRICS, crossesThreshold, metricDomain, metricEvidence, relevantMetrics, suggestionReasons } from "../src/dashboard.ts";
+import { METRICS, crossesThreshold, metricDefinitions, metricDomain, metricEvidence, relevantMetrics, suggestionReasons } from "../src/dashboard.ts";
 import { readFileSync } from "node:fs";
 
 const asOf = "2026-01-13T06:00:00Z";
@@ -253,4 +253,110 @@ test("strict versus inclusive threshold comparisons are preserved", () => {
   assert.equal(crossesThreshold(58, { operator: ">=", threshold: 58 }), true);
   assert.equal(crossesThreshold(-20, { operator: "<", threshold: -20 }), false);
   assert.equal(crossesThreshold(-20, { operator: "<=", threshold: -20 }), true);
+});
+
+test("a Wilmington hurricane leads with local wind and rainfall instead of unrelated zero winter charts", () => {
+  const s = snap([rule("hurricane", "alert_present", { hazard: "tropical", observed_value: "Hurricane Warning" })], {
+    facility: { state: "NC" }, posture: { contributing_hazards: ["tropical"] },
+  });
+  const d = data([{ t: at(8), fcst_wind_gust_mph: 65, fcst_rain_in: 1.2, fcst_snow_cum: 0, fcst_ice_cum: 0 }]);
+  assert.deepEqual(relevantMetrics(s, d).map((m) => m.id), ["wind", "rain"]);
+  const rain = metricEvidence(s, METRICS.find((m) => m.id === "rain"), d);
+  assert.equal(rain.context.rule_id, "hurricane");
+  assert.equal(rain.peak.value, 1.2);
+  assert.equal(rain.highlighted, 1);
+  const wind = metricEvidence(s, METRICS[0], d);
+  assert.equal(metricDomain(s, METRICS[0], wind, true)[1], Date.parse(asOf) + 72 * 3600e3);
+});
+
+test("alert-only coastal replay does not create blank or unrelated numerical charts", () => {
+  const s = snap([rule("surge", "alert_present", { hazard: "coastal", observed_value: "Storm Surge Warning" })]);
+  assert.deepEqual(relevantMetrics(s, data([{ t: at(8), fcst_snow_cum: 0, fcst_temp_f: 80 }])), []);
+});
+
+test("a DriveNC commute closure shows access evidence without implying a flood or adding a rainfall chart", () => {
+  const s = snap([rule("access.commute_road_closed", "road_worst_rank", { hazard: "access", observed_value: 5, threshold: 5,
+    time_of_peak: at(5), window_start: at(5), window_end: at(9) })], {
+    facility: { state: "NC" }, signals: { road_worst_rank: { available: true, value: 5, peak_time: at(5) } },
+  });
+  const d = data([{ t: at(8), fcst_rain_in: 0.1, fcst_snow_cum: 0 }]);
+  const metrics = relevantMetrics(s, d);
+  assert.deepEqual(metrics.map((m) => m.id), ["roads"]);
+  const evidence = metricEvidence(s, metrics[0], d);
+  assert.equal(evidence.rule.hazard, "access");
+  assert.equal(evidence.peak.value, 5);
+});
+
+test("rain accumulation uses the winning 24-hour window and preserves original forecast gaps", () => {
+  const offset = (hours) => new Date(Date.parse(asOf) + hours * 3600e3).toISOString();
+  const s = snap([rule("rain", "fcst_rain_24h_in", { hazard: "flood", threshold: 3, time_of_peak: offset(2),
+    window_start: offset(2), window_end: offset(26) })], {
+    facility: { state: "NC" }, inputs: [{ kind: "series", role: "forecast", metric: "qpf_in", series: [{ t: offset(3), v: null }] }],
+  });
+  const d = data([{ t: offset(1), fcst_rain_in: 50 }, { t: offset(2), fcst_rain_in: 1 },
+    { t: offset(4), fcst_rain_in: 2 }, { t: offset(26), fcst_rain_in: 50 }]);
+  const rain = metricEvidence(s, METRICS.find((m) => m.id === "rain"), d);
+  assert.deepEqual(rain.rows.map((row) => row.fcst_rain_cum), [null, 1, null, 3, null]);
+  assert.equal(rain.peak.value, 3);
+  assert.equal(rain.rows[3].fcst_rain_cum_focus, 3);
+});
+
+test("Wilmington winter charts use the recorded heaviest day within the coastal planning horizon", () => {
+  const offset = (hours) => new Date(Date.parse(asOf) + hours * 3600e3).toISOString();
+  for (const [metric, amount] of [["snow", 6], ["ice", 0.3]]) {
+    const s = snap([rule(metric, `fcst_${metric}_24h_in`, { hazard: "winter", threshold: amount,
+      time_of_peak: offset(30), window_start: offset(30), window_end: offset(54) })], { facility: { state: "NC" } });
+    const d = data([{ t: offset(1), [`fcst_${metric}_in`]: 20, [`fcst_${metric}_cum`]: 20 },
+      { t: offset(30), [`fcst_${metric}_in`]: amount / 2, [`fcst_${metric}_cum`]: 20 + amount / 2 },
+      { t: offset(40), [`fcst_${metric}_in`]: amount / 2, [`fcst_${metric}_cum`]: 20 + amount },
+      { t: offset(54), [`fcst_${metric}_in`]: 20, [`fcst_${metric}_cum`]: 40 + amount }]);
+    const evidence = metricEvidence(s, METRICS.find((m) => m.id === metric), d);
+    assert.deepEqual(evidence.rows.map((row) => row[`fcst_${metric}_cum`]), [null, amount / 2, amount, null]);
+    assert.equal(evidence.peak.value, amount);
+    assert.equal(evidence.rows[2][`fcst_${metric}_cum_focus`], amount);
+  }
+});
+
+const waterMeta = (id, extra = {}) => ({ source: "NOAA NWPS", unit: "ft", station_id: "WLON7", station_name: "Cape Fear River at Wilmington",
+  source_time: at(3), input_ids: [id], provenance: { datum: "MLLW", flood_stage_ft: 5.5 }, ...extra });
+
+test("water charts compare the matched gauge and datum and highlight only the controlling observed source", () => {
+  const s = snap([rule("gauge", "water_above_flood_stage_ft", { hazard: "coastal", threshold: 0, unit: "ft", observed_value: 0.5,
+    input_ids: ["water.WLON7.observed"], window_start: at(4), window_end: at(10) })]);
+  const d = { rows: [{ t: at(5), obs_water_level_ft_WLON7: 6 }, { t: at(8), fcst_water_level_ft_WLON7: 10 }],
+    meta: { obs_water_level_ft_WLON7: waterMeta("water.WLON7.observed"), fcst_water_level_ft_WLON7: waterMeta("water.WLON7.forecast") } };
+  const [metric] = relevantMetrics(s, d);
+  assert.equal(metric.waterLevel.stationId, "WLON7");
+  assert.equal(metric.waterLevel.datum, "MLLW");
+  assert.equal(metric.waterLevel.floodStage, 5.5);
+  const evidence = metricEvidence(s, metric, d);
+  assert.equal(evidence.rule.threshold, 5.5);
+  assert.equal(evidence.rule.observed_value, 6);
+  assert.equal(evidence.rows[0].obs_water_level_ft_WLON7_focus, 6);
+  assert.equal(evidence.rows[1].fcst_water_level_ft_WLON7_focus, null);
+  assert.equal(evidence.peak.value, 6);
+});
+
+test("water observations after evaluation, forecasts issued later, and incompatible gauge units are excluded", () => {
+  const s = snap([rule("surge", "alert_present", { hazard: "coastal" })]);
+  const d = { rows: [{ t: at(5), obs_water_level_ft_WLON7: 4 }, { t: at(8), obs_water_level_ft_WLON7: 20, fcst_water_level_ft_WLON7: 20 }],
+    meta: { obs_water_level_ft_WLON7: waterMeta("water.WLON7.observed"),
+      fcst_water_level_ft_WLON7: waterMeta("water.WLON7.forecast", { source_time: at(7) }),
+      obs_water_level_ft_OTHER: waterMeta("water.OTHER.observed", { station_id: "OTHER", unit: "m" }) } };
+  const metrics = relevantMetrics(s, d);
+  assert.equal(metrics.length, 1);
+  assert.equal(metrics[0].series.length, 1);
+  assert.equal(metricEvidence(s, metrics[0], d).peak.value, 4);
+});
+
+test("different gauge datums and providers never share a chart or a numerical flood-stage comparison", () => {
+  const s = snap([]);
+  const d = { rows: [], meta: { obs_water_level_ft_WLON7: waterMeta("water.WLON7.observed"),
+    fcst_water_level_ft_WLON7: waterMeta("water.WLON7.forecast", { provenance: { datum: "NAVD88", flood_stage_ft: 9 } }),
+    obs_water_level_ft_WLON7_OTHER: waterMeta("water.WLON7.observed2", { source: "Other source" }),
+    obs_water_level_ft_UNKNOWN: waterMeta("water.WLON7.unknown", { provenance: { datum: null, flood_stage_ft: 5.5 } }) } };
+  const metrics = metricDefinitions(s, d).filter((m) => m.waterLevel);
+  assert.equal(metrics.length, 4);
+  assert.ok(metrics.every((m) => m.series.length === 1));
+  assert.equal(metrics.at(-1).waterLevel.floodStage, null);
 });
