@@ -24,8 +24,10 @@ VERDICTS = ("good_call", "too_lenient", "too_strict", "mixed")
 
 async def observed_outcome(facility: Facility, start: datetime, end: datetime, road_ranks: list[int | None] | None = None) -> dict:
     lsrs, lsr_url = await fetch_lsrs(facility, start, end)
-    rows, _ = await fetch_obhistory(facility.asos_station, start, end, facility.timezone)
+    rows, _ = await fetch_obhistory(facility.asos_station, start, end, facility.timezone,
+                                  network=facility.provider_settings.get("asos_network", f"{facility.state}_ASOS"))
     s = obs_series(rows)
+    station = facility.asos_station or "local airport"
     peak_gust = max(s["wind_gust_mph"], key=lambda x: x[1], default=None)
     fz_hours = sum(1 for _, v in s["freezing_precip"] if v >= 1)
     snow_hours = sum(1 for _, v in s["snow_obs"] if v >= 1)
@@ -48,13 +50,17 @@ async def observed_outcome(facility: Facility, start: datetime, end: datetime, r
     if ice_mags:
         parts.append(f"max reported ice {max(ice_mags):.2f} in")
     if peak_gust:
-        parts.append(f"AMW peak gust {peak_gust[1]:.0f} mph")
+        parts.append(f"{station} peak gust {peak_gust[1]:.0f} mph")
     if fz_hours:
-        parts.append(f"{fz_hours} h of freezing precip at AMW")
+        parts.append(f"{fz_hours} h of freezing precip at {station}")
     if worst_road is not None:
         parts.append(f"worst commute corridor: {ROAD_NAMES[int(worst_road)]}")
+    flood_reports = sum(n for name, n in by_type.items() if "FLOOD" in name.upper() or "SURGE" in name.upper())
     severe = bool((wind_mags and max(wind_mags) >= 58) or (peak_gust and peak_gust[1] >= 58) or (worst_road or 0) >= 3
                   or fz_hours >= 2 or (snow_mags and max(snow_mags) >= 6) or (ice_mags and max(ice_mags) >= 0.1))
+    if facility.state == "NC":
+        severe = severe or flood_reports > 0
+        parts.append("Regional reports and airport observations; facility inundation and complete historical road coverage are unverified")
     return {
         "summary": "; ".join(parts) + ".",
         "severe_impact": severe,
@@ -66,6 +72,12 @@ async def observed_outcome(facility: Facility, start: datetime, end: datetime, r
         "amw_peak_gust_mph": round(peak_gust[1], 1) if peak_gust else None,
         "amw_peak_gust_time": peak_gust[0].isoformat() if peak_gust else None,
         "amw_freezing_precip_hours": fz_hours, "amw_snow_hours": snow_hours,
+        "station_id": station,
+        "station_peak_gust_mph": round(peak_gust[1], 1) if peak_gust else None,
+        "station_peak_gust_time": peak_gust[0].isoformat() if peak_gust else None,
+        "station_freezing_precip_hours": fz_hours, "station_snow_hours": snow_hours,
+        "regional_flood_reports": flood_reports,
+        "outcome_sufficient": facility.state != "NC",
         "worst_corridor_rank": worst_road,
     }
 
@@ -78,9 +90,10 @@ def impact(outcome: dict) -> tuple[str, list[str]]:
     """'major' | 'severe' | 'some' | 'none', with the observations behind it."""
     why: list[str] = []
     tornado, hail = _count(outcome, "TORNADO"), [x.get("magnitude") or 0 for x in outcome.get("lsrs") or [] if "HAIL" in (x.get("typetext") or "").upper()]
-    wind = max(outcome.get("max_reported_wind_mph") or 0, outcome.get("amw_peak_gust_mph") or 0)
+    wind = max(outcome.get("max_reported_wind_mph") or 0, outcome.get("station_peak_gust_mph", outcome.get("amw_peak_gust_mph")) or 0)
     snow, ice = outcome.get("max_reported_snow_in") or 0, outcome.get("max_reported_ice_in") or 0
-    road, fz = outcome.get("worst_corridor_rank") or 0, outcome.get("amw_freezing_precip_hours") or 0
+    road = outcome.get("worst_corridor_rank") or 0
+    fz = outcome.get("station_freezing_precip_hours", outcome.get("amw_freezing_precip_hours")) or 0
     if tornado:
         why.append(f"{tornado} tornado report{'s' if tornado > 1 else ''} within 25 mi")
     if hail and max(hail) >= 1:
@@ -93,6 +106,8 @@ def impact(outcome: dict) -> tuple[str, list[str]]:
         why.append(f"{fz} h of freezing rain at the airport" if fz >= 2 else f"{ice:.2f} in of ice reported")
     if road >= 3:
         why.append(f"commute roads {ROAD_NAMES[int(road)]}")
+    if outcome.get("regional_flood_reports"):
+        why.append(f"{outcome['regional_flood_reports']} regional flooding or surge reports; facility inundation unverified")
     major = bool(tornado or wind >= 70 or snow >= 8 or ice >= 0.25 or fz >= 6 or road >= 3)
     if major:
         return "major", why
@@ -115,6 +130,9 @@ def impact(outcome: dict) -> tuple[str, list[str]]:
 def grade(decision_posture: str, outcome: dict, *, warned: bool = False, data_gaps: bool = False) -> dict:
     """Verdict on a decision given what happened. ``warned``: alerts or hazards were active when it was made."""
     level, why = impact(outcome)
+    if outcome.get("outcome_sufficient") is False:
+        return {"verdict": "mixed", "confidence": 0.3, "impact": level, "assessment_status": "insufficient",
+                "reasons": why + ["Outcome coverage is incomplete for coastal hazards and road access; this evidence cannot establish whether the operating decision was correct."]}
     strength = ORDER.index(decision_posture) if decision_posture in ORDER else 0
     if level == "major":
         verdict, conf = ("good_call", 0.85) if strength >= 3 else ("too_lenient", 0.8) if strength <= 1 else ("mixed", 0.6)

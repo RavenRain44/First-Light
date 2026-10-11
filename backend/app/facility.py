@@ -10,20 +10,53 @@ from app.config import settings
 
 
 @lru_cache
-def load_facility() -> Facility:
-    return Facility(**json.loads((settings.data_dir / "facility.json").read_text(encoding="utf-8")))
+def load_facilities() -> tuple[Facility, ...]:
+    """Configured facilities; the original facility remains the backwards-compatible default.
+
+    The registry contains local filenames, never paths supplied by an API request.
+    """
+    registry = settings.data_dir / "facilities.json"
+    filenames = json.loads(registry.read_text(encoding="utf-8"))["profiles"] if registry.exists() else ["facility.json"]
+    facilities = tuple(Facility(**json.loads((settings.data_dir / filename).read_text(encoding="utf-8")))
+                       for filename in filenames)
+    if not facilities or len({f.id for f in facilities}) != len(facilities):
+        raise ValueError("Facility registry must contain unique facility IDs")
+    return facilities
+
+
+@lru_cache
+def load_facility(facility_id: str | None = None) -> Facility:
+    facilities = load_facilities()
+    if facility_id is None:
+        return facilities[0]
+    for facility in facilities:
+        if facility.id == facility_id:
+            return facility
+    raise KeyError(facility_id)
+
+
+def list_facilities() -> list[Facility]:
+    return list(load_facilities())
 
 
 @lru_cache
 def load_employees() -> list[dict]:
-    return json.loads((settings.data_dir / "employees.json").read_text(encoding="utf-8"))["employees"]
+    employees = json.loads((settings.data_dir / "employees.json").read_text(encoding="utf-8"))["employees"]
+    secondary = settings.data_dir / "employees-nc-wilmington.json"
+    if secondary.exists():
+        employees += json.loads(secondary.read_text(encoding="utf-8"))["employees"]
+    if len({e["id"] for e in employees}) != len(employees):
+        raise ValueError("Synthetic roster employee IDs must be unique across facilities")
+    return employees
 
 
 def get_facility(facility_id: str | None = None) -> Facility:
-    f = load_facility()
-    if facility_id and facility_id != f.id:
-        raise KeyError(facility_id)
-    return f
+    return load_facility(facility_id)
+
+
+def facility_employees(facility: Facility, day: str | None = None) -> list[dict]:
+    employees = [employee_on(e, day) for e in load_employees()] if day else load_employees()
+    return [e for e in employees if e["assigned_facility"] == facility.id or e["this_week_location"] == facility.id]
 
 
 def employee_on(e: dict, day: str) -> dict:
@@ -47,7 +80,7 @@ def roster_summary(facility: Facility, day: str | None = None) -> dict:
     The two differ on purpose: details out/in, travel, telework, leave and days off all move
     people, and notifications must follow the person, not the org chart.
     """
-    emps = [employee_on(e, day) for e in load_employees()] if day else load_employees()
+    emps = facility_employees(facility, day)
     assigned = [e for e in emps if e["assigned_facility"] == facility.id]
     working = [e for e in emps if not e.get("on_leave") and e.get("scheduled", True)]
     here = [e for e in working if e["this_week_location"] == facility.id]

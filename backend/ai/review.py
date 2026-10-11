@@ -37,6 +37,8 @@ def _template(check: dict, outcome: dict) -> dict:
     reasons = check["reasons"]
     lead = {"good_call": "The call fit what happened", "too_lenient": "Conditions were worse than the call allowed for",
             "too_strict": "Conditions stayed milder than the call assumed", "mixed": "A reasonable call, but not clear-cut"}[check["verdict"]]
+    if check.get("assessment_status") == "insufficient":
+        lead = "Insufficient outcome evidence to grade this decision"
     note = f"{lead}: {'; '.join(reasons)}." if reasons else f"{lead}."
     return {"source": "template", "verdict": check["verdict"], "confidence": check["confidence"], "note": note}
 
@@ -44,7 +46,7 @@ def _template(check: dict, outcome: dict) -> dict:
 async def review(evidence: dict, check: dict) -> dict:
     """``evidence``: decision, suggestion, alerts at decision time and the observed outcome. ``check``: grade()."""
     outcome = evidence.get("observed", {})
-    if settings.model_provider != "akamai" or not settings.akamai_api_key:
+    if check.get("assessment_status") == "insufficient" or settings.model_provider != "akamai" or not settings.akamai_api_key:
         return _template(check, outcome)
     user = json.dumps({**evidence, "weather_check": check}, default=str)[:6000]
     try:

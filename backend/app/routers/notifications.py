@@ -3,19 +3,37 @@ import json
 from datetime import datetime
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field, ValidationError, field_validator
 from sqlmodel import select
 
 from app import notifications as n
 from app.db import session
+from app.facility import get_facility
 from app.models import NotificationAudit, NotificationClock, NotificationPackage
 
-router = APIRouter(prefix="/api/notifications")
+def _selected_package(request: Request, facility_id: str | None = None):
+    """A scoped action cannot edit or send another site's retained package."""
+    if facility_id is None:
+        return
+    try:
+        facility = get_facility(facility_id)
+    except KeyError:
+        raise HTTPException(404, "unknown facility") from None
+    pid = request.path_params.get("pid")
+    if pid:
+        with session() as s:
+            package = s.get(NotificationPackage, pid)
+            if not package or package.facility_id != facility.id:
+                raise HTTPException(404, "Notification package does not belong to the selected facility")
+
+
+router = APIRouter(prefix="/api/notifications", dependencies=[Depends(_selected_package)])
 
 
 class Create(BaseModel):
     decision_id: int
+    facility_id: str | None = None
     fallback_start: str | None = None
     include_unchanged: bool = False
 
@@ -64,21 +82,27 @@ class Clock(BaseModel):
 
 
 @router.get("")
-def overview():
+def overview(facility_id: str | None = None):
+    try:
+        facility = get_facility(facility_id)
+    except KeyError:
+        raise HTTPException(404, "unknown facility") from None
     with session() as s:
         clock = s.get(NotificationClock, 1)
-        packages = [json.loads(r.state_json) for r in s.exec(select(NotificationPackage)).all()]
+        packages = [json.loads(r.state_json) for r in s.exec(select(NotificationPackage).where(NotificationPackage.facility_id == facility.id)).all()]
         for p in packages:
             for g in p["groups"]:
                 g["previews"] = {c: n.message_text(p, g, c, "Recipient") for c in ("sms", "email")}
-        return {"provider": "simulation", "now": n.clock_now(s).isoformat(),
+        return {"facility_id": facility.id, "provider": "simulation", "now": n.clock_now(s).isoformat(),
                 "demo_clock": bool(clock and clock.simulated_now), "contacts": n.contacts(),
                 "packages": sorted(packages, key=lambda p: p["decision_id"], reverse=True)}
 
 
 @router.post("/packages")
-async def create(req: Create):
-    return await n.create(req.decision_id, req.fallback_start, req.include_unchanged)
+async def create(req: Create, facility_id: str | None = None):
+    if req.facility_id and facility_id and req.facility_id != facility_id:
+        raise HTTPException(422, "Conflicting facility IDs")
+    return await n.create(req.decision_id, req.fallback_start, req.include_unchanged, facility_id=req.facility_id or facility_id)
 
 
 @router.put("/packages/{pid}/groups/{gid}")

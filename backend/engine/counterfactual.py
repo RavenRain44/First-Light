@@ -47,10 +47,12 @@ SPC_NAMES = ["TSTM", "MRGL", "SLGT", "ENH", "MDT", "HIGH"]
 RANK_NAMES = ["normal", "wet/frost", "partially covered", "completely covered", "travel advisory", "not advised/closed"]
 
 
-def _fmt(v: float, unit: str) -> str:
+def _fmt(v: float, unit: str, facility: Facility | None = None) -> str:
     if unit.startswith("SPC"):
         return SPC_NAMES[int(v)] if 0 <= int(v) < len(SPC_NAMES) else "none"
     if unit == "rank":
+        if facility is not None and facility.state == "NC":
+            return {0: "'no matched restriction'", 1: "'traffic lane restriction'", 4: "'weather restriction'", 5: "'road closed'"}.get(int(v), f"rank {v:g}")
         return f"'{RANK_NAMES[int(v)]}'" if 0 <= int(v) < len(RANK_NAMES) else str(v)
     if unit == "in":
         return f"{v:.2f} in"
@@ -77,7 +79,7 @@ def what_would_change(ctx: Context, th: Thresholds, facility: Facility, current:
         word = "drops below" if top.operator in (">=", ">") else "rises above"
         tail = f"the posture would become {p2}" if p2 != current else f"the posture would stay {current} (other triggers)"
         out.append(Change(
-            text=f"If {top.label.lower()} {word} {_fmt(top.threshold, top.unit)} (now {_fmt(float(top.observed_value), top.unit)}), {tail}.",
+            text=f"If {top.label.lower()} {word} {_fmt(top.threshold, top.unit, facility)} (now {_fmt(float(top.observed_value), top.unit, facility)}), {tail}.",
             kind="drop_below", rule_id=top.rule_id, metric=metric, current_value=top.observed_value,
             threshold=top.threshold, new_posture=p2))
 
@@ -88,7 +90,8 @@ def what_would_change(ctx: Context, th: Thresholds, facility: Facility, current:
             ctx2 = ctx.model_copy(update={"alerts": [a for a in ctx.alerts if a.get("event") not in events]})
             p2 = _posture(ctx2, th, facility)
             tail = f"the posture would become {p2}" if p2 != current else f"the posture would stay {current} (other triggers)"
-            out.append(Change(text=f"If the {r.observed_value} were cancelled or expired, {tail}.", kind="alert_cleared",
+            recovery = " Actual road access and facility recovery must be verified separately; warning expiry is not an all-clear." if r.hazard in ("coastal", "flood", "tropical") else ""
+            out.append(Change(text=f"If the {r.observed_value} were cancelled or expired, {tail}.{recovery}", kind="alert_cleared",
                               rule_id=r.rule_id, current_value=r.observed_value, new_posture=p2))
 
     # 3) near misses that would raise the posture
@@ -103,7 +106,7 @@ def what_would_change(ctx: Context, th: Thresholds, facility: Facility, current:
         p2 = _posture(_with_value(ctx, r.metric, r.threshold), th, facility)
         if p2 != current:
             word = "reaches" if r.operator in (">=", ">") else "falls to"
-            out.append(Change(text=f"If {r.label.lower()} {word} {_fmt(r.threshold, r.unit)} (now {_fmt(v, r.unit)}), the posture would become {p2}.",
+            out.append(Change(text=f"If {r.label.lower()} {word} {_fmt(r.threshold, r.unit, facility)} (now {_fmt(v, r.unit, facility)}), the posture would become {p2}.",
                               kind="rise_above", rule_id=r.rule_id, metric=r.metric, current_value=v,
                               threshold=r.threshold, new_posture=p2))
 
@@ -111,7 +114,8 @@ def what_would_change(ctx: Context, th: Thresholds, facility: Facility, current:
     if current == "NORMAL" and not any(r.triggered for r in results):
         tz = ZoneInfo(facility.timezone)
         D = decision_day(ctx.as_of, facility)
-        for event, start, hours in (("Winter Storm Warning", "04:00", 6), ("Severe Thunderstorm Warning", "14:00", 2)):
+        examples = (("Flood Warning", "04:00", 8), ("Tropical Storm Warning", "14:00", 12)) if facility.state == "NC" else (("Winter Storm Warning", "04:00", 6), ("Severe Thunderstorm Warning", "14:00", 2))
+        for event, start, hours in examples:
             h, m = map(int, start.split(":"))
             s = datetime(D.year, D.month, D.day, h, m, tzinfo=tz).astimezone(ZoneInfo("UTC"))
             fake = {"id": f"hypothetical:{event}", "event": event, "certainty": "Likely", "severity": "Severe",

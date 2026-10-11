@@ -107,13 +107,17 @@ class IEMVTECAdapter(Adapter):
     label = "NWS warnings archive (IEM VTEC)"
     supports_historical = True
     historical_only = True
-    coverage = "IA"
+    coverage = "US"
     BYUGC = "https://mesonet.agron.iastate.edu/json/vtec_events_byugc.php"
 
     def __init__(self, ugcs: list[str]):
         self.ugcs = ugcs
 
     async def fetch(self, facility: Facility, as_of: datetime) -> list[NormalizedInput]:
+        if facility.state != "IA":
+            # Final event records can contain extensions or cancellations issued
+            # after evaluation. New facilities require original product versions.
+            raise cache.SourceUnavailable("Original issued warning versions are not available in this feed; final VTEC event records are excluded from replay.")
         as_of = utc(as_of)
         d0 = (as_of - timedelta(days=3)).date()
         d0 = d0 - timedelta(days=d0.toordinal() % 3)  # align windows so neighbouring hours share a cached call

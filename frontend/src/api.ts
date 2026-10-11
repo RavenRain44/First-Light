@@ -1,17 +1,66 @@
-import type { Decision, ReplayEvent, ReplayTimeline, Snapshot, Timeseries } from "./types";
+import type { Decision, Facility, ReplayEvent, ReplayTimeline, Snapshot, Timeseries } from "./types";
 
-async function req<T>(path: string, init?: RequestInit): Promise<T> {
-  const r = await fetch(path, { headers: { "content-type": "application/json" }, ...init });
-  if (!r.ok) {
-    let detail = `${r.status} ${r.statusText}`;
-    try {
-      const j = await r.json();
-      detail = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail ?? j);
-    } catch { /* not JSON */ }
-    throw new Error(detail);
-  }
-  return r.json() as Promise<T>;
+export const DEFAULT_FACILITY_ID = "IA-AMES-SC";
+let facilityId = DEFAULT_FACILITY_ID;
+let generation = 0;
+let scope = new AbortController();
+
+/** Capture the facility for every request, and cancel all outgoing work when it changes. */
+export function selectApiFacility(id: string) {
+  if (id === facilityId) return;
+  scope.abort();
+  scope = new AbortController();
+  facilityId = id;
+  generation += 1;
 }
+export const selectedApiFacility = () => facilityId;
+export const selectedApiGeneration = () => generation;
+export function facilityPath(path: string, id = facilityId): string {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}facility_id=${encodeURIComponent(id)}`;
+}
+
+export async function scopedRequest<T>(path: string, init?: RequestInit, scoped = true): Promise<T> {
+  const version = generation, selected = facilityId;
+  const controller = new AbortController();
+  const signals = scoped ? [scope.signal, init?.signal] : [init?.signal];
+  const abort = () => controller.abort();
+  for (const signal of signals) {
+    if (signal?.aborted) controller.abort();
+    else signal?.addEventListener("abort", abort, { once: true });
+  }
+  let body = init?.body;
+  if (scoped && typeof body === "string") {
+    try { const data = JSON.parse(body); if (data && !Array.isArray(data) && typeof data === "object") body = JSON.stringify({ ...data, facility_id: selected }); }
+    catch { /* Non-JSON bodies retain their original encoding. */ }
+  }
+  try {
+    const r = await fetch(scoped ? facilityPath(path, selected) : path, {
+      headers: { "content-type": "application/json" }, ...init, body, signal: controller.signal,
+    });
+    if (!r.ok) {
+      let detail = `${r.status} ${r.statusText}`;
+      try { const j = await r.json(); detail = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail ?? j); }
+      catch { /* not JSON */ }
+      throw new Error(detail);
+    }
+    const data = await r.json() as T;
+    if (controller.signal.aborted || (scoped && version !== generation)) throw new DOMException("Facility request cancelled", "AbortError");
+    const responseFacility = data && typeof data === "object" ? (data as any).facility_id ?? (data as any).facility?.id : undefined;
+    const whatIf = data as any;
+    const requestPath = path.split("?")[0];
+    const selectedHypothetical = ((requestPath === "/api/live-check/evaluate"
+      && whatIf?.livecheck?.base_facility_id === selected) ||
+      (requestPath.startsWith("/api/snapshot/") && requestPath !== "/api/snapshot/latest"))
+      && whatIf?.mode === "livecheck" && whatIf?.facility?.hypothetical === true
+      && whatIf?.facility?.provider_settings?.origin_facility_id === selected;
+    if (scoped && responseFacility && responseFacility !== selected && !selectedHypothetical) throw new Error("The response belongs to a different facility. Reload this view.");
+    return data;
+  } finally {
+    for (const signal of signals) signal?.removeEventListener("abort", abort);
+  }
+}
+const req = scopedRequest;
 
 export type StorageStatus = { enabled: boolean; bucket: string | null; endpoint: string | null; last_sync: string | null;
   last_error: string | null; uploaded: number; backup: string | null };
@@ -19,12 +68,13 @@ export type StorageLinks = { enabled: boolean; error?: string; expires_in?: numb
   camera_sets?: { decision_id: number; captured_at?: string; images: { key: string; url: string; camera: string; view?: string; time?: string }[] }[] };
 
 export const api = {
+  facilities: () => req<Facility[]>("/api/facilities", undefined, false),
   backtesting: () => req<any>("/api/backtesting"),
   searchHistory: (body: any) => req<any>("/api/backtesting/search", {method:"POST",body:JSON.stringify(body)}),
   startHistoryBuild: (body: any) => req<any>("/api/backtesting/build", {method:"POST",body:JSON.stringify(body)}),
   resumeHistoryBuild: (id: string) => req<any>(`/api/backtesting/jobs/${id}/resume`, {method:"POST"}),
   cancelHistoryBuild: (id: string) => req<any>(`/api/backtesting/jobs/${id}/cancel`, {method:"POST"}),
-  health: () => req<{ demo_mode: boolean; model_provider: string; inference: { enabled: boolean } }>("/api/health"),
+  health: () => req<{ demo_mode: boolean; model_provider: string; inference: { enabled: boolean } }>("/api/health", undefined, false),
   facility: () => req<any>("/api/facility"),
   latest: (maxAge?: number) => req<Snapshot>(`/api/snapshot/latest${maxAge !== undefined ? `?max_age_seconds=${maxAge}` : ""}`),
   snapshot: (id: string) => req<Snapshot>(`/api/snapshot/${id}`),
@@ -38,7 +88,7 @@ export const api = {
   cameras: (as_of?: string) => req<{ status: string; detail: string | null; as_of: string; cameras: import("./types").Camera[]; note: string; source_url?: string; fetched_at?: string }>(
     `/api/cameras${as_of ? `?as_of=${encodeURIComponent(as_of)}` : ""}`),
   decisionCameras: (id: number) => req<any>(`/api/cameras/decision/${id}`),
-  cameraImage: (url: string) => url.startsWith("/api/cameras/saved-frame/") ? url : `/api/cameras/image?u=${encodeURIComponent(url)}`,
+  cameraImage: (url: string) => url.startsWith("/api/cameras/saved-frame/") ? facilityPath(url) : facilityPath(`/api/cameras/image?u=${encodeURIComponent(url)}`),
   thresholds: () => req<any>("/api/thresholds"),
   history: () => req<any[]>("/api/snapshots?limit=40"),
   decisions: () => req<Decision[]>("/api/decisions"),

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import type { Snapshot } from "../types";
+import type { Facility, Snapshot } from "../types";
+import { facilityLabel } from "../facility";
 import { Badge, readinessColor } from "../util";
 
 export type Mode = "live" | "replay" | "livecheck";
@@ -10,8 +11,9 @@ const TOOLS: { id: "replay" | "thresholds"; label: string; hint: string }[] = [
   { id: "thresholds", label: "Thresholds & backtest", hint: "The weather limits behind each recommendation, and how they scored on past storms" },
 ];
 
-export function Header({ snap, mode, setMode, view, setView, demo, theme, toggleTheme }: {
+export function Header({ snap, mode, setMode, view, setView, demo, theme, toggleTheme, facility, facilities, onFacilityChange }: {
   snap: Snapshot | null; mode: Mode; setMode: (m: Mode) => void; view: View; setView: (v: View) => void;
+  facility: Facility; facilities: Facility[]; onFacilityChange: (id: string) => void;
   demo: boolean; theme: string; toggleTheme: () => void;
 }) {
   const [menu, setMenu] = useState(false);
@@ -36,13 +38,22 @@ export function Header({ snap, mode, setMode, view, setView, demo, theme, toggle
   return (
     <header className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
         <button onClick={goToday} className="flex items-center gap-3 text-left" aria-label="Closure Call: go to today">
           <img src="/closure-call-mark.svg" alt="" width="40" height="40" className="h-10 w-10 shrink-0" />
           <span className="leading-tight">
             <span className="block text-base font-semibold">Closure Call</span>
-            <span className="block text-xs text-muted">USDA Service Center, Ames, IA</span>
+            <span className="block text-xs text-muted">{facility.name}</span>
           </span>
         </button>
+        <label className="grid gap-1 text-xs text-muted">
+          <span>Facility</span>
+          <select aria-label="Facility" value={facility.id} onChange={e => onFacilityChange(e.target.value)}
+            className="min-h-[44px] max-w-full rounded-lg border border-edge bg-surface px-3 text-sm font-semibold text-ink">
+            {facilities.map(f => <option key={f.id} value={f.id}>{facilityLabel(f)}</option>)}
+          </select>
+        </label>
+        </div>
 
         <nav className="flex items-center gap-1 text-sm" aria-label="Main">
           <NavTab on={view === "today" && mode === "live"} onClick={goToday}>Today</NavTab>

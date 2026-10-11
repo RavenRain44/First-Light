@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useUnsavedDraft } from "../facility";
 import { api } from "../api";
 import type { Posture, Snapshot } from "../types";
 import { CooperBanner, POSTURES, POSTURE_STYLE, PostureBadge, fmtDayLong, fmtTime } from "../util";
@@ -84,12 +85,14 @@ export function DecisionStep({ snap, onDecided }: { snap: Snapshot; onDecided: (
 
 function DecideForm({ snap, onRecorded, onCancel }: { snap: Snapshot; onRecorded: (d: Recorded) => void; onCancel?: () => void }) {
   const rec = snap.posture.posture;
-  const [by, setBy] = useState(savedName);
+  const [initialName] = useState(savedName);
+  const [by, setBy] = useState(initialName);
   const [posture, setPosture] = useState<Posture>(rec);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const override = posture !== rec;
+  useUnsavedDraft(override || reason.trim().length > 0 || by !== initialName);
   // Insufficient (or unrecorded) evidence makes every decision manual, even one matching the fallback.
   const evidence = evidenceState(snap);
   const manual = evidence.reason_required;
@@ -131,7 +134,7 @@ function DecideForm({ snap, onRecorded, onCancel }: { snap: Snapshot; onRecorded
             : manual ? "What is this manual decision based on? (required: current data is insufficient)"
             : override ? "Why are you choosing differently? (required)" : "Why do you agree? (optional)"}</span>
           <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} className="rounded-lg border border-edge bg-surface px-3 py-2"
-            placeholder="e.g. County roads north of town are untreated; staff on US 69 can't get in" />
+            placeholder={snap.facility.state === "NC" ? "e.g. A reported bridge closure affects staff commuting from Leland" : "e.g. County roads north of town are untreated; staff on US 69 cannot get in"} />
         </label>
       <p className="text-xs text-muted">Your reasoning helps draft the notification explanation. Keep personal contact details out of this field.</p>
       <label className="flex max-w-sm flex-col gap-1 text-sm">

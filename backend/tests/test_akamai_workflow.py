@@ -16,7 +16,7 @@ from app.facility import load_facility
 from app.main import app
 
 
-def test_brief_does_not_decide_and_manager_override_is_audited(tmp_path, monkeypatch):
+def test_brief_does_not_decide_and_manager_override_is_audited(tmp_path, monkeypatch, cached_live_storm):
     monkeypatch.setattr(settings, "demo_mode", True)
     monkeypatch.setattr(settings, "model_provider", "akamai")
     monkeypatch.setattr(settings, "akamai_api_key", "test-team-key")
@@ -38,7 +38,7 @@ def test_brief_does_not_decide_and_manager_override_is_audited(tmp_path, monkeyp
     monkeypatch.setattr(agent, "_akamai_chat", notification_inference)
     try:
         with TestClient(app) as client:
-            result = client.post("/api/evaluate", json={"mode": "replay", "as_of": "2020-08-10T16:00:00Z"})
+            result = client.post("/api/evaluate", json={"mode": "live"})
             assert result.status_code == 200
             snap = result.json()
             # The snapshot is saved immediately with the deterministic brief; the Akamai brief follows

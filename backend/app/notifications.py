@@ -23,7 +23,7 @@ from app import snapshots
 from app.config import settings
 from app.db import session
 from app.facility import employee_on, load_employees
-from app.models import Decision, NotificationAudit, NotificationClock, NotificationPackage
+from app.models import Decision, NotificationAudit, NotificationClock, NotificationPackage, Snapshot
 
 # Real-test contacts (git- and Docker-ignored). The production container reads them from a private host folder.
 CONTACT_FILE = Path(os.environ.get("NOTIFICATION_CONTACTS_FILE") or settings.data_dir.parent / "notification-contacts.local.json")
@@ -88,10 +88,19 @@ def require_package(s, pid, version=None):
     row = s.get(NotificationPackage, pid)
     if not row:
         raise HTTPException(404, "Notification package not found")
+    if not live_package(s, row):
+        raise HTTPException(422, "Historical replay notification packages are read-only and cannot be approved or sent")
     p = json.loads(row.state_json)
     if version is not None and p["version"] != version:
         raise HTTPException(409, "Package changed. Refresh and review it again.")
     return row, p
+
+
+def live_package(s, package) -> bool:
+    decision = s.get(Decision, package.decision_id)
+    snap = s.get(Snapshot, decision.snapshot_id) if decision else None
+    return bool(snap and snap.mode == "live" and decision.facility_id == package.facility_id
+                and snap.facility_id == package.facility_id and not json.loads(snap.facility_json).get("hypothetical"))
 
 
 def contacts():
@@ -270,8 +279,18 @@ def show_all_groups(p, facility, now):
 
 
 
-async def create(decision_id, fallback_start=None, include_unchanged=False):
+async def create(decision_id, fallback_start=None, include_unchanged=False, facility_id=None):
     with session() as s:
+        decision = s.get(Decision, decision_id)
+        if not decision:
+            raise HTTPException(404, "Record a human decision first")
+        if facility_id is not None and facility_id != decision.facility_id:
+            raise HTTPException(404, "Decision does not belong to the selected facility")
+        snap = snapshots.get(decision.snapshot_id)
+        if not snap or snap["mode"] != "live" or snap.get("historical_context") or snap["facility"].get("hypothetical"):
+            raise HTTPException(422, "Notifications require a manager decision from live facility weather; historical replay is read-only")
+        if snap["facility"]["id"] != decision.facility_id:
+            raise HTTPException(409, "Decision facility does not match its saved weather")
         existing = s.exec(select(NotificationPackage).where(NotificationPackage.decision_id == decision_id)).first()
         if existing:
             p = json.loads(existing.state_json)
@@ -287,12 +306,6 @@ async def create(decision_id, fallback_start=None, include_unchanged=False):
                 store(s, existing, p)
                 s.commit()
             return p
-        decision = s.get(Decision, decision_id)
-        if not decision:
-            raise HTTPException(404, "Record a human decision first")
-        snap = snapshots.get(decision.snapshot_id)
-        if not snap or snap["mode"] not in {"live", "replay"} or snap["facility"].get("hypothetical"):
-            raise HTTPException(422, "Notifications require a live/replay decision for the actual facility profile")
         now = clock_now(s)
         old = s.exec(select(NotificationPackage).where(NotificationPackage.facility_id == decision.facility_id,
                        NotificationPackage.decision_day == snap["posture"]["decision_day"])).all()
@@ -394,6 +407,8 @@ def tick():
     with transaction() as s:
         now = clock_now(s)
         for row in s.exec(select(NotificationPackage)).all():
+            if not live_package(s, row):
+                continue
             p = json.loads(row.state_json)
             if p["status"] != "superseded":
                 process(s, row, p, now)

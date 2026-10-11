@@ -1,0 +1,63 @@
+{
+  "facility_id": "NC-WILMINGTON-SC",
+  "lat": 34.2257,
+  "lon": -77.875,
+  "as_of": "2026-10-11T10:34:31.833507+00:00",
+  "purpose": "Wilmington-only current source packets for offline demonstration; never a replacement for original historical inputs.",
+  "sources": [
+    {
+      "url": "https://api.weather.gov/points/34.2257,-77.8750",
+      "file": "7dbeb55cdbbe78d569def593d4c1b570660fa96c.json.gz",
+      "fetched_at": "2026-10-11T10:34:32.370289+00:00",
+      "sha256": "f2450b588fca8577ede3f8ec8f50c0dd0b030db4d27e6aa9b315740f7cd39d5a"
+    },
+    {
+      "url": "https://api.weather.gov/alerts/active?point=34.2257,-77.8750",
+      "file": "3b96f6a28bcc3ea966f4cc145cf775661d420ca6.json.gz",
+      "fetched_at": "2026-10-11T10:34:32.404325+00:00",
+      "sha256": "4ecabd9043ba01d73d67186d4c8025359e0516211bde32651ee741764d169610"
+    },
+    {
+      "url": "https://api.weather.gov/gridpoints/ILM/92,75",
+      "file": "64ada448c6113ef36ea3f872bac70e41aa717ef2.json.gz",
+      "fetched_at": "2026-10-11T10:34:32.755937+00:00",
+      "sha256": "8a9be1f54cd9a1330cacb0dc2c0f6c603a5e9918730370796e1525efc826bd82"
+    },
+    {
+      "url": "https://api.water.noaa.gov/nwps/v1/gauges/wlon7",
+      "file": "76c58e0c4eb5aff757e9bed74e952df8811ce33c.json.gz",
+      "fetched_at": "2026-10-11T10:34:32.730279+00:00",
+      "sha256": "3a33d60d9cae4284887ad722cff2ada3ddaec8efa763e4b80a0ab9cea848b463"
+    },
+    {
+      "url": "https://api.water.noaa.gov/nwps/v1/gauges/wlon7/stageflow",
+      "file": "6a1eb7635431a71276b93072d89095d305bbdc96.json.gz",
+      "fetched_at": "2026-10-11T10:34:33.159537+00:00",
+      "sha256": "fd16adf75d8f3368820fa9f3d8cec949b1589e366a5b708d9e3ca6529dd526f3"
+    },
+    {
+      "url": "https://api.weather.gov/products/types/HLS/locations/ILM",
+      "file": "807724bc5b083948aa3877124e96ac9c80d76e4c.json.gz",
+      "fetched_at": "2026-10-11T10:34:32.349196+00:00",
+      "sha256": "6b2986894a3aa89e40c5edb82094f13da29ff8e787a1f2bec7fe27907a87f4ea"
+    },
+    {
+      "url": "https://mesonet.agron.iastate.edu/api/1/currents.json?station=ILM",
+      "file": "0363297093a5cb1abaec10ffcf0f4e4bd796dd89.json.gz",
+      "fetched_at": "2026-10-11T10:34:32.823941+00:00",
+      "sha256": "819b0227881b64cb1410ead8012386dad7b8f4b2ed2181f83ed269a977a34ef9"
+    },
+    {
+      "url": "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=NC_ASOS&station=ILM&date=2026-10-10&full=true",
+      "file": "3875f8ed7b99ee11a834cb6928c97ab6b62e38ef.json.gz",
+      "fetched_at": "2026-10-11T10:34:32.488225+00:00",
+      "sha256": "d1fcbbbed430e5f4cbf45d8d6cdb6e1030fa1c8d6224e5d13dbcb02ef4df9a9f"
+    },
+    {
+      "url": "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=NC_ASOS&station=ILM&date=2026-10-11&full=true",
+      "file": "80cc2221c2b947ebaf1ef7449341c85a38fdc0ba.json.gz",
+      "fetched_at": "2026-10-11T10:34:32.637701+00:00",
+      "sha256": "89b53db2b7204ce0f9f00acc6330eadaeedf5364521da33d0e8a0c47599625f6"
+    }
+  ]
+}

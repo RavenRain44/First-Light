@@ -39,7 +39,7 @@ export function EvidenceNotice({ snap, onRefresh, busy = false, compact = false 
       <div className="mt-2 flex flex-wrap items-center gap-3">
         {recheck}
         {s.mode_note && <span className="text-xs text-ink2">{s.mode_note}</span>}
-        {(warn || s.reason_required) && <span className="text-xs text-ink2">{snap.mode === "backtest" ? "Review only; no decision is recorded." : "The manager makes the final decision. Recording a decision requires a reason."}</span>}
+        {(warn || s.reason_required) && <span className="text-xs text-ink2">{(snap.mode === "backtest" || snap.mode === "replay") ? "Review only; no decision is recorded." : "The manager makes the final decision. Recording a decision requires a reason."}</span>}
       </div>
     </section>
   );

@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { api } from "../api";
+import { api, selectedApiGeneration } from "../api";
 import type { Snapshot } from "../types";
 import { latest, maxAhead } from "../util";
 
@@ -8,7 +8,7 @@ const roadsCache = new Map<string, Promise<any>>();
 export function useRoads(snap: Snapshot, frozen = false): { data: any; err: string | null } {
   const live = snap.mode === "live";
   const historicalContext = snap.historical_context ?? (frozen ? true : undefined);
-  const key = live ? `live:${snap.snapshot_id}` : snap.as_of;
+  const key = `${selectedApiGeneration()}:${snap.facility_id}:${live ? `live:${snap.snapshot_id}` : snap.as_of}`;
   const [state, setState] = useState<{ key: string; data: any; err: string | null } | null>(null);
   useEffect(() => {
     if (snap.facility.hypothetical || historicalContext) return;
@@ -75,11 +75,12 @@ export function GlanceRow({ snap, onOpen, historical = false }: { snap: Snapshot
 }
 
 function RoadsSummary({ snap, roads }: { snap: Snapshot; roads: { data: any; err: string | null } }) {
-  if (snap.facility.hypothetical) return <p className="text-sm text-ink2">Road reports cover Iowa only.</p>;
+  if (snap.facility.hypothetical) return <p className="text-sm text-ink2">Road coverage is not configured for this what-if location.</p>;
   if (roads.err) return <p className="text-sm text-ink2">Road reports unavailable right now.</p>;
   if (!roads.data) return <div className="skeleton h-10" aria-hidden />;
+  if (["unavailable", "not_applicable"].includes(roads.data.status)) return <><p className="text-2xl font-semibold">Unavailable</p><p className="text-sm text-ink2">{roads.data.detail ?? "Road conditions could not be verified for this facility."}</p></>;
   const reported = (roads.data.corridors ?? []).filter((c: any) => c.worst_rank !== null);
-  if (!reported.length) return <><p className="text-2xl font-semibold">No reports</p><p className="text-sm text-ink2">{snap.mode!=='live' ? 'Historical corridor reports unavailable for this context.' : 'Iowa DOT has no current reports for the commute routes.'}</p></>;
+  if (!reported.length) return <><p className="text-2xl font-semibold">No reports</p><p className="text-sm text-ink2">{snap.mode!=='live' ? 'Historical corridor reports unavailable for this context.' : 'No current DOT reports match the commute routes.'}</p></>;
   const bad = reported.filter((c: any) => c.worst_rank > 0).sort((a: any, b: any) => b.worst_rank - a.worst_rank);
   if (!bad.length) return <><p className="text-2xl font-semibold">Normal</p><p className="text-sm text-ink2">All {reported.length} commute routes report normal conditions.</p></>;
   return (

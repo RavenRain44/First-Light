@@ -78,6 +78,7 @@ class HistoryEvent(SQLModel, table=True):
     """A verified past event used for backtesting and analogs."""
 
     id: str = Field(primary_key=True)
+    facility_id: str = Field(default="IA-AMES-SC", index=True)
     name: str
     hazard: str
     start: datetime

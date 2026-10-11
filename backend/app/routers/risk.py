@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException
 
 from app import historical, snapshots
 from app.config import settings
-from app.facility import load_employees
+from app.facility import load_facility, facility_employees
 from engine.action_risk import assess_actions
 from engine.scoring import load_thresholds
 
@@ -28,13 +28,22 @@ def validation() -> dict | None:
             "periods": {k: r["periods"][k] for k in keep if k in r["periods"]}, "all_years": r["all"]}
 
 
+def _facility(facility_id=None):
+    try: return load_facility(facility_id)
+    except KeyError: raise HTTPException(422,"Unknown facility") from None
+
+
+
 @router.get("/risk-tradeoffs")
-def risk_tradeoffs(snapshot_id: str | None = None, time: str = "04:00"):
+def risk_tradeoffs(snapshot_id: str | None = None, time: str = "04:00", facility_id: str | None = None):
     """Read-only. Never records a decision, changes the suggestion or sends notifications."""
+    facility=_facility(facility_id)
     snap = (snapshots.get(snapshot_id) or historical.lookup(snapshot_id)) if snapshot_id else None
-    if snapshot_id and not snap:
+    if snapshot_id and (not snap or snap["facility"]["id"] != facility.id):
         raise HTTPException(404, "snapshot not found")
-    scores = historical.overview()["metrics_by_time"].get(time) or {}
+    scores = historical.overview(facility.id)["metrics_by_time"].get(time) or {}
     from app.risk_experiment import saved_report
-    return {"validation": validation(), "experiment":saved_report() if time=="04:00" else None,"errors": scores.get("error_analysis", {}), "range": scores.get("range"), "evaluation_time": time,
-            "actions": assess_actions(snap, load_employees(), load_thresholds().timing) if snap else None}
+    # The committed hourly validation measures Ames station weather and policy.
+    return {"validation": validation() if facility.id == "IA-AMES-SC" else None,
+            "experiment":saved_report(facility.id) if time=="04:00" else None,"errors": scores.get("error_analysis", {}), "range": scores.get("range"), "evaluation_time": time,
+            "actions": assess_actions(snap, facility_employees(facility), load_thresholds(facility=facility).timing) if snap else None}

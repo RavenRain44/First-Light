@@ -59,7 +59,7 @@ export function RoadsPanel({ snap, savedDecisionId, historical = false }: { snap
   const hide = useCallback((id: string) => { setHidden((h) => new Set(h).add(id)); setSelected(null); }, []);
 
   if (snap.facility.hypothetical) {
-    return <Card title="Roads"><p className="text-sm text-ink2">Iowa DOT road conditions and cameras are Iowa-only. Unavailable for this what-if location, which lowers confidence.</p></Card>;
+    return <Card title="Roads"><p className="text-sm text-ink2">Roads and camera coverage is not configured for this what-if location.</p></Card>;
   }
   if (err) return <Card title="Roads"><p className="text-sm">Road data unavailable: {err}</p></Card>;
   if (!data) return <Card title="Roads"><Skeleton className="h-80" /></Card>;
@@ -72,7 +72,7 @@ export function RoadsPanel({ snap, savedDecisionId, historical = false }: { snap
   };
 
   return (
-    <Card title="Roads: Iowa DOT conditions on commute corridors"
+    <Card title={`Roads: ${snap.facility.state === "NC" ? "NCDOT" : "Iowa DOT"} conditions on commute corridors`}
       right={<span className="text-xs text-muted">
         <Prov tz={tz} source={data.source} url={data.source_url} fetched={data.fetched_at}>as of {fmtTime(data.as_of, tz)}</Prov>
       </span>}>
@@ -148,7 +148,7 @@ export function RoadsPanel({ snap, savedDecisionId, historical = false }: { snap
                         {c.worst_rank !== null ? (
                           <span className="inline-flex items-center gap-1.5">
                             <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: RANK_COLOR[c.worst_rank] }} />
-                            <Prov tz={tz} source="Iowa DOT via IEM" url={data.source_url} sourceTime={c.worst_updated?.replace("Z", ":00Z")} fetched={data.fetched_at}>
+                            <Prov tz={tz} source={data.source ?? "State DOT"} url={data.source_url} sourceTime={c.worst_updated?.replace("Z", ":00Z")} fetched={data.fetched_at}>
                               {c.worst_label}
                             </Prov>
                           </span>
@@ -157,7 +157,7 @@ export function RoadsPanel({ snap, savedDecisionId, historical = false }: { snap
                       <td className="text-right tabnum">{c.commuters_in_building}</td>
                     </tr>
                   ))}
-                  <tr><td className="py-1.5 text-ink2">Local Ames streets (no DOT data)</td><td /><td className="text-right tabnum">{data.local_commuters_in_building}</td></tr>
+                  <tr><td className="py-1.5 text-ink2">Local streets (no matched DOT reports)</td><td /><td className="text-right tabnum">{data.local_commuters_in_building}</td></tr>
                 </tbody>
               </table>
               <div className="mt-3 flex flex-wrap gap-2 text-xs">

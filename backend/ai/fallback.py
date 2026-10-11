@@ -9,6 +9,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from engine import sufficiency
+from engine.analogs import evidence_analogs
 from ai.prompts import Interpretation
 
 POSTURE_WORDS = {
@@ -53,7 +54,9 @@ def alert_line(a: dict, tz: ZoneInfo) -> str:
 RANK_NAMES = {2: "partially covered", 3: "completely covered", 4: "travel advisory", 5: "travel not advised / closed"}
 
 
-def _rank_name(v) -> str:
+def _rank_name(v, hazard=None) -> str:
+    if hazard == "access":
+        return {2: "traffic restriction", 5: "reported full road closure"}.get(int(v), str(v))
     return RANK_NAMES.get(int(v), str(v))
 
 
@@ -65,7 +68,9 @@ def _reason_phrase(rule: dict) -> str:
         if risk:
             return f"a {risk} risk of severe storms in the Storm Prediction Center outlook"
     if rule["unit"] == "rank":
-        return f"reported roads at {_rank_name(rule['observed_value'])}"
+        if rule.get("hazard") == "access" and rule["observed_value"] == 5:
+            return "a reported full closure on a commute road"
+        return f"reported roads at {_rank_name(rule['observed_value'], rule.get('hazard'))}"
     return f"{rule['label']} of {_fmt_val(rule['observed_value'], rule['unit'])}"
 
 
@@ -110,8 +115,9 @@ def build(snap: dict, analogs: list[dict] | None = None) -> Interpretation:
                          f"(rule fires at {r['unit'].split('= ')[-1].rstrip(')')} or higher).")
         elif r["unit"] == "rank":
             sig = snap.get("signals", {}).get(r["metric"], {})
-            parts.append(f"Iowa DOT reports {sig.get('detail') or 'degraded roads'} as of {_local(r['time_of_peak'], tz)}, "
-                         f"at or past our '{_rank_name(r['threshold'])}' cutoff.")
+            road_source = "NCDOT" if snap["facility"].get("state") == "NC" else "Iowa DOT"
+            parts.append(f"{road_source} reports {sig.get('detail') or 'degraded roads'} as of {_local(r['time_of_peak'], tz)}, "
+                         f"at or past our '{_rank_name(r['threshold'], r.get('hazard'))}' cutoff.")
         else:
             when = f" around {_local(r['time_of_peak'], tz)}" if r.get("time_of_peak") else ""
             past = "at" if not r["margin_abs"] else f"{_fmt_val(r['margin_abs'], r['unit'])} past"
@@ -120,6 +126,8 @@ def build(snap: dict, analogs: list[dict] | None = None) -> Interpretation:
     for reason in p["reasons"][:2]:
         if rules:
             parts.append(f"Timing: {reason.rstrip('.')}.")
+    if any(r["hazard"] in {"coastal", "flood"} for r in key):
+        parts.append("Regional flood alerts and gauge levels describe their reported areas; flooding at this synthetic facility has not been established.")
     rd = snap.get("readiness")
     if rd:
         when = f"; decide and announce by {_local(rd['decide_by'], tz)}" if rd.get("decide_by") else ""
@@ -151,7 +159,7 @@ def build(snap: dict, analogs: list[dict] | None = None) -> Interpretation:
                    + (p["reasons"][0] if p["reasons"] else "No operating-status threshold is crossed for the decision day."))
 
     analog_text = ""
-    if analogs:
+    if analogs and evidence_analogs({**snap, "analogs": analogs}):
         a = analogs[0]
         analog_text = (f"Closest past event: {a['name']} ({a['similarity_pct']:.0f}% similar). The rules (backtest, "
                        f"simulated) recommended {a['recommended_posture']} then; outcome: {a['outcome_summary']}")

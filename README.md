@@ -12,14 +12,19 @@ Closure Call does **not** automate the decision. It puts every input a manager n
 OPM-aligned posture from deterministic, cited thresholds, explains it in a paste-ready paragraph, and writes an
 immutable, reconstructable record of what was known, when, and what the human decided.
 
-Scope: **Iowa only**, one synthetic facility (USDA Service Center, Ames), two hazards handled well
-(**winter/ice** and **high wind / severe thunderstorm**) plus an optional third (**extreme cold**).
+Scope: **Ames, Iowa and Wilmington, North Carolina**, selectable beside the logo.
+Both facilities and rosters are synthetic. Ames covers winter/ice, wind/severe
+storms, and extreme cold. Wilmington additionally supports tropical storms,
+hurricanes, surge/coastal flooding, inland flooding, and commute access.
+See the [Wilmington setup and evidence guide](docs/wilmington-facility.md) for
+source coverage, the optional DriveNC key, and strict historical replay limits.
 
 ## What's real and what's synthetic
 
 | Real (live APIs or archives) | Synthetic |
 |---|---|
 | NWS active alerts and gridded forecasts (api.weather.gov) | The facility profile (`backend/data/facility.json`) |
+| Wilmington NWS/ILM weather, NOAA NWPS tidal gauge data, and DriveNC roads/cameras when configured | Wilmington profile and 270-person roster (`backend/data/facility-nc-wilmington.json`, `backend/data/employees-nc-wilmington.json`) |
 | AMW ASOS observations, Iowa DOT road conditions, RWIS pavement sensors, NWS warning archive, archived NBM forecasts, SPC outlooks, Local Storm Reports (Iowa Environmental Mesonet) | The 270-person roster (`backend/data/employees.json`, imported from `data/NADC_synthetic_assignments.csv`): schedules, details, scheduled telework, approved leave and emergency-required staff come from the CSV; home towns, commute corridors, contact channels and accessibility needs are generated |
 | Seven historical Story County events, each verified against the NWS VTEC archive | Every "recommended posture" in the backtest (*simulated by rules*, not real USDA decisions) |
 | Decisions recorded through the UI (labelled "real (recorded in this system)") | Commute corridor lines (approximate geometry) |

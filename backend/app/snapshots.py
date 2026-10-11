@@ -9,11 +9,12 @@ from typing import Any
 
 from sqlmodel import select
 
-from adapters.base import Facility, utc
+from adapters.base import Facility, demo_reference_time, utc
 from app.config import settings
 from app.db import session
-from app.facility import load_employees, roster_summary
+from app.facility import employee_on, load_employees, roster_summary
 from app.models import Decision, Snapshot
+from engine import analogs as analog_engine
 from engine.evaluate import Assessment, assess, gather, json_ready
 from engine.scoring import load_thresholds
 
@@ -28,7 +29,7 @@ def _dumps(x: Any) -> str:
 
 def build_snapshot_dict(facility: Facility, a: Assessment, inputs, statuses, mode: str,
                         event_id: str | None = None) -> dict:
-    th = load_thresholds()
+    th = load_thresholds(facility=facility)
     return json_ready({
         "snapshot_id": uuid.uuid4().hex,
         "facility": facility,
@@ -114,6 +115,8 @@ def row_to_dict(row: Snapshot, include_inputs: bool = True) -> dict:
     d["integrity_ok"] = content_hash(d) == row.content_sha256 if include_inputs else None
     # AI brief added after the snapshot was saved (not part of the snapshot or its hash).
     d["ai_addon"] = interpretation(row.snapshot_id) if include_inputs else None
+    if row.mode in analog_engine.HISTORICAL_MODES:
+        d["analogs_addon"] = []  # Display guard; the immutable original stays intact.
     return d
 
 
@@ -159,7 +162,6 @@ async def demo_live_as_of(facility: Facility) -> datetime | None:
     except cache.SourceUnavailable:
         return None
     t = cache.cached_fetched_at(meta["forecastGridData"])
-    settings.demo_reference_now = t
     return t
 
 
@@ -167,18 +169,25 @@ async def evaluate(facility: Facility, as_of: datetime | None, mode: str, *, eve
                    use_ai: bool = True, persist: bool = True) -> dict:
     """Full pipeline: fetch -> assess -> analogs -> interpretation -> immutable snapshot."""
     from ai import agent as ai_agent
-    from engine import analogs as analog_engine
 
     if as_of is None and mode == "live" and settings.demo_mode:
         as_of = await demo_live_as_of(facility)
     as_of = utc(as_of or datetime.now(timezone.utc))
-    inputs, statuses = await gather(facility, as_of, mode)
+    token = demo_reference_time.set(as_of if mode == "live" and settings.demo_mode else None)
+    try:
+        inputs, statuses = await gather(facility, as_of, mode)
+    finally:
+        demo_reference_time.reset(token)
     employees = None if facility.hypothetical else load_employees()
-    here = [e for e in employees or [] if e["this_week_location"] == facility.id and not e["teleworking_today"]]
+    from engine.posture import decision_day
+    day = decision_day(as_of, facility).isoformat()
+    effective = [employee_on(e, day) for e in employees or []]
+    here = [e for e in effective if e["this_week_location"] == facility.id and not e["teleworking_today"]
+            and e["scheduled"] and not e["on_leave"]]
     a = assess(inputs, statuses, facility, as_of, mode, employees=here)
     snap = build_snapshot_dict(facility, a, inputs, statuses, mode, event_id)
     if mode != "backtest":
-        snap["analogs"] = analog_engine.find_analogs(snap["features"], exclude_event=event_id)
+        snap["analogs"] = analog_engine.find_analogs(snap["features"], exclude_event=event_id, facility_id=facility.id, mode=mode)
     # The snapshot is saved right away with the deterministic template brief (sub-second). When a model
     # is configured, the AI brief is generated in the background and added as a separate append-only
     # record (SnapshotInterpretation), so the decision record never waits on, or is edited by, the model.
