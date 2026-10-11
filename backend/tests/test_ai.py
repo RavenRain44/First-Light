@@ -132,7 +132,7 @@ def test_model_exception_falls_back(snap, monkeypatch):
 def enable_akamai(monkeypatch):
     monkeypatch.setattr(agent.settings, "model_provider", "akamai")
     monkeypatch.setattr(agent.settings, "akamai_api_key", "test-team-key")
-    monkeypatch.setattr(agent.settings, "aws_fallback_enabled", False)
+    monkeypatch.setattr(agent.settings, "strands_fallback_enabled", False)
 
 
 def test_all_brief_fields_reject_invented_numbers(snap):
@@ -173,10 +173,10 @@ def test_missing_key_makes_no_request(snap, monkeypatch):
     assert "AKAMAI_API_KEY" in d["validation"]["problems"][0]
 
 
-def test_aws_fallback_is_opt_in_and_audited(snap, monkeypatch):
+def test_strands_fallback_is_audited(snap, monkeypatch):
     enable_akamai(monkeypatch)
-    monkeypatch.setattr(agent.settings, "aws_fallback_enabled", True)
-    monkeypatch.setattr(agent.settings, "aws_bedrock_model_id", "configured-model")
+    monkeypatch.setattr(agent.settings, "strands_fallback_enabled", True)
+    monkeypatch.setattr(agent.settings, "strands_model_id", "configured-model")
     calls = []
     async def fake(provider, s, feedback):
         calls.append(provider)
@@ -185,14 +185,13 @@ def test_aws_fallback_is_opt_in_and_audited(snap, monkeypatch):
         return fallback.build(s), {"provider": provider, "model": "configured-model", "usage": None}
     monkeypatch.setattr(agent, "_run_agent", fake)
     d, mid = asyncio.run(agent.interpret(snap))
-    assert calls == ["akamai", "bedrock"]
-    assert mid == "bedrock:configured-model" and d["inference"]["fallback_used"]
+    assert calls == ["akamai", "strands"]
+    assert mid == "strands:configured-model" and d["inference"]["fallback_used"]
     assert d["inference"]["failures"][0]["provider"] == "akamai"
 
 
 def test_transport_uses_workshop_chat_schema_no_hidden_retries(snap, monkeypatch):
     import httpx
-    import openai
     enable_akamai(monkeypatch)
     seen = []
     def handle(request):
@@ -205,11 +204,11 @@ def test_transport_uses_workshop_chat_schema_no_hidden_retries(snap, monkeypatch
                 "role": "assistant", "content": fallback.build(snap).model_dump_json()}}],
             "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
         })
-    original = openai.AsyncOpenAI
+    original = httpx.AsyncClient
     def client(**kwargs):
-        assert kwargs["max_retries"] == 0
-        return original(**kwargs, http_client=httpx.AsyncClient(transport=httpx.MockTransport(handle)))
-    monkeypatch.setattr(openai, "AsyncOpenAI", client)
+        assert kwargs["timeout"] == agent.TIMEOUT_S
+        return original(**kwargs, transport=httpx.MockTransport(handle))
+    monkeypatch.setattr(httpx, "AsyncClient", client)
     d, mid = asyncio.run(agent.interpret(snap))
     assert mid == "akamai:hackathon-chat" and len(seen) == 1
     assert seen[0]["model"] == "hackathon-chat"
@@ -301,23 +300,40 @@ def test_reason_phrases_translate_coded_weather_evidence_for_the_manager():
         "reported roads at travel not advised / closed")
 
 
-def test_bedrock_converse_transport(snap, monkeypatch):
-    import boto3
-    from botocore.stub import Stubber, ANY
-    # Unit transport tests must not depend on the cloud runner's selected AWS profile.
-    monkeypatch.delenv("AWS_PROFILE", raising=False)
-    monkeypatch.delenv("AWS_DEFAULT_PROFILE", raising=False)
-    client = boto3.client("bedrock-runtime", region_name="us-east-1", aws_access_key_id="test", aws_secret_access_key="test")
-    monkeypatch.setattr(agent.settings, "aws_bedrock_model_id", "test-converse-model")
-    with Stubber(client) as stub:
-        stub.add_response("converse", {
-            "output": {"message": {"role": "assistant", "content": [{"text": fallback.build(snap).model_dump_json()}]}},
-            "stopReason": "end_turn", "usage": {"inputTokens": 10, "outputTokens": 20, "totalTokens": 30},
-            "metrics": {"latencyMs": 1},
-        }, {"modelId": "test-converse-model", "system": ANY, "messages": ANY,
-            "inferenceConfig": {"maxTokens": 700, "temperature": 0.2}})
-        monkeypatch.setattr(boto3, "client", lambda *args, **kwargs: client)
-        out, metadata = agent._bedrock_request(snap, None)
-        assert out.rationale_paragraph == fallback.build(snap).rationale_paragraph
-        assert metadata["provider"] == "bedrock" and metadata["usage"]["total_tokens"] == 30
-        stub.assert_no_pending_responses()
+def test_strands_transport_uses_structured_output(snap, monkeypatch):
+    from types import SimpleNamespace
+    import strands
+    import strands.models.bedrock as bedrock
+    from ai.prompts import BriefDraft
+
+    base = fallback.build(snap)
+    draft = BriefDraft(**{name: getattr(base, name) for name in BriefDraft.model_fields})
+    seen = {}
+
+    class FakeModel:
+        def __init__(self, **kwargs):
+            seen["model"] = kwargs
+
+    class FakeAgent:
+        def __init__(self, **kwargs):
+            seen["agent"] = kwargs
+
+        async def invoke_async(self, prompt, **kwargs):
+            seen["prompt"] = prompt
+            seen["invoke"] = kwargs
+            return SimpleNamespace(
+                structured_output=draft,
+                metrics=SimpleNamespace(accumulated_usage={
+                    "inputTokens": 10, "outputTokens": 20, "totalTokens": 30,
+                }),
+            )
+
+    monkeypatch.setattr(agent.settings, "strands_model_id", "test-strands-model")
+    monkeypatch.setattr(bedrock, "BedrockModel", FakeModel)
+    monkeypatch.setattr(strands, "Agent", FakeAgent)
+    out, metadata = asyncio.run(agent._run_strands(snap, None))
+    assert out.rationale_paragraph == base.rationale_paragraph
+    assert seen["model"]["model_id"] == "test-strands-model"
+    assert seen["model"]["max_tokens"] == agent.MAX_OUTPUT_TOKENS
+    assert seen["invoke"]["structured_output_model"] is BriefDraft
+    assert metadata["provider"] == "strands" and metadata["usage"]["total_tokens"] == 30

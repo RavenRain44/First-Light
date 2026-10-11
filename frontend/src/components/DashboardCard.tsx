@@ -31,8 +31,8 @@ export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotif
   const tz = snap.facility.timezone;
   const r = snap.readiness;
   const pending = snap.ai_addon?.status === "pending";
-  const provider = pending ? "Akamai brief in progress" : snap.model_id.startsWith("akamai:") ? "Powered by Akamai"
-    : snap.model_id.startsWith("bedrock:") ? "AWS fallback" : snap.model_id === "deterministic-fallback" ? "Template suggestion" : "Archived AI brief";
+  const provider = pending ? "AI brief in progress" : snap.model_id.startsWith("akamai:") ? "Powered by Akamai"
+    : snap.model_id.startsWith("strands:") ? "Strands fallback" : snap.model_id === "deterministic-fallback" ? "Template suggestion" : "Archived AI brief";
   const unavailable = snap.sources.filter((s) => s.status === "unavailable");
   const people = snap.roster && !snap.roster.hypothetical ? snap.roster.expected_in_building : undefined;
   const canDecide = snap.mode !== "backtest" && !snap.facility.hypothetical;
@@ -44,9 +44,9 @@ export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotif
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 id={`${id}-action`} className="text-2xl font-semibold tracking-tight">Suggested Action</h2>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge tone={snap.model_id.startsWith("bedrock:") ? "warn" : pending ? "neutral" : "info"}>{provider}</Badge>
+            <Badge tone={snap.model_id.startsWith("strands:") ? "warn" : pending ? "neutral" : "info"}>{provider}</Badge>
             {onRegenerate && <button onClick={onRegenerate} disabled={pending} className="btn min-h-11 !px-2 !text-xs"
-              title="Ask Akamai to rewrite the suggestion from the same recorded evidence. Use Check again for fresh weather.">
+              title="Rewrite the suggestion from the same recorded evidence using the configured inference pipeline. Use Check again for fresh weather.">
               <span aria-hidden className={pending ? "inline-block animate-spin" : ""}>↻</span> {pending ? "Updating…" : "Regenerate"}
             </button>}
           </div>
@@ -82,8 +82,8 @@ export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotif
           </li>
         </ul>
         {(snap.ai_addon?.status === "failed" || (snap.ai.validation && !snap.ai.validation.ok)) &&
-          <p role="status" className="mt-3 text-xs text-ink2">Akamai's wording could not be verified. The suggestion uses the recorded rules and evidence.</p>}
-        {snap.ai_addon?.regen_failed && <p role="status" className="mt-3 text-xs text-ink2">The new Akamai brief could not be verified. The previous brief is still shown.</p>}
+          <p role="status" className="mt-3 text-xs text-ink2">AI wording could not be verified. The suggestion uses the recorded rules and evidence.</p>}
+        {snap.ai_addon?.regen_failed && <p role="status" className="mt-3 text-xs text-ink2">The new AI brief could not be verified. The previous brief is still shown.</p>}
         {unavailable.length > 0 && <p className="mt-3 text-sm text-ink2">Some data could not be loaded ({unavailable.map((s) => s.label).join(", ")}). Missing data does not mean conditions are safe.</p>}
 
         {canDecide ? (

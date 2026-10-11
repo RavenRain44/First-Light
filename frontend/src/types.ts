@@ -109,7 +109,7 @@ export interface Interpretation {
   analog_comparison: string;
   validation?: { ok: boolean; attempts: number; problems: string[] };
   inference?: {
-    provider: "akamai" | "bedrock" | "template";
+    provider: "akamai" | "strands" | "template";
     fallback_used: boolean;
     requests: { provider: string; model: string; usage: { input_tokens: number; output_tokens: number; total_tokens: number } | null }[];
     failures: { provider: string; problems: string[] }[];

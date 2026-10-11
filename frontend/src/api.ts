@@ -14,7 +14,7 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  health: () => req<{ demo_mode: boolean; model_provider: string }>("/api/health"),
+  health: () => req<{ demo_mode: boolean; model_provider: string; inference: { enabled: boolean } }>("/api/health"),
   facility: () => req<any>("/api/facility"),
   latest: (maxAge?: number) => req<Snapshot>(`/api/snapshot/latest${maxAge !== undefined ? `?max_age_seconds=${maxAge}` : ""}`),
   snapshot: (id: string) => req<Snapshot>(`/api/snapshot/${id}`),

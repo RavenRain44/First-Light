@@ -3,7 +3,6 @@ import asyncio
 import json
 
 import httpx
-import openai
 import pytest
 
 from ai import agent
@@ -16,7 +15,7 @@ def workshop(monkeypatch):
     seen = []
     reply = {"explanation": "Extreme winter hazards are present."}
     config = {"status": 200, "finish_reason": "stop"}
-    original = openai.AsyncOpenAI
+    original = httpx.AsyncClient
 
     def handle(request):
         body = json.loads(request.content)
@@ -33,9 +32,9 @@ def workshop(monkeypatch):
         })
 
     def client(**kwargs):
-        assert kwargs["max_retries"] == 0 and kwargs["timeout"] == 30
-        return original(**kwargs, http_client=httpx.AsyncClient(transport=httpx.MockTransport(handle)))
-    monkeypatch.setattr(openai, "AsyncOpenAI", client)
+        assert kwargs["timeout"] == 30
+        return original(**kwargs, transport=httpx.MockTransport(handle))
+    monkeypatch.setattr(httpx, "AsyncClient", client)
     return seen, reply, config
 
 

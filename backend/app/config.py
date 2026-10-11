@@ -27,13 +27,15 @@ class Settings:
     snapshot_stale_seconds: int = int(os.environ.get("SNAPSHOT_STALE_SECONDS", "600"))
     refresh_interval_seconds: int = int(os.environ.get("REFRESH_INTERVAL_SECONDS", "0"))
 
-    # Akamai workshop inference; AWS is an explicit, opt-in fallback only.
+    # Akamai workshop inference first; Strands on Bedrock is the secondary path.
     model_provider: str = os.environ.get("MODEL_PROVIDER", "akamai").strip().lower()
     akamai_api_key: str = os.environ.get("AKAMAI_API_KEY", "")
     akamai_base_url: str = "https://ws.akamai-workshops.com/v1"
     akamai_model_id: str = "hackathon-chat"
-    aws_fallback_enabled: bool = _bool("AWS_FALLBACK_ENABLED")
-    aws_bedrock_model_id: str = os.environ.get("AWS_BEDROCK_MODEL_ID", "")
+    strands_fallback_enabled: bool = _bool("STRANDS_FALLBACK_ENABLED", True)
+    strands_model_id: str = os.environ.get(
+        "STRANDS_MODEL_ID", os.environ.get("AWS_BEDROCK_MODEL_ID", "global.anthropic.claude-sonnet-4-6")
+    )
     aws_region: str = os.environ.get("AWS_REGION", "us-east-1")
 
     demo_reference_now = None  # set at runtime in DEMO_MODE (see app.snapshots.demo_live_as_of)

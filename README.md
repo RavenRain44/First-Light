@@ -36,6 +36,8 @@ npm run dev        # API on http://localhost:8000, dashboard on http://localhost
 
 `make setup` / `make dev` do the same where GNU make exists. Windows has no make; use the npm scripts.
 
+If port 8000 is already occupied, set `API_PORT=8001` in `.env`; the API launcher and dashboard proxy use it together.
+
 Setup also builds the historical library from the committed cache, so Replay, analogs and backtests
 are ready on first launch. This build runs offline and does not change `DEMO_MODE` in your `.env`.
 
@@ -158,12 +160,14 @@ unfinished manager input and reuses the chart data.
 | `DATABASE_PATH` | `backend/var/closurecall.db` | SQLite file |
 | `MODEL_PROVIDER` | `akamai` | Akamai workshop inference; `none` disables inference |
 | `AKAMAI_API_KEY` | | Backend-only workshop team key for `hackathon-chat` |
-| `AWS_FALLBACK_ENABLED` | `false` | Explicit opt-in to AWS Bedrock if Akamai fails |
-| `AWS_BEDROCK_MODEL_ID` / `AWS_REGION` | / `us-east-1` | Optional Bedrock Converse model and region; uses the AWS credential chain |
+| `STRANDS_FALLBACK_ENABLED` | `true` | Try a Strands agent through Amazon Bedrock if Akamai fails |
+| `STRANDS_MODEL_ID` / `AWS_REGION` | `global.anthropic.claude-sonnet-4-6` / `us-east-1` | Strands Bedrock model and region; uses the AWS credential chain |
 
 The dashboard works fully with **no API key**: the deterministic template rationale is used and labelled as such.
 With a workshop key, Akamai produces the manager decision brief, alert summaries, watch items and historical
-comparisons. Akamai also drafts weather-only notification wording after a manager records a decision; each
+comparisons. Reports generate a brief when loaded, including previously stored and historical reports. If Akamai
+cannot produce a valid brief, the app tries Strands through Bedrock and then uses the deterministic template.
+Akamai also drafts weather-only notification wording after a manager records a decision; each
 notification group still requires manager approval. Provider identity and token usage are recorded with the
 draft. See [Akamai setup, usage bounds and optional cloud deployment](docs/akamai-usage.md).
 
@@ -191,7 +195,7 @@ adapters (NWS, IEM)  ->  normalized inputs (value, unit, source, URL, fetched_at
   decision brief with a concise summary, evidence citations, uncertainty and a paste-ready rationale. Every text
   field is checked for unsupported numbers, citations are checked against the snapshot, and the manager's final
   authority is explicit. One failed validation can trigger one repair; otherwise a labeled template is used.
-  AWS Bedrock is an optional fallback, disabled for judging. Provider, token usage, prompt version and validation
+  A Strands agent through Bedrock is the secondary path. Provider, token usage, prompt version and validation
   outcomes are stored with the immutable snapshot.
 
 ## Readiness (adapted from Cooper's color code)
@@ -304,7 +308,7 @@ backend/
   app/        FastAPI app, routers, SQLModel tables, snapshot service, facility/roster
   adapters/   base interface + nws, iem_obs, iem_roads (roads + RWIS), iem_vtec (archive + SPC), iem_mos, iem_lsr, cache
   engine/     normalize, features, scoring, posture, confidence, counterfactual, analogs, evaluate
-  ai/         Akamai briefs, grounded snapshot views, prompts/schema, optional AWS fallback
+  ai/         Akamai-first briefs, grounded views, prompts/schema, Strands fallback
   config/     thresholds.yaml
   data/       facility.json, employees.json (synthetic)
   fixtures/   probe/ (real samples), http_cache/ (gzip cache, demo mode), history/ (event exports)

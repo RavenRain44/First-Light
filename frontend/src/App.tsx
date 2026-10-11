@@ -95,7 +95,7 @@ export default function App() {
   useEffect(() => {
     api.health().then((h: any) => {
       setDemo(h.demo_mode);
-      setAiEnabled(h.model_provider !== "none" && !!h.inference?.key_configured);
+      setAiEnabled(!!h.inference?.enabled);
     }).catch(() => {});
   }, []);
 
@@ -146,7 +146,7 @@ export default function App() {
             <div className="cc-stagger space-y-4">
               <PanelBoundary name="Suggested action"><SuggestedAction snap={shown} busy={busy}
                 onRefresh={mode === "live" ? () => run(() => api.evaluateLive()) : undefined}
-                onRegenerate={aiEnabled && shown.mode !== "backtest" ? regenerate : undefined}
+                onRegenerate={aiEnabled ? regenerate : undefined}
                 onGoNotify={() => { setView("notifications"); window.scrollTo({ top: 0, behavior: "smooth" }); }} /></PanelBoundary>
               <PanelBoundary name="Relevant metrics"><RelevantMetrics snap={shown} /></PanelBoundary>
               <PanelBoundary name="At a glance"><GlanceRow snap={shown} onOpen={openSection} /></PanelBoundary>
@@ -154,7 +154,7 @@ export default function App() {
               <h2 className="px-1 pt-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted">More detail, if you want it</h2>
               <Section id="why" title="Why this recommendation" open={open.has("why")} onToggle={() => toggle("why")}
                 summary="The weather behind it, what would change it, and what to watch">
-                <PanelBoundary name="Interpretation"><AIPanel snap={shown} onRegenerate={aiEnabled && shown.mode !== "backtest" ? regenerate : undefined} /></PanelBoundary>
+                <PanelBoundary name="Interpretation"><AIPanel snap={shown} onRegenerate={aiEnabled ? regenerate : undefined} /></PanelBoundary>
               </Section>
               <Section id="alerts" title="Weather alerts" open={open.has("alerts")} onToggle={() => toggle("alerts")}
                 summary={alertCount ? `${alertCount} active: ${[...new Set(shown.inputs.filter((i) => i.kind === "alert").map((i) => (i.data as any)?.event))].join(", ")}` : "No active National Weather Service alerts"}>

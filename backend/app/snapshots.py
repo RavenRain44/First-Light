@@ -181,7 +181,7 @@ async def evaluate(facility: Facility, as_of: datetime | None, mode: str, *, eve
     if not persist:
         return snap
     store(snap)
-    if use_ai and mode != "backtest" and ai_agent.model_enabled():
+    if use_ai and ai_agent.model_enabled():
         _start_enrichment(snap)
     return get(snap["snapshot_id"])
 
@@ -195,6 +195,8 @@ _tasks: set = set()
 def _start_enrichment(snap: dict) -> None:
     import asyncio
 
+    if snap["snapshot_id"] in _pending:
+        return
     _pending[snap["snapshot_id"]] = datetime.now(timezone.utc)
     task = asyncio.get_running_loop().create_task(_enrich(snap))
     _tasks.add(task)
@@ -242,6 +244,18 @@ def interpretation(snapshot_id: str) -> dict:
             "ai": json.loads(row.ai_json), "content_sha256": row.content_sha256}
 
 
+def ensure_interpretation(snap: dict) -> dict:
+    """Start the default brief pipeline when a report is loaded for the first time."""
+    from ai import agent as ai_agent
+
+    addon = interpretation(snap["snapshot_id"])
+    if addon["status"] == "none" and ai_agent.model_enabled():
+        _start_enrichment(snap)
+        addon = interpretation(snap["snapshot_id"])
+    snap["ai_addon"] = addon
+    return snap
+
+
 def regenerate_interpretation(snapshot_id: str) -> dict | None:
     """Ask the model for a fresh brief on an existing snapshot (same recorded facts). The new brief is
     another append-only add-on; the newest one is shown. Returns None if the snapshot doesn't exist."""
@@ -252,7 +266,7 @@ def regenerate_interpretation(snapshot_id: str) -> dict | None:
     snap = get(snapshot_id)
     if snap is None:
         return None
-    if snap["mode"] == "backtest" or not ai_agent.model_enabled():
+    if not ai_agent.model_enabled():
         return {"status": "unavailable"}
     _start_enrichment(snap)
     return interpretation(snapshot_id)
