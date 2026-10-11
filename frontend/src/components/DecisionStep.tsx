@@ -68,7 +68,8 @@ export function DecisionStep({ snap, onDecided }: { snap: Snapshot; onDecided: (
             <span className="font-semibold">✓ Decided:</span>
             <PostureBadge p={done.decision_posture} size="sm" />
             <span className="text-sm text-ink2">by {done.decided_by} at {fmtTime(done.decided_at, tz)}{
-              done.decision_basis === "manual_insufficient_evidence" ? " (manual decision: current data was insufficient)"
+              done.decision_basis === "manual_provisional_forecast" ? " (manager decision: provisional backup forecast)"
+                : done.decision_basis === "manual_insufficient_evidence" ? " (manual decision: current data was insufficient)"
                 : done.agreed_with_recommendation ? "" : " (changed from the suggestion)"}</span>
             <button onClick={() => setEditing(true)} className="ml-auto text-sm text-[var(--accent)] hover:underline">Record a different decision</button>
           </div>
@@ -90,7 +91,9 @@ function DecideForm({ snap, onRecorded, onCancel }: { snap: Snapshot; onRecorded
   const [err, setErr] = useState<string | null>(null);
   const override = posture !== rec;
   // Insufficient (or unrecorded) evidence makes every decision manual, even one matching the fallback.
-  const manual = evidenceState(snap).reason_required;
+  const evidence = evidenceState(snap);
+  const manual = evidence.reason_required;
+  const provisional = evidence.provisional && evidence.status === "limited";
   const needReason = override || manual;
   const ok = by.trim().length >= 2 && (!needReason || reason.trim().length > 0);
 
@@ -118,13 +121,14 @@ function DecideForm({ snap, onRecorded, onCancel }: { snap: Snapshot; onRecorded
             <label key={p} className={`flex min-h-[44px] cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm ${posture === p ? "border-2" : "border-edge"}`}
               style={posture === p ? { borderColor: POSTURE_STYLE[p].color } : undefined}>
               <input type="radio" name="decision-posture" value={p} checked={posture === p} onChange={() => setPosture(p)} />
-              {POSTURE_STYLE[p].label}{p === rec && <span className="text-xs text-muted">{manual && p === "NORMAL" ? "(fallback)" : "(suggested)"}</span>}
+              {POSTURE_STYLE[p].label}{p === rec && <span className="text-xs text-muted">{provisional ? "(provisional)" : manual && p === "NORMAL" ? "(fallback)" : "(suggested)"}</span>}
             </label>
           ))}
         </div>
       </fieldset>
       <label className="flex max-w-2xl flex-col gap-1 text-sm">
-          <span className="font-medium">{manual ? "What is this manual decision based on? (required: current data is insufficient)"
+          <span className="font-medium">{provisional ? "What did you verify before deciding? (required: backup forecast is provisional)"
+            : manual ? "What is this manual decision based on? (required: current data is insufficient)"
             : override ? "Why are you choosing differently? (required)" : "Why do you agree? (optional)"}</span>
           <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} className="rounded-lg border border-edge bg-surface px-3 py-2"
             placeholder="e.g. County roads north of town are untreated; staff on US 69 can't get in" />

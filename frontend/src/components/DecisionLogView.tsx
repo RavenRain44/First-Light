@@ -34,6 +34,7 @@ export function DecisionLogView({ timezone, onSnapshot }: {
       <strong>Decision #{d.id} · {d.decision_posture.replaceAll("_", " ")}</strong>
       <p className="mt-1 text-ink2">{d.decided_by} · {new Intl.DateTimeFormat("en-US", {timeZone: timezone, dateStyle: "medium", timeStyle: "short"}).format(new Date(d.decided_at))} · {timezone}</p>
       {d.decision_basis === "manual_insufficient_evidence" && <p className="mt-1 font-semibold text-[var(--danger)]">Manual decision: current data was insufficient when decided</p>}
+      {d.decision_basis === "manual_provisional_forecast" && <p className="mt-1 font-semibold">Manager decision based on a provisional backup forecast</p>}
       <p className="mt-1">{d.override_reason || d.notes || "Manager confirmed the assessment."}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         <button className="btn" onClick={() => setSelected(d.id)}>Review decision & alerts</button>

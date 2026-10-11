@@ -89,6 +89,65 @@ def test_revised_alerts_and_future_road_measurements_excluded(env,monkeypatch):
     assert not result['snapshot']['alerts']
     assert all(p['t'] <= result['as_of'] for i in result['snapshot']['inputs'] if i['role']=='observation' for p in i.get('series') or [])
 
+
+def test_archive_backup_can_support_prediction_when_observations_unavailable(env, monkeypatch):
+    from adapters.cache import SourceUnavailable, historical_online
+    async def missing(*args, **kwargs): raise SourceUnavailable('Observation archive not cached')
+    monkeypatch.setattr(h, 'year_rows', missing)
+    at = h.local_instant('2024-01-02')
+    calls = []
+    async def gather(facility, moment, mode):
+        calls.append(historical_online.get())
+        records = [NormalizedInput(id=f'fcst.{metric}', kind='series', role='forecast', metric=metric,
+                   unit='degF' if metric=='temp_f' else 'mph',
+                   series=[Point(t=at+timedelta(hours=j),v=value) for j in range(48)],
+                   source='Archived GFS MOS backup', source_url='https://example.org/original-forecast',
+                   fetched_at=at+timedelta(days=365), source_time=at-timedelta(hours=4),
+                   data={'weather_fallback':True, 'limitations':['Snow and ice amounts unavailable.']})
+                   for metric,value in [('temp_f',50),('wind_speed_mph',8)]]
+        return records,[SourceStatus(adapter='iem_gfs',label='Archived GFS MOS',status='ok')]
+    monkeypatch.setattr(h, 'gather', gather)
+    result = asyncio.run(h.compute('2024-01-02', reconstruction='archive', online=False))
+    assert calls == [False]
+    assert result['pipeline_version'] == 'v4' and result['reconstruction'].startswith('archived secondary forecast')
+    assert result['recommendation'] == 'NORMAL' and not result['outcome']['gradable']
+    assert result['snapshot']['sufficiency']['provisional'] and not result['snapshot']['sufficiency']['supports_all_clear']
+    assert not result['selection_gradable']  # No observations to independently grade a prediction.
+    assert all(datetime.fromisoformat(i['source_time'])+timedelta(hours=2)<=at for i in result['snapshot']['inputs'])
+
+
+def test_observation_baseline_does_not_silently_use_backup_forecasts(env, monkeypatch):
+    from adapters.cache import SourceUnavailable
+    async def missing(*args, **kwargs): raise SourceUnavailable('Observation archive unavailable')
+    async def forbidden(*args, **kwargs): raise AssertionError('Observation-only baseline must remain separate')
+    monkeypatch.setattr(h, 'year_rows', missing)
+    monkeypatch.setattr(h, 'gather', forbidden)
+    with pytest.raises(SourceUnavailable):
+        asyncio.run(h.compute('2024-01-02', reconstruction='observation'))
+
+
+def test_missing_evaluation_year_keeps_adjacent_observation_provenance(env, monkeypatch):
+    from adapters.cache import SourceUnavailable
+    rows = [{**env.rows[0], 'utc_valid':(datetime(2023,12,31,15,tzinfo=timezone.utc)+timedelta(hours=j)).isoformat()} for j in range(9)]
+    adjacent = {**env.raw, 'rows':rows, 'url':'https://example.org/2023-observations'}
+    async def fetch(year, **kwargs):
+        if year == 2024: raise SourceUnavailable('2024 archive unavailable')
+        return adjacent
+    async def gather(*args): return [], []
+    monkeypatch.setattr(h,'year_rows',fetch);monkeypatch.setattr(h,'gather',gather)
+    value = asyncio.run(h.compute('2024-01-01',reconstruction='archive'))
+    assert value['snapshot']['inputs'] and value['provenance']['url'] == adjacent['url']
+    assert all(i['source_url'] == adjacent['url'] for i in value['snapshot']['inputs'])
+
+
+def test_explicit_cloud_restore_can_precede_forecast_only_fallback(env, monkeypatch):
+    from adapters.cache import SourceUnavailable
+    async def missing(*args, **kwargs): raise SourceUnavailable('Restore this observation archive first')
+    async def forbidden(*args, **kwargs): raise AssertionError('Cloud restoration must be tried before forecast-only fallback')
+    monkeypatch.setattr(h,'year_rows',missing);monkeypatch.setattr(h,'gather',forbidden)
+    with pytest.raises(SourceUnavailable):
+        asyncio.run(h.compute('2024-01-02',reconstruction='archive',require_observations=True))
+
 def test_recommendation_for_other_day_not_scored(env):
     value=asyncio.run(h.compute('2024-01-06'))
     assert value['decision_day']=='2024-01-08'

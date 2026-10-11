@@ -108,6 +108,8 @@ def assess_readiness(hazards: dict[str, HazardResult], rules: list[RuleResult], 
     # Missing evidence raises attention (recheck sooner), never the operating posture.
     if sufficiency is not None and sufficiency.status == "insufficient":
         found["YELLOW"].insert(0, "Insufficient current data: recheck before relying on a normal day")
+    elif sufficiency is not None and sufficiency.provisional:
+        found["YELLOW"].insert(0, "Backup forecast in use: provisional recommendation; verify missing evidence before deciding")
     if confidence.level == "low":
         found["YELLOW"].append("Confidence is low: data is incomplete or stale, so stay alert")
 

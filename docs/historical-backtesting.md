@@ -76,13 +76,26 @@ inputs come only from the preceding twelve hours, with a **15-minute assumed
 observation availability lag**. Actual ingestion times and original pre-correction
 observation versions are not archived; this is an observation-based reconstruction.
 
-Optional archive enrichment uses the existing NBS, SPC, road and RWIS adapters.
+Optional archive enrichment uses the NBS, SPC, road and RWIS adapters. When NBS
+is missing, stale or incomplete, original GFS MOS runs from IEM can fill forecast
+gaps. GFS contributes temperature, sustained wind and precipitation probability;
+its categorical snow/QPF fields are never treated as measured inches, and ice
+amounts and gusts remain unknown. Fresh primary values retain priority.
 Source issue/report times after the selected instant are rejected. Observation
 points beyond the cutoff are rejected as well. Forecast availability is conservatively
 estimated as nominal run/product issue plus two hours; exact publication timestamps
 are unavailable. Results are labeled **archived forecast reconstruction (estimated
 availability)**, rather than verified forecast backtests. Missing forecasts do not
 cause live NWS forecasts to be substituted.
+
+GFS-backed results are separately labelled **archived secondary forecast
+reconstruction (estimated availability)** and **provisional**. Confidence cannot
+exceed Medium. No Open-Meteo current forecast or after-event reanalysis is used in
+replay. The forecast archive can still support provisional advice when the yearly
+observation download is unavailable, but such cases cannot be independently graded
+without an observed outcome. Archive evaluation identity is now version 4, preserving
+earlier immutable results; the observation-only baseline and retained control keep
+their existing identity and inputs.
 
 Final VTEC event records can contain later changes to expiration or cancellation.
 They are **excluded from recommendation inputs** until original alert/update

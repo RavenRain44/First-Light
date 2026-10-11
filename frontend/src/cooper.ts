@@ -79,6 +79,7 @@ export function cooperPresentation(snap: Snapshot) {
     : level === "RED" ? `Send communication immediately${event ? `: ${event}` : ""}`
     : level === "ORANGE" ? "Start taking precautions"
     : quiet && evidenceWarning(evidenceState(snap)) && snap.sufficiency ? "Insufficient current data"
+    : quiet && evidenceState(snap).provisional ? "Provisional forecast · verify before deciding"
     : level ? weatherHeading(snap) : "Readiness not recorded";
   const action = level === "RED" ? "Draft urgent decision" : level === "ORANGE" ? "Draft decision"
     : level === "YELLOW" ? "Review decision" : level === null ? "Review decision" : null;
@@ -92,6 +93,7 @@ export function cooperPresentation(snap: Snapshot) {
 }
 
 function watchMessage(snap: Snapshot, event: string | null, title: string): string {
+  if (evidenceState(snap).provisional) return "A backup forecast is in use. Verify local warnings and the missing measurements before choosing an operating status.";
   const reasons = snap.readiness?.reasons.join(" ") ?? "";
   if (/insufficient|incomplete|stale/i.test(reasons)) return "Verify the latest local warnings and forecast before deciding; some evidence is incomplete or stale.";
   if (snap.confidence.level === "low") return "Confidence is low. Verify the latest local warnings and forecast before deciding.";

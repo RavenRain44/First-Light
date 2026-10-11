@@ -70,6 +70,7 @@ export const METRICS: MetricDefinition[] = [
     { key: "fcst_snow_cum", name: "Forecast snow", color: "var(--series-2)", forecast: true }] },
   { id: "temp", title: "Temperature & feels-like", unit: "°F", hazard: "cold", contextHazards: ["winter"], series: [
     { key: "obs_temp_f", name: "Observed temperature (hourly report)", color: "var(--series-1)" },
+    { key: "obs_apparent_temp_f", name: "Observed feels-like", color: "var(--series-3)" },
     { key: "obs_pavement_temp_f", name: "Observed pavement temperature (nearby minimum)", color: "var(--series-3)" },
     { key: "fcst_temp_f", name: "Forecast temperature", color: "var(--series-2)", forecast: true },
     { key: "fcst_apparent_temp_f", name: "Forecast feels-like", color: "var(--series-3)", forecast: true }] },
@@ -105,7 +106,8 @@ export function metricHasData(snap: Snapshot, metric: MetricDefinition, data: Ti
 function winterMetrics(snap: Snapshot, rule: RuleResult, data: Timeseries): string[] {
   const event = String(rule.observed_value ?? "");
   // Named events are unambiguous; generic winter alerts need their actual text or measurements.
-  if (/blizzard|snow/i.test(event)) return /\bice\b|freezing rain|freezing drizzle|sleet/i.test(event) ? ["snow", "ice"] : ["snow"];
+  if (/blizzard/i.test(event)) return ["snow", "wind", "temp"];
+  if (/snow/i.test(event)) return /\bice\b|freezing rain|freezing drizzle|sleet/i.test(event) ? ["snow", "ice"] : ["snow"];
   if (/ice storm|freezing rain|freezing drizzle/i.test(event)) return ["ice"];
   const text = [event, ...(snap.alerts ?? []).filter((a) => event.split(", ").includes(a.event))
     .flatMap((a) => [a.headline, a.description])].join(" ");
@@ -130,6 +132,17 @@ function ruleMetrics(snap: Snapshot, rule: RuleResult, data: Timeseries): string
 export function relevantMetrics(snap: Snapshot, data: Timeseries): MetricDefinition[] {
   if (snap.historical_context?.control?.kind === "normal-weather") {
     return ["temp", "wind"].map((id) => METRICS.find((metric) => metric.id === id)!);
+  }
+  if (hasBlizzardWarning(snap)) {
+    const start = Math.floor(Date.parse(snap.as_of) / 3600e3) * 3600e3;
+    const snow = METRICS.find((m) => m.id === "snow")!;
+    const newSnow = metricRows(snap, snow, data).some((row) => row.ts >= start && row.ts < start + 24 * 3600e3
+      && [row.fcst_snow_in, row.fcst_snow_cum].some((v) => typeof v === "number" && v > 0));
+    // A blizzard may be blowing existing snow after snowfall ends. Show the actual
+    // wind, dangerous cold and roads rather than leading with an all-zero snow line.
+    const ids = [...(newSnow ? ["snow"] : []), "wind", "temp", "roads"];
+    const metrics = ids.map((id) => METRICS.find((m) => m.id === id)!).filter((m) => metricHasData(snap, m, data));
+    return metrics.length ? metrics.slice(0, 3) : [METRICS[0], METRICS.find((m) => m.id === "temp")!];
   }
   const ids: string[] = [];
   const add = (id: string | undefined) => { if (id && !ids.includes(id)) ids.push(id); };
@@ -161,6 +174,25 @@ export function relevantMetrics(snap: Snapshot, data: Timeseries): MetricDefinit
 }
 
 export type ChartRow = Record<string, number | string | null> & { ts: number };
+
+export function hasBlizzardWarning(snap: Snapshot): boolean {
+  return supportingRules(snap).some((r) => r.metric === "alert_present" && /blizzard/i.test(String(r.observed_value)));
+}
+
+/** Keep a timestamped single observation inside the default view, even when its
+ *  report precedes the commute window where the rules apply its condition. */
+export function metricDomain(snap: Snapshot, metric: MetricDefinition, evidence: ReturnType<typeof metricEvidence>, full = false): [number, number] {
+  const asOf = Date.parse(snap.as_of), start = asOf - 12 * 3600e3, end = asOf + 48 * 3600e3;
+  if (full) return [start, end];
+  const window = evidence.window;
+  const domain: [number, number] = window ? [Math.max(start, Math.min(window.start - 3 * 3600e3, asOf - 2 * 3600e3)),
+    Math.min(end, Math.max(window.end + 3 * 3600e3, asOf + 4 * 3600e3))] : [asOf - 3 * 3600e3, asOf + 24 * 3600e3];
+  if (metric.signal) {
+    const times = evidence.rows.filter((r) => metric.series.some((s) => typeof r[s.key] === "number")).map((r) => r.ts);
+    if (times.length) domain[0] = Math.max(start, Math.min(domain[0], Math.min(...times) - 30 * 60000));
+  }
+  return domain;
+}
 
 function metricRows(snap: Snapshot, metric: MetricDefinition, data: Timeseries): ChartRow[] {
   const byTime = new Map(data.rows.map((r) => [Date.parse(r.t), { ...r, ts: Date.parse(r.t) } as ChartRow]));
@@ -261,7 +293,7 @@ export function metricEvidence(snap: Snapshot, metric: MetricDefinition, data: T
     const updates: Record<string, number | null> = {};
     for (const series of metric.series) {
       const value = row[series.key];
-      const focus = typeof value === "number" && pointInWindow(row) && (rule?.triggered
+      const focus = typeof value === "number" && (pointInWindow(row) || !!metric.signal) && (rule?.triggered
         ? keys.includes(series.key) && crossesThreshold(value, rule) : !!context);
       updates[`${series.key}_focus`] = focus ? value as number : null;
       if (focus) highlighted++;

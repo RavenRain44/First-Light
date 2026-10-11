@@ -19,6 +19,7 @@ from zoneinfo import ZoneInfo
 from fastapi import HTTPException
 from sqlmodel import select
 from adapters.base import NormalizedInput, Point, SourceStatus, utc
+from adapters.cache import SourceUnavailable
 from adapters.historical_asos import START, archive_dir, year_rows
 from adapters.iem_obs import UNITS, _t, obs_series
 from app import snapshots
@@ -63,7 +64,7 @@ def local_instant(day, clock='04:00'):
 def identity(as_of, reconstruction):
     rules = load_thresholds()
     config = hashlib.sha256(dumps(load_facility()).encode()).hexdigest()
-    pipeline = 'v3' if reconstruction == 'archive' else 'v2'
+    pipeline = 'v4' if reconstruction == 'archive' else 'v2'
     key = f'{as_of.isoformat()}|{rules.sha256}|{config}|{reconstruction}|{OUTCOME_VERSION}|{pipeline}'
     return 'bt-' + hashlib.sha256(key.encode()).hexdigest()[:32], rules, config
 
@@ -130,7 +131,7 @@ def outcome(rows, day, tz):
             'max_gust_mph':gust,'freezing_precip_hours':fz,'snow_hours':snow,'min_visibility_mi':visibility,'min_feels_like_f':cold}
 
 
-async def compute(day, clock='04:00', reconstruction='observation', online=False, prefetched=None, force=False):
+async def compute(day, clock='04:00', reconstruction='observation', online=False, prefetched=None, force=False, require_observations=False):
     as_of = local_instant(day,clock)
     id, rules, config_sha = identity(as_of,reconstruction)
     with session() as s:
@@ -140,12 +141,25 @@ async def compute(day, clock='04:00', reconstruction='observation', online=False
             meta['proxy_records'] = proxies(day)
             return {**meta,'snapshot':lookup(id) if meta.get('recommendation') else None}
     facility = load_facility()
-    raw = prefetched or await year_rows(as_of.astimezone(ZoneInfo(facility.timezone)).year, online=online, retry=force and online)
+    observation_error = None
+    try:
+        raw = prefetched or await year_rows(as_of.astimezone(ZoneInfo(facility.timezone)).year, online=online, retry=force and online)
+    except SourceUnavailable as exc:
+        if reconstruction != 'archive' or require_observations:
+            raise
+        observation_error = exc
+        raw = {'rows': [], 'url': 'https://mesonet.agron.iastate.edu/request/download.phtml',
+               'detail': f'Observation archive unavailable: {exc}'}
     rows = raw['rows']
     # Jan 1 needs previous-year evening observations; Dec 31 outcome can cross UTC year.
     if day[5:] in ('01-01','12-31') and prefetched is None:
         other = int(day[:4]) + (-1 if day[5:]=='01-01' else 1)
-        try: rows = sorted(rows + (await year_rows(other,online=online))['rows'],key=lambda r:r['utc_valid'])
+        try:
+            adjacent = await year_rows(other,online=online)
+            rows = sorted(rows + adjacent['rows'],key=lambda r:r['utc_valid'])
+            if observation_error is not None:
+                # Retain the actual neighboring archive's provenance, even if this year's download failed.
+                raw = {**adjacent, 'detail': f'Evaluation-year observations unavailable: {observation_error}'}
         except Exception: pass  # explicit coverage labels below
     times = raw.get("_times") or [r["utc_valid"] for r in rows]
     begin = datetime.combine(date.fromisoformat(day),time(),ZoneInfo(facility.timezone)).astimezone(timezone.utc)-timedelta(hours=12)
@@ -168,11 +182,15 @@ async def compute(day, clock='04:00', reconstruction='observation', online=False
                 item.series = [p for p in item.series if utc(p.t) <= as_of-timedelta(minutes=15)]
         statuses = [s.model_copy(update={'status':'unavailable','n_inputs':0,'detail':'Final VTEC event records excluded: original expiration/update history not reconstructed.'}) if s.adapter=='iem_vtec' else s for s in statuses]
         if any(i.role == 'forecast' for i in inputs):
-            kind = 'archived forecast reconstruction (estimated availability)'
+            kind = ('archived secondary forecast reconstruction (estimated availability)' if any(
+                i.role == 'forecast' and (i.data or {}).get('weather_fallback') for i in inputs)
+                else 'archived forecast reconstruction (estimated availability)')
         else:
             kind = 'observation-based reconstruction (archive enrichment; no forecast)'
-        assumptions += ['NBS availability uses nominal run + 2-hour lag; exact publication times unavailable.',
+        assumptions += ['NBS/GFS availability uses nominal run + 2-hour lag; exact publication times unavailable. No hindsight or reanalysis forecasts are used.',
                         'VTEC final event records can reflect later updates and are excluded from recommendation inputs.']
+    if not inputs and observation_error is not None:
+        raise observation_error
     missing = ['Archived corridor conditions, accumulation totals, facility outages and camera imagery may be unavailable.']
     if not any(i.role=='forecast' for i in inputs): missing.append('No archived forecast supplied; afternoon conditions cannot be predicted from morning observations alone.')
     if not any(i.kind=='alert' for i in inputs): missing.append('No alert inputs supplied; this is not proof no alerts existed.')
@@ -192,7 +210,7 @@ async def compute(day, clock='04:00', reconstruction='observation', online=False
     status = 'partial' if inputs else 'unavailable'
     out = outcome(rows,day,facility.timezone)
     summary = {'id':id, 'day':day,'as_of':as_of.isoformat(),'reconstruction':kind,'requested_mode':reconstruction,
-               'pipeline_version':'v3' if reconstruction=='archive' else 'v2',
+               'pipeline_version':'v4' if reconstruction=='archive' else 'v2',
                'status':status,'detail':'Partial historical reconstruction; consult source coverage.' if inputs else 'Archive contains no usable pre-evaluation observations or forecasts.',
                'rules_sha':rules.sha256,'rules_version':rules.version,'config_sha':config_sha,
                'recommendation':snap['posture']['posture'] if inputs else None,

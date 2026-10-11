@@ -75,6 +75,14 @@ remain unknown, so the rules return **Normal (fallback)** with **Yellow** attent
 for incomplete evidence. It does not prove the office stayed open or establish a
 false-alarm rate. The February 5, 2025 advisory remains a mild-weather example.
 
+Blizzard replays prioritize wind, feels-like temperature and reported road conditions
+when no additional snowfall is forecast. A zero forecast does not describe snow already
+on the ground or rule out blowing snow. When new snowfall is forecast it remains a
+primary chart. Archived NBS wind chill is calculated from the saved temperature and
+wind using the same formula as the recorded cold signal, and labeled as calculated.
+Single road reports keep their original timestamps and stay visible in the default
+chart window; they are not expanded into a trend or future forecast.
+
 ### Run the demo offline
 
 ```bash
@@ -475,6 +483,23 @@ If unchanged reporting instructions produced an empty package, **Create groups f
 another update** lets a manager deliberately draft an informational follow-up.
 
 ### Multi-year historical replay and backtesting
+
+New assessments try a backup when the primary forecast is missing, outdated or
+incomplete. Live weather uses Open-Meteo; replay uses original GFS MOS runs from
+the IEM archive, with the same conservative two-hour publication lag as NBS.
+Replay never substitutes today's forecasts or weather reconstructed after the
+selected time. Historical downloads still require **Download missing public
+archives**; cached data works offline. Saved snapshots and the observation-only
+normal-weather control are preserved.
+
+Backup recommendations are labelled **provisional**, show their source and gaps,
+and require the manager's verification reason before recording a decision.
+Confidence is capped at Medium. Open-Meteo does not supply ice accumulation or
+official warnings; GFS MOS supplies temperature, sustained wind and precipitation
+probability, not numeric snow/ice amounts or gusts. Missing measurements remain
+unknown. Fresh primary measurements and official warnings retain priority.
+Requests are cached and each fallback attempt has a 20-second budget. If both
+feeds lack usable evidence, the dashboard still reports insufficient data.
 
 Use **More tools → Replay a past storm** to select a curated event or search an
 exact Ames date/time (default 04:00 Central). Expand **Multi-year scores & build

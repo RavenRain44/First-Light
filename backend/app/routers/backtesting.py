@@ -30,7 +30,8 @@ async def search(req:Search):
     # Reject invalid dates before attempting a download.
     historical.local_instant(req.day,req.time)
     async with historical._day_lock:
-        try: return await historical.compute(req.day,req.time,req.mode,req.online,force=req.retry)
+        # Preserve explicitly requested cloud-cache restoration before accepting forecast-only evidence.
+        try: return await historical.compute(req.day,req.time,req.mode,req.online,force=req.retry,require_observations=req.cloud_cache)
         except SourceUnavailable as exc:
             if req.cloud_cache:
                 from app import dataset_cloud
