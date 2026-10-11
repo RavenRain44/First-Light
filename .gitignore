@@ -25,3 +25,6 @@ frontend/node_modules/
 
 # Consented test contacts stay local
 backend/notification-contacts.local.json
+
+# Production manager login for the Caddy front door (written by deploy/scripts/setup-linode.sh)
+deploy/manager-auth
