@@ -1,0 +1,2 @@
+# Server-only files (real-test notification contacts). Everything here except this README is git-ignored.
+# Create notification-contacts.local.json here; see backend/notification-contacts.example.json.

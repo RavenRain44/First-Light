@@ -28,6 +28,13 @@ approves the test. Select multiple local email contacts to send the group draft 
 all of them. SMS can be routed through an email-to-SMS gateway account as described below.
 A sending email account with SMTP credentials is required for actual delivery.
 
+## On the deployed server
+
+The production container doesn't include `backend/notification-contacts.local.json`. Put the contacts in
+`deploy/private/notification-contacts.local.json` on the server instead (git-ignored, mounted read-only), and the
+SMTP values in the server's `.env`, then run `docker compose -f deploy/compose.prod.yaml up -d --force-recreate app`.
+New Linodes block outbound SMTP ports until Akamai Support lifts the restriction.
+
 ## Email-to-SMS gateway
 
 Obtain an account with a service that accepts SMTP email and delivers SMS. Follow
