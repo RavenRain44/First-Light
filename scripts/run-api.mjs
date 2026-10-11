@@ -33,6 +33,7 @@ const args = arg === "--test" ? ["-m", "pytest", "-q"]
   : arg === "--daily-history" ? ["-m", "scripts.build_daily_history", ...process.argv.slice(3)]
   : arg === "--cameras" ? ["-m", "scripts.cache_cameras"]
   : arg === "--examples" ? ["-m", "scripts.seed_example_decisions"]
+  : arg === "--backtest-ai" ? ["-m", "scripts.backtest_ai", ...process.argv.slice(3)]
   : ["-m", "uvicorn", "app.main:app", "--reload", "--port", getApiPort(), "--timeout-graceful-shutdown", "5"];
 const child = spawn(py, args, { cwd: backend, stdio: "inherit" });
 child.on("exit", (code) => process.exit(code ?? 0));
