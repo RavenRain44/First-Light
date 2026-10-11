@@ -224,3 +224,13 @@ frontend/     React + Vite + TypeScript + Tailwind + Recharts + React-Leaflet
 Hooks are in place: the roster model separates *assigned* from *where people actually are this week* (details in and
 out, travel, telework), each employee has contact channels and accessibility needs, and every send will be logged
 against a snapshot and decision id. `POST /api/notifications/preview` describes the planned shape.
+
+## Akamai staff notifications
+
+Set `MODEL_PROVIDER=akamai` and `AKAMAI_API_KEY` in your local `.env`. The workshop endpoint is `https://ws.akamai-workshops.com/v1` with model `hackathon-chat`.
+
+Record a manager decision, then open **Staff notifications**. A new notification package automatically generates Akamai email and SMS copy from saved decision and weather evidence. The generated wording is shared across groups; each group retains its own reporting instructions. Drafts remain editable and require approval. Reopening a package reuses its saved drafts. If inference fails, the editable weather template is preserved and individual or bulk Akamai drafting can be retried.
+
+Normal dispatch uses the simulated outbox and sends nothing externally. Configure local SMTP settings and allowlisted contacts to use the explicit real-test action; see `backend/notification-contacts.example.json`. This integration does not enable production delivery to the employee roster.
+
+Run backend tests from `backend` with `MODEL_PROVIDER=none .venv/Scripts/python -m pytest -q` on Windows. Build the dashboard with `npm --prefix frontend run build`.

@@ -3,15 +3,17 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 from datetime import date, datetime, timedelta, timezone
 from typing import Literal
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlmodel import select
 
+from ai.agent import draft_decision_change
 from adapters.base import utc
 from adapters.cache import SourceUnavailable
 from adapters.iem_roads import RANK_LABELS, fetch_road_geojson
@@ -239,6 +241,109 @@ class DecisionIn(BaseModel):
     notes: str | None = Field(default=None, max_length=2000)
 
 
+class DecisionChangeDraftIn(BaseModel):
+    snapshot_id: str
+    previous_decision_id: int
+    decision_posture: str
+    decided_by: str = Field(min_length=2, max_length=120)
+
+    @field_validator("decided_by")
+    @classmethod
+    def manager_required(cls, value: str) -> str:
+        value = value.strip()
+        if len(value) < 2:
+            raise ValueError("Manager name required")
+        return value
+
+
+@router.post("/decisions/draft-message")
+async def decision_change_draft(req: DecisionChangeDraftIn):
+    if req.decision_posture not in ORDER:
+        raise HTTPException(422, f"decision_posture must be one of {ORDER}")
+    snap = snapshots.get(req.snapshot_id)
+    if not snap:
+        raise HTTPException(404, "snapshot not found")
+    with session() as s:
+        previous = s.get(Decision, req.previous_decision_id)
+    if not previous or previous.snapshot_id != req.snapshot_id:
+        raise HTTPException(404, "Previous decision not found for this case")
+    if previous.decision_posture == req.decision_posture:
+        raise HTTPException(422, "Choose a different operating status to draft a decision-change message")
+
+    posture = snap.get("posture", {})
+    contributing = set(posture.get("contributing_hazards", []))
+    hazard_levels = [
+        {"hazard": hazard.get("hazard", name), "level": hazard.get("level_name", hazard.get("level"))}
+        for name, hazard in snap.get("hazards", {}).items()
+        if not contributing or hazard.get("hazard", name) in contributing
+    ]
+    controlling_ids = {
+        rule_id
+        for name, hazard in snap.get("hazards", {}).items()
+        if not contributing or hazard.get("hazard", name) in contributing
+        for rule_id in hazard.get("controlling_rule_ids", [])
+    }
+    rules = [
+        {"name": rule.get("label", rule.get("metric")), "observed": rule.get("observed_value"),
+         "threshold": rule.get("threshold"), "unit": rule.get("unit")}
+        for rule in snap.get("rules", [])
+        if rule.get("triggered") and (not controlling_ids or rule.get("rule_id") in controlling_ids)
+    ][:5]
+    context = {
+        "facility": snap["facility"]["name"],
+        "decision_day": posture.get("decision_day"),
+        "risk_recommendation": {
+            "posture": posture.get("posture"),
+            "risk_level": posture.get("opm_label"),
+            "confidence": snap.get("confidence", {}).get("level"),
+            "key_reasons": posture.get("reasons", [])[:3],
+            "hazard_levels": hazard_levels,
+            "supporting_rules": rules,
+        },
+        "previous_decision": {
+            "posture": previous.decision_posture,
+            "decided_by": previous.decided_by,
+            "rationale": previous.override_reason or previous.notes,
+        },
+        "proposed_decision": {
+            "posture": req.decision_posture,
+            "decided_by": req.decided_by,
+        },
+    }
+    message, _, inference = await draft_decision_change(context)
+    if message is None:
+        detail = inference["failures"][0]["problems"][0] if inference["failures"] else "Akamai could not create the draft"
+        raise HTTPException(503, detail)
+    recommendation = context["risk_recommendation"]
+    contributors = list(recommendation["key_reasons"])
+    contributors.extend(f"{item['hazard']} hazard: {item['level']}" for item in hazard_levels)
+    contributors.extend(
+        f"{rule['name']}: {rule['observed']} {rule['unit']}"
+        + (f" (threshold {rule['threshold']} {rule['unit']})" if rule.get("threshold") is not None else "")
+        for rule in rules
+    )
+    evidence = "; ".join(dict.fromkeys(_first_sentence(str(item)) for item in contributors if item))
+    if not evidence:
+        evidence = "No specific hazard contributor or triggered rule was recorded."
+    ai_sentence = _first_sentence(message) or "Akamai prepared this proposed decision update."
+    rationale = _first_sentence(previous.override_reason or previous.notes or "No separate reason was recorded")
+    return {"message": "\n\n".join([
+        f"{ai_sentence.rstrip('.!?')}.",
+        (f"For {context['facility']} on {context['decision_day']}, {previous.decision_posture.replace('_', ' ').lower()} "
+         f"is proposed to change to {req.decision_posture.replace('_', ' ').lower()}, proposed by {req.decided_by}; "
+         f"the previous decision was made by {previous.decided_by} because {rationale.rstrip('.!?')}."),
+        (f"The system recommends {recommendation['posture'].replace('_', ' ').lower()} "
+         f"({recommendation['risk_level']} risk; {recommendation['confidence']} confidence), with main contributors "
+         f"including {evidence}."),
+    ])}
+
+
+def _first_sentence(text: str) -> str:
+    normalized = " ".join(text.split())
+    match = re.search(r"[.!?](?:\s|$)", normalized)
+    return normalized[:match.end() - 1].rstrip() if match else normalized.rstrip(".!?")
+
+
 @router.post("/decisions", status_code=201)
 def record_decision(d: DecisionIn):
     snap = snapshots.get(d.snapshot_id)
@@ -279,19 +384,3 @@ def decision_record(snapshot_id: str):
     return {"snapshot": snap, "decisions": [d.model_dump(mode="json") for d in ds],
             "thresholds_current_sha256": load_thresholds().sha256,
             "thresholds_changed_since": load_thresholds().sha256 != snap["thresholds_sha256"]}
-
-
-# ----------------------------------------------------------------------------- notifications (later phase)
-
-@router.post("/notifications/preview")
-def notifications_preview():
-    return JSONResponse(status_code=501, content={
-        "detail": "Notification package is a later phase.",
-        "planned": {
-            "recipients": "people physically expected at the facility this week (this_week_location), "
-                          "not the assigned roster; includes detailees in, excludes details out/travel",
-            "variants": ["all staff", "essential personnel", "teleworkers", "accessibility follow-up"],
-            "channels": "per-employee contact_channels (sms/email/phone)",
-            "hooks": "snapshot_id + decision id are the inputs; every send will be logged against the decision",
-        },
-    })

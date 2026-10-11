@@ -1,3 +1,4 @@
+import { NotificationsView } from "./components/NotificationsView";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "./api";
 import { AIPanel, WatchPanel } from "./components/AIPanel";
@@ -32,7 +33,7 @@ export default function App() {
   const [demo, setDemo] = useState(false);
   const [theme, setTheme] = useState(initialTheme);
   const [recordKey, setRecordKey] = useState(0);
-  const [view, setView] = useState<"dashboard" | "thresholds">("dashboard");
+  const [view, setView] = useState<"dashboard" | "thresholds" | "notifications">("dashboard");
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -68,16 +69,16 @@ export default function App() {
         onRefresh={() => run(() => api.evaluateLive())} toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} />
 
       <nav className="flex gap-5 border-b border-edge text-sm">
-        {(["dashboard", "thresholds"] as const).map((v) => (
+        {(["dashboard", "thresholds", "notifications"] as const).map((v) => (
           <button key={v} onClick={() => setView(v)}
             className={`relative px-1 pb-1.5 ${view === v ? "font-semibold text-ink" : "text-ink2 hover:text-ink"}`}>
-            {v === "dashboard" ? "Dashboard" : "Thresholds & backtest"}
+            {v === "dashboard" ? "Dashboard" : v === "notifications" ? "Staff notifications" : "Thresholds & backtest"}
             <span className={`absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-[var(--accent)] transition-transform duration-300 ${view === v ? "scale-x-100" : "scale-x-0"}`} />
           </button>
         ))}
       </nav>
 
-      {view === "thresholds" ? <div className="cc-fade"><ThresholdsView /></div> : (
+      {view === "notifications" ? <NotificationsView onBack={() => setView("dashboard")} /> : view === "thresholds" ? <div className="cc-fade"><ThresholdsView /></div> : (
         <>
           {mode === "replay" && <ReplayPanel onSnapshot={setSnap} busy={busy} setBusy={setBusy} current={snap} />}
           {mode === "livecheck" && <LiveCheckPanel onSnapshot={setSnap} busy={busy} setBusy={setBusy} />}
