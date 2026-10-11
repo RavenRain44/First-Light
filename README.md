@@ -188,6 +188,16 @@ cutoffs are in the `readiness` section of `thresholds.yaml` (`verified: false`, 
 readiness went Yellow at 08:00 CDT on the derecho morning (rising SPC outlook, then the watch), three hours before the
 posture changed.
 
+## AI brief timing (template first, Akamai after)
+
+Evaluations return in under a second with the deterministic template brief. When `MODEL_PROVIDER=akamai` and a key
+is set, the Akamai brief is generated in the background and saved as a separate, append-only `snapshotinterpretation`
+record; the dashboard shows "Akamai brief in progress…" and swaps it in when ready (typically 4-7 s). The snapshot
+and its integrity hash are never changed. The model writes only the short parts (headline, two-sentence summary,
+uncertainty, up to three evidence rule ids, alert one-liners, about 120 output tokens); the paste-ready rationale,
+"what would change" and watch items always come from the rules. `GET /api/snapshot/{id}/interpretation` returns
+`pending | ok | failed | none`.
+
 ## The decision record
 
 Every evaluation writes an immutable `snapshot` row: all normalized inputs with provenance, source statuses,

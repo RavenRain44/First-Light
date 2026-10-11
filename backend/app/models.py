@@ -57,6 +57,21 @@ class Decision(SQLModel, table=True):
     decided_at: datetime
 
 
+class SnapshotInterpretation(SQLModel, table=True):
+    """AI-written brief added to a snapshot after it was saved. Append-only; the snapshot itself
+    keeps its deterministic template brief and is never edited."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    snapshot_id: str = Field(index=True, foreign_key="snapshot.snapshot_id")
+    created_at: datetime
+    status: str  # ok | failed
+    model_id: str
+    prompt_version: str
+    seconds: float
+    ai_json: str
+    content_sha256: str
+
+
 class HistoryEvent(SQLModel, table=True):
     """A verified past event used for backtesting and analogs."""
 

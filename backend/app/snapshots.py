@@ -108,6 +108,8 @@ def row_to_dict(row: Snapshot, include_inputs: bool = True) -> dict:
         d["inputs"] = inputs
         d["alerts"] = [i["data"] for i in inputs if i["kind"] == "alert"]
     d["integrity_ok"] = content_hash(d) == row.content_sha256 if include_inputs else None
+    # AI brief added after the snapshot was saved (not part of the snapshot or its hash).
+    d["ai_addon"] = interpretation(row.snapshot_id) if include_inputs else None
     return d
 
 
@@ -168,7 +170,10 @@ async def evaluate(facility: Facility, as_of: datetime | None, mode: str, *, eve
     snap = build_snapshot_dict(facility, a, inputs, statuses, mode, event_id)
     if mode != "backtest":
         snap["analogs"] = analog_engine.find_analogs(snap["features"], exclude_event=event_id)
-    interp, model_id = await ai_agent.interpret(snap, use_model=use_ai and mode != "backtest")
+    # The snapshot is saved right away with the deterministic template brief (sub-second). When a model
+    # is configured, the AI brief is generated in the background and added as a separate append-only
+    # record (SnapshotInterpretation), so the decision record never waits on, or is edited by, the model.
+    interp, model_id = await ai_agent.interpret(snap, use_model=False)
     snap["ai"] = interp
     snap["model_id"] = model_id
     from ai.prompts import PROMPT_VERSION
@@ -176,4 +181,78 @@ async def evaluate(facility: Facility, as_of: datetime | None, mode: str, *, eve
     if not persist:
         return snap
     store(snap)
+    if use_ai and mode != "backtest" and ai_agent.model_enabled():
+        _start_enrichment(snap)
     return get(snap["snapshot_id"])
+
+
+# ----------------------------------------------------------------------------- background AI briefs
+
+_pending: dict[str, datetime] = {}
+_tasks: set = set()
+
+
+def _start_enrichment(snap: dict) -> None:
+    import asyncio
+
+    _pending[snap["snapshot_id"]] = datetime.now(timezone.utc)
+    task = asyncio.get_running_loop().create_task(_enrich(snap))
+    _tasks.add(task)
+    task.add_done_callback(_tasks.discard)
+
+
+async def _enrich(snap: dict) -> None:
+    import time
+
+    from ai import agent as ai_agent
+    from ai.prompts import PROMPT_VERSION
+    from app.models import SnapshotInterpretation
+
+    t0 = time.perf_counter()
+    try:
+        interp, model_id = await ai_agent.interpret(snap, use_model=True)
+        status = "ok" if model_id != ai_agent.FALLBACK_ID else "failed"
+    except Exception as e:  # noqa: BLE001 - never let a background task crash the app
+        interp, model_id, status = {"error": type(e).__name__}, "none", "failed"
+    try:
+        body = _dumps(interp)
+        with session() as s:
+            s.add(SnapshotInterpretation(
+                snapshot_id=snap["snapshot_id"], created_at=datetime.now(timezone.utc), status=status,
+                model_id=model_id, prompt_version=PROMPT_VERSION, seconds=round(time.perf_counter() - t0, 1),
+                ai_json=body, content_sha256=hashlib.sha256(body.encode()).hexdigest()))
+            s.commit()
+    finally:
+        _pending.pop(snap["snapshot_id"], None)
+
+
+def interpretation(snapshot_id: str) -> dict:
+    """Latest AI brief for a snapshot: {'status': pending|ok|failed|none, ...}."""
+    from app.models import SnapshotInterpretation
+
+    if snapshot_id in _pending:
+        return {"status": "pending", "since": _pending[snapshot_id].isoformat()}
+    with session() as s:
+        row = s.exec(select(SnapshotInterpretation).where(SnapshotInterpretation.snapshot_id == snapshot_id)
+                     .order_by(SnapshotInterpretation.id.desc())).first()
+    if row is None:
+        return {"status": "none"}
+    return {"status": row.status, "model_id": row.model_id, "prompt_version": row.prompt_version,
+            "created_at": utc(row.created_at).isoformat(), "seconds": row.seconds,
+            "ai": json.loads(row.ai_json), "content_sha256": row.content_sha256}
+
+
+def regenerate_interpretation(snapshot_id: str) -> dict | None:
+    """Ask the model for a fresh brief on an existing snapshot (same recorded facts). The new brief is
+    another append-only add-on; the newest one is shown. Returns None if the snapshot doesn't exist."""
+    from ai import agent as ai_agent
+
+    if snapshot_id in _pending:
+        return interpretation(snapshot_id)
+    snap = get(snapshot_id)
+    if snap is None:
+        return None
+    if snap["mode"] == "backtest" or not ai_agent.model_enabled():
+        return {"status": "unavailable"}
+    _start_enrichment(snap)
+    return interpretation(snapshot_id)

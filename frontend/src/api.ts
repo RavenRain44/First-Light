@@ -18,6 +18,8 @@ export const api = {
   facility: () => req<any>("/api/facility"),
   latest: (maxAge?: number) => req<Snapshot>(`/api/snapshot/latest${maxAge !== undefined ? `?max_age_seconds=${maxAge}` : ""}`),
   snapshot: (id: string) => req<Snapshot>(`/api/snapshot/${id}`),
+  regenerateBrief: (id: string) => req<import("./types").AiAddon>(`/api/snapshot/${id}/interpretation`, { method: "POST" }),
+  interpretation: (id: string) => req<import("./types").AiAddon>(`/api/snapshot/${id}/interpretation`),
   evaluateLive: () => req<Snapshot>("/api/evaluate", { method: "POST", body: JSON.stringify({ mode: "live" }) }),
   evaluateReplay: (as_of: string, event_id?: string) =>
     req<Snapshot>("/api/evaluate", { method: "POST", body: JSON.stringify({ mode: "replay", as_of, event_id }) }),

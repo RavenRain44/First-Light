@@ -175,11 +175,25 @@ export interface Snapshot {
   confidence: { level: "high" | "medium" | "low"; score: number; factors: Factor[] };
   changes: { text: string; kind: string; new_posture: Posture }[];
   readiness: Readiness | null;
+  /** AI brief added after the snapshot was saved (separate append-only record). */
+  ai_addon?: AiAddon | null;
   watch_next_6h: string[];
   analogs: Analog[];
   features: Record<string, number>;
   ai: Interpretation;
   livecheck?: { alert_id: string; event: string; place: string; label: string; assume_workday: boolean };
+}
+
+export interface AiAddon {
+  status: "pending" | "ok" | "failed" | "none";
+  since?: string;
+  model_id?: string;
+  prompt_version?: string;
+  created_at?: string;
+  seconds?: number;
+  ai?: Interpretation & Record<string, any>;
+  /** While a regeneration runs, the brief that is still on screen. */
+  previous?: AiAddon;
 }
 
 export type ReadinessLevel = "WHITE" | "YELLOW" | "ORANGE" | "RED";

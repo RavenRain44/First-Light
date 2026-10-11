@@ -12,11 +12,13 @@ interface SeriesDef { key: string; name: string; color: string; dash?: string }
 interface ChartDef { id: string; title: string; unit: string; series: SeriesDef[]; lineChart: string; minMax?: number; lines?: "always" | "near" }
 
 const CHARTS: ChartDef[] = [
-  { id: "wind", title: "Wind gust", unit: "mph", lineChart: "wind", minMax: 60, lines: "always",
-    series: [{ key: "obs_wind_gust_mph", name: "Observed gust", color: "var(--series-1)" },
-             { key: "fcst_wind_gust_mph", name: "Forecast gust", color: "var(--series-2)" }] },
+  { id: "wind", title: "Wind and gusts", unit: "mph", lineChart: "wind", minMax: 60, lines: "always",
+    series: [{ key: "obs_wind_speed_mph", name: "Observed wind (hourly report)", color: "var(--series-1)" },
+             { key: "obs_peak_gust_mph", name: "Observed peak gust in hour", color: "var(--series-1)", dash: "4 3" },
+             { key: "fcst_wind_speed_mph", name: "Forecast wind", color: "var(--series-2)" },
+             { key: "fcst_wind_gust_mph", name: "Forecast gust", color: "var(--series-2)", dash: "4 3" }] },
   { id: "temp", title: "Temperature / feels-like", unit: "°F", lineChart: "temp", lines: "near",
-    series: [{ key: "obs_temp_f", name: "Observed temp", color: "var(--series-1)" },
+    series: [{ key: "obs_temp_f", name: "Observed temp (hourly report)", color: "var(--series-1)" },
              { key: "fcst_temp_f", name: "Forecast temp", color: "var(--series-2)" },
              { key: "fcst_apparent_temp_f", name: "Forecast feels-like", color: "var(--series-2)", dash: "4 3" }] },
   { id: "ice", title: "Forecast ice accumulation (running total)", unit: "in", lineChart: "ice_cum", minMax: 0.3, lines: "always",

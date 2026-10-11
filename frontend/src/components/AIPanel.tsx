@@ -2,11 +2,13 @@ import { useState } from "react";
 import type { Snapshot } from "../types";
 import { Badge, Card, fmtTime, fmtVal, PostureBadge } from "../util";
 
-export function AIPanel({ snap }: { snap: Snapshot }) {
+export function AIPanel({ snap, onRegenerate }: { snap: Snapshot; onRegenerate?: () => void }) {
   const [copied, setCopied] = useState(false);
   const ai = snap.ai;
   const overview = ai.summary?.match(/.*?[.!?](?=\s|$)/gs)?.slice(0, 2).join(" ").trim() || ai.summary;
   const template = snap.model_id === "deterministic-fallback";
+  const addon = snap.ai_addon;
+  const pending = addon?.status === "pending";
   const aws = snap.model_id.startsWith("bedrock:");
   const akamai = snap.model_id.startsWith("akamai:");
   const tz = snap.facility.timezone;
@@ -26,11 +28,23 @@ export function AIPanel({ snap }: { snap: Snapshot }) {
     } catch { /* clipboard blocked */ }
   };
   return (
-    <Card title="Decision brief" right={
-      <Badge tone={template ? "neutral" : aws ? "warn" : "info"} title={`Model: ${snap.model_id} · ${snap.prompt_version}`}>
-        {template ? "Template brief" : aws ? "AWS fallback" : akamai ? "Powered by Akamai" : "Archived AI brief"}
-      </Badge>
-    }>
+    <Card title="Decision brief" right={<span className="flex items-center gap-2">{
+      pending ? (
+        <Badge tone="neutral" title="The template brief is shown now; the Akamai brief is being written in the background.">
+          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--accent)]" /> Akamai brief in progress…
+        </Badge>
+      ) : (
+        <Badge tone={template ? "neutral" : aws ? "warn" : "info"} title={`Model: ${snap.model_id} · ${snap.prompt_version}${addon?.created_at ? ` · added ${fmtTime(addon.created_at, snap.facility.timezone)}` : ""}`}>
+          {template ? "Template brief" : aws ? "AWS fallback" : akamai ? `Powered by Akamai${addon?.seconds ? ` · +${Math.round(addon.seconds)} s` : ""}` : "Archived AI brief"}
+        </Badge>
+      )}
+      {onRegenerate && (
+        <button onClick={onRegenerate} disabled={pending} className="btn !px-2 !py-0.5 !text-xs"
+          title="Ask Akamai to rewrite this brief now from the same recorded data. Use Re-evaluate (top right) to fetch fresh weather first.">
+          <span aria-hidden className={`inline-block ${pending ? "animate-spin" : ""}`}>↻</span> {pending ? "Updating…" : "Regenerate"}
+        </button>
+      )}
+    </span>}>
       <div className="rounded-xl bg-[var(--surface-2)] p-4">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Recommended operating status</p>
         <PostureBadge p={snap.posture.posture} size="lg" />
@@ -61,7 +75,7 @@ export function AIPanel({ snap }: { snap: Snapshot }) {
       </div>
       <div className="mt-4">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">Why this is suggested</h3>
-        <p key={snap.snapshot_id} className="cc-fade mt-2 text-[15px] leading-relaxed">{overview || snap.posture.reasons.join(" ") || ai.headline}</p>
+        <p key={`${snap.snapshot_id}-${snap.model_id}`} className="cc-fade mt-2 text-[15px] leading-relaxed">{overview || snap.posture.reasons.join(" ") || ai.headline}</p>
         {snap.roster.expected_in_building !== undefined && (
           <p className="mt-2 text-xs text-muted">{snap.roster.expected_in_building} people expected on site · {snap.roster.assigned} employees assigned to this facility. Brief as of {fmtTime(snap.as_of, tz)}.</p>
         )}
@@ -91,6 +105,12 @@ export function AIPanel({ snap }: { snap: Snapshot }) {
         {!evidence.length && <p className="mt-2 text-sm text-ink2">No operating-status threshold is crossed. Check uncertainty and missing sources before accepting normal operations.</p>}
         {unavailable.length > 0 && <p className="mt-2 text-sm text-ink2">Unavailable sources: {unavailable.map((s) => s.label).join(", ")}. Missing data does not establish safe conditions.</p>}
       </div>
+      {(addon as any)?.regen_failed && (
+        <p role="status" className="mt-3 rounded-lg bg-[var(--surface-2)] p-3 text-xs text-ink2">The new Akamai brief could not be produced or verified; the previous brief is still shown.</p>
+      )}
+      {addon?.status === "failed" && (
+        <p role="status" className="mt-3 rounded-lg bg-[var(--surface-2)] p-3 text-xs text-ink2">The Akamai brief could not be produced or verified, so the template brief stays. It uses the same recorded evidence; the rules recommendation is unchanged.</p>
+      )}
       {template && ai.validation && !ai.validation.ok && (
         <p role="status" className="mt-3 rounded-lg bg-[var(--surface-2)] p-3 text-xs text-ink2">AI is unavailable or its brief could not be verified. This template uses the same recorded evidence; the rules recommendation is preserved.</p>
       )}

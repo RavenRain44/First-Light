@@ -147,3 +147,21 @@ def test_roster_differs_from_building_population():
     assert s["detailed_out"] > 0 and s["teleworking_today"] > 0
     assert roster_summary(fac, "2026-10-13")["on_leave"] > 0      # approved sick leave from the CSV
     assert roster_summary(fac, "2026-10-11")["not_scheduled"] > 0  # Sunday: only rotating schedules work
+
+
+def test_hourly_obs_use_routine_metar_like_weather_gov():
+    """Real AMW reports from 2026-10-10 20Z: 5-minute obs carry no temperature; the :53 routine METAR does."""
+    rows = [
+        {"utc_valid": "2026-10-10T20:50Z", "tmpf": None, "sknt": 17.0, "gust": 22.0, "peak_wind_gust": None, "feel": None,
+         "raw": "KAMW 102050Z AUTO 17017G22KT 10SM CLR 29/13 A2984 RMK T02900130 MADISHF"},
+        {"utc_valid": "2026-10-10T20:53Z", "tmpf": 85.0, "sknt": 13.0, "gust": 24.0, "peak_wind_gust": None, "feel": 84.0,
+         "raw": "KAMW 102053Z AUTO 17013G24KT 10SM CLR 29/13 A2984 RMK AO2 SLP094 T02940133"},
+        {"utc_valid": "2026-10-10T20:55Z", "tmpf": None, "sknt": 16.0, "gust": 26.0, "peak_wind_gust": None, "feel": None,
+         "raw": "KAMW 102055Z AUTO 16016G26KT 10SM CLR 29/13 A2984 RMK T02900130 MADISHF"},
+    ]
+    s = {k: dict(v) for k, v in obs_series(rows).items()}
+    hr = datetime(2026, 10, 10, 20, tzinfo=timezone.utc)
+    assert s["temp_f"][hr] == pytest.approx(84.9)                # T-group 29.4 C from the routine report
+    assert s["wind_speed_mph"][hr] == pytest.approx(13 * 1.150779)  # routine report, not the hour's max
+    assert s["wind_gust_mph"][hr] == pytest.approx(24 * 1.150779)
+    assert s["peak_gust_mph"][hr] == pytest.approx(26 * 1.150779)   # highest gust in any report, for thresholds
