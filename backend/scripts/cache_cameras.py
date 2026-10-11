@@ -2,8 +2,10 @@
 
 Run from backend/ (online):  python -m scripts.cache_cameras [--replay-step 3] [--no-replay]
 
-  * Live: every view of the 20 cameras nearest the facility, refreshing the cached
-    camera list at the same time so list and images match.
+  * Live: every view of the 20 RWIS cameras nearest the facility, plus one snapshot of each
+    nearby Iowa DOT traffic camera (shown as a still offline; there is no video in demo mode),
+    refreshing the cached camera list at the same time so list and images match.
+  * Live and Replay also include the ISU campus / KCCI webcams near the facility.
   * Replay: for each historical event, the impact day (00:00-18:00 local) on a
     3-hour grid, main view only, for the 20 nearest cameras.
 
@@ -20,8 +22,9 @@ from zoneinfo import ZoneInfo
 from sqlmodel import select
 
 from adapters import cache
-from adapters.iem_cameras import fetch_cameras, get_image, is_cached, save_demo_list
+from adapters.iem_cameras import fetch_cameras, fetch_webcams, get_image, is_cached, is_snapshot, save_demo_list
 from adapters.iem_roads import archive_time
+from adapters.iowadot_cameras import fetch_traffic_cameras, merge_live
 from app.config import settings
 from app.db import session
 from app.facility import load_facility
@@ -36,7 +39,7 @@ async def _grab(urls: list[str]) -> tuple[int, int]:
 
     async def one(u: str):
         nonlocal got, skipped
-        if is_cached(u):
+        if is_cached(u) and not is_snapshot(u):  # snapshots are overwritten upstream: always re-grab
             skipped += 1
             return
         async with gate:
@@ -60,6 +63,13 @@ async def main() -> None:
     settings.live_ttl_seconds = 0
     now = datetime.now(timezone.utc)
     cams, _ = await fetch_cameras(f, now, live=True)
+    try:
+        traffic, _ = await fetch_traffic_cameras(f)
+    except cache.SourceUnavailable:
+        traffic = []
+        print("Iowa DOT traffic camera feed unavailable; caching RWIS cameras only")
+    webcams = await fetch_webcams(f, now, live=True)
+    cams = merge_live(cams, [{k: v for k, v in c.items() if k != "stream_url"} for c in traffic], webcams)
     urls = [v["url"] for c in cams for v in c["views"]]
     got, skipped = await _grab(urls)
     # Pin exactly this list for DEMO_MODE so later online browsing can't swap in uncached frames.
@@ -83,7 +93,8 @@ async def main() -> None:
                 cams, _ = await fetch_cameras(f, t + timedelta(minutes=59), live=False)
             except cache.SourceUnavailable:
                 cams = []
-            urls += [c["views"][0]["url"] for c in cams if c["views"]]
+            webcams = await fetch_webcams(f, t + timedelta(minutes=59), live=False)
+            urls += [c["views"][0]["url"] for c in cams + webcams if c["views"]]
             t += timedelta(hours=args.replay_step)
         got, skipped = await _grab(sorted(set(urls)))
         print(f"{e.id}: {len(set(urls))} images -> {got} downloaded, {skipped} already cached")

@@ -1,4 +1,4 @@
-"""Iowa DOT roadside (RWIS) cameras via the IEM archive: locations and still images.
+"""Iowa DOT roadside (RWIS) cameras and nearby ISU/KCCI webcams via the IEM archive: locations and still images.
 
 For human situational awareness only: cameras are NOT inputs to the recommendation
 and are not stored on snapshots. Images are stills refreshed every few minutes,
@@ -126,6 +126,7 @@ def parse_cameras(geojson: dict, facility: Facility, as_of: datetime, live: bool
                          if point_to_polyline_km((lon, lat), c.coordinates) <= CORRIDOR_KM), None)
         out.append({
             "id": cid,
+            "kind": "rwis",
             "name": site or f"Iowa DOT camera {cid}",
             "lat": lat, "lon": lon,
             "km": round(km, 1),
@@ -146,6 +147,87 @@ async def fetch_cameras(facility: Facility, as_of: datetime, nearest: int = NEAR
     return parse_cameras(r.data, facility, as_of, live=live, nearest=nearest, names=await camera_names()), r
 
 
+# ----------------------------------------------------------------------------- IEM webcams (ISU campus, KCCI)
+
+# Non-DOT webcams IEM archives every 5 minutes. Around Ames these are the only public cameras off
+# the US 30 / I-35 corridors: Iowa State's campus cameras (Curtis Hall; the Design building and
+# Memorial Union in earlier years) and KCCI's camera at the ISU Ag Farm west of town.
+#
+# Frames come from json/webcams.php, which honours ``network`` for past times. It carries no
+# coordinates, so sites are pinned here (location and pointing angle from IEM's
+# geojson/webcam.php). That endpoint isn't used for frames: for past times its cache is keyed
+# on the time alone and can answer one network's request with another network's cameras.
+WEBCAM_URL = "https://mesonet.agron.iastate.edu/json/webcams.php"
+WEBCAM_SOURCES = {"ISUC": "Iowa State University webcam via IEM", "KCCI": "KCCI webcam via IEM"}
+WEBCAM_KM = 20
+WEBCAMS: dict[str, tuple[float, float, int]] = {  # cid -> (lat, lon, facing degrees)
+    "ISUC-003": (42.023992, -93.6459, 0),       # ISU Memorial Union
+    "ISUC-004": (42.026123, -93.64478, 235),    # ISU Curtis Hall - Left
+    "ISUC-005": (42.026123, -93.64478, 270),    # ISU Curtis Hall - Center
+    "ISUC-006": (42.026123, -93.64478, 315),    # ISU Curtis Hall - Right
+    "ISUC-007": (42.0288815, -93.652788, 45),   # ISU Design - Left
+    "ISUC-008": (42.0288815, -93.652788, 90),   # ISU Design - Center
+    "ISUC-009": (42.0288815, -93.652788, 135),  # ISU Design - Right
+    "KCCI-027": (42.02098, -93.7736, 286),      # ISU Ag Farm
+}
+
+
+def webcams_urls(as_of: datetime, live: bool) -> list[str]:
+    ts = "" if live else f"&ts={iso_z(archive_time(as_of))}"
+    return [f"{WEBCAM_URL}?network={n}{ts}" for n in WEBCAM_SOURCES]
+
+
+def _compass(deg: float) -> str:
+    return ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][int((deg % 360 + 22.5) // 45) % 8]
+
+
+def parse_webcams(data: dict, facility: Facility, as_of: datetime, live: bool, max_km: float = WEBCAM_KM) -> list[dict]:
+    """Nearby ISU/KCCI webcams; views at one site ('ISU Curtis Hall - Left/Center/Right') become one camera."""
+    as_of = utc(as_of)
+    sites: dict[str, dict] = {}
+    for x in data.get("images", []):
+        cid = x.get("cid") or ""
+        if cid not in WEBCAMS:
+            continue  # not a site we have a location for (e.g. the NEXRAD overview, or far from Ames)
+        lat, lon, angle = WEBCAMS[cid]
+        km = _km(lat, lon, facility.lat, facility.lon)
+        url = x.get("url") or ""
+        t = image_time(url)
+        if km > max_km or t is None or t > as_of + timedelta(minutes=1):
+            continue  # too far, not an archive frame, or newer than the moment being viewed
+        if live and as_of - t > LIVE_MAX_AGE:
+            continue
+        site, _, part = (x.get("name") or cid).partition(" - ")
+        c = sites.setdefault(site, {
+            "id": cid, "kind": "webcam", "source": WEBCAM_SOURCES[cid[:4]], "name": site,
+            "lat": lat, "lon": lon, "km": round(km, 1),
+            "direction": _bearing(lat, lon, facility.lat, facility.lon),
+            "corridor": None, "corridor_name": None, "views": [],
+        })
+        label = " · ".join(s for s in (part, f"facing {_compass(angle)}") if s)
+        c["views"].append({"view": int(cid.rsplit("-", 1)[-1]), "url": url, "time": t.isoformat(), "label": label})
+    out = []
+    for c in sites.values():
+        c["views"].sort(key=lambda v: v["view"])
+        c["id"] = f"{c['id'][:4]}-{c['views'][0]['view']:03d}"  # stable: the site's lowest-numbered view
+        c["updated"] = max(v["time"] for v in c["views"])
+        out.append(c)
+    return sorted(out, key=lambda c: c["km"])
+
+
+async def fetch_webcams(facility: Facility, as_of: datetime, live: bool | None = None) -> list[dict]:
+    """Webcams near the facility; an unavailable network is simply left out."""
+    live = (not is_historical(as_of)) if live is None else live
+    out: list[dict] = []
+    for url in webcams_urls(as_of, live):
+        try:
+            r = await cache.get_json(url, historical=not live, ttl=300)
+        except cache.SourceUnavailable:
+            continue
+        out += parse_webcams(r.data, facility, as_of, live=live)
+    return sorted(out, key=lambda c: c["km"])
+
+
 # ----------------------------------------------------------------------------- image cache
 
 def image_path(url: str) -> Path:
@@ -156,15 +238,33 @@ def is_cached(url: str) -> bool:
     return image_path(url).exists()
 
 
+def is_snapshot(url: str) -> bool:
+    from adapters.iowadot_cameras import SNAPSHOT_URL
+    return bool(SNAPSHOT_URL.match(url or ""))
+
+
 async def get_image(url: str) -> bytes | None:
-    """Image bytes from the local cache, fetching (and caching) when allowed. None if unavailable."""
-    if not IMAGE_URL.match(url or ""):
-        raise ValueError("not an IEM camera image URL")
+    """Image bytes from the local cache, fetching (and caching) when allowed. None if unavailable.
+
+    IEM archive frames never change, so a cached copy is final. Iowa DOT traffic snapshots keep
+    one URL that is overwritten every few minutes: online they are always fetched fresh (the
+    cached copy is only a fallback and the offline-demo still).
+    """
+    snapshot = is_snapshot(url)
+    if not (snapshot or IMAGE_URL.match(url or "")):
+        raise ValueError("not an IEM camera image or Iowa DOT snapshot URL")
     path = image_path(url)
-    if path.exists():
+    if path.exists() and (settings.demo_mode or not snapshot):
         return path.read_bytes()
     if settings.demo_mode:
         return None
+    fresh = await _download(url, path)
+    if fresh is None and path.exists():
+        return path.read_bytes()  # stale snapshot beats a broken image
+    return fresh
+
+
+async def _download(url: str, path: Path) -> bytes | None:
     try:
         async with httpx.AsyncClient(timeout=20, headers={"User-Agent": settings.nws_user_agent}) as c:
             resp = await c.get(url)

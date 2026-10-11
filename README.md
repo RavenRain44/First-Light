@@ -66,11 +66,28 @@ To refresh the cached "live" moment before a demo, run once online (`npm run dev
 
 ### Iowa DOT cameras
 
-The Roads map has a **Map layers** panel. Turn on **DOT cameras** to show the 20 Iowa DOT roadside (RWIS)
-cameras nearest the facility; click one to see its latest still image and switch between its views. In Replay
-the cameras show what they captured at that time (3-hour archive grid, never later than the replay moment).
-Images are stills refreshed every few minutes, not video, and they are for situational awareness only: they are
-not inputs to the recommendation and are not stored on snapshots.
+The Roads map has a **Map layers** panel. Turn on **DOT cameras** to show two kinds of Iowa DOT camera:
+
+* **Traffic cameras with live video** (marked with a red dot): 20 Iowa DOT 511 traffic cameras spread around the
+  facility. Selection takes turns across compass directions, so the list covers US 30 west to Boone and east to
+  Nevada and I-35 south to Huxley and north to Ellsworth, not just the US 30 / I-35 interchange. Iowa DOT has no
+  cameras on Ames city streets. Click one to play its live HLS stream in the
+  browser (hls.js; native on Safari). If the stream fails, the viewer falls back to the current snapshot and
+  refreshes it every minute. Locations and stream URLs come from Iowa DOT's open-data
+  [Traffic Cameras](https://data.iowadot.gov/datasets/IowaDOT::traffic-cameras-3/about) feature service
+  (refreshed hourly). Iowa DOT keeps no public archive, so these cameras appear in live view only.
+* **ISU and KCCI webcams** (stills via IEM, every 5 minutes): Iowa State's Curtis Hall camera on campus (1.2 km,
+  three views facing SW, W and NW; the Design building and Memorial Union cameras also appear in older Replay
+  events) and KCCI's ISU Ag Farm camera west of town. They are archived, so they also follow Replay.
+* **RWIS weather-station cameras** (stills only): the nearest roadside weather-information cameras, archived by
+  IEM. These sensors send a JPEG every few minutes and have no video. In live view the 5 nearest are listed
+  alongside the traffic cameras; the nearest is about 50 km from Ames. In Replay they are the only cameras, and
+  they show what was captured at that time (3-hour archive grid, never later than the replay moment).
+
+Cameras are for situational awareness only. They are not inputs to the recommendation and are not stored on
+snapshots. See Iowa DOT's [511 data feeds](https://iowadot.gov/travel-tools/iowa-511/511-data-feeds) page for
+feed terms. Iowa DOT is moving video hosts (`video4.iowadot.gov` to `video.iowadot.gov`), so stream URLs are
+always read from the feed.
 
 For the offline demo, cache the images first (online, about 1 minute, ~80 MB in the git-ignored
 `backend/var/camera_cache`):
@@ -79,8 +96,9 @@ For the offline demo, cache the images first (online, about 1 minute, ~80 MB in 
 npm run cache:cameras
 ```
 
-That pins the current camera list with every view, plus each historical event's impact day (main view, every
-3 hours). In `DEMO_MODE` only cached images are offered; a camera with no cached image is simply not shown.
+That pins the current camera list with every RWIS view and one snapshot per traffic camera, plus each historical
+event's impact day (main view, every 3 hours). In `DEMO_MODE` there is no live video: traffic cameras show their
+cached snapshot, only cached images are offered, and a camera with no cached image is simply not shown.
 
 ### Synthetic roster
 
@@ -242,7 +260,7 @@ ENH/MDT outlooks; forecast gust >= 45 mph; wind chill <= -20 F and <= -35 F (DMX
 | `POST /api/decisions`, `GET /api/decisions` | record / list human decisions |
 | `GET /api/live-check/alerts`, `POST /api/live-check/evaluate` | national alerts and what-if evaluation |
 | `GET /api/thresholds` | registry with anchors, verified flags, backtest summary |
-| `GET /api/cameras?as_of=`, `GET /api/cameras/image?u=` | 20 nearest Iowa DOT cameras with views; cached image proxy (IEM archive URLs only) |
+| `GET /api/cameras?as_of=`, `GET /api/cameras/image?u=` | Live: Iowa DOT traffic cameras spread around the facility (`stream_url` HLS), ISU/KCCI webcams and RWIS stills; Replay: ISU/KCCI webcams and 20 nearest RWIS cameras. Image proxy (IEM archive and Iowa DOT snapshot URLs only) |
 | `POST /api/notifications/preview` | **501** stub: the notification package is the next phase |
 
 ## Repository layout

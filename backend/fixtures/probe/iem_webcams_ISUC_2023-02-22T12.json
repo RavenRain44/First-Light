@@ -1,0 +1,69 @@
+{
+    "images": [
+        {
+            "cid": "ISUC-000",
+            "name": "NEXRAD Overview",
+            "county": "",
+            "network": "",
+            "state": "",
+            "url": "https://mesonet.agron.iastate.edu/current/camrad.php?network=ISUC&ts=202302220600"
+        },
+        {
+            "cid": "ISUC-005",
+            "name": "ISU Curtis Hall - Center",
+            "county": "Story",
+            "network": "ISUC",
+            "state": "IA",
+            "url": "https://mesonet.agron.iastate.edu/archive/data/2023/02/22/camera/ISUC-005/ISUC-005_202302221200.jpg"
+        },
+        {
+            "cid": "ISUC-004",
+            "name": "ISU Curtis Hall - Left",
+            "county": "Story",
+            "network": "ISUC",
+            "state": "IA",
+            "url": "https://mesonet.agron.iastate.edu/archive/data/2023/02/22/camera/ISUC-004/ISUC-004_202302221200.jpg"
+        },
+        {
+            "cid": "ISUC-006",
+            "name": "ISU Curtis Hall - Right",
+            "county": "Story",
+            "network": "ISUC",
+            "state": "IA",
+            "url": "https://mesonet.agron.iastate.edu/archive/data/2023/02/22/camera/ISUC-006/ISUC-006_202302221200.jpg"
+        },
+        {
+            "cid": "ISUC-008",
+            "name": "ISU Design - Center",
+            "county": "Story",
+            "network": "ISUC",
+            "state": "IA",
+            "url": "https://mesonet.agron.iastate.edu/archive/data/2023/02/22/camera/ISUC-008/ISUC-008_202302221200.jpg"
+        },
+        {
+            "cid": "ISUC-007",
+            "name": "ISU Design - Left",
+            "county": "Story",
+            "network": "ISUC",
+            "state": "IA",
+            "url": "https://mesonet.agron.iastate.edu/archive/data/2023/02/22/camera/ISUC-007/ISUC-007_202302221200.jpg"
+        },
+        {
+            "cid": "ISUC-009",
+            "name": "ISU Design - Right",
+            "county": "Story",
+            "network": "ISUC",
+            "state": "IA",
+            "url": "https://mesonet.agron.iastate.edu/archive/data/2023/02/22/camera/ISUC-009/ISUC-009_202302221200.jpg"
+        },
+        {
+            "cid": "ISUC-003",
+            "name": "ISU Memorial Union",
+            "county": "Story",
+            "network": "ISUC",
+            "state": "IA",
+            "url": "https://mesonet.agron.iastate.edu/archive/data/2023/02/22/camera/ISUC-003/ISUC-003_202302221200.jpg"
+        }
+    ],
+    "generated_at": "2026-10-11T00:48:37Z"
+}

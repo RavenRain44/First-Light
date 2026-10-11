@@ -1,0 +1,1119 @@
+{
+ "objectIdFieldName": "FID",
+ "uniqueIdField": {
+  "name": "FID",
+  "isSystemMaintained": true
+ },
+ "globalIdFieldName": "",
+ "geometryType": "esriGeometryPoint",
+ "spatialReference": {
+  "wkid": 102100,
+  "latestWkid": 3857
+ },
+ "features": [
+  {
+   "attributes": {
+    "COMMON_ID": "WWDTV03",
+    "Desc_": "WWD - US 30 @ MM 149.7 (S Dayton Ave)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/wwdtv03hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/wwdtv03lb/playlist.m3u8",
+    "latitude": 42.006288,
+    "longitude": -93.586484,
+    "FUNCTION": "WWD"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV12",
+    "Desc_": "AM - US 30 @ MM 143.8 (500th Ave)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv12hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv12lb/playlist.m3u8",
+    "latitude": 42.014856,
+    "longitude": -93.698778,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "WWDTV06",
+    "Desc_": "WWD - US 30 # MM 135.5 (Quill Ave.)",
+    "Route": "Unknown",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/wwdtv06hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/cedarrapids/wwdtv06lb/playlist.m3u8",
+    "latitude": 42.034544,
+    "longitude": -93.849101,
+    "FUNCTION": "WWD"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "WWDTV01",
+    "Desc_": "WWD - US 30 @ MM 147 (S University Blvd)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/wwdtv01hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/wwdtv01lb/playlist.m3u8",
+    "latitude": 42.002733,
+    "longitude": -93.639886,
+    "FUNCTION": "WWD"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35NB120",
+    "Desc_": "Rest Area: I-35 NB MM 120 near Story City",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35NB120-01-CENTER.jpg",
+    "VideoURL": null,
+    "latitude": 42.128125,
+    "longitude": -93.553536,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35NB120",
+    "Desc_": "Rest Area: I-35 NB MM 120 near Story City",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35NB120-Exit.jpg",
+    "VideoURL": null,
+    "latitude": 42.128125,
+    "longitude": -93.553536,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "BNTV06",
+    "Desc_": "BN - US 30 @ Montana Rd (06)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/bntv06hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ankeny/bntv06lb/playlist.m3u8",
+    "latitude": 42.034519,
+    "longitude": -93.911997,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35SB119",
+    "Desc_": "Parking Only: I-35 SB MM 119 near Story City",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35SB119-Entrance.jpg",
+    "VideoURL": null,
+    "latitude": 42.110185,
+    "longitude": -93.556605,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35NB98",
+    "Desc_": "Rest Area: I-35 NB MM 98 near Elkhart",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35NB98-02-ENTRY.jpg",
+    "VideoURL": null,
+    "latitude": 41.829231,
+    "longitude": -93.569318,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV04",
+    "Desc_": "AM - I-35 @ MM 107.7",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv04hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv04lb/playlist.m3u8",
+    "latitude": 41.949802,
+    "longitude": -93.569297,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "BNTV01",
+    "Desc_": "BN - US 30 @ MM 134 (Story St)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/bntv01hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/bntv01lb/playlist.m3u8",
+    "latitude": 42.034853,
+    "longitude": -93.879475,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "BNTV02",
+    "Desc_": "BN - US 30 @ MM 135.5 (Quill Ave)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/bntv02hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/bntv02lb/playlist.m3u8",
+    "latitude": 42.03445,
+    "longitude": -93.850197,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "BNTV03",
+    "Desc_": "BN - US 30 @ MM 137.3 (IA 17)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/bntv03hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/bntv03lb/playlist.m3u8",
+    "latitude": 42.03433,
+    "longitude": -93.81554,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "WWDTV061",
+    "Desc_": "WWD - US 30 @ MM 157.6 (S 19th St)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/wwdtv061hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/wwdtv061lb/playlist.m3u8",
+    "latitude": 42.008105,
+    "longitude": -93.434772,
+    "FUNCTION": "WWD"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV15",
+    "Desc_": "AM - US 30 @ MM 146.7 (W of University Blvd)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv15hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv15lb/playlist.m3u8",
+    "latitude": 42.00335,
+    "longitude": -93.646139,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "DMTV063",
+    "Desc_": "DM - I-35 @ MM 98.8 (NE 142nd Ave)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/dmtv063hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ankeny/dmtv063lb/playlist.m3u8",
+    "latitude": 41.820314,
+    "longitude": -93.570163,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "DMTV041Q",
+    "Desc_": "DM - I-35 @ MM 92.6 (1st St - Ankeny)-Q",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/dmtv041qhd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ankeny/dmtv041qlb/playlist.m3u8",
+    "latitude": 41.732096,
+    "longitude": -93.576819,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "WWD40",
+    "Desc_": "WWD - IA 141 @ MM 149",
+    "Route": "IA 141",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/wwd40hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ankeny/wwd40lb/playlist.m3u8",
+    "latitude": 41.73971,
+    "longitude": -93.7756,
+    "FUNCTION": "WWD"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35SB119",
+    "Desc_": "Parking Only: I-35 SB MM 119 near Story City",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35SB119-TruckParking1.jpg",
+    "VideoURL": null,
+    "latitude": 42.110185,
+    "longitude": -93.556605,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "NVTV01",
+    "Desc_": "NV - US 30 @ MM 152.1 (580th Ave)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/nvtv01hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/nvtv01lb/playlist.m3u8",
+    "latitude": 42.008756,
+    "longitude": -93.539492,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "DMTV094",
+    "Desc_": "DM - IA 141 @ MM 148.4 (NW 121st St - ICWS)",
+    "Route": "IA 141",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/dmtv094hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ankeny/dmtv094lb/playlist.m3u8",
+    "latitude": 41.743902,
+    "longitude": -93.785265,
+    "FUNCTION": "ICWS"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35SB98",
+    "Desc_": "Rest Area: I-35 SB MM 98 near Elkhart",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35SB98-02-EXIT.jpg",
+    "VideoURL": null,
+    "latitude": 41.832517,
+    "longitude": -93.572685,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "DMTV061",
+    "Desc_": "DM - I-35 @ MM 94.7 (NE 36th St)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/dmtv061hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ankeny/dmtv061lb/playlist.m3u8",
+    "latitude": 41.761242,
+    "longitude": -93.568964,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35NB98",
+    "Desc_": "Rest Area: I-35 NB MM 98 near Elkhart",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35NB98-01-CENTER.jpg",
+    "VideoURL": null,
+    "latitude": 41.829231,
+    "longitude": -93.569318,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35NB98",
+    "Desc_": "Rest Area: I-35 NB MM 98 near Elkhart",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35NB98-01-EXIT.jpg",
+    "VideoURL": null,
+    "latitude": 41.829231,
+    "longitude": -93.569318,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV08",
+    "Desc_": "AM - I-35 @ MM 112.8 (E Lincoln Way)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv08hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv08lb/playlist.m3u8",
+    "latitude": 42.022869,
+    "longitude": -93.571731,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV10",
+    "Desc_": "AM - I-35 @ MM 116.6 (E 190th St)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv10hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv10lb/playlist.m3u8",
+    "latitude": 42.078,
+    "longitude": -93.566503,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "DMTV041",
+    "Desc_": "DM - I-35 @ MM 92.6 (1st St - Ankeny)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/dmtv041hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ankeny/dmtv041lb/playlist.m3u8",
+    "latitude": 41.732463,
+    "longitude": -93.576719,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35NB120",
+    "Desc_": "Rest Area: I-35 NB MM 120 near Story City",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35NB120-CarParking.jpg",
+    "VideoURL": null,
+    "latitude": 42.128125,
+    "longitude": -93.553536,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "D1TV11",
+    "Desc_": "D1 - I-35 @ MM 136 (300th St)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/d1tv11hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/d1tv11lb/playlist.m3u8",
+    "latitude": 42.354786,
+    "longitude": -93.570034,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV13",
+    "Desc_": "AM - US 30 @ MM 144.9 (S Dakota Ave)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv13hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv13lb/playlist.m3u8",
+    "latitude": 42.008072,
+    "longitude": -93.678856,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "D1TV09",
+    "Desc_": "D1 - I-35 @ MM 132.9 (IA 175 Ellsworth)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/d1tv09hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/d1tv09lb/playlist.m3u8",
+    "latitude": 42.309804,
+    "longitude": -93.569361,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV03",
+    "Desc_": "AM - I-35 @ MM 105.6",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv03hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv03lb/playlist.m3u8",
+    "latitude": 41.919281,
+    "longitude": -93.569842,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV16",
+    "Desc_": "AM - US 30 @ MM 147 (University Blvd)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv16hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv16lb/playlist.m3u8",
+    "latitude": 42.002675,
+    "longitude": -93.639856,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35SB98",
+    "Desc_": "Rest Area: I-35 SB MM 98 near Elkhart",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35SB98-02-ENTRY.jpg",
+    "VideoURL": null,
+    "latitude": 41.832517,
+    "longitude": -93.572685,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "BNTV07",
+    "Desc_": "BN - US 30 @ MM 130.3 (L Ave)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/bntv07hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/bntv07lb/playlist.m3u8",
+    "latitude": 42.033489,
+    "longitude": -93.951651,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV17",
+    "Desc_": "AM - US 30 @ MM 148.5 (S Duff Ave)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv17hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv17lb/playlist.m3u8",
+    "latitude": 42.004697,
+    "longitude": -93.610481,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV01",
+    "Desc_": "AM - I-35 @ MM 102.9 (IA 210)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv01hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv01lb/playlist.m3u8",
+    "latitude": 41.877885,
+    "longitude": -93.571813,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35NB120",
+    "Desc_": "Rest Area: I-35 NB MM 120 near Story City",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35NB120-Entrance.jpg",
+    "VideoURL": null,
+    "latitude": 42.128125,
+    "longitude": -93.553536,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "DMTV093",
+    "Desc_": "DM - IA 141 @ MM 149 (IA 415)",
+    "Route": "IA 141",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/dmtv093hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ankeny/dmtv093lb/playlist.m3u8",
+    "latitude": 41.739614,
+    "longitude": -93.77561,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "IWZ5786",
+    "Desc_": "1FH - US 69 @ MM 95 (IWZ 5786)",
+    "Route": "US 69",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/iwz5786lb.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ankeny/iwz5786lb/playlist.m3u8",
+    "latitude": 41.730214,
+    "longitude": -93.600556,
+    "FUNCTION": "IWZ"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "BNTV04",
+    "Desc_": "BN - US 30 @ MM 138.7",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/bntv04hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/bntv04lb/playlist.m3u8",
+    "latitude": 42.027817,
+    "longitude": -93.793914,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35NB120",
+    "Desc_": "Rest Area: I-35 NB MM 120 near Story City",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35NB120-TruckParking1.jpg",
+    "VideoURL": null,
+    "latitude": 42.128125,
+    "longitude": -93.553536,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35SB119",
+    "Desc_": "Parking Only: I-35 SB MM 119 near Story City",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35SB119-01-EXIT.jpg",
+    "VideoURL": null,
+    "latitude": 42.110185,
+    "longitude": -93.556605,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV09",
+    "Desc_": "AM - I-35 @ MM 113.6 (E 13th St)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv09hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv09lb/playlist.m3u8",
+    "latitude": 42.034328,
+    "longitude": -93.570231,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "WWD48",
+    "Desc_": "WWD - US 65 @ IA 330 near Mingo (48)",
+    "Route": "US 65",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/WWD/WWD48.jpg",
+    "VideoURL": null,
+    "latitude": 41.81434,
+    "longitude": -93.29911,
+    "FUNCTION": "WWD"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "BNTV05",
+    "Desc_": "BN - US 30 @ MM 139.6 (U Ave)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/bntv05hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/bntv05lb/playlist.m3u8",
+    "latitude": 42.023047,
+    "longitude": -93.776964,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35SB98",
+    "Desc_": "Rest Area: I-35 SB MM 98 near Elkhart",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35SB98-01-EXIT.jpg",
+    "VideoURL": null,
+    "latitude": 41.832517,
+    "longitude": -93.572685,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35NB98",
+    "Desc_": "Rest Area: I-35 NB MM 98 near Elkhart",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35NB98-02-EXIT.jpg",
+    "VideoURL": null,
+    "latitude": 41.829231,
+    "longitude": -93.569318,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "D1TV13",
+    "Desc_": "D1 - US 30 @ MM 172.30 (State Center)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/Rural/D1TV13.jpg",
+    "VideoURL": null,
+    "latitude": 42.007961,
+    "longitude": -93.165474,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "WWDTV02",
+    "Desc_": "WWD - US 30 @ MM 148.5 (US 69)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/wwdtv02hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/wwdtv02lb/playlist.m3u8",
+    "latitude": 42.004718,
+    "longitude": -93.609692,
+    "FUNCTION": "WWD"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV06",
+    "Desc_": "AM - I-35 @ MM 111.7 (US 30)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv06hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv06lb/playlist.m3u8",
+    "latitude": 42.007281,
+    "longitude": -93.571301,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "WWDTV83",
+    "Desc_": "WWD - US 30 @ MM 132.2 (Montana Rd.)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/wwdtv83hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/wwdtv83lb/playlist.m3u8",
+    "latitude": 42.03472,
+    "longitude": -93.912187,
+    "FUNCTION": "WWD"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV18",
+    "Desc_": "AM - US 30 @ MM 149.7 (S Dayton Ave)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv18hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv18lb/playlist.m3u8",
+    "latitude": 42.006272,
+    "longitude": -93.586508,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV22",
+    "Desc_": "AM - I-35 @ MM 112 (N of US 30)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv22hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv22lb/playlist.m3u8",
+    "latitude": 42.01236,
+    "longitude": -93.57127,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "DMTV040",
+    "Desc_": "DM - I-35 @ MM 90.6 (Oralabor Rd)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/dmtv040hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ankeny/dmtv040lb/playlist.m3u8",
+    "latitude": 41.702836,
+    "longitude": -93.5762,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "NVTV04",
+    "Desc_": "NV - US 30 @ MM 157.1 (S 11th St)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/nvtv04hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/nvtv04lb/playlist.m3u8",
+    "latitude": 42.005456,
+    "longitude": -93.444603,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV11",
+    "Desc_": "AM - US 30 @ MM 142.3 (W Lincoln Way)",
+    "Route": "IA 930",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv11hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv11lb/playlist.m3u8",
+    "latitude": 42.022653,
+    "longitude": -93.724367,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV19",
+    "Desc_": "AM - US 30 @ MM 151.1 (E of I-35)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv19hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv19lb/playlist.m3u8",
+    "latitude": 42.008233,
+    "longitude": -93.560122,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "NVTV03",
+    "Desc_": "NV - US 30 @ MM 156 (SW 4th St)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/nvtv03hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/nvtv03lb/playlist.m3u8",
+    "latitude": 42.006236,
+    "longitude": -93.465303,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "DMTV062",
+    "Desc_": "DM - I-35 @ MM 96.8 (NE 126th Ave Elkhart)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/dmtv062hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ankeny/dmtv062lb/playlist.m3u8",
+    "latitude": 41.79129,
+    "longitude": -93.57088,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35SB98",
+    "Desc_": "Rest Area: I-35 SB MM 98 near Elkhart",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35SB98-02-CENTER.jpg",
+    "VideoURL": null,
+    "latitude": 41.832517,
+    "longitude": -93.572685,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV02",
+    "Desc_": "AM - I-35 @ MM 104.3 (E 1st St - Huxley)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv02hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv02lb/playlist.m3u8",
+    "latitude": 41.899673,
+    "longitude": -93.57194,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35NB98",
+    "Desc_": "Rest Area: I-35 NB MM 98 near Elkhart",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35NB98-01-ENTRY.jpg",
+    "VideoURL": null,
+    "latitude": 41.829231,
+    "longitude": -93.569318,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "BNTV01Q",
+    "Desc_": "BN - US 30 @ MM 134 (Story St)-Q",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/bntv01qhd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/bntv01qlb/playlist.m3u8",
+    "latitude": 42.035224,
+    "longitude": -93.879595,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "WWD49",
+    "Desc_": "WWD - US 30 @ S27 near Nevada (49)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/WWD/WWD49.jpg",
+    "VideoURL": null,
+    "latitude": 42.00763,
+    "longitude": -93.40521,
+    "FUNCTION": "WWD"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "IWZ5788",
+    "Desc_": "1FH - US 69 @ MM 94.7 (IWZ 5788)",
+    "Route": "US 69",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/iwz5788lb.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ankeny/iwz5788lb/playlist.m3u8",
+    "latitude": 41.727237,
+    "longitude": -93.600566,
+    "FUNCTION": "IWZ"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35NB120",
+    "Desc_": "Rest Area: I-35 NB MM 120 near Story City",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35NB120-01-EXIT.jpg",
+    "VideoURL": null,
+    "latitude": 42.128125,
+    "longitude": -93.553536,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "DMTV064",
+    "Desc_": "DM - I-35 @ MM 100.15 (NE 158TH Ave.)",
+    "Route": "Unknown",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/dmtv064hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/dmtv064lb/playlist.m3u8",
+    "latitude": 41.849747,
+    "longitude": -93.570599,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "NVTV05",
+    "Desc_": "NV - US 30 @ MM 157.6 (19th St)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/nvtv05hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/nvtv05lb/playlist.m3u8",
+    "latitude": 42.008381,
+    "longitude": -93.434794,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35SB119",
+    "Desc_": "Parking Only: I-35 SB MM 119 near Story City",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35SB119-CarParking.jpg",
+    "VideoURL": null,
+    "latitude": 42.110185,
+    "longitude": -93.556605,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35SB98",
+    "Desc_": "Rest Area: I-35 SB MM 98 near Elkhart",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35SB98-01-CENTER.jpg",
+    "VideoURL": null,
+    "latitude": 41.832517,
+    "longitude": -93.572685,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "DMTV053",
+    "Desc_": "DM - I-35 @ MM 89 (Corporate Woods Dr)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/dmtv053hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ankeny/dmtv053lb/playlist.m3u8",
+    "latitude": 41.679928,
+    "longitude": -93.576414,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "WWDTV82",
+    "Desc_": "WWD - US 30 @ MM 130.2 (L Ave.)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/wwdtv82hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/wwdtv82lb/playlist.m3u8",
+    "latitude": 42.033292,
+    "longitude": -93.951727,
+    "FUNCTION": "WWD"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV05",
+    "Desc_": "AM - I-35 @ MM 109.8 (260th St)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv05hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv05lb/playlist.m3u8",
+    "latitude": 41.979323,
+    "longitude": -93.571019,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35NB120",
+    "Desc_": "Rest Area: I-35 NB MM 120 near Story City",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35NB120-TruckParking2.jpg",
+    "VideoURL": null,
+    "latitude": 42.128125,
+    "longitude": -93.553536,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35SB119",
+    "Desc_": "Parking Only: I-35 SB MM 119 near Story City",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35SB119-TruckParking2.jpg",
+    "VideoURL": null,
+    "latitude": 42.110185,
+    "longitude": -93.556605,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "WWDTV072",
+    "Desc_": "WWD - I-35 @ MM 92.6 (1st St - Ankeny)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/wwdtv072hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ankeny/wwdtv072lb/playlist.m3u8",
+    "latitude": 41.732438,
+    "longitude": -93.576679,
+    "FUNCTION": "WWD"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "DMTV066",
+    "Desc_": "DM - IA 415 @ MM 13.7 (Mile Long Bridge)",
+    "Route": "IA 415",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/dmtv066hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ankeny/dmtv066lb/playlist.m3u8",
+    "latitude": 41.765611,
+    "longitude": -93.729773,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35SB98",
+    "Desc_": "Rest Area: I-35 SB MM 98 near Elkhart",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35SB98-01-ENTRY.jpg",
+    "VideoURL": null,
+    "latitude": 41.832517,
+    "longitude": -93.572685,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "DMTV060",
+    "Desc_": "DM - I-35 @ MM 93.9 (S of NE 36th St)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/dmtv060hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ankeny/dmtv060lb/playlist.m3u8",
+    "latitude": 41.750675,
+    "longitude": -93.574094,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV14",
+    "Desc_": "AM - US 30 @ MM 145.9 (State Ave)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv14hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/waterloo/amtv14lb/playlist.m3u8",
+    "latitude": 42.006984,
+    "longitude": -93.658765,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35NB98",
+    "Desc_": "Rest Area: I-35 NB MM 98 near Elkhart",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35NB98-02-CENTER.jpg",
+    "VideoURL": null,
+    "latitude": 41.829231,
+    "longitude": -93.569318,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV06Q",
+    "Desc_": "AM - I-35 @ MM 111.7 (US 30)-Q",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv06qhd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv06qlb/playlist.m3u8",
+    "latitude": 42.007297,
+    "longitude": -93.57141,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "WWDTV051",
+    "Desc_": "WWD - US 30 @ MM 152.8 (580th Ave)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/wwdtv051hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/wwdtv051lb/playlist.m3u8",
+    "latitude": 42.008472,
+    "longitude": -93.539491,
+    "FUNCTION": "WWD"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "DMTV094Q",
+    "Desc_": "DM - IA 141 @ MM 148.4 (NW 121st St - ICWS)-Q",
+    "Route": "IA 141",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/dmtv094qhd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ankeny/dmtv094qlb/playlist.m3u8",
+    "latitude": 41.744175,
+    "longitude": -93.785651,
+    "FUNCTION": "ICWS"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "NVTV02",
+    "Desc_": "NV - US 30 @ MM 154.1 (600th Ave)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/nvtv02hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/nvtv02lb/playlist.m3u8",
+    "latitude": 42.008581,
+    "longitude": -93.501636,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "IWZ3718",
+    "Desc_": "1FG - US 30 @ MM 149.9 (IWZ 3718)",
+    "Route": "US 30",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/iwz3718lb.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/iwz3718lb/playlist.m3u8",
+    "latitude": 42.005836,
+    "longitude": -93.600011,
+    "FUNCTION": "IWZ"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "RA35NB120",
+    "Desc_": "Rest Area: I-35 NB MM 120 near Story City",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/snapshots/Public/RestAreas/RA35NB120-01-ENTRY.jpg",
+    "VideoURL": null,
+    "latitude": 42.128125,
+    "longitude": -93.553536,
+    "FUNCTION": "Rest Area"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV21",
+    "Desc_": "AM - I-35 @ MM 111.5 (US 30W Flyover)",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv21hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv21lb/playlist.m3u8",
+    "latitude": 42.004577,
+    "longitude": -93.57033,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "AMTV20",
+    "Desc_": "AM - I-35 @ MM 109.2",
+    "Route": "I-35",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/amtv20hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ames/amtv20lb/playlist.m3u8",
+    "latitude": 41.971767,
+    "longitude": -93.570829,
+    "FUNCTION": "General"
+   }
+  },
+  {
+   "attributes": {
+    "COMMON_ID": "DMTV092",
+    "Desc_": "DM - IA 141 @ MM 152.5 (E 1st St)",
+    "Route": "IA 141",
+    "ImageURL": "https://atmsqf.iowadot.gov/SNAPSHOTS/PUBLIC/Metro/dmtv092hd.jpeg",
+    "VideoURL": "https://video4.iowadot.gov:8888/ankeny/dmtv092lb/playlist.m3u8",
+    "latitude": 41.688247,
+    "longitude": -93.774056,
+    "FUNCTION": "General"
+   }
+  }
+ ]
+}
