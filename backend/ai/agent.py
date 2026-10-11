@@ -17,6 +17,7 @@ from pydantic import ValidationError
 from ai import fallback
 from ai.prompts import SYSTEM_PROMPT, USER_PROMPT, BriefDraft, Interpretation, WeatherDraft
 from ai.tools import VIEWS
+from engine import sufficiency
 from app.config import settings
 
 log = logging.getLogger("closurecall.ai")
@@ -127,6 +128,32 @@ def validate(interp: Interpretation, snap: dict, allowed: set[float]) -> list[st
         problems.append("alert summaries include an unknown alert")
     if "manager" not in rationale or "decision" not in rationale:
         problems.append("rationale must state that the manager makes the final decision")
+    problems += sufficiency_problems(interp, snap)
+    return problems
+
+
+ALL_CLEAR = re.compile(r"\b(all[- ]clear|(?:is|are|look|looks|remain|remains) (?:safe|clear|quiet)|safe (?:conditions|to travel|commute)|"
+                       r"no (?:weather )?(?:hazards?|threats?|risks?|concerns?)\b(?! (?:threshold|rule)s? (?:is|are|was|were) crossed in the (?:available|limited) data))", re.I)
+NEGATED = re.compile(r"\b(?:not|never|no)\s+(?:evidence|proof|a sign|an indication)\s+(?:of|that)\b[^.;]*|\bcannot (?:confirm|show)\b[^.;]*|\bnot (?:a |an )?(?:supported )?all[- ]clear\b", re.I)
+INSUFFICIENT_WORDS = re.compile(r"\b(insufficient|missing|unavailable|stale|out of date|incomplete)\b", re.I)
+
+
+def sufficiency_problems(interp: Interpretation, snap: dict) -> list[str]:
+    """When the rules found evidence insufficient, the brief must say so and must not claim an all-clear."""
+    ev = sufficiency.for_snapshot(snap)
+    if ev.get("supports_all_clear"):
+        return []
+    lead = f"{interp.headline} {interp.summary}"
+    problems = []
+    if ev.get("provisional") and ev.get("status") != "insufficient":
+        if not re.search(r"\bprovisional\b", lead, re.I) or not re.search(r"\b(?:backup|secondary)\b", lead, re.I):
+            problems.append("backup forecast: headline or summary must identify the recommendation as provisional and based on a backup or secondary forecast")
+    elif not INSUFFICIENT_WORDS.search(lead):
+        problems.append("evidence is insufficient: headline or summary must say current data is insufficient or missing")
+    text = " ".join([interp.headline, interp.summary, interp.uncertainty, *(r.text for r in interp.suggested_reasons)])
+    text = NEGATED.sub(" ", text)  # "not evidence of safe conditions" is the required caveat, not a claim
+    if ALL_CLEAR.search(text):
+        problems.append("evidence is insufficient: the brief must not describe conditions as safe or clear")
     return problems
 
 

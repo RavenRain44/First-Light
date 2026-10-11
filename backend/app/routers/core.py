@@ -19,6 +19,8 @@ from app.config import settings
 from app.db import session
 from app.facility import get_facility, load_employees, roster_summary
 from app.models import Decision, DecisionContext, HistoryEvent
+from engine import sufficiency
+from engine.features import wind_chill_f
 from engine.posture import ORDER
 from engine.scoring import load_thresholds
 
@@ -156,11 +158,13 @@ def build_timeseries(snap: dict) -> dict:
     rows: dict[str, dict] = {}
     meta = {}
     for inp in snap["inputs"]:
-        if inp["kind"] != "series":
+        if inp["kind"] != "series" or inp["id"].startswith("unused."):
             continue
         prefix = "obs" if inp["role"] == "observation" else "fcst"
         key = f"{prefix}_{inp['metric']}"
         meta[key] = {k: inp.get(k) for k in ("id", "source", "source_url", "fetched_at", "source_time", "unit", "note")}
+        if (inp.get("data") or {}).get("weather_fallback"):
+            meta[key]["provenance"] = inp["data"]
         for p in inp["series"]:
             t = datetime.fromisoformat(p["t"])
             if not (start <= t <= end) or p["v"] is None:
@@ -169,8 +173,25 @@ def build_timeseries(snap: dict) -> dict:
                 continue
             if prefix == "obs" and t > as_of:
                 continue
-            rows.setdefault(p["t"], {"t": utc(t).isoformat()})[key] = p["v"]
+            rows.setdefault(utc(t).isoformat(), {"t": utc(t).isoformat()})[key] = p["v"]
     ordered = sorted(rows.values(), key=lambda r: r["t"])
+    # Archived NBS has temperature and wind but no separate feels-like series.
+    # Render the same derived quantity the recorded cold signal used, from saved
+    # inputs only. This enriches the chart response without rewriting a snapshot.
+    apparent = snap.get("signals", {}).get("fcst_min_apparent_24h_f", {})
+    derived = apparent.get("available") and "fcst.temp_f" in apparent.get("input_ids", [])
+    if derived and "fcst_apparent_temp_f" not in meta:
+        for r in ordered:
+            if datetime.fromisoformat(r["t"]) < as_of.replace(minute=0, second=0, microsecond=0):
+                continue
+            if isinstance(r.get("fcst_temp_f"), (int, float)):
+                # The engine uses zero wind when the saved forecast has no wind at
+                # this hour; the formula then returns temperature unchanged.
+                r["fcst_apparent_temp_f"] = round(wind_chill_f(r["fcst_temp_f"], r.get("fcst_wind_speed_mph", 0.0)), 1)
+        if any("fcst_apparent_temp_f" in r for r in ordered):
+            meta["fcst_apparent_temp_f"] = {**meta["fcst_temp_f"], "unit": "degF",
+                "note": "Calculated from the saved forecast temperature and wind with the NWS wind chill formula; missing wind uses temperature unchanged.",
+                "derived": True, "input_ids": apparent["input_ids"]}
     ice = snow = 0.0
     for r in ordered:  # running forecast totals from as_of forward, for threshold comparison
         if datetime.fromisoformat(r["t"]) >= as_of.replace(minute=0, second=0, microsecond=0):
@@ -278,24 +299,42 @@ def record_decision(d: DecisionIn, background_tasks: BackgroundTasks):
         raise HTTPException(422, f"decision_posture must be one of {ORDER}")
     if snap["mode"] == "backtest":
         raise HTTPException(422, "Historical backtesting cannot record a human operating decision")
-    agreed = d.decision_posture == snap["posture"]["posture"]
-    if not agreed and not (d.override_reason and d.override_reason.strip()):
+    evidence = sufficiency.for_snapshot(snap)
+    reason = (d.override_reason or "").strip() or None
+    manual = bool(evidence.get("reason_required"))
+    # Insufficient, unrecorded or provisional evidence needs an explicit manager reason.
+    agreed = d.decision_posture == snap["posture"]["posture"] and not manual
+    if manual and not reason:
+        raise HTTPException(422, "override_reason is required: evidence is provisional or insufficient "
+                                 f"({evidence['status']}), so this is a manual decision; explain the basis for it")
+    if d.decision_posture != snap["posture"]["posture"] and not reason:
         raise HTTPException(422, "override_reason is required when the decision differs from the recommendation")
     row = Decision(snapshot_id=d.snapshot_id, facility_id=snap["facility"]["id"], decided_by=d.decided_by.strip(),
                    decision_posture=d.decision_posture, recommended_posture=snap["posture"]["posture"],
-                   agreed_with_recommendation=agreed, override_reason=(d.override_reason or "").strip() or None,
+                   agreed_with_recommendation=agreed, override_reason=reason,
                    notes=d.notes, decided_at=datetime.now(timezone.utc))
+    basis = ("manual_provisional_forecast" if manual and evidence.get("provisional") and evidence["status"] == "limited"
+             else "manual_insufficient_evidence" if manual else "recommendation" if agreed else "override")
     with session() as s:
         s.add(row)
         s.commit()
         s.refresh(row)
         # Demo-mode decisions use cached weather; Past decisions leaves them out.
-        s.add(DecisionContext(decision_id=row.id, demo_mode=settings.demo_mode)); s.commit()
+        s.add(DecisionContext(decision_id=row.id, demo_mode=settings.demo_mode, evidence_status=evidence["status"],
+                              decision_basis=basis)); s.commit()
         from app.camera_archive import pending, capture
         s.add(pending(row)); s.commit()
         camera_time = datetime.fromisoformat(snap["as_of"]) if snap["mode"] == "replay" else row.decided_at.replace(tzinfo=timezone.utc)
         background_tasks.add_task(capture, row.id, row.facility_id, camera_time, snap["mode"] == "replay")
-        return {**row.model_dump(mode="json"), "label": "real (recorded in this system)"}
+        return {**row.model_dump(mode="json"), "label": "real (recorded in this system)",
+                "evidence_status": evidence["status"], "decision_basis": basis}
+
+
+def _with_context(rows: list[Decision], s) -> list[dict]:
+    ctx = {c.decision_id: c for c in s.exec(select(DecisionContext).where(DecisionContext.decision_id.in_([r.id for r in rows]))).all()}
+    return [{**r.model_dump(mode="json"), "label": "real (recorded in this system)",
+             "evidence_status": ctx[r.id].evidence_status if r.id in ctx else "",
+             "decision_basis": ctx[r.id].decision_basis if r.id in ctx else ""} for r in rows]
 
 
 @router.get("/decisions")
@@ -303,7 +342,7 @@ def list_decisions(facility_id: str | None = None):
     f = _facility(facility_id)
     with session() as s:
         rows = s.exec(select(Decision).where(Decision.facility_id == f.id).order_by(Decision.decided_at.desc())).all()
-        return [{**r.model_dump(mode="json"), "label": "real (recorded in this system)"} for r in rows]
+        return _with_context(rows, s)
 
 
 @router.get("/record/{snapshot_id}")
@@ -313,7 +352,7 @@ async def decision_record(snapshot_id: str):
     if not snap:
         raise HTTPException(404, "snapshot not found")
     with session() as s:
-        ds = s.exec(select(Decision).where(Decision.snapshot_id == snapshot_id).order_by(Decision.decided_at)).all()
-    return {"snapshot": snapshots.ensure_interpretation(snap), "decisions": [d.model_dump(mode="json") for d in ds],
+        ds = _with_context(s.exec(select(Decision).where(Decision.snapshot_id == snapshot_id).order_by(Decision.decided_at)).all(), s)
+    return {"snapshot": snapshots.ensure_interpretation(snap), "decisions": ds,
             "thresholds_current_sha256": load_thresholds().sha256,
             "thresholds_changed_since": load_thresholds().sha256 != snap["thresholds_sha256"]}

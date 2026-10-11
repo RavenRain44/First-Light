@@ -126,11 +126,11 @@ export function LegacyReplayPanel({ onSnapshot, busy, setBusy, current }: {
   return (
     <Card title="Replay a past event (only data available at that moment)" right={busy ? <span className="text-xs text-muted">loading…</span> : null}>
       <div className="flex flex-wrap items-end gap-3">
-        <label className="grid gap-1 text-sm">Event
+        <label className="grid min-w-0 max-w-full gap-1 text-sm">Event
           <select value={ev?.id ?? ""} onChange={(e) => {
             if (!e.target.value) return;
             interacted.current = true; setPlaying(false); void loadEvent(e.target.value, events?.find((item) => item.id === e.target.value)?.name);
-          }} className="rounded-md border border-edge bg-surface px-2 py-1">
+          }} className="min-w-0 max-w-full rounded-md border border-edge bg-surface px-2 py-1">
             <option value="" disabled>{selection && !ev ? "Custom date" : "Choose an event"}</option>
             {events?.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
           </select>
@@ -140,7 +140,7 @@ export function LegacyReplayPanel({ onSnapshot, busy, setBusy, current }: {
         <button onClick={() => selectPoint(idx + 1)} disabled={!selection || idx >= timeline.length - 1} className="btn" aria-label="Next hour">1h ▶</button>
         {ev?.backtest?.at_0400_local && (
           <button onClick={() => selectPoint(Math.max(0, timeline.findIndex((x) => x.as_of === ev.backtest.at_0400_local.as_of)))}
-            className="btn">Jump to 04:00 on impact day</button>
+            className="btn">{ev.kind === "normal-control" ? "Jump to 04:00 on control day" : "Jump to 04:00 on impact day"}</button>
         )}
         <span className="ml-auto flex items-end gap-2 text-sm">
           <label className="grid gap-1">{tz === TZ ? "Any moment (Central time)" : `Any moment (${tz})`}
@@ -197,8 +197,8 @@ export function LegacyReplayPanel({ onSnapshot, busy, setBusy, current }: {
               {ev.outcome.amw_obs_note && <p className="text-xs italic text-muted">{ev.outcome.amw_obs_note}</p>}
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase text-ink2">Backtest at 04:00 on impact day</p>
-              <div className="mt-1 flex flex-wrap items-center gap-2"><PostureBadge p={ev.backtest.at_0400_local.posture} size="sm" /><Badge>{ev.backtest.verdict}</Badge></div>
+              <p className="text-xs font-semibold uppercase text-ink2">{ev.kind === "normal-control" ? "Evaluation at 04:00 on control day" : "Backtest at 04:00 on impact day"}</p>
+              <div className="mt-1 flex flex-wrap items-center gap-2"><PostureBadge p={ev.backtest.at_0400_local.posture} size="sm" />{ev.kind === "normal-control" ? <p className="basis-full text-xs text-ink2">{ev.backtest.verdict}</p> : <Badge>{ev.backtest.verdict}</Badge>}</div>
               <p className="mt-1 text-xs text-muted">{ev.backtest.label}</p>
             </div>
           </div>}

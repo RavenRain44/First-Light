@@ -12,6 +12,14 @@ const snap = (level, extra = {}) => ({ as_of: asOf, inputs: [input("temp_f", 65)
   readiness: { level, reasons: [] }, posture: { posture: "NORMAL", contributing_hazards: [], guidance: [] },
   confidence: { level: "high" }, hazards: {}, rules: [], ...extra });
 
+test("backup forecasts identify provisional advice and missing evidence instead of promising clear skies", () => {
+  const s = snap("YELLOW", { sufficiency: { status: "limited", provisional: true, supports_all_clear: false } });
+  const p = cooperPresentation(s);
+  assert.equal(p.title, "Provisional forecast · verify before deciding");
+  assert.match(p.watch, /backup forecast.*Verify local warnings/i);
+  assert.equal(p.action, "Review decision");
+});
+
 test("each Cooper condition has the requested next step, independently of the suggested posture", () => {
   for (const [level, action] of [["WHITE", null], ["YELLOW", "Review decision"], ["ORANGE", "Draft decision"], ["RED", "Draft urgent decision"]]) {
     const s = snap(level);
@@ -97,9 +105,49 @@ test("numeric urgency has a recorded label while deadline-only urgency invents n
   const s = snap("RED", { readiness: { level: "RED", reasons: ["Destructive gusts is happening now"] },
     rules: [rule("Destructive gusts", { metric: "max_gust_mph", observed_value: 90 })] });
   assert.equal(readinessEvent(s), "Destructive gusts");
-  const deadline = snap("RED", { readiness: { level: "RED", reasons: ["Telework must be announced by Tue 04:30 CST"] } });
+  const deadline = snap("RED", { posture: { posture: "TELEWORK", contributing_hazards: [], guidance: [] },
+    readiness: { level: "RED", reasons: ["Telework must be announced by Tue 04:30 CST"] } });
   assert.equal(readinessEvent(deadline), null);
-  assert.equal(cooperPresentation(deadline).title, "Send communication immediately");
+  assert.equal(cooperPresentation(deadline).title, "Decision due soon: telework");
+});
+
+test("a minor pavement alert near the decision deadline is urgent without implying extreme weather", () => {
+  const s = snap("RED", {
+    readiness: { level: "RED", reasons: ["Delayed Arrival must be announced by Wed 04:30 CST"], deadline_passed: false },
+    posture: { posture: "DELAYED_ARRIVAL", contributing_hazards: ["winter"], guidance: [] },
+    hazards: { winter: { hazard: "winter", level: 1 } },
+    rules: [rule("RWIS sensors reporting ice", { metric: "rwis_ice_sensors", observed_value: 1, level: 1, hazard: "winter" })],
+  });
+  const p = cooperPresentation(s);
+  assert.equal(p.level, "RED");
+  assert.equal(p.title, "Decision due soon: delayed arrival");
+  assert.equal(p.deadlineOnly, true);
+  assert.match(p.urgencyExplanation, /announcement deadline.*rated minor/);
+  s.readiness.deadline_passed = true;
+  assert.equal(cooperPresentation(s).title, "Decision overdue: delayed arrival");
+  s.readiness.reasons.push("Freezing precipitation is happening now");
+  assert.equal(cooperPresentation(s).deadlineOnly, false);
+  assert.match(cooperPresentation(s).title, /^Send communication immediately/);
+  assert.equal(cooperPresentation(s).urgencyExplanation, null);
+});
+
+test("active safety guidance keeps the immediate communication message even alongside a deadline", () => {
+  const s = snap("RED", { readiness: { level: "RED", reasons: ["Closure deadline passed"] },
+    posture: { posture: "CLOSED", contributing_hazards: [], guidance: ["Shelter in place"] } });
+  assert.equal(cooperPresentation(s).deadlineOnly, false);
+  assert.match(cooperPresentation(s).title, /^Send communication immediately/);
+});
+
+test("insufficient evidence stays prominent while real decision deadlines retain their urgency", () => {
+  const sufficiency = { status: "insufficient", supports_all_clear: false };
+  for (const level of ["WHITE", "YELLOW"]) {
+    assert.equal(cooperPresentation(snap(level, { sufficiency })).title, "Insufficient current data");
+  }
+  const deadline = snap("RED", { sufficiency,
+    posture: { posture: "DELAYED_ARRIVAL", contributing_hazards: [], guidance: [] },
+    readiness: { level: "RED", reasons: ["Delayed Arrival must be announced by Wed 04:30 CST"] } });
+  assert.equal(cooperPresentation(deadline).title, "Decision due soon: delayed arrival");
+  assert.equal(cooperPresentation(deadline).deadlineOnly, true);
 });
 
 test("old snapshots without readiness remain explicitly unknown with their forecast available", () => {

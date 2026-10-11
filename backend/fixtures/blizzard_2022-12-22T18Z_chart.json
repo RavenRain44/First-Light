@@ -1,0 +1,5617 @@
+{
+ "snapshot": {
+  "snapshot_id": "933fcb0ccb8d41acadc472e124afd73c",
+  "facility_id": "IA-AMES-SC",
+  "as_of": "2022-12-22T18:00:00+00:00",
+  "created_at": "2026-10-10T19:58:06.866784+00:00",
+  "mode": "backtest",
+  "event_id": "blizzard-2022-12-22",
+  "thresholds_version": "2026-10-10.1",
+  "thresholds_sha256": "246b545dd4a34f725d499ee9502ab858cd99723f01f0c68a9cf351e38fdc3c6e",
+  "model_id": "deterministic-fallback",
+  "prompt_version": "interp-v1.2",
+  "content_sha256": "bb86c2118d7f7244d3f7e406d7ff0dae105f80e6028a908893f50bd245781a84",
+  "facility": {
+   "accessibility_notes": [
+    "One ramp entrance (north side); ramp is not heated and ices first",
+    "Parking lot drainage issue on the east side: standing water refreezes overnight",
+    "No backup generator; HVAC and badge readers fail in a power outage",
+    "Interior storm shelter area: central restrooms and records room (no windows)"
+   ],
+   "asos_station": "AMW",
+   "building_type": "Single-story leased office with public counter (FSA/NRCS/RD), capacity ~40",
+   "commute_windows": {
+    "am": [
+     "06:00",
+     "08:00"
+    ],
+    "pm": [
+     "16:00",
+     "18:00"
+    ]
+   },
+   "corridors": [
+    {
+     "coordinates": [
+      [
+       -93.5705,
+       42.06
+      ],
+      [
+       -93.57,
+       41.96
+      ],
+      [
+       -93.5695,
+       41.86
+      ],
+      [
+       -93.568,
+       41.75
+      ],
+      [
+       -93.566,
+       41.66
+      ]
+     ],
+     "id": "i35_ames_dsm",
+     "name": "I-35 Ames - Des Moines (Ankeny)"
+    },
+    {
+     "coordinates": [
+      [
+       -93.5705,
+       42.06
+      ],
+      [
+       -93.573,
+       42.12
+      ],
+      [
+       -93.59,
+       42.185
+      ]
+     ],
+     "id": "i35_ames_storycity",
+     "name": "I-35 Ames - Story City"
+    },
+    {
+     "coordinates": [
+      [
+       -93.62,
+       42.005
+      ],
+      [
+       -93.7,
+       42.005
+      ],
+      [
+       -93.8,
+       42.008
+      ],
+      [
+       -93.88,
+       42.035
+      ]
+     ],
+     "id": "us30_ames_boone",
+     "name": "US-30 Ames - Boone"
+    },
+    {
+     "coordinates": [
+      [
+       -93.57,
+       42.008
+      ],
+      [
+       -93.48,
+       42.01
+      ],
+      [
+       -93.4,
+       42.015
+      ]
+     ],
+     "id": "us30_ames_nevada",
+     "name": "US-30 Ames - Nevada"
+    },
+    {
+     "coordinates": [
+      [
+       -93.61,
+       42.0
+      ],
+      [
+       -93.61,
+       41.95
+      ],
+      [
+       -93.605,
+       41.895
+      ]
+     ],
+     "id": "us69_ames_huxley",
+     "name": "US-69 Ames - Huxley"
+    }
+   ],
+   "hours": {
+    "close": "16:30",
+    "open": "07:30"
+   },
+   "hypothetical": false,
+   "id": "IA-AMES-SC",
+   "lat": 42.0308,
+   "lon": -93.6319,
+   "mos_station": "KAMW",
+   "name": "USDA Service Center (synthetic), Ames, IA",
+   "nws_office": "DMX",
+   "state": "IA",
+   "synthetic": true,
+   "timezone": "America/Chicago",
+   "workdays": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
+  },
+  "roster": {
+   "accessibility_needs_in_building": 3,
+   "assigned": 22,
+   "commuters_by_corridor": {
+    "i35_ames_dsm": 4,
+    "local": 5,
+    "us30_ames_boone": 3,
+    "us30_ames_nevada": 2,
+    "us69_ames_huxley": 3
+   },
+   "detailed_in": 3,
+   "detailed_out": 2,
+   "essential_in_building": 5,
+   "expected_in_building": 17,
+   "on_travel": 2,
+   "synthetic": true,
+   "teleworking_today": 4
+  },
+  "sources": [
+   {
+    "adapter": "iem_vtec",
+    "detail": null,
+    "elapsed_ms": 0,
+    "fetched_at": "2026-10-10T18:46:55.482242Z",
+    "label": "NWS warnings archive (IEM VTEC)",
+    "n_inputs": 1,
+    "source_time": "2022-12-21T17:25:00Z",
+    "status": "ok",
+    "urls": [
+     "https://mesonet.agron.iastate.edu/json/vtec_events_byugc.php?ugc=IAZ048&sdate=2022-12-18&edate=2022-12-24",
+     "https://mesonet.agron.iastate.edu/json/vtec_events_byugc.php?ugc=IAC169&sdate=2022-12-18&edate=2022-12-24"
+    ]
+   },
+   {
+    "adapter": "iem_mos",
+    "detail": null,
+    "elapsed_ms": 2,
+    "fetched_at": "2026-10-10T18:47:27.571650Z",
+    "label": "Archived NBM forecast (IEM MOS/NBS)",
+    "n_inputs": 7,
+    "source_time": "2022-12-22T13:00:00Z",
+    "status": "ok",
+    "urls": [
+     "https://mesonet.agron.iastate.edu/api/1/mos.json?station=KAMW&model=NBS&runtime=2022-12-22T13:00:00Z",
+     "https://mesonet.agron.iastate.edu/api/1/mos.json?station=KAMW&model=NBS&runtime=2022-12-22T07:00:00Z"
+    ]
+   },
+   {
+    "adapter": "iem_obs",
+    "detail": null,
+    "elapsed_ms": 4,
+    "fetched_at": "2026-10-10T18:47:15.801440Z",
+    "label": "IEM ASOS observations",
+    "n_inputs": 8,
+    "source_time": "2022-12-22T18:00:00Z",
+    "status": "ok",
+    "urls": [
+     "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=IA_ASOS&station=AMW&date=2022-12-22&full=true"
+    ]
+   },
+   {
+    "adapter": "iem_roads",
+    "detail": null,
+    "elapsed_ms": 66,
+    "fetched_at": "2026-10-10T18:47:48.030738Z",
+    "label": "Iowa DOT road conditions (IEM)",
+    "n_inputs": 5,
+    "source_time": "2022-12-22T13:37:00Z",
+    "status": "ok",
+    "urls": [
+     "https://mesonet.agron.iastate.edu/api/1/iowa_winter_roadcond.geojson?valid=2022-12-22T18:00:00Z"
+    ]
+   },
+   {
+    "adapter": "iem_rwis",
+    "detail": null,
+    "elapsed_ms": 0,
+    "fetched_at": "2026-10-10T18:47:37.011862Z",
+    "label": "Iowa DOT RWIS pavement sensors (IEM)",
+    "n_inputs": 2,
+    "source_time": "2022-12-22T18:00:00Z",
+    "status": "ok",
+    "urls": [
+     "https://mesonet.agron.iastate.edu/api/1/rwis.json?valid=2022-12-22T18:00:00Z"
+    ]
+   },
+   {
+    "adapter": "iem_outlook",
+    "detail": null,
+    "elapsed_ms": 0,
+    "fetched_at": "2026-10-10T18:47:37.123823Z",
+    "label": "SPC convective outlook (IEM)",
+    "n_inputs": 2,
+    "source_time": null,
+    "status": "ok",
+    "urls": [
+     "https://mesonet.agron.iastate.edu/api/1/nws/outlook_by_point.json?lat=42.0308&lon=-93.6319&valid=2022-12-22T18:00:00Z"
+    ]
+   }
+  ],
+  "signals": {
+   "fcst_ice_24h_in": {
+    "accumulation": true,
+    "available": true,
+    "data": null,
+    "detail": null,
+    "id": "fcst_ice_24h_in",
+    "input_ids": [
+     "fcst.ice_in"
+    ],
+    "label": "Forecast ice accumulation (24 h)",
+    "peak_time": null,
+    "role": "forecast",
+    "unit": "in",
+    "value": 0.0,
+    "window": null
+   },
+   "fcst_max_gust_24h_mph": {
+    "accumulation": false,
+    "available": true,
+    "data": null,
+    "detail": null,
+    "id": "fcst_max_gust_24h_mph",
+    "input_ids": [
+     "fcst.wind_gust_mph"
+    ],
+    "label": "Forecast max wind gust (24 h)",
+    "peak_time": "2022-12-23T20:00:00Z",
+    "role": "forecast",
+    "unit": "mph",
+    "value": 43.7,
+    "window": null
+   },
+   "fcst_max_sustained_24h_mph": {
+    "accumulation": false,
+    "available": true,
+    "data": null,
+    "detail": null,
+    "id": "fcst_max_sustained_24h_mph",
+    "input_ids": [
+     "fcst.wind_speed_mph"
+    ],
+    "label": "Forecast max sustained wind (24 h)",
+    "peak_time": "2022-12-23T17:00:00Z",
+    "role": "forecast",
+    "unit": "mph",
+    "value": 26.5,
+    "window": null
+   },
+   "fcst_min_apparent_24h_f": {
+    "accumulation": false,
+    "available": true,
+    "data": null,
+    "detail": "computed from forecast temperature and wind with the NWS wind chill formula",
+    "id": "fcst_min_apparent_24h_f",
+    "input_ids": [
+     "fcst.temp_f",
+     "fcst.wind_speed_mph"
+    ],
+    "label": "Forecast lowest feels-like temperature (24 h)",
+    "peak_time": "2022-12-22T23:00:00Z",
+    "role": "forecast",
+    "unit": "degF",
+    "value": -36.8,
+    "window": null
+   },
+   "fcst_snow_12h_in": {
+    "accumulation": true,
+    "available": true,
+    "data": null,
+    "detail": null,
+    "id": "fcst_snow_12h_in",
+    "input_ids": [
+     "fcst.snow_in"
+    ],
+    "label": "Forecast snowfall, heaviest 12 h",
+    "peak_time": null,
+    "role": "forecast",
+    "unit": "in",
+    "value": 0.0,
+    "window": null
+   },
+   "fcst_snow_24h_in": {
+    "accumulation": true,
+    "available": true,
+    "data": null,
+    "detail": null,
+    "id": "fcst_snow_24h_in",
+    "input_ids": [
+     "fcst.snow_in"
+    ],
+    "label": "Forecast snowfall (24 h)",
+    "peak_time": null,
+    "role": "forecast",
+    "unit": "in",
+    "value": 0.0,
+    "window": null
+   },
+   "max_gust_mph": {
+    "accumulation": false,
+    "available": true,
+    "data": null,
+    "detail": null,
+    "id": "max_gust_mph",
+    "input_ids": [
+     "fcst.wind_gust_mph"
+    ],
+    "label": "Max gust (forecast max wind gust (24 h))",
+    "peak_time": "2022-12-23T20:00:00Z",
+    "role": "forecast",
+    "unit": "mph",
+    "value": 43.7,
+    "window": null
+   },
+   "obs_freezing_precip_hours_3h": {
+    "accumulation": false,
+    "available": true,
+    "data": null,
+    "detail": null,
+    "id": "obs_freezing_precip_hours_3h",
+    "input_ids": [
+     "obs.freezing_precip"
+    ],
+    "label": "Observed freezing precip (hours of last 3)",
+    "peak_time": null,
+    "role": "observation",
+    "unit": "hours",
+    "value": 0.0,
+    "window": [
+     "2022-12-22T17:00:00Z",
+     "2022-12-22T21:00:00Z"
+    ]
+   },
+   "obs_ice_accretion_3h_in": {
+    "accumulation": false,
+    "available": false,
+    "data": null,
+    "detail": "icing sensor value not reported (live only)",
+    "id": "obs_ice_accretion_3h_in",
+    "input_ids": [],
+    "label": "Measured ice accretion (3 h)",
+    "peak_time": null,
+    "role": "observation",
+    "unit": "in",
+    "value": null,
+    "window": null
+   },
+   "obs_max_gust_3h_mph": {
+    "accumulation": false,
+    "available": true,
+    "data": null,
+    "detail": null,
+    "id": "obs_max_gust_3h_mph",
+    "input_ids": [
+     "obs.wind_gust_mph"
+    ],
+    "label": "Observed max gust (last 3 h)",
+    "peak_time": "2022-12-22T17:00:00Z",
+    "role": "observation",
+    "unit": "mph",
+    "value": 41.4,
+    "window": [
+     "2022-12-22T17:00:00Z",
+     "2022-12-22T21:00:00Z"
+    ]
+   },
+   "road_worst_rank": {
+    "accumulation": false,
+    "available": true,
+    "data": {
+     "commuters_on_covered_corridors": 12,
+     "corridor": "i35_ames_dsm",
+     "label": "Travel Advisory"
+    },
+    "detail": "Travel Advisory on I-35 Ames - Des Moines (Ankeny)",
+    "id": "road_worst_rank",
+    "input_ids": [
+     "road.i35_ames_dsm",
+     "road.i35_ames_storycity",
+     "road.us30_ames_boone",
+     "road.us30_ames_nevada",
+     "road.us69_ames_huxley"
+    ],
+    "label": "Worst Iowa DOT condition on a commute corridor",
+    "peak_time": "2022-12-22T13:37:00Z",
+    "role": "observation",
+    "unit": "rank",
+    "value": 4.0,
+    "window": [
+     "2022-12-22T17:00:00Z",
+     "2022-12-22T21:00:00Z"
+    ]
+   },
+   "rwis_ice_sensors": {
+    "accumulation": false,
+    "available": true,
+    "data": null,
+    "detail": null,
+    "id": "rwis_ice_sensors",
+    "input_ids": [
+     "rwis.ice_condition_sensors"
+    ],
+    "label": "RWIS sensors reporting ice",
+    "peak_time": "2022-12-22T18:00:00Z",
+    "role": "observation",
+    "unit": "sensors",
+    "value": 8.0,
+    "window": [
+     "2022-12-22T17:00:00Z",
+     "2022-12-22T21:00:00Z"
+    ]
+   },
+   "spc_day1_rank": {
+    "accumulation": false,
+    "available": true,
+    "data": null,
+    "detail": "NONE",
+    "id": "spc_day1_rank",
+    "input_ids": [
+     "spc.day1_category"
+    ],
+    "label": "SPC day-1 convective outlook",
+    "peak_time": "2022-12-23T18:00:00Z",
+    "role": "outlook",
+    "unit": "category",
+    "value": -1.0,
+    "window": [
+     "2022-12-23T18:00:00Z",
+     "2022-12-23T18:00:00Z"
+    ]
+   }
+  },
+  "rules": [
+   {
+    "anchor": "NWSI 10-513: Ice Storm Warning = ice accumulation meeting locally defined warning criteria; significant ice is usually >= 0.25 in on an elevated flat surface.",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "winter",
+    "input_ids": [],
+    "label": "Ice Storm Warning",
+    "level": 3,
+    "margin_abs": null,
+    "margin_pct": null,
+    "metric": "alert_present",
+    "observed_value": "not in effect",
+    "operator": "present",
+    "posture_effect": "extreme",
+    "rule_id": "winter.ice_storm_warning",
+    "score": 85,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005013curr.pdf",
+    "threshold": 1.0,
+    "time_of_peak": null,
+    "time_window": "alert onset to end, if it overlaps the next 36 h or the decision day",
+    "triggered": false,
+    "unit": "alert",
+    "verified": true,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "NWSI 10-513: Blizzard Warning = sustained wind or frequent gusts >= 35 mph with falling/blowing snow frequently reducing visibility below 1/4 mile for 3+ hours.",
+    "available": true,
+    "basis": "official",
+    "detail": "Blizzard Warning (Likely/Extreme) 2022-12-22T18:00:00Z to 2022-12-24T12:00:00Z",
+    "hazard": "winter",
+    "input_ids": [
+     "alert:DMX.BZ.W.0001.2022"
+    ],
+    "label": "Blizzard Warning",
+    "level": 3,
+    "margin_abs": null,
+    "margin_pct": null,
+    "metric": "alert_present",
+    "observed_value": "Blizzard Warning",
+    "operator": "present",
+    "posture_effect": "extreme",
+    "rule_id": "winter.blizzard_warning",
+    "score": 85,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005013curr.pdf",
+    "threshold": 1.0,
+    "time_of_peak": "2022-12-22T18:00:00Z",
+    "time_window": "alert onset to end, if it overlaps the next 36 h or the decision day",
+    "triggered": true,
+    "unit": "alert",
+    "verified": true,
+    "window_end": "2022-12-24T12:00:00Z",
+    "window_start": "2022-12-22T18:00:00Z"
+   },
+   {
+    "anchor": "NWSI 10-513: Winter Storm Warning = snow, ice or sleet meeting locally defined event-based warning criteria (Appendix D).",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "winter",
+    "input_ids": [],
+    "label": "Winter Storm Warning",
+    "level": 2,
+    "margin_abs": null,
+    "margin_pct": null,
+    "metric": "alert_present",
+    "observed_value": "not in effect",
+    "operator": "present",
+    "posture_effect": "significant",
+    "rule_id": "winter.winter_storm_warning",
+    "score": 65,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005013curr.pdf",
+    "threshold": 1.0,
+    "time_of_peak": null,
+    "time_window": "alert onset to end, if it overlaps the next 36 h or the decision day",
+    "triggered": false,
+    "unit": "alert",
+    "verified": true,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "NWSI 10-513: Winter Weather Advisory = winter precipitation below warning criteria that still causes significant inconvenience (Appendix E regional criteria).",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "winter",
+    "input_ids": [],
+    "label": "Winter Weather Advisory",
+    "level": 1,
+    "margin_abs": null,
+    "margin_pct": null,
+    "metric": "alert_present",
+    "observed_value": "not in effect",
+    "operator": "present",
+    "posture_effect": "minor",
+    "rule_id": "winter.winter_weather_advisory",
+    "score": 35,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005013curr.pdf",
+    "threshold": 1.0,
+    "time_of_peak": null,
+    "time_window": "alert onset to end, if it overlaps the next 36 h or the decision day",
+    "triggered": false,
+    "unit": "alert",
+    "verified": true,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "NWSI 10-513: a Watch means warning-level winter conditions are possible; treated as minor until upgraded.",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "winter",
+    "input_ids": [],
+    "label": "Winter Storm Watch / Ice Storm Watch / Blizzard Watch",
+    "level": 1,
+    "margin_abs": null,
+    "margin_pct": null,
+    "metric": "alert_present",
+    "observed_value": "not in effect",
+    "operator": "present",
+    "posture_effect": "minor",
+    "rule_id": "winter.winter_storm_watch",
+    "score": 30,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005013curr.pdf",
+    "threshold": 1.0,
+    "time_of_peak": null,
+    "time_window": "alert onset to end, if it overlaps the next 36 h or the decision day",
+    "triggered": false,
+    "unit": "alert",
+    "verified": true,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "NWSI 10-513 glossary: significant ice accumulations are usually 0.25 in or greater. DMX's local ice criterion is published only as a map image in Appendix D; the national typical value is used.",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "winter",
+    "input_ids": [
+     "fcst.ice_in"
+    ],
+    "label": "Forecast ice accumulation (24 h)",
+    "level": 3,
+    "margin_abs": -0.25,
+    "margin_pct": -100.0,
+    "metric": "fcst_ice_24h_in",
+    "observed_value": 0.0,
+    "operator": ">=",
+    "posture_effect": "extreme",
+    "rule_id": "winter.fcst_ice_quarter_inch",
+    "score": 80,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005013curr.pdf",
+    "threshold": 0.25,
+    "time_of_peak": null,
+    "time_window": "forecast ice accumulation summed through the decision day (at least the next 24 h)",
+    "triggered": false,
+    "unit": "in",
+    "verified": true,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "Sperry-Piltz Ice Accumulation Index: about 0.10 in of ice is where scattered outages and very hazardous travel begin. Policy cut below the ice storm level.",
+    "available": true,
+    "basis": "policy",
+    "detail": null,
+    "hazard": "winter",
+    "input_ids": [
+     "fcst.ice_in"
+    ],
+    "label": "Forecast ice accumulation (24 h)",
+    "level": 2,
+    "margin_abs": -0.1,
+    "margin_pct": -100.0,
+    "metric": "fcst_ice_24h_in",
+    "observed_value": 0.0,
+    "operator": ">=",
+    "posture_effect": "significant",
+    "rule_id": "winter.fcst_ice_tenth_inch",
+    "score": 60,
+    "source_url": "https://www.spia-index.com/",
+    "threshold": 0.1,
+    "time_of_peak": null,
+    "time_window": "forecast ice accumulation summed through the decision day (at least the next 24 h)",
+    "triggered": false,
+    "unit": "in",
+    "verified": false,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "Any measurable glaze makes the facility's unheated ramp and lot hazardous (facility.json accessibility notes). NWSI 10-513 advisories cover ice below warning criteria.",
+    "available": true,
+    "basis": "policy",
+    "detail": null,
+    "hazard": "winter",
+    "input_ids": [
+     "fcst.ice_in"
+    ],
+    "label": "Forecast ice accumulation (24 h)",
+    "level": 1,
+    "margin_abs": -0.01,
+    "margin_pct": -100.0,
+    "metric": "fcst_ice_24h_in",
+    "observed_value": 0.0,
+    "operator": ">=",
+    "posture_effect": "minor",
+    "rule_id": "winter.fcst_ice_any",
+    "score": 40,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005013curr.pdf",
+    "threshold": 0.01,
+    "time_of_peak": null,
+    "time_window": "forecast ice accumulation summed through the decision day (at least the next 24 h)",
+    "triggered": false,
+    "unit": "in",
+    "verified": true,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "Commonly reported NWS Des Moines winter storm warning snow criterion (6 in in 12 h). NWSI 10-513 Appendix D points to weather.gov/snow-criteria, an interactive map we could not machine-read.",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "winter",
+    "input_ids": [
+     "fcst.snow_in"
+    ],
+    "label": "Forecast snowfall, heaviest 12 h",
+    "level": 2,
+    "margin_abs": -6.0,
+    "margin_pct": -100.0,
+    "metric": "fcst_snow_12h_in",
+    "observed_value": 0.0,
+    "operator": ">=",
+    "posture_effect": "significant",
+    "rule_id": "winter.fcst_snow_warning_12h",
+    "score": 65,
+    "source_url": "https://www.weather.gov/snow-criteria",
+    "threshold": 6.0,
+    "time_of_peak": null,
+    "time_window": "largest forecast snowfall in any 12 h period through the decision day",
+    "triggered": false,
+    "unit": "in",
+    "verified": false,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "Policy: twice the local warning amount; plows cannot keep commute corridors open.",
+    "available": true,
+    "basis": "policy",
+    "detail": null,
+    "hazard": "winter",
+    "input_ids": [
+     "fcst.snow_in"
+    ],
+    "label": "Forecast snowfall (24 h)",
+    "level": 3,
+    "margin_abs": -12.0,
+    "margin_pct": -100.0,
+    "metric": "fcst_snow_24h_in",
+    "observed_value": 0.0,
+    "operator": ">=",
+    "posture_effect": "extreme",
+    "rule_id": "winter.fcst_snow_heavy_24h",
+    "score": 85,
+    "source_url": "https://www.weather.gov/snow-criteria",
+    "threshold": 12.0,
+    "time_of_peak": null,
+    "time_window": "forecast snowfall summed through the decision day (at least the next 24 h)",
+    "triggered": false,
+    "unit": "in",
+    "verified": false,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "Commonly reported Central Region winter weather advisory snow amount (3 in). NWSI 10-513 Appendix E shows the regional criteria as an image.",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "winter",
+    "input_ids": [
+     "fcst.snow_in"
+    ],
+    "label": "Forecast snowfall (24 h)",
+    "level": 1,
+    "margin_abs": -3.0,
+    "margin_pct": -100.0,
+    "metric": "fcst_snow_24h_in",
+    "observed_value": 0.0,
+    "operator": ">=",
+    "posture_effect": "minor",
+    "rule_id": "winter.fcst_snow_advisory_24h",
+    "score": 35,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005013curr.pdf",
+    "threshold": 3.0,
+    "time_of_peak": null,
+    "time_window": "forecast snowfall summed through the decision day (at least the next 24 h)",
+    "triggered": false,
+    "unit": "in",
+    "verified": false,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "Observed freezing rain/drizzle or ice pellets (METAR present-weather codes) means ice is forming now. Policy: treat as significant.",
+    "available": true,
+    "basis": "policy",
+    "detail": null,
+    "hazard": "winter",
+    "input_ids": [
+     "obs.freezing_precip"
+    ],
+    "label": "Observed freezing precip (hours of last 3)",
+    "level": 2,
+    "margin_abs": -1.0,
+    "margin_pct": -100.0,
+    "metric": "obs_freezing_precip_hours_3h",
+    "observed_value": 0.0,
+    "operator": ">=",
+    "posture_effect": "significant",
+    "rule_id": "winter.obs_freezing_precip",
+    "score": 55,
+    "source_url": "https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf",
+    "threshold": 1.0,
+    "time_of_peak": null,
+    "time_window": "hours in the last 3 h with FZRA/FZDZ/PL reported at the facility ASOS",
+    "triggered": false,
+    "unit": "hours",
+    "verified": false,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "Measured ice accretion at the facility's ASOS. Policy: any measured accretion is significant for walking and driving.",
+    "available": false,
+    "basis": "policy",
+    "detail": "icing sensor value not reported (live only)",
+    "hazard": "winter",
+    "input_ids": [],
+    "label": "Measured ice accretion (3 h)",
+    "level": 2,
+    "margin_abs": null,
+    "margin_pct": null,
+    "metric": "obs_ice_accretion_3h_in",
+    "observed_value": null,
+    "operator": ">=",
+    "posture_effect": "significant",
+    "rule_id": "winter.obs_ice_accretion",
+    "score": 60,
+    "source_url": "https://www.weather.gov/media/wrh/mesowest/metar_decode_key.pdf",
+    "threshold": 0.01,
+    "time_of_peak": null,
+    "time_window": "ASOS icing sensor, last 3 h (live only)",
+    "triggered": false,
+    "unit": "in",
+    "verified": false,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "Iowa DOT 'Travel not advised' / 'Impassable' / closed on a corridor employees use. Category from Iowa DOT via the IEM archive; ranking is ours.",
+    "available": true,
+    "basis": "policy",
+    "detail": "Travel Advisory on I-35 Ames - Des Moines (Ankeny)",
+    "hazard": "winter",
+    "input_ids": [
+     "road.i35_ames_dsm",
+     "road.i35_ames_storycity",
+     "road.us30_ames_boone",
+     "road.us30_ames_nevada",
+     "road.us69_ames_huxley"
+    ],
+    "label": "Worst Iowa DOT condition on a commute corridor",
+    "level": 3,
+    "margin_abs": -1.0,
+    "margin_pct": -20.0,
+    "metric": "road_worst_rank",
+    "observed_value": 4.0,
+    "operator": ">=",
+    "posture_effect": "extreme",
+    "rule_id": "winter.road_closed",
+    "score": 90,
+    "source_url": "https://www.511ia.org/",
+    "threshold": 5.0,
+    "time_of_peak": "2022-12-22T13:37:00Z",
+    "time_window": "current Iowa DOT report on any commute corridor",
+    "triggered": false,
+    "unit": "rank",
+    "verified": false,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "Iowa DOT 'Travel Advisory' issued on a commute corridor.",
+    "available": true,
+    "basis": "policy",
+    "detail": "Travel Advisory on I-35 Ames - Des Moines (Ankeny)",
+    "hazard": "winter",
+    "input_ids": [
+     "road.i35_ames_dsm",
+     "road.i35_ames_storycity",
+     "road.us30_ames_boone",
+     "road.us30_ames_nevada",
+     "road.us69_ames_huxley"
+    ],
+    "label": "Worst Iowa DOT condition on a commute corridor",
+    "level": 2,
+    "margin_abs": 0.0,
+    "margin_pct": 0.0,
+    "metric": "road_worst_rank",
+    "observed_value": 4.0,
+    "operator": ">=",
+    "posture_effect": "significant",
+    "rule_id": "winter.road_travel_advisory",
+    "score": 70,
+    "source_url": "https://www.511ia.org/",
+    "threshold": 4.0,
+    "time_of_peak": "2022-12-22T13:37:00Z",
+    "time_window": "current Iowa DOT report on any commute corridor",
+    "triggered": true,
+    "unit": "rank",
+    "verified": false,
+    "window_end": "2022-12-22T21:00:00Z",
+    "window_start": "2022-12-22T17:00:00Z"
+   },
+   {
+    "anchor": "Iowa DOT 'Completely covered' (snow/ice/mixed/slush) on a commute corridor.",
+    "available": true,
+    "basis": "policy",
+    "detail": "Travel Advisory on I-35 Ames - Des Moines (Ankeny)",
+    "hazard": "winter",
+    "input_ids": [
+     "road.i35_ames_dsm",
+     "road.i35_ames_storycity",
+     "road.us30_ames_boone",
+     "road.us30_ames_nevada",
+     "road.us69_ames_huxley"
+    ],
+    "label": "Worst Iowa DOT condition on a commute corridor",
+    "level": 2,
+    "margin_abs": 1.0,
+    "margin_pct": 33.3,
+    "metric": "road_worst_rank",
+    "observed_value": 4.0,
+    "operator": ">=",
+    "posture_effect": "significant",
+    "rule_id": "winter.road_completely_covered",
+    "score": 60,
+    "source_url": "https://mesonet.agron.iastate.edu/roads/",
+    "threshold": 3.0,
+    "time_of_peak": "2022-12-22T13:37:00Z",
+    "time_window": "current Iowa DOT report on any commute corridor",
+    "triggered": true,
+    "unit": "rank",
+    "verified": false,
+    "window_end": "2022-12-22T21:00:00Z",
+    "window_start": "2022-12-22T17:00:00Z"
+   },
+   {
+    "anchor": "Iowa DOT 'Partially covered' on a commute corridor.",
+    "available": true,
+    "basis": "policy",
+    "detail": "Travel Advisory on I-35 Ames - Des Moines (Ankeny)",
+    "hazard": "winter",
+    "input_ids": [
+     "road.i35_ames_dsm",
+     "road.i35_ames_storycity",
+     "road.us30_ames_boone",
+     "road.us30_ames_nevada",
+     "road.us69_ames_huxley"
+    ],
+    "label": "Worst Iowa DOT condition on a commute corridor",
+    "level": 1,
+    "margin_abs": 2.0,
+    "margin_pct": 100.0,
+    "metric": "road_worst_rank",
+    "observed_value": 4.0,
+    "operator": ">=",
+    "posture_effect": "minor",
+    "rule_id": "winter.road_partially_covered",
+    "score": 35,
+    "source_url": "https://mesonet.agron.iastate.edu/roads/",
+    "threshold": 2.0,
+    "time_of_peak": "2022-12-22T13:37:00Z",
+    "time_window": "current Iowa DOT report on any commute corridor",
+    "triggered": true,
+    "unit": "rank",
+    "verified": false,
+    "window_end": "2022-12-22T21:00:00Z",
+    "window_start": "2022-12-22T17:00:00Z"
+   },
+   {
+    "anchor": "Iowa DOT RWIS pavement sensor reporting an ice watch/warning condition near the facility.",
+    "available": true,
+    "basis": "policy",
+    "detail": null,
+    "hazard": "winter",
+    "input_ids": [
+     "rwis.ice_condition_sensors"
+    ],
+    "label": "RWIS sensors reporting ice",
+    "level": 1,
+    "margin_abs": 7.0,
+    "margin_pct": 700.0,
+    "metric": "rwis_ice_sensors",
+    "observed_value": 8.0,
+    "operator": ">=",
+    "posture_effect": "minor",
+    "rule_id": "winter.rwis_ice",
+    "score": 30,
+    "source_url": "https://mesonet.agron.iastate.edu/roads/",
+    "threshold": 1.0,
+    "time_of_peak": "2022-12-22T18:00:00Z",
+    "time_window": "RWIS pavement sensors within 40 km, latest report",
+    "triggered": true,
+    "unit": "sensors",
+    "verified": false,
+    "window_end": "2022-12-22T21:00:00Z",
+    "window_start": "2022-12-22T17:00:00Z"
+   },
+   {
+    "anchor": "NWSI 10-511: Tornado Warning = tornado imminent or occurring. Shelter, do not release staff into the storm.",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "wind",
+    "input_ids": [],
+    "label": "Tornado Warning",
+    "level": 3,
+    "margin_abs": null,
+    "margin_pct": null,
+    "metric": "alert_present",
+    "observed_value": "not in effect",
+    "operator": "present",
+    "posture_effect": "extreme",
+    "rule_id": "wind.tornado_warning",
+    "score": 95,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005011curr.pdf",
+    "threshold": 1.0,
+    "time_of_peak": null,
+    "time_window": "alert in effect now or within the next 36 h",
+    "triggered": false,
+    "unit": "alert",
+    "verified": true,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "NWSI 10-511: Severe Thunderstorm Warning = winds >= 58 mph (50 kt) and/or hail >= 1 in.",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "wind",
+    "input_ids": [],
+    "label": "Severe Thunderstorm Warning",
+    "level": 2,
+    "margin_abs": null,
+    "margin_pct": null,
+    "metric": "alert_present",
+    "observed_value": "not in effect",
+    "operator": "present",
+    "posture_effect": "significant",
+    "rule_id": "wind.severe_tstorm_warning",
+    "score": 70,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005011curr.pdf",
+    "threshold": 1.0,
+    "time_of_peak": null,
+    "time_window": "alert in effect now or within the next 36 h",
+    "triggered": false,
+    "unit": "alert",
+    "verified": true,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "NWSI 10-515: High Wind Warning typical criteria = sustained >= 40 mph for 1 h or more, or gusts >= 58 mph.",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "wind",
+    "input_ids": [],
+    "label": "High Wind Warning / Extreme Wind Warning",
+    "level": 2,
+    "margin_abs": null,
+    "margin_pct": null,
+    "metric": "alert_present",
+    "observed_value": "not in effect",
+    "operator": "present",
+    "posture_effect": "significant",
+    "rule_id": "wind.high_wind_warning",
+    "score": 70,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005015curr.pdf",
+    "threshold": 1.0,
+    "time_of_peak": null,
+    "time_window": "alert onset to end, if it overlaps the next 36 h or the decision day",
+    "triggered": false,
+    "unit": "alert",
+    "verified": true,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "SPC watch = conditions favorable for severe storms. Treated as minor: monitor and pre-position, no posture change unless timing hits a commute.",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "wind",
+    "input_ids": [],
+    "label": "Tornado Watch / Severe Thunderstorm Watch",
+    "level": 1,
+    "margin_abs": null,
+    "margin_pct": null,
+    "metric": "alert_present",
+    "observed_value": "not in effect",
+    "operator": "present",
+    "posture_effect": "minor",
+    "rule_id": "wind.convective_watch",
+    "score": 35,
+    "source_url": "https://www.spc.noaa.gov/misc/about.html",
+    "threshold": 1.0,
+    "time_of_peak": null,
+    "time_window": "watch in effect now or within the next 36 h",
+    "triggered": false,
+    "unit": "alert",
+    "verified": false,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "NWSI 10-515: High Wind Watch = high wind warning criteria possible.",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "wind",
+    "input_ids": [],
+    "label": "High Wind Watch",
+    "level": 1,
+    "margin_abs": null,
+    "margin_pct": null,
+    "metric": "alert_present",
+    "observed_value": "not in effect",
+    "operator": "present",
+    "posture_effect": "minor",
+    "rule_id": "wind.high_wind_watch",
+    "score": 30,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005015curr.pdf",
+    "threshold": 1.0,
+    "time_of_peak": null,
+    "time_window": "alert onset to end, if it overlaps the next 36 h or the decision day",
+    "triggered": false,
+    "unit": "alert",
+    "verified": true,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "NWSI 10-515: Wind Advisory = sustained 30-39 mph for 1 h or more (or locally defined).",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "wind",
+    "input_ids": [],
+    "label": "Wind Advisory",
+    "level": 1,
+    "margin_abs": null,
+    "margin_pct": null,
+    "metric": "alert_present",
+    "observed_value": "not in effect",
+    "operator": "present",
+    "posture_effect": "minor",
+    "rule_id": "wind.wind_advisory",
+    "score": 25,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005015curr.pdf",
+    "threshold": 1.0,
+    "time_of_peak": null,
+    "time_window": "alert onset to end, if it overlaps the next 36 h or the decision day",
+    "triggered": false,
+    "unit": "alert",
+    "verified": true,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "NWSI 10-511: 'Destructive' severe thunderstorm damage threat starts at 80 mph winds.",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "wind",
+    "input_ids": [
+     "fcst.wind_gust_mph"
+    ],
+    "label": "Max gust (forecast max wind gust (24 h))",
+    "level": 3,
+    "margin_abs": -36.3,
+    "margin_pct": -45.4,
+    "metric": "max_gust_mph",
+    "observed_value": 43.7,
+    "operator": ">=",
+    "posture_effect": "extreme",
+    "rule_id": "wind.destructive_gust",
+    "score": 90,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005011curr.pdf",
+    "threshold": 80.0,
+    "time_of_peak": "2022-12-23T20:00:00Z",
+    "time_window": "max of forecast gust (through the decision day) and observed gust (last 3 h)",
+    "triggered": false,
+    "unit": "mph",
+    "verified": true,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "NWSI 10-515 high wind warning typical criterion (gusts >= 58 mph); also the NWSI 10-511 severe wind threshold (50 kt).",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "wind",
+    "input_ids": [
+     "fcst.wind_gust_mph"
+    ],
+    "label": "Forecast max wind gust (24 h)",
+    "level": 2,
+    "margin_abs": -14.3,
+    "margin_pct": -24.7,
+    "metric": "fcst_max_gust_24h_mph",
+    "observed_value": 43.7,
+    "operator": ">=",
+    "posture_effect": "significant",
+    "rule_id": "wind.fcst_gust_warning",
+    "score": 70,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005015curr.pdf",
+    "threshold": 58.0,
+    "time_of_peak": "2022-12-23T20:00:00Z",
+    "time_window": "max forecast gust through the decision day (at least 24 h)",
+    "triggered": false,
+    "unit": "mph",
+    "verified": true,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "NWSI 10-515 high wind warning typical criterion (sustained >= 40 mph for 1 h+).",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "wind",
+    "input_ids": [
+     "fcst.wind_speed_mph"
+    ],
+    "label": "Forecast max sustained wind (24 h)",
+    "level": 2,
+    "margin_abs": -13.5,
+    "margin_pct": -33.8,
+    "metric": "fcst_max_sustained_24h_mph",
+    "observed_value": 26.5,
+    "operator": ">=",
+    "posture_effect": "significant",
+    "rule_id": "wind.fcst_sustained_warning",
+    "score": 65,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005015curr.pdf",
+    "threshold": 40.0,
+    "time_of_peak": "2022-12-23T17:00:00Z",
+    "time_window": "max forecast sustained wind through the decision day (at least 24 h)",
+    "triggered": false,
+    "unit": "mph",
+    "verified": true,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "NWSI 10-515 wind advisory criterion (sustained 30-39 mph).",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "wind",
+    "input_ids": [
+     "fcst.wind_speed_mph"
+    ],
+    "label": "Forecast max sustained wind (24 h)",
+    "level": 1,
+    "margin_abs": -3.5,
+    "margin_pct": -11.7,
+    "metric": "fcst_max_sustained_24h_mph",
+    "observed_value": 26.5,
+    "operator": ">=",
+    "posture_effect": "minor",
+    "rule_id": "wind.fcst_sustained_advisory",
+    "score": 25,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005015curr.pdf",
+    "threshold": 30.0,
+    "time_of_peak": "2022-12-23T17:00:00Z",
+    "time_window": "max forecast sustained wind through the decision day (at least 24 h)",
+    "triggered": false,
+    "unit": "mph",
+    "verified": true,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "Gusts of 45 mph are a common local wind advisory criterion in the central US; not stated in NWSI 10-515 (which says 'or locally defined').",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "wind",
+    "input_ids": [
+     "fcst.wind_gust_mph"
+    ],
+    "label": "Forecast max wind gust (24 h)",
+    "level": 1,
+    "margin_abs": -1.3,
+    "margin_pct": -2.9,
+    "metric": "fcst_max_gust_24h_mph",
+    "observed_value": 43.7,
+    "operator": ">=",
+    "posture_effect": "minor",
+    "rule_id": "wind.fcst_gust_advisory",
+    "score": 25,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005015curr.pdf",
+    "threshold": 45.0,
+    "time_of_peak": "2022-12-23T20:00:00Z",
+    "time_window": "max forecast gust through the decision day (at least 24 h)",
+    "triggered": false,
+    "unit": "mph",
+    "verified": false,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "NWSI 10-511 severe wind threshold (58 mph / 50 kt) measured at the facility.",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "wind",
+    "input_ids": [
+     "obs.wind_gust_mph"
+    ],
+    "label": "Observed max gust (last 3 h)",
+    "level": 2,
+    "margin_abs": -16.6,
+    "margin_pct": -28.6,
+    "metric": "obs_max_gust_3h_mph",
+    "observed_value": 41.4,
+    "operator": ">=",
+    "posture_effect": "significant",
+    "rule_id": "wind.obs_severe_gust",
+    "score": 75,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005011curr.pdf",
+    "threshold": 58.0,
+    "time_of_peak": "2022-12-22T17:00:00Z",
+    "time_window": "max observed gust at the facility ASOS in the last 3 h",
+    "triggered": false,
+    "unit": "mph",
+    "verified": true,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "SPC Moderate (4 of 5) risk: widespread severe storms likely.",
+    "available": true,
+    "basis": "official",
+    "detail": "NONE",
+    "hazard": "wind",
+    "input_ids": [
+     "spc.day1_category"
+    ],
+    "label": "SPC day-1 convective outlook",
+    "level": 2,
+    "margin_abs": -5.0,
+    "margin_pct": -125.0,
+    "metric": "spc_day1_rank",
+    "observed_value": -1.0,
+    "operator": ">=",
+    "posture_effect": "significant",
+    "rule_id": "wind.spc_moderate",
+    "score": 55,
+    "source_url": "https://www.spc.noaa.gov/misc/about.html",
+    "threshold": 4.0,
+    "time_of_peak": "2022-12-23T18:00:00Z",
+    "time_window": "SPC day-1 categorical outlook at the facility; timed to 12:00-21:00 local of the outlook day (policy: Iowa afternoon/evening convective peak)",
+    "triggered": false,
+    "unit": "SPC category (4 = MDT)",
+    "verified": false,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "SPC Enhanced (3 of 5) risk: numerous severe storms possible.",
+    "available": true,
+    "basis": "official",
+    "detail": "NONE",
+    "hazard": "wind",
+    "input_ids": [
+     "spc.day1_category"
+    ],
+    "label": "SPC day-1 convective outlook",
+    "level": 1,
+    "margin_abs": -4.0,
+    "margin_pct": -133.3,
+    "metric": "spc_day1_rank",
+    "observed_value": -1.0,
+    "operator": ">=",
+    "posture_effect": "minor",
+    "rule_id": "wind.spc_enhanced",
+    "score": 35,
+    "source_url": "https://www.spc.noaa.gov/misc/about.html",
+    "threshold": 3.0,
+    "time_of_peak": "2022-12-23T18:00:00Z",
+    "time_window": "SPC day-1 categorical outlook at the facility; timed to 12:00-21:00 local of the outlook day (policy: Iowa afternoon/evening convective peak)",
+    "triggered": false,
+    "unit": "SPC category (3 = ENH)",
+    "verified": false,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "NWSI 10-515: Extreme Cold Warning = air temperature or wind chill reaching locally defined warning criteria (Appendix B). Wind Chill Warning is the pre-2024 product name.",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "cold",
+    "input_ids": [],
+    "label": "Extreme Cold Warning / Wind Chill Warning",
+    "level": 2,
+    "margin_abs": null,
+    "margin_pct": null,
+    "metric": "alert_present",
+    "observed_value": "not in effect",
+    "operator": "present",
+    "posture_effect": "significant",
+    "rule_id": "cold.extreme_cold_warning",
+    "score": 65,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005015curr.pdf",
+    "threshold": 1.0,
+    "time_of_peak": null,
+    "time_window": "alert onset to end, if it overlaps the next 36 h or the decision day",
+    "triggered": false,
+    "unit": "alert",
+    "verified": true,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "NWSI 10-515: Cold Weather Advisory / Extreme Cold Watch = cold below warning criteria, or warning criteria possible.",
+    "available": true,
+    "basis": "official",
+    "detail": null,
+    "hazard": "cold",
+    "input_ids": [],
+    "label": "Cold Weather Advisory / Wind Chill Advisory / Extreme Cold Watch / Wind Chill Watch",
+    "level": 1,
+    "margin_abs": null,
+    "margin_pct": null,
+    "metric": "alert_present",
+    "observed_value": "not in effect",
+    "operator": "present",
+    "posture_effect": "minor",
+    "rule_id": "cold.cold_advisory",
+    "score": 30,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005015curr.pdf",
+    "threshold": 1.0,
+    "time_of_peak": null,
+    "time_window": "alert onset to end, if it overlaps the next 36 h or the decision day",
+    "triggered": false,
+    "unit": "alert",
+    "verified": true,
+    "window_end": null,
+    "window_start": null
+   },
+   {
+    "anchor": "Approximate central-Iowa extreme cold warning wind chill. Local value in NWSI 10-515 Appendix B was not machine-verified.",
+    "available": true,
+    "basis": "official",
+    "detail": "computed from forecast temperature and wind with the NWS wind chill formula",
+    "hazard": "cold",
+    "input_ids": [
+     "fcst.temp_f",
+     "fcst.wind_speed_mph"
+    ],
+    "label": "Forecast lowest feels-like temperature (24 h)",
+    "level": 2,
+    "margin_abs": 1.8,
+    "margin_pct": 5.1,
+    "metric": "fcst_min_apparent_24h_f",
+    "observed_value": -36.8,
+    "operator": "<=",
+    "posture_effect": "significant",
+    "rule_id": "cold.fcst_wind_chill_extreme",
+    "score": 60,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005015curr.pdf",
+    "threshold": -35.0,
+    "time_of_peak": "2022-12-22T23:00:00Z",
+    "time_window": "lowest forecast apparent temperature through the decision day (at least 24 h)",
+    "triggered": true,
+    "unit": "degF",
+    "verified": false,
+    "window_end": "2022-12-23T08:00:00Z",
+    "window_start": "2022-12-22T18:00:00Z"
+   },
+   {
+    "anchor": "Approximate central-Iowa cold weather advisory wind chill. Not machine-verified.",
+    "available": true,
+    "basis": "official",
+    "detail": "computed from forecast temperature and wind with the NWS wind chill formula",
+    "hazard": "cold",
+    "input_ids": [
+     "fcst.temp_f",
+     "fcst.wind_speed_mph"
+    ],
+    "label": "Forecast lowest feels-like temperature (24 h)",
+    "level": 1,
+    "margin_abs": 16.8,
+    "margin_pct": 84.0,
+    "metric": "fcst_min_apparent_24h_f",
+    "observed_value": -36.8,
+    "operator": "<=",
+    "posture_effect": "minor",
+    "rule_id": "cold.fcst_wind_chill_advisory",
+    "score": 30,
+    "source_url": "https://www.weather.gov/media/directives/010_pdfs/pd01005015curr.pdf",
+    "threshold": -20.0,
+    "time_of_peak": "2022-12-22T23:00:00Z",
+    "time_window": "lowest forecast apparent temperature through the decision day (at least 24 h)",
+    "triggered": true,
+    "unit": "degF",
+    "verified": false,
+    "window_end": "2022-12-24T00:00:00Z",
+    "window_start": "2022-12-22T18:00:00Z"
+   }
+  ],
+  "hazards": {
+   "cold": {
+    "controlling_rule_ids": [
+     "cold.fcst_wind_chill_extreme"
+    ],
+    "hazard": "cold",
+    "label": "Extreme cold",
+    "level": 2,
+    "level_name": "significant",
+    "posture": "EARLY_DISMISSAL",
+    "posture_reason": "Extreme cold is significant (Forecast lowest feels-like temperature (24 h)) and arrives during the workday or PM commute (Thu 12:00 to Fri 02:00)",
+    "score": 65,
+    "time_of_peak": "2022-12-22T23:00:00Z",
+    "triggered_rule_ids": [
+     "cold.fcst_wind_chill_extreme",
+     "cold.fcst_wind_chill_advisory"
+    ],
+    "window_end": "2022-12-23T08:00:00Z",
+    "window_start": "2022-12-22T18:00:00Z"
+   },
+   "wind": {
+    "controlling_rule_ids": [],
+    "hazard": "wind",
+    "label": "High wind / severe thunderstorm",
+    "level": 0,
+    "level_name": "none",
+    "posture": "NORMAL",
+    "posture_reason": "High wind / severe thunderstorm: no thresholds crossed",
+    "score": 0,
+    "time_of_peak": null,
+    "triggered_rule_ids": [],
+    "window_end": null,
+    "window_start": null
+   },
+   "winter": {
+    "controlling_rule_ids": [
+     "winter.blizzard_warning"
+    ],
+    "hazard": "winter",
+    "label": "Winter / ice",
+    "level": 3,
+    "level_name": "extreme",
+    "posture": "CLOSED",
+    "posture_reason": "Winter / ice is extreme (Blizzard Warning) and is happening now during work hours (Thu 12:00 to Sat 09:00 (incl. road recovery))",
+    "score": 100,
+    "time_of_peak": "2022-12-22T18:00:00Z",
+    "triggered_rule_ids": [
+     "winter.blizzard_warning",
+     "winter.road_travel_advisory",
+     "winter.road_completely_covered",
+     "winter.road_partially_covered",
+     "winter.rwis_ice"
+    ],
+    "window_end": "2022-12-24T12:00:00Z",
+    "window_start": "2022-12-22T18:00:00Z"
+   }
+  },
+  "posture": {
+   "contributing_hazards": [
+    "winter"
+   ],
+   "decision_day": "2022-12-22",
+   "guidance": [
+    "Hazard is in progress during work hours: Shelter-In-Place per OPM IV.B.6 if travel is unsafe."
+   ],
+   "opm_label": "Office Closure (closed to the public); immediate departure or Shelter-In-Place as applicable",
+   "opm_section": "IV.B.5 Office Closure / IV.B.6 Shelter-In-Place",
+   "posture": "CLOSED",
+   "reasons": [
+    "Winter / ice is extreme (Blizzard Warning) and is happening now during work hours (Thu 12:00 to Sat 09:00 (incl. road recovery)) -> CLOSED",
+    "Extreme cold is significant (Forecast lowest feels-like temperature (24 h)) and arrives during the workday or PM commute (Thu 12:00 to Fri 02:00) -> EARLY_DISMISSAL"
+   ]
+  },
+  "confidence": {
+   "factors": [
+    {
+     "explanation": "All expected sources responded.",
+     "name": "completeness",
+     "score": 1.0,
+     "weight": 0.35
+    },
+    {
+     "explanation": "forecast issued 5.0 h before as-of; latest observation 0.0 h old",
+     "name": "freshness",
+     "score": 1.0,
+     "weight": 0.25
+    },
+    {
+     "explanation": "gust forecast 32 vs observed 41 mph; temp forecast -10 vs observed -10 F; winter alert vs forecast ice+snow 0.00 in (disagree)",
+     "name": "agreement",
+     "score": 0.77,
+     "weight": 0.25
+    },
+    {
+     "explanation": "Controlling alert certainty: Likely (inferred from VTEC significance)",
+     "name": "certainty",
+     "score": 0.9,
+     "weight": 0.15
+    }
+   ],
+   "level": "high",
+   "score": 0.93
+  },
+  "changes": [
+   {
+    "current_value": 4.0,
+    "kind": "drop_below",
+    "metric": "road_worst_rank",
+    "new_posture": "CLOSED",
+    "rule_id": "winter.road_travel_advisory",
+    "text": "If worst iowa dot condition on a commute corridor drops below 'travel advisory' (now 'travel advisory'), the posture would stay CLOSED (other triggers).",
+    "threshold": 4.0
+   },
+   {
+    "current_value": 8.0,
+    "kind": "drop_below",
+    "metric": "rwis_ice_sensors",
+    "new_posture": "CLOSED",
+    "rule_id": "winter.rwis_ice",
+    "text": "If rwis sensors reporting ice drops below 1 (now 8), the posture would stay CLOSED (other triggers).",
+    "threshold": 1.0
+   },
+   {
+    "current_value": -36.8,
+    "kind": "drop_below",
+    "metric": "fcst_min_apparent_24h_f",
+    "new_posture": "CLOSED",
+    "rule_id": "cold.fcst_wind_chill_extreme",
+    "text": "If forecast lowest feels-like temperature (24 h) rises above -35 F (now -37 F), the posture would stay CLOSED (other triggers).",
+    "threshold": -35.0
+   },
+   {
+    "current_value": "Blizzard Warning",
+    "kind": "alert_cleared",
+    "metric": null,
+    "new_posture": "EARLY_DISMISSAL",
+    "rule_id": "winter.blizzard_warning",
+    "text": "If the Blizzard Warning were cancelled or expired, the posture would become EARLY_DISMISSAL.",
+    "threshold": null
+   }
+  ],
+  "watch_next_6h": [
+   "Blizzard Warning begins at 12:00 CST",
+   "Forecast gust peaks near 33 mph around 14:00 CST",
+   "Roads: Travel Advisory on I-35 Ames - Des Moines (Ankeny); re-check Iowa DOT reports before the next commute window"
+  ],
+  "readiness": null,
+  "sufficiency": null,
+  "analogs": [],
+  "features": {
+   "cold_alert_level": 0.0,
+   "fcst_ice_in": 0.0,
+   "fcst_snow_in": 0.0,
+   "hours_to_peak": 0.0,
+   "max_gust_mph": 43.7,
+   "min_apparent_f": -36.8,
+   "obs_freezing_hours": 0.0,
+   "peak_local_hour": 12.0,
+   "road_worst_rank": 4.0,
+   "spc_rank": -1.0,
+   "wind_alert_level": 0.0,
+   "wind_level": 0.0,
+   "winter_alert_level": 3.0,
+   "winter_level": 3.0
+  },
+  "ai": {
+   "alert_summaries": {
+    "DMX.BZ.W.0001.2022": "Blizzard Warning (Extreme, Likely) from Thu 12:00 CST to Sat 06:00 CST."
+   },
+   "analog_comparison": "",
+   "headline": "Closed: Blizzard Warning",
+   "rationale_paragraph": "Recommendation for USDA Service Center (synthetic), Ames, IA for Thursday Dec 22: Closed (OPM: Office Closure (closed to the public); immediate departure or Shelter-In-Place as applicable). The NWS has a Blizzard Warning in effect from Thu 12:00 CST to Sat 06:00 CST (certainty: Likely). Timing: Winter / ice is extreme (Blizzard Warning) and is happening now during work hours (Thu 12:00 to Sat 09:00 (incl. road recovery)) -> CLOSED. Timing: Extreme cold is significant (Forecast lowest feels-like temperature (24 h)) and arrives during the workday or PM commute (Thu 12:00 to Fri 02:00) -> EARLY_DISMISSAL. Confidence is high (0.93); the weakest factor is agreement: gust forecast 32 vs observed 41 mph; temp forecast -10 vs observed -10 F; winter alert vs forecast ice+snow 0.00 in (disagree). If worst iowa dot condition on a commute corridor drops below 'travel advisory' (now 'travel advisory'), the posture would stay CLOSED (other triggers). This is a decision-support recommendation; the final operating-status decision rests with the facility manager.",
+   "watch_next_6h": [
+    "Blizzard Warning begins at 12:00 CST",
+    "Forecast gust peaks near 33 mph around 14:00 CST",
+    "Roads: Travel Advisory on I-35 Ames - Des Moines (Ankeny); re-check Iowa DOT reports before the next commute window"
+   ],
+   "what_would_change": [
+    "If worst iowa dot condition on a commute corridor drops below 'travel advisory' (now 'travel advisory'), the posture would stay CLOSED (other triggers).",
+    "If rwis sensors reporting ice drops below 1 (now 8), the posture would stay CLOSED (other triggers).",
+    "If forecast lowest feels-like temperature (24 h) rises above -35 F (now -37 F), the posture would stay CLOSED (other triggers).",
+    "If the Blizzard Warning were cancelled or expired, the posture would become EARLY_DISMISSAL."
+   ]
+  },
+  "inputs": [
+   {
+    "data": {
+     "archive_note": "end time is the archive's final value (may reflect later extensions)",
+     "areaDesc": "IAZ048",
+     "certainty": "Likely",
+     "description": null,
+     "effective": "2022-12-21T17:25:00+00:00",
+     "ends": "2022-12-24T12:00:00Z",
+     "event": "Blizzard Warning",
+     "expires": "2022-12-24T12:00:00Z",
+     "headline": "Blizzard Warning (BZ.W) for IAZ048",
+     "id": "DMX.BZ.W.0001.2022",
+     "inferred_fields": [
+      "severity",
+      "certainty",
+      "urgency"
+     ],
+     "instruction": null,
+     "onset": "2022-12-22T18:00:00Z",
+     "origin": "iem_vtec_archive",
+     "senderName": "NWS DMX",
+     "sent": "2022-12-21T17:25:00+00:00",
+     "severity": "Extreme",
+     "ugc": [
+      "IAZ048"
+     ],
+     "urgency": "Expected",
+     "vtec": [
+      "BZ.W #1"
+     ],
+     "web": "https://mesonet.agron.iastate.edu/vtec/?year=2022&wfo=KDMX&phenomena=BZ&significance=W&eventid=0001"
+    },
+    "fetched_at": "2026-10-10T18:46:55.482242Z",
+    "id": "alert:DMX.BZ.W.0001.2022",
+    "kind": "alert",
+    "metric": "nws_alert",
+    "note": "known at as_of from the issuing product time; severity/certainty inferred from VTEC significance",
+    "role": "alert",
+    "series": null,
+    "source": "IEM VTEC archive (events by UGC)",
+    "source_time": "2022-12-21T17:25:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/json/vtec_events_byugc.php?ugc=IAZ048&sdate=2022-12-18&edate=2022-12-24",
+    "unit": null,
+    "value": "Blizzard Warning"
+   },
+   {
+    "data": null,
+    "fetched_at": "2026-10-10T18:47:27.571650Z",
+    "id": "fcst.wind_gust_mph",
+    "kind": "series",
+    "metric": "wind_gust_mph",
+    "note": "forecast as issued before as_of; 3-hourly values held, 6-h amounts spread hourly",
+    "role": "forecast",
+    "series": [
+     {
+      "t": "2022-12-22T17:00:00Z",
+      "v": 32.2
+     },
+     {
+      "t": "2022-12-22T18:00:00Z",
+      "v": 32.2
+     },
+     {
+      "t": "2022-12-22T19:00:00Z",
+      "v": 32.2
+     },
+     {
+      "t": "2022-12-22T20:00:00Z",
+      "v": 33.4
+     },
+     {
+      "t": "2022-12-22T21:00:00Z",
+      "v": 33.4
+     },
+     {
+      "t": "2022-12-22T22:00:00Z",
+      "v": 33.4
+     },
+     {
+      "t": "2022-12-22T23:00:00Z",
+      "v": 33.4
+     },
+     {
+      "t": "2022-12-23T00:00:00Z",
+      "v": 33.4
+     },
+     {
+      "t": "2022-12-23T01:00:00Z",
+      "v": 33.4
+     },
+     {
+      "t": "2022-12-23T02:00:00Z",
+      "v": 35.7
+     },
+     {
+      "t": "2022-12-23T03:00:00Z",
+      "v": 35.7
+     },
+     {
+      "t": "2022-12-23T04:00:00Z",
+      "v": 35.7
+     },
+     {
+      "t": "2022-12-23T05:00:00Z",
+      "v": 33.4
+     },
+     {
+      "t": "2022-12-23T06:00:00Z",
+      "v": 33.4
+     },
+     {
+      "t": "2022-12-23T07:00:00Z",
+      "v": 33.4
+     },
+     {
+      "t": "2022-12-23T08:00:00Z",
+      "v": 35.7
+     },
+     {
+      "t": "2022-12-23T09:00:00Z",
+      "v": 35.7
+     },
+     {
+      "t": "2022-12-23T10:00:00Z",
+      "v": 35.7
+     },
+     {
+      "t": "2022-12-23T11:00:00Z",
+      "v": 38.0
+     },
+     {
+      "t": "2022-12-23T12:00:00Z",
+      "v": 38.0
+     },
+     {
+      "t": "2022-12-23T13:00:00Z",
+      "v": 38.0
+     },
+     {
+      "t": "2022-12-23T14:00:00Z",
+      "v": 39.1
+     },
+     {
+      "t": "2022-12-23T15:00:00Z",
+      "v": 39.1
+     },
+     {
+      "t": "2022-12-23T16:00:00Z",
+      "v": 39.1
+     },
+     {
+      "t": "2022-12-23T17:00:00Z",
+      "v": 41.4
+     },
+     {
+      "t": "2022-12-23T18:00:00Z",
+      "v": 41.4
+     },
+     {
+      "t": "2022-12-23T19:00:00Z",
+      "v": 41.4
+     },
+     {
+      "t": "2022-12-23T20:00:00Z",
+      "v": 43.7
+     },
+     {
+      "t": "2022-12-23T21:00:00Z",
+      "v": 43.7
+     },
+     {
+      "t": "2022-12-23T22:00:00Z",
+      "v": 43.7
+     },
+     {
+      "t": "2022-12-23T23:00:00Z",
+      "v": 41.4
+     },
+     {
+      "t": "2022-12-24T00:00:00Z",
+      "v": 41.4
+     },
+     {
+      "t": "2022-12-24T01:00:00Z",
+      "v": 41.4
+     },
+     {
+      "t": "2022-12-24T02:00:00Z",
+      "v": 39.1
+     },
+     {
+      "t": "2022-12-24T03:00:00Z",
+      "v": 39.1
+     },
+     {
+      "t": "2022-12-24T04:00:00Z",
+      "v": 39.1
+     },
+     {
+      "t": "2022-12-24T05:00:00Z",
+      "v": 38.0
+     },
+     {
+      "t": "2022-12-24T06:00:00Z",
+      "v": 38.0
+     },
+     {
+      "t": "2022-12-24T07:00:00Z",
+      "v": 38.0
+     },
+     {
+      "t": "2022-12-24T08:00:00Z",
+      "v": 34.5
+     },
+     {
+      "t": "2022-12-24T09:00:00Z",
+      "v": 34.5
+     },
+     {
+      "t": "2022-12-24T10:00:00Z",
+      "v": 34.5
+     },
+     {
+      "t": "2022-12-24T11:00:00Z",
+      "v": 29.9
+     },
+     {
+      "t": "2022-12-24T12:00:00Z",
+      "v": 29.9
+     },
+     {
+      "t": "2022-12-24T13:00:00Z",
+      "v": 29.9
+     },
+     {
+      "t": "2022-12-24T14:00:00Z",
+      "v": 31.1
+     },
+     {
+      "t": "2022-12-24T15:00:00Z",
+      "v": 31.1
+     },
+     {
+      "t": "2022-12-24T16:00:00Z",
+      "v": 31.1
+     },
+     {
+      "t": "2022-12-24T17:00:00Z",
+      "v": 32.2
+     },
+     {
+      "t": "2022-12-24T18:00:00Z",
+      "v": 32.2
+     },
+     {
+      "t": "2022-12-24T19:00:00Z",
+      "v": 32.2
+     },
+     {
+      "t": "2022-12-24T20:00:00Z",
+      "v": 32.2
+     },
+     {
+      "t": "2022-12-24T21:00:00Z",
+      "v": 32.2
+     },
+     {
+      "t": "2022-12-24T22:00:00Z",
+      "v": 32.2
+     },
+     {
+      "t": "2022-12-24T23:00:00Z",
+      "v": 24.2
+     },
+     {
+      "t": "2022-12-25T00:00:00Z",
+      "v": 24.2
+     },
+     {
+      "t": "2022-12-25T01:00:00Z",
+      "v": 24.2
+     },
+     {
+      "t": "2022-12-25T02:00:00Z",
+      "v": 24.2
+     },
+     {
+      "t": "2022-12-25T03:00:00Z",
+      "v": 24.2
+     },
+     {
+      "t": "2022-12-25T04:00:00Z",
+      "v": 24.2
+     },
+     {
+      "t": "2022-12-25T05:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-25T06:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-25T07:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-25T08:00:00Z",
+      "v": 19.6
+     },
+     {
+      "t": "2022-12-25T09:00:00Z",
+      "v": 19.6
+     },
+     {
+      "t": "2022-12-25T10:00:00Z",
+      "v": 19.6
+     },
+     {
+      "t": "2022-12-25T11:00:00Z",
+      "v": 17.3
+     },
+     {
+      "t": "2022-12-25T12:00:00Z",
+      "v": 17.3
+     },
+     {
+      "t": "2022-12-25T13:00:00Z",
+      "v": 17.3
+     }
+    ],
+    "source": "NBM NBS KAMW run 2022-12-22T13:00:00Z + 2022-12-22T07:00:00Z (IEM archive)",
+    "source_time": "2022-12-22T13:00:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/mos.json?station=KAMW&model=NBS&runtime=2022-12-22T13:00:00Z",
+    "unit": "mph",
+    "value": null
+   },
+   {
+    "data": null,
+    "fetched_at": "2026-10-10T18:47:27.571650Z",
+    "id": "fcst.wind_speed_mph",
+    "kind": "series",
+    "metric": "wind_speed_mph",
+    "note": "forecast as issued before as_of; 3-hourly values held, 6-h amounts spread hourly",
+    "role": "forecast",
+    "series": [
+     {
+      "t": "2022-12-22T17:00:00Z",
+      "v": 21.9
+     },
+     {
+      "t": "2022-12-22T18:00:00Z",
+      "v": 21.9
+     },
+     {
+      "t": "2022-12-22T19:00:00Z",
+      "v": 21.9
+     },
+     {
+      "t": "2022-12-22T20:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-22T21:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-22T22:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-22T23:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-23T00:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-23T01:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-23T02:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-23T03:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-23T04:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-23T05:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-23T06:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-23T07:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-23T08:00:00Z",
+      "v": 21.9
+     },
+     {
+      "t": "2022-12-23T09:00:00Z",
+      "v": 21.9
+     },
+     {
+      "t": "2022-12-23T10:00:00Z",
+      "v": 21.9
+     },
+     {
+      "t": "2022-12-23T11:00:00Z",
+      "v": 21.9
+     },
+     {
+      "t": "2022-12-23T12:00:00Z",
+      "v": 21.9
+     },
+     {
+      "t": "2022-12-23T13:00:00Z",
+      "v": 21.9
+     },
+     {
+      "t": "2022-12-23T14:00:00Z",
+      "v": 23.0
+     },
+     {
+      "t": "2022-12-23T15:00:00Z",
+      "v": 23.0
+     },
+     {
+      "t": "2022-12-23T16:00:00Z",
+      "v": 23.0
+     },
+     {
+      "t": "2022-12-23T17:00:00Z",
+      "v": 26.5
+     },
+     {
+      "t": "2022-12-23T18:00:00Z",
+      "v": 26.5
+     },
+     {
+      "t": "2022-12-23T19:00:00Z",
+      "v": 26.5
+     },
+     {
+      "t": "2022-12-23T20:00:00Z",
+      "v": 25.3
+     },
+     {
+      "t": "2022-12-23T21:00:00Z",
+      "v": 25.3
+     },
+     {
+      "t": "2022-12-23T22:00:00Z",
+      "v": 25.3
+     },
+     {
+      "t": "2022-12-23T23:00:00Z",
+      "v": 24.2
+     },
+     {
+      "t": "2022-12-24T00:00:00Z",
+      "v": 24.2
+     },
+     {
+      "t": "2022-12-24T01:00:00Z",
+      "v": 24.2
+     },
+     {
+      "t": "2022-12-24T02:00:00Z",
+      "v": 21.9
+     },
+     {
+      "t": "2022-12-24T03:00:00Z",
+      "v": 21.9
+     },
+     {
+      "t": "2022-12-24T04:00:00Z",
+      "v": 21.9
+     },
+     {
+      "t": "2022-12-24T05:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-24T06:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-24T07:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-24T08:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-24T09:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-24T10:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-24T11:00:00Z",
+      "v": 19.6
+     },
+     {
+      "t": "2022-12-24T12:00:00Z",
+      "v": 19.6
+     },
+     {
+      "t": "2022-12-24T13:00:00Z",
+      "v": 19.6
+     },
+     {
+      "t": "2022-12-24T14:00:00Z",
+      "v": 19.6
+     },
+     {
+      "t": "2022-12-24T15:00:00Z",
+      "v": 19.6
+     },
+     {
+      "t": "2022-12-24T16:00:00Z",
+      "v": 19.6
+     },
+     {
+      "t": "2022-12-24T17:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-24T18:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-24T19:00:00Z",
+      "v": 20.7
+     },
+     {
+      "t": "2022-12-24T20:00:00Z",
+      "v": 19.6
+     },
+     {
+      "t": "2022-12-24T21:00:00Z",
+      "v": 19.6
+     },
+     {
+      "t": "2022-12-24T22:00:00Z",
+      "v": 19.6
+     },
+     {
+      "t": "2022-12-24T23:00:00Z",
+      "v": 18.4
+     },
+     {
+      "t": "2022-12-25T00:00:00Z",
+      "v": 18.4
+     },
+     {
+      "t": "2022-12-25T01:00:00Z",
+      "v": 18.4
+     },
+     {
+      "t": "2022-12-25T02:00:00Z",
+      "v": 16.1
+     },
+     {
+      "t": "2022-12-25T03:00:00Z",
+      "v": 16.1
+     },
+     {
+      "t": "2022-12-25T04:00:00Z",
+      "v": 16.1
+     },
+     {
+      "t": "2022-12-25T05:00:00Z",
+      "v": 15.0
+     },
+     {
+      "t": "2022-12-25T06:00:00Z",
+      "v": 15.0
+     },
+     {
+      "t": "2022-12-25T07:00:00Z",
+      "v": 15.0
+     },
+     {
+      "t": "2022-12-25T08:00:00Z",
+      "v": 13.8
+     },
+     {
+      "t": "2022-12-25T09:00:00Z",
+      "v": 13.8
+     },
+     {
+      "t": "2022-12-25T10:00:00Z",
+      "v": 13.8
+     },
+     {
+      "t": "2022-12-25T11:00:00Z",
+      "v": 11.5
+     },
+     {
+      "t": "2022-12-25T12:00:00Z",
+      "v": 11.5
+     },
+     {
+      "t": "2022-12-25T13:00:00Z",
+      "v": 11.5
+     }
+    ],
+    "source": "NBM NBS KAMW run 2022-12-22T13:00:00Z + 2022-12-22T07:00:00Z (IEM archive)",
+    "source_time": "2022-12-22T13:00:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/mos.json?station=KAMW&model=NBS&runtime=2022-12-22T13:00:00Z",
+    "unit": "mph",
+    "value": null
+   },
+   {
+    "data": null,
+    "fetched_at": "2026-10-10T18:47:27.571650Z",
+    "id": "fcst.temp_f",
+    "kind": "series",
+    "metric": "temp_f",
+    "note": "forecast as issued before as_of; 3-hourly values held, 6-h amounts spread hourly",
+    "role": "forecast",
+    "series": [
+     {
+      "t": "2022-12-22T17:00:00Z",
+      "v": -10.0
+     },
+     {
+      "t": "2022-12-22T18:00:00Z",
+      "v": -10.0
+     },
+     {
+      "t": "2022-12-22T19:00:00Z",
+      "v": -10.0
+     },
+     {
+      "t": "2022-12-22T20:00:00Z",
+      "v": -9.0
+     },
+     {
+      "t": "2022-12-22T21:00:00Z",
+      "v": -9.0
+     },
+     {
+      "t": "2022-12-22T22:00:00Z",
+      "v": -9.0
+     },
+     {
+      "t": "2022-12-22T23:00:00Z",
+      "v": -11.0
+     },
+     {
+      "t": "2022-12-23T00:00:00Z",
+      "v": -11.0
+     },
+     {
+      "t": "2022-12-23T01:00:00Z",
+      "v": -11.0
+     },
+     {
+      "t": "2022-12-23T02:00:00Z",
+      "v": -10.0
+     },
+     {
+      "t": "2022-12-23T03:00:00Z",
+      "v": -10.0
+     },
+     {
+      "t": "2022-12-23T04:00:00Z",
+      "v": -10.0
+     },
+     {
+      "t": "2022-12-23T05:00:00Z",
+      "v": -10.0
+     },
+     {
+      "t": "2022-12-23T06:00:00Z",
+      "v": -10.0
+     },
+     {
+      "t": "2022-12-23T07:00:00Z",
+      "v": -10.0
+     },
+     {
+      "t": "2022-12-23T08:00:00Z",
+      "v": -9.0
+     },
+     {
+      "t": "2022-12-23T09:00:00Z",
+      "v": -9.0
+     },
+     {
+      "t": "2022-12-23T10:00:00Z",
+      "v": -9.0
+     },
+     {
+      "t": "2022-12-23T11:00:00Z",
+      "v": -8.0
+     },
+     {
+      "t": "2022-12-23T12:00:00Z",
+      "v": -8.0
+     },
+     {
+      "t": "2022-12-23T13:00:00Z",
+      "v": -8.0
+     },
+     {
+      "t": "2022-12-23T14:00:00Z",
+      "v": -7.0
+     },
+     {
+      "t": "2022-12-23T15:00:00Z",
+      "v": -7.0
+     },
+     {
+      "t": "2022-12-23T16:00:00Z",
+      "v": -7.0
+     },
+     {
+      "t": "2022-12-23T17:00:00Z",
+      "v": -3.0
+     },
+     {
+      "t": "2022-12-23T18:00:00Z",
+      "v": -3.0
+     },
+     {
+      "t": "2022-12-23T19:00:00Z",
+      "v": -3.0
+     },
+     {
+      "t": "2022-12-23T20:00:00Z",
+      "v": -2.0
+     },
+     {
+      "t": "2022-12-23T21:00:00Z",
+      "v": -2.0
+     },
+     {
+      "t": "2022-12-23T22:00:00Z",
+      "v": -2.0
+     },
+     {
+      "t": "2022-12-23T23:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-24T00:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-24T01:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-24T02:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-24T03:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-24T04:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-24T05:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-24T06:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-24T07:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-24T08:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-24T09:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-24T10:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-24T11:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-24T12:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-24T13:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-24T14:00:00Z",
+      "v": -3.0
+     },
+     {
+      "t": "2022-12-24T15:00:00Z",
+      "v": -3.0
+     },
+     {
+      "t": "2022-12-24T16:00:00Z",
+      "v": -3.0
+     },
+     {
+      "t": "2022-12-24T17:00:00Z",
+      "v": 3.0
+     },
+     {
+      "t": "2022-12-24T18:00:00Z",
+      "v": 3.0
+     },
+     {
+      "t": "2022-12-24T19:00:00Z",
+      "v": 3.0
+     },
+     {
+      "t": "2022-12-24T20:00:00Z",
+      "v": 5.0
+     },
+     {
+      "t": "2022-12-24T21:00:00Z",
+      "v": 5.0
+     },
+     {
+      "t": "2022-12-24T22:00:00Z",
+      "v": 5.0
+     },
+     {
+      "t": "2022-12-24T23:00:00Z",
+      "v": 1.0
+     },
+     {
+      "t": "2022-12-25T00:00:00Z",
+      "v": 1.0
+     },
+     {
+      "t": "2022-12-25T01:00:00Z",
+      "v": 1.0
+     },
+     {
+      "t": "2022-12-25T02:00:00Z",
+      "v": -1.0
+     },
+     {
+      "t": "2022-12-25T03:00:00Z",
+      "v": -1.0
+     },
+     {
+      "t": "2022-12-25T04:00:00Z",
+      "v": -1.0
+     },
+     {
+      "t": "2022-12-25T05:00:00Z",
+      "v": -3.0
+     },
+     {
+      "t": "2022-12-25T06:00:00Z",
+      "v": -3.0
+     },
+     {
+      "t": "2022-12-25T07:00:00Z",
+      "v": -3.0
+     },
+     {
+      "t": "2022-12-25T08:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-25T09:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-25T10:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-25T11:00:00Z",
+      "v": -5.0
+     },
+     {
+      "t": "2022-12-25T12:00:00Z",
+      "v": -5.0
+     },
+     {
+      "t": "2022-12-25T13:00:00Z",
+      "v": -5.0
+     }
+    ],
+    "source": "NBM NBS KAMW run 2022-12-22T13:00:00Z + 2022-12-22T07:00:00Z (IEM archive)",
+    "source_time": "2022-12-22T13:00:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/mos.json?station=KAMW&model=NBS&runtime=2022-12-22T13:00:00Z",
+    "unit": "degF",
+    "value": null
+   },
+   {
+    "data": null,
+    "fetched_at": "2026-10-10T18:47:27.571650Z",
+    "id": "fcst.ice_in",
+    "kind": "series",
+    "metric": "ice_in",
+    "note": "forecast as issued before as_of; 3-hourly values held, 6-h amounts spread hourly",
+    "role": "forecast",
+    "series": [
+     {
+      "t": "2022-12-22T18:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T19:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T20:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T21:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T22:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T23:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T00:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T01:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T02:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T03:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T04:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T05:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T06:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T07:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T08:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T09:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T10:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T11:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T12:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T13:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T14:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T15:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T16:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T17:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T18:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T19:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T20:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T21:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T22:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T23:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T00:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T01:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T02:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T03:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T04:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T05:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T06:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T07:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T08:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T09:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T10:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T11:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T12:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T13:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T14:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T15:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T16:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T17:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T18:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T19:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T20:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T21:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T22:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T23:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T00:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T01:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T02:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T03:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T04:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T05:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T06:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T07:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T08:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T09:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T10:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T11:00:00Z",
+      "v": 0.0
+     }
+    ],
+    "source": "NBM NBS KAMW run 2022-12-22T13:00:00Z + 2022-12-22T07:00:00Z (IEM archive)",
+    "source_time": "2022-12-22T13:00:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/mos.json?station=KAMW&model=NBS&runtime=2022-12-22T13:00:00Z",
+    "unit": "in",
+    "value": null
+   },
+   {
+    "data": null,
+    "fetched_at": "2026-10-10T18:47:27.571650Z",
+    "id": "fcst.snow_in",
+    "kind": "series",
+    "metric": "snow_in",
+    "note": "forecast as issued before as_of; 3-hourly values held, 6-h amounts spread hourly",
+    "role": "forecast",
+    "series": [
+     {
+      "t": "2022-12-22T18:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T19:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T20:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T21:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T22:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T23:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T00:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T01:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T02:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T03:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T04:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T05:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T06:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T07:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T08:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T09:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T10:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T11:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T12:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T13:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T14:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T15:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T16:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T17:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T18:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T19:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T20:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T21:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T22:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T23:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T00:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T01:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T02:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T03:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T04:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T05:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T06:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T07:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T08:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T09:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T10:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T11:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T12:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T13:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T14:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T15:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T16:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T17:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T18:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T19:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T20:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T21:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T22:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T23:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T00:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T01:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T02:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T03:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T04:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T05:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T06:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T07:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T08:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T09:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T10:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T11:00:00Z",
+      "v": 0.0
+     }
+    ],
+    "source": "NBM NBS KAMW run 2022-12-22T13:00:00Z + 2022-12-22T07:00:00Z (IEM archive)",
+    "source_time": "2022-12-22T13:00:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/mos.json?station=KAMW&model=NBS&runtime=2022-12-22T13:00:00Z",
+    "unit": "in",
+    "value": null
+   },
+   {
+    "data": null,
+    "fetched_at": "2026-10-10T18:47:27.571650Z",
+    "id": "fcst.qpf_in",
+    "kind": "series",
+    "metric": "qpf_in",
+    "note": "forecast as issued before as_of; 3-hourly values held, 6-h amounts spread hourly",
+    "role": "forecast",
+    "series": [
+     {
+      "t": "2022-12-22T18:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T19:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T20:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T21:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T22:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T23:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T00:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T01:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T02:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T03:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T04:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T05:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T06:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T07:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T08:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T09:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T10:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T11:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T12:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T13:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T14:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T15:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T16:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T17:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T18:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T19:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T20:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T21:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T22:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T23:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T00:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T01:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T02:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T03:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T04:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T05:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T06:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T07:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T08:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T09:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T10:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T11:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T12:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T13:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T14:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T15:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T16:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T17:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T18:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T19:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T20:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T21:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T22:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T23:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T00:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T01:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T02:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T03:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T04:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T05:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T06:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T07:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T08:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T09:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T10:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T11:00:00Z",
+      "v": 0.0
+     }
+    ],
+    "source": "NBM NBS KAMW run 2022-12-22T13:00:00Z + 2022-12-22T07:00:00Z (IEM archive)",
+    "source_time": "2022-12-22T13:00:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/mos.json?station=KAMW&model=NBS&runtime=2022-12-22T13:00:00Z",
+    "unit": "in",
+    "value": null
+   },
+   {
+    "data": null,
+    "fetched_at": "2026-10-10T18:47:27.571650Z",
+    "id": "fcst.pop_pct",
+    "kind": "series",
+    "metric": "pop_pct",
+    "note": "forecast as issued before as_of; 3-hourly values held, 6-h amounts spread hourly",
+    "role": "forecast",
+    "series": [
+     {
+      "t": "2022-12-22T18:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T19:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T20:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T21:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T22:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T23:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T00:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T01:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T02:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T03:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T04:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T05:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T06:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T07:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T08:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T09:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T10:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T11:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T12:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T13:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T14:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T15:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T16:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T17:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T18:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T19:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T20:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T21:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T22:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-23T23:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T00:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T01:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T02:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T03:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T04:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T05:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T06:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T07:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T08:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T09:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T10:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T11:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T12:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T13:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T14:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T15:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T16:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T17:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T18:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T19:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T20:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T21:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T22:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-24T23:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T00:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T01:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T02:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T03:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T04:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T05:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T06:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T07:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T08:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T09:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T10:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-25T11:00:00Z",
+      "v": 0.0
+     }
+    ],
+    "source": "NBM NBS KAMW run 2022-12-22T13:00:00Z + 2022-12-22T07:00:00Z (IEM archive)",
+    "source_time": "2022-12-22T13:00:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/mos.json?station=KAMW&model=NBS&runtime=2022-12-22T13:00:00Z",
+    "unit": "%",
+    "value": null
+   },
+   {
+    "data": null,
+    "fetched_at": "2026-10-10T18:47:15.801440Z",
+    "id": "obs.wind_gust_mph",
+    "kind": "series",
+    "metric": "wind_gust_mph",
+    "note": "hourly max gust/wind (knots converted to mph), last temp, min feels-like",
+    "role": "observation",
+    "series": [
+     {
+      "t": "2022-12-22T06:00:00Z",
+      "v": 37.98
+     },
+     {
+      "t": "2022-12-22T07:00:00Z",
+      "v": 34.52
+     },
+     {
+      "t": "2022-12-22T08:00:00Z",
+      "v": 31.07
+     },
+     {
+      "t": "2022-12-22T09:00:00Z",
+      "v": 36.82
+     },
+     {
+      "t": "2022-12-22T10:00:00Z",
+      "v": 35.67
+     },
+     {
+      "t": "2022-12-22T11:00:00Z",
+      "v": 34.52
+     },
+     {
+      "t": "2022-12-22T12:00:00Z",
+      "v": 33.37
+     },
+     {
+      "t": "2022-12-22T13:00:00Z",
+      "v": 32.22
+     },
+     {
+      "t": "2022-12-22T14:00:00Z",
+      "v": 37.98
+     },
+     {
+      "t": "2022-12-22T15:00:00Z",
+      "v": 37.98
+     },
+     {
+      "t": "2022-12-22T16:00:00Z",
+      "v": 35.67
+     },
+     {
+      "t": "2022-12-22T17:00:00Z",
+      "v": 41.43
+     },
+     {
+      "t": "2022-12-22T18:00:00Z",
+      "v": 29.92
+     }
+    ],
+    "source": "IEM ASOS AMW (obhistory)",
+    "source_time": "2022-12-22T18:00:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=IA_ASOS&station=AMW&date=2022-12-22&full=true",
+    "unit": "mph",
+    "value": null
+   },
+   {
+    "data": null,
+    "fetched_at": "2026-10-10T18:47:15.801440Z",
+    "id": "obs.wind_speed_mph",
+    "kind": "series",
+    "metric": "wind_speed_mph",
+    "note": "hourly max gust/wind (knots converted to mph), last temp, min feels-like",
+    "role": "observation",
+    "series": [
+     {
+      "t": "2022-12-22T06:00:00Z",
+      "v": 25.32
+     },
+     {
+      "t": "2022-12-22T07:00:00Z",
+      "v": 24.17
+     },
+     {
+      "t": "2022-12-22T08:00:00Z",
+      "v": 23.02
+     },
+     {
+      "t": "2022-12-22T09:00:00Z",
+      "v": 24.17
+     },
+     {
+      "t": "2022-12-22T10:00:00Z",
+      "v": 24.17
+     },
+     {
+      "t": "2022-12-22T11:00:00Z",
+      "v": 24.17
+     },
+     {
+      "t": "2022-12-22T12:00:00Z",
+      "v": 23.02
+     },
+     {
+      "t": "2022-12-22T13:00:00Z",
+      "v": 23.02
+     },
+     {
+      "t": "2022-12-22T14:00:00Z",
+      "v": 25.32
+     },
+     {
+      "t": "2022-12-22T15:00:00Z",
+      "v": 27.62
+     },
+     {
+      "t": "2022-12-22T16:00:00Z",
+      "v": 26.47
+     },
+     {
+      "t": "2022-12-22T17:00:00Z",
+      "v": 26.47
+     },
+     {
+      "t": "2022-12-22T18:00:00Z",
+      "v": 24.17
+     }
+    ],
+    "source": "IEM ASOS AMW (obhistory)",
+    "source_time": "2022-12-22T18:00:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=IA_ASOS&station=AMW&date=2022-12-22&full=true",
+    "unit": "mph",
+    "value": null
+   },
+   {
+    "data": null,
+    "fetched_at": "2026-10-10T18:47:15.801440Z",
+    "id": "obs.temp_f",
+    "kind": "series",
+    "metric": "temp_f",
+    "note": "hourly max gust/wind (knots converted to mph), last temp, min feels-like",
+    "role": "observation",
+    "series": [
+     {
+      "t": "2022-12-22T06:00:00Z",
+      "v": 3.0
+     },
+     {
+      "t": "2022-12-22T07:00:00Z",
+      "v": 1.0
+     },
+     {
+      "t": "2022-12-22T08:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T09:00:00Z",
+      "v": -3.0
+     },
+     {
+      "t": "2022-12-22T10:00:00Z",
+      "v": -3.0
+     },
+     {
+      "t": "2022-12-22T11:00:00Z",
+      "v": -4.0
+     },
+     {
+      "t": "2022-12-22T12:00:00Z",
+      "v": -7.0
+     },
+     {
+      "t": "2022-12-22T13:00:00Z",
+      "v": -7.0
+     },
+     {
+      "t": "2022-12-22T14:00:00Z",
+      "v": -8.0
+     },
+     {
+      "t": "2022-12-22T15:00:00Z",
+      "v": -9.0
+     },
+     {
+      "t": "2022-12-22T16:00:00Z",
+      "v": -9.9
+     },
+     {
+      "t": "2022-12-22T17:00:00Z",
+      "v": -9.9
+     }
+    ],
+    "source": "IEM ASOS AMW (obhistory)",
+    "source_time": "2022-12-22T18:00:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=IA_ASOS&station=AMW&date=2022-12-22&full=true",
+    "unit": "degF",
+    "value": null
+   },
+   {
+    "data": null,
+    "fetched_at": "2026-10-10T18:47:15.801440Z",
+    "id": "obs.apparent_temp_f",
+    "kind": "series",
+    "metric": "apparent_temp_f",
+    "note": "hourly max gust/wind (knots converted to mph), last temp, min feels-like",
+    "role": "observation",
+    "series": [
+     {
+      "t": "2022-12-22T06:00:00Z",
+      "v": -18.62
+     },
+     {
+      "t": "2022-12-22T07:00:00Z",
+      "v": -19.41
+     },
+     {
+      "t": "2022-12-22T08:00:00Z",
+      "v": -20.7
+     },
+     {
+      "t": "2022-12-22T09:00:00Z",
+      "v": -27.22
+     },
+     {
+      "t": "2022-12-22T10:00:00Z",
+      "v": -27.69
+     },
+     {
+      "t": "2022-12-22T11:00:00Z",
+      "v": -28.68
+     },
+     {
+      "t": "2022-12-22T12:00:00Z",
+      "v": -31.72
+     },
+     {
+      "t": "2022-12-22T13:00:00Z",
+      "v": -32.27
+     },
+     {
+      "t": "2022-12-22T14:00:00Z",
+      "v": -33.46
+     },
+     {
+      "t": "2022-12-22T15:00:00Z",
+      "v": -36.36
+     },
+     {
+      "t": "2022-12-22T16:00:00Z",
+      "v": -38.01
+     },
+     {
+      "t": "2022-12-22T17:00:00Z",
+      "v": -39.49
+     }
+    ],
+    "source": "IEM ASOS AMW (obhistory)",
+    "source_time": "2022-12-22T18:00:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=IA_ASOS&station=AMW&date=2022-12-22&full=true",
+    "unit": "degF",
+    "value": null
+   },
+   {
+    "data": null,
+    "fetched_at": "2026-10-10T18:47:15.801440Z",
+    "id": "obs.visibility_mi",
+    "kind": "series",
+    "metric": "visibility_mi",
+    "note": "hourly max gust/wind (knots converted to mph), last temp, min feels-like",
+    "role": "observation",
+    "series": [
+     {
+      "t": "2022-12-22T06:00:00Z",
+      "v": 1.0
+     },
+     {
+      "t": "2022-12-22T07:00:00Z",
+      "v": 1.5
+     },
+     {
+      "t": "2022-12-22T08:00:00Z",
+      "v": 2.0
+     },
+     {
+      "t": "2022-12-22T09:00:00Z",
+      "v": 1.5
+     },
+     {
+      "t": "2022-12-22T10:00:00Z",
+      "v": 1.25
+     },
+     {
+      "t": "2022-12-22T11:00:00Z",
+      "v": 1.5
+     },
+     {
+      "t": "2022-12-22T12:00:00Z",
+      "v": 2.0
+     },
+     {
+      "t": "2022-12-22T13:00:00Z",
+      "v": 4.0
+     },
+     {
+      "t": "2022-12-22T14:00:00Z",
+      "v": 2.5
+     },
+     {
+      "t": "2022-12-22T15:00:00Z",
+      "v": 1.25
+     },
+     {
+      "t": "2022-12-22T16:00:00Z",
+      "v": 1.75
+     },
+     {
+      "t": "2022-12-22T17:00:00Z",
+      "v": 1.75
+     },
+     {
+      "t": "2022-12-22T18:00:00Z",
+      "v": 2.5
+     }
+    ],
+    "source": "IEM ASOS AMW (obhistory)",
+    "source_time": "2022-12-22T18:00:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=IA_ASOS&station=AMW&date=2022-12-22&full=true",
+    "unit": "mi",
+    "value": null
+   },
+   {
+    "data": null,
+    "fetched_at": "2026-10-10T18:47:15.801440Z",
+    "id": "obs.precip_in",
+    "kind": "series",
+    "metric": "precip_in",
+    "note": "hourly max gust/wind (knots converted to mph), last temp, min feels-like",
+    "role": "observation",
+    "series": [
+     {
+      "t": "2022-12-22T06:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T07:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T08:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T09:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T10:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T11:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T12:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T13:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T14:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T15:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T16:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T17:00:00Z",
+      "v": 0.0
+     }
+    ],
+    "source": "IEM ASOS AMW (obhistory)",
+    "source_time": "2022-12-22T18:00:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=IA_ASOS&station=AMW&date=2022-12-22&full=true",
+    "unit": "in",
+    "value": null
+   },
+   {
+    "data": null,
+    "fetched_at": "2026-10-10T18:47:15.801440Z",
+    "id": "obs.freezing_precip",
+    "kind": "series",
+    "metric": "freezing_precip",
+    "note": "hourly max gust/wind (knots converted to mph), last temp, min feels-like",
+    "role": "observation",
+    "series": [
+     {
+      "t": "2022-12-22T06:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T07:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T08:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T09:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T10:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T11:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T12:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T13:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T14:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T15:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T16:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T17:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T18:00:00Z",
+      "v": 0.0
+     }
+    ],
+    "source": "IEM ASOS AMW (obhistory)",
+    "source_time": "2022-12-22T18:00:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=IA_ASOS&station=AMW&date=2022-12-22&full=true",
+    "unit": "flag",
+    "value": null
+   },
+   {
+    "data": null,
+    "fetched_at": "2026-10-10T18:47:15.801440Z",
+    "id": "obs.snow_obs",
+    "kind": "series",
+    "metric": "snow_obs",
+    "note": "hourly max gust/wind (knots converted to mph), last temp, min feels-like",
+    "role": "observation",
+    "series": [
+     {
+      "t": "2022-12-22T06:00:00Z",
+      "v": 1.0
+     },
+     {
+      "t": "2022-12-22T07:00:00Z",
+      "v": 1.0
+     },
+     {
+      "t": "2022-12-22T08:00:00Z",
+      "v": 1.0
+     },
+     {
+      "t": "2022-12-22T09:00:00Z",
+      "v": 1.0
+     },
+     {
+      "t": "2022-12-22T10:00:00Z",
+      "v": 1.0
+     },
+     {
+      "t": "2022-12-22T11:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T12:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T13:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T14:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T15:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T16:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T17:00:00Z",
+      "v": 0.0
+     },
+     {
+      "t": "2022-12-22T18:00:00Z",
+      "v": 0.0
+     }
+    ],
+    "source": "IEM ASOS AMW (obhistory)",
+    "source_time": "2022-12-22T18:00:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=IA_ASOS&station=AMW&date=2022-12-22&full=true",
+    "unit": "flag",
+    "value": null
+   },
+   {
+    "data": {
+     "corridor": "i35_ames_dsm",
+     "label": "Travel Advisory",
+     "labels": [
+      "CC Snow",
+      "PC Snow",
+      "Travel Advisory"
+     ],
+     "n_segments": 9,
+     "name": "I-35 Ames - Des Moines (Ankeny)",
+     "rank_label": "Travel advisory"
+    },
+    "fetched_at": "2026-10-10T18:47:48.030738Z",
+    "id": "road.i35_ames_dsm",
+    "kind": "road",
+    "metric": "road_condition_rank",
+    "note": null,
+    "role": "observation",
+    "series": null,
+    "source": "Iowa DOT via IEM iowa_winter_roadcond",
+    "source_time": "2022-12-22T13:37:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/iowa_winter_roadcond.geojson?valid=2022-12-22T18:00:00Z",
+    "unit": "rank",
+    "value": 4.0
+   },
+   {
+    "data": {
+     "corridor": "i35_ames_storycity",
+     "label": "PC Snow",
+     "labels": [
+      "PC Snow"
+     ],
+     "n_segments": 1,
+     "name": "I-35 Ames - Story City",
+     "rank_label": "Partially covered"
+    },
+    "fetched_at": "2026-10-10T18:47:48.030738Z",
+    "id": "road.i35_ames_storycity",
+    "kind": "road",
+    "metric": "road_condition_rank",
+    "note": null,
+    "role": "observation",
+    "series": null,
+    "source": "Iowa DOT via IEM iowa_winter_roadcond",
+    "source_time": "2022-12-22T13:37:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/iowa_winter_roadcond.geojson?valid=2022-12-22T18:00:00Z",
+    "unit": "rank",
+    "value": 2.0
+   },
+   {
+    "data": {
+     "corridor": "us30_ames_boone",
+     "label": "CC Snow",
+     "labels": [
+      "CC Snow",
+      "PC Snow"
+     ],
+     "n_segments": 3,
+     "name": "US-30 Ames - Boone",
+     "rank_label": "Completely covered"
+    },
+    "fetched_at": "2026-10-10T18:47:48.030738Z",
+    "id": "road.us30_ames_boone",
+    "kind": "road",
+    "metric": "road_condition_rank",
+    "note": null,
+    "role": "observation",
+    "series": null,
+    "source": "Iowa DOT via IEM iowa_winter_roadcond",
+    "source_time": "2022-12-21T23:59:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/iowa_winter_roadcond.geojson?valid=2022-12-22T18:00:00Z",
+    "unit": "rank",
+    "value": 3.0
+   },
+   {
+    "data": {
+     "corridor": "us30_ames_nevada",
+     "label": "CC Snow",
+     "labels": [
+      "CC Snow"
+     ],
+     "n_segments": 1,
+     "name": "US-30 Ames - Nevada",
+     "rank_label": "Completely covered"
+    },
+    "fetched_at": "2026-10-10T18:47:48.030738Z",
+    "id": "road.us30_ames_nevada",
+    "kind": "road",
+    "metric": "road_condition_rank",
+    "note": null,
+    "role": "observation",
+    "series": null,
+    "source": "Iowa DOT via IEM iowa_winter_roadcond",
+    "source_time": "2022-12-22T00:03:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/iowa_winter_roadcond.geojson?valid=2022-12-22T18:00:00Z",
+    "unit": "rank",
+    "value": 3.0
+   },
+   {
+    "data": {
+     "corridor": "us69_ames_huxley",
+     "label": "CC Snow",
+     "labels": [
+      "CC Snow"
+     ],
+     "n_segments": 1,
+     "name": "US-69 Ames - Huxley",
+     "rank_label": "Completely covered"
+    },
+    "fetched_at": "2026-10-10T18:47:48.030738Z",
+    "id": "road.us69_ames_huxley",
+    "kind": "road",
+    "metric": "road_condition_rank",
+    "note": null,
+    "role": "observation",
+    "series": null,
+    "source": "Iowa DOT via IEM iowa_winter_roadcond",
+    "source_time": "2022-12-22T00:03:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/iowa_winter_roadcond.geojson?valid=2022-12-22T18:00:00Z",
+    "unit": "rank",
+    "value": 3.0
+   },
+   {
+    "data": {
+     "stations": [
+      {
+       "air_f": 3.7,
+       "condition": "Ice Watch",
+       "name": "Ames (I-35)",
+       "pavement_f": 0.9,
+       "station": "RAMI4",
+       "utc_valid": "2022-12-22T18:00:00Z"
+      },
+      {
+       "air_f": -11.6,
+       "condition": "Ice Watch",
+       "name": "Ankeny (I-35)",
+       "pavement_f": null,
+       "station": "RAKI4",
+       "utc_valid": "2022-12-22T18:00:00Z"
+      },
+      {
+       "air_f": -12.1,
+       "condition": "Ice Warning",
+       "name": "Granger",
+       "pavement_f": -3.6,
+       "station": "RGAI4",
+       "utc_valid": "2022-12-22T18:00:00Z"
+      }
+     ]
+    },
+    "fetched_at": "2026-10-10T18:47:37.011862Z",
+    "id": "rwis.ice_condition_sensors",
+    "kind": "scalar",
+    "metric": "rwis_ice_sensor_count",
+    "note": "pavement sensors within 40 km reporting an ice watch/warning condition",
+    "role": "observation",
+    "series": null,
+    "source": "Iowa DOT RWIS via IEM",
+    "source_time": "2022-12-22T18:00:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/rwis.json?valid=2022-12-22T18:00:00Z",
+    "unit": "count",
+    "value": 8.0
+   },
+   {
+    "data": {
+     "name": "Granger",
+     "station": "RGAI4"
+    },
+    "fetched_at": "2026-10-10T18:47:37.011862Z",
+    "id": "rwis.min_pavement_temp_f",
+    "kind": "scalar",
+    "metric": "pavement_temp_f",
+    "note": null,
+    "role": "observation",
+    "series": null,
+    "source": "Iowa DOT RWIS via IEM",
+    "source_time": "2022-12-22T18:00:00Z",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/rwis.json?valid=2022-12-22T18:00:00Z",
+    "unit": "degF",
+    "value": -3.6
+   },
+   {
+    "data": {
+     "expire": null,
+     "issue": null,
+     "rank": -1,
+     "wind_probability": null
+    },
+    "fetched_at": "2026-10-10T18:47:37.123823Z",
+    "id": "spc.day1_category",
+    "kind": "outlook",
+    "metric": "spc_category",
+    "note": null,
+    "role": "forecast",
+    "series": null,
+    "source": "SPC convective outlook via IEM",
+    "source_time": null,
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/nws/outlook_by_point.json?lat=42.0308&lon=-93.6319&valid=2022-12-22T18:00:00Z",
+    "unit": "category",
+    "value": "NONE"
+   },
+   {
+    "data": {
+     "expire": null,
+     "issue": null,
+     "rank": -1,
+     "wind_probability": null
+    },
+    "fetched_at": "2026-10-10T18:47:37.123823Z",
+    "id": "spc.day2_category",
+    "kind": "outlook",
+    "metric": "spc_category",
+    "note": null,
+    "role": "forecast",
+    "series": null,
+    "source": "SPC convective outlook via IEM",
+    "source_time": null,
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/nws/outlook_by_point.json?lat=42.0308&lon=-93.6319&valid=2022-12-22T18:00:00Z",
+    "unit": "category",
+    "value": "NONE"
+   }
+  ],
+  "alerts": [
+   {
+    "archive_note": "end time is the archive's final value (may reflect later extensions)",
+    "areaDesc": "IAZ048",
+    "certainty": "Likely",
+    "description": null,
+    "effective": "2022-12-21T17:25:00+00:00",
+    "ends": "2022-12-24T12:00:00Z",
+    "event": "Blizzard Warning",
+    "expires": "2022-12-24T12:00:00Z",
+    "headline": "Blizzard Warning (BZ.W) for IAZ048",
+    "id": "DMX.BZ.W.0001.2022",
+    "inferred_fields": [
+     "severity",
+     "certainty",
+     "urgency"
+    ],
+    "instruction": null,
+    "onset": "2022-12-22T18:00:00Z",
+    "origin": "iem_vtec_archive",
+    "senderName": "NWS DMX",
+    "sent": "2022-12-21T17:25:00+00:00",
+    "severity": "Extreme",
+    "ugc": [
+     "IAZ048"
+    ],
+    "urgency": "Expected",
+    "vtec": [
+     "BZ.W #1"
+    ],
+    "web": "https://mesonet.agron.iastate.edu/vtec/?year=2022&wfo=KDMX&phenomena=BZ&significance=W&eventid=0001"
+   }
+  ],
+  "integrity_ok": true,
+  "ai_addon": {
+   "status": "none"
+  }
+ },
+ "timeseries": {
+  "snapshot_id": "933fcb0ccb8d41acadc472e124afd73c",
+  "as_of": "2022-12-22T18:00:00+00:00",
+  "timezone": "America/Chicago",
+  "rows": [
+   {
+    "t": "2022-12-22T06:00:00+00:00",
+    "obs_wind_gust_mph": 37.98,
+    "obs_wind_speed_mph": 25.32,
+    "obs_temp_f": 3.0,
+    "obs_apparent_temp_f": -18.62,
+    "obs_visibility_mi": 1.0,
+    "obs_precip_in": 0.0,
+    "obs_freezing_precip": 0.0,
+    "obs_snow_obs": 1.0
+   },
+   {
+    "t": "2022-12-22T07:00:00+00:00",
+    "obs_wind_gust_mph": 34.52,
+    "obs_wind_speed_mph": 24.17,
+    "obs_temp_f": 1.0,
+    "obs_apparent_temp_f": -19.41,
+    "obs_visibility_mi": 1.5,
+    "obs_precip_in": 0.0,
+    "obs_freezing_precip": 0.0,
+    "obs_snow_obs": 1.0
+   },
+   {
+    "t": "2022-12-22T08:00:00+00:00",
+    "obs_wind_gust_mph": 31.07,
+    "obs_wind_speed_mph": 23.02,
+    "obs_temp_f": 0.0,
+    "obs_apparent_temp_f": -20.7,
+    "obs_visibility_mi": 2.0,
+    "obs_precip_in": 0.0,
+    "obs_freezing_precip": 0.0,
+    "obs_snow_obs": 1.0
+   },
+   {
+    "t": "2022-12-22T09:00:00+00:00",
+    "obs_wind_gust_mph": 36.82,
+    "obs_wind_speed_mph": 24.17,
+    "obs_temp_f": -3.0,
+    "obs_apparent_temp_f": -27.22,
+    "obs_visibility_mi": 1.5,
+    "obs_precip_in": 0.0,
+    "obs_freezing_precip": 0.0,
+    "obs_snow_obs": 1.0
+   },
+   {
+    "t": "2022-12-22T10:00:00+00:00",
+    "obs_wind_gust_mph": 35.67,
+    "obs_wind_speed_mph": 24.17,
+    "obs_temp_f": -3.0,
+    "obs_apparent_temp_f": -27.69,
+    "obs_visibility_mi": 1.25,
+    "obs_precip_in": 0.0,
+    "obs_freezing_precip": 0.0,
+    "obs_snow_obs": 1.0
+   },
+   {
+    "t": "2022-12-22T11:00:00+00:00",
+    "obs_wind_gust_mph": 34.52,
+    "obs_wind_speed_mph": 24.17,
+    "obs_temp_f": -4.0,
+    "obs_apparent_temp_f": -28.68,
+    "obs_visibility_mi": 1.5,
+    "obs_precip_in": 0.0,
+    "obs_freezing_precip": 0.0,
+    "obs_snow_obs": 0.0
+   },
+   {
+    "t": "2022-12-22T12:00:00+00:00",
+    "obs_wind_gust_mph": 33.37,
+    "obs_wind_speed_mph": 23.02,
+    "obs_temp_f": -7.0,
+    "obs_apparent_temp_f": -31.72,
+    "obs_visibility_mi": 2.0,
+    "obs_precip_in": 0.0,
+    "obs_freezing_precip": 0.0,
+    "obs_snow_obs": 0.0
+   },
+   {
+    "t": "2022-12-22T13:00:00+00:00",
+    "obs_wind_gust_mph": 32.22,
+    "obs_wind_speed_mph": 23.02,
+    "obs_temp_f": -7.0,
+    "obs_apparent_temp_f": -32.27,
+    "obs_visibility_mi": 4.0,
+    "obs_precip_in": 0.0,
+    "obs_freezing_precip": 0.0,
+    "obs_snow_obs": 0.0
+   },
+   {
+    "t": "2022-12-22T14:00:00+00:00",
+    "obs_wind_gust_mph": 37.98,
+    "obs_wind_speed_mph": 25.32,
+    "obs_temp_f": -8.0,
+    "obs_apparent_temp_f": -33.46,
+    "obs_visibility_mi": 2.5,
+    "obs_precip_in": 0.0,
+    "obs_freezing_precip": 0.0,
+    "obs_snow_obs": 0.0
+   },
+   {
+    "t": "2022-12-22T15:00:00+00:00",
+    "obs_wind_gust_mph": 37.98,
+    "obs_wind_speed_mph": 27.62,
+    "obs_temp_f": -9.0,
+    "obs_apparent_temp_f": -36.36,
+    "obs_visibility_mi": 1.25,
+    "obs_precip_in": 0.0,
+    "obs_freezing_precip": 0.0,
+    "obs_snow_obs": 0.0
+   },
+   {
+    "t": "2022-12-22T16:00:00+00:00",
+    "obs_wind_gust_mph": 35.67,
+    "obs_wind_speed_mph": 26.47,
+    "obs_temp_f": -9.9,
+    "obs_apparent_temp_f": -38.01,
+    "obs_visibility_mi": 1.75,
+    "obs_precip_in": 0.0,
+    "obs_freezing_precip": 0.0,
+    "obs_snow_obs": 0.0
+   },
+   {
+    "t": "2022-12-22T17:00:00+00:00",
+    "fcst_wind_gust_mph": 32.2,
+    "fcst_wind_speed_mph": 21.9,
+    "fcst_temp_f": -10.0,
+    "obs_wind_gust_mph": 41.43,
+    "obs_wind_speed_mph": 26.47,
+    "obs_temp_f": -9.9,
+    "obs_apparent_temp_f": -39.49,
+    "obs_visibility_mi": 1.75,
+    "obs_precip_in": 0.0,
+    "obs_freezing_precip": 0.0,
+    "obs_snow_obs": 0.0
+   },
+   {
+    "t": "2022-12-22T18:00:00+00:00",
+    "fcst_wind_gust_mph": 32.2,
+    "fcst_wind_speed_mph": 21.9,
+    "fcst_temp_f": -10.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "obs_wind_gust_mph": 29.92,
+    "obs_wind_speed_mph": 24.17,
+    "obs_visibility_mi": 2.5,
+    "obs_freezing_precip": 0.0,
+    "obs_snow_obs": 0.0,
+    "fcst_apparent_temp_f": -36.1,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-22T19:00:00+00:00",
+    "fcst_wind_gust_mph": 32.2,
+    "fcst_wind_speed_mph": 21.9,
+    "fcst_temp_f": -10.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -36.1,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-22T20:00:00+00:00",
+    "fcst_wind_gust_mph": 33.4,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": -9.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -34.2,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-22T21:00:00+00:00",
+    "fcst_wind_gust_mph": 33.4,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": -9.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -34.2,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-22T22:00:00+00:00",
+    "fcst_wind_gust_mph": 33.4,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": -9.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -34.2,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-22T23:00:00+00:00",
+    "fcst_wind_gust_mph": 33.4,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": -11.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -36.8,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T00:00:00+00:00",
+    "fcst_wind_gust_mph": 33.4,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": -11.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -36.8,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T01:00:00+00:00",
+    "fcst_wind_gust_mph": 33.4,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": -11.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -36.8,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T02:00:00+00:00",
+    "fcst_wind_gust_mph": 35.7,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": -10.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -35.5,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T03:00:00+00:00",
+    "fcst_wind_gust_mph": 35.7,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": -10.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -35.5,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T04:00:00+00:00",
+    "fcst_wind_gust_mph": 35.7,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": -10.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -35.5,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T05:00:00+00:00",
+    "fcst_wind_gust_mph": 33.4,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": -10.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -35.5,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T06:00:00+00:00",
+    "fcst_wind_gust_mph": 33.4,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": -10.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -35.5,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T07:00:00+00:00",
+    "fcst_wind_gust_mph": 33.4,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": -10.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -35.5,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T08:00:00+00:00",
+    "fcst_wind_gust_mph": 35.7,
+    "fcst_wind_speed_mph": 21.9,
+    "fcst_temp_f": -9.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -34.7,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T09:00:00+00:00",
+    "fcst_wind_gust_mph": 35.7,
+    "fcst_wind_speed_mph": 21.9,
+    "fcst_temp_f": -9.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -34.7,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T10:00:00+00:00",
+    "fcst_wind_gust_mph": 35.7,
+    "fcst_wind_speed_mph": 21.9,
+    "fcst_temp_f": -9.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -34.7,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T11:00:00+00:00",
+    "fcst_wind_gust_mph": 38.0,
+    "fcst_wind_speed_mph": 21.9,
+    "fcst_temp_f": -8.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -33.4,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T12:00:00+00:00",
+    "fcst_wind_gust_mph": 38.0,
+    "fcst_wind_speed_mph": 21.9,
+    "fcst_temp_f": -8.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -33.4,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T13:00:00+00:00",
+    "fcst_wind_gust_mph": 38.0,
+    "fcst_wind_speed_mph": 21.9,
+    "fcst_temp_f": -8.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -33.4,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T14:00:00+00:00",
+    "fcst_wind_gust_mph": 39.1,
+    "fcst_wind_speed_mph": 23.0,
+    "fcst_temp_f": -7.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -32.6,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T15:00:00+00:00",
+    "fcst_wind_gust_mph": 39.1,
+    "fcst_wind_speed_mph": 23.0,
+    "fcst_temp_f": -7.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -32.6,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T16:00:00+00:00",
+    "fcst_wind_gust_mph": 39.1,
+    "fcst_wind_speed_mph": 23.0,
+    "fcst_temp_f": -7.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -32.6,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T17:00:00+00:00",
+    "fcst_wind_gust_mph": 41.4,
+    "fcst_wind_speed_mph": 26.5,
+    "fcst_temp_f": -3.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -28.7,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T18:00:00+00:00",
+    "fcst_wind_gust_mph": 41.4,
+    "fcst_wind_speed_mph": 26.5,
+    "fcst_temp_f": -3.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -28.7,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T19:00:00+00:00",
+    "fcst_wind_gust_mph": 41.4,
+    "fcst_wind_speed_mph": 26.5,
+    "fcst_temp_f": -3.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -28.7,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T20:00:00+00:00",
+    "fcst_wind_gust_mph": 43.7,
+    "fcst_wind_speed_mph": 25.3,
+    "fcst_temp_f": -2.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -26.9,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T21:00:00+00:00",
+    "fcst_wind_gust_mph": 43.7,
+    "fcst_wind_speed_mph": 25.3,
+    "fcst_temp_f": -2.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -26.9,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T22:00:00+00:00",
+    "fcst_wind_gust_mph": 43.7,
+    "fcst_wind_speed_mph": 25.3,
+    "fcst_temp_f": -2.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -26.9,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-23T23:00:00+00:00",
+    "fcst_wind_gust_mph": 41.4,
+    "fcst_wind_speed_mph": 24.2,
+    "fcst_temp_f": -4.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -29.1,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T00:00:00+00:00",
+    "fcst_wind_gust_mph": 41.4,
+    "fcst_wind_speed_mph": 24.2,
+    "fcst_temp_f": -4.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -29.1,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T01:00:00+00:00",
+    "fcst_wind_gust_mph": 41.4,
+    "fcst_wind_speed_mph": 24.2,
+    "fcst_temp_f": -4.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -29.1,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T02:00:00+00:00",
+    "fcst_wind_gust_mph": 39.1,
+    "fcst_wind_speed_mph": 21.9,
+    "fcst_temp_f": -4.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -28.1,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T03:00:00+00:00",
+    "fcst_wind_gust_mph": 39.1,
+    "fcst_wind_speed_mph": 21.9,
+    "fcst_temp_f": -4.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -28.1,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T04:00:00+00:00",
+    "fcst_wind_gust_mph": 39.1,
+    "fcst_wind_speed_mph": 21.9,
+    "fcst_temp_f": -4.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -28.1,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T05:00:00+00:00",
+    "fcst_wind_gust_mph": 38.0,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": -4.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -27.6,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T06:00:00+00:00",
+    "fcst_wind_gust_mph": 38.0,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": -4.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -27.6,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T07:00:00+00:00",
+    "fcst_wind_gust_mph": 38.0,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": -4.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -27.6,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T08:00:00+00:00",
+    "fcst_wind_gust_mph": 34.5,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": -4.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -27.6,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T09:00:00+00:00",
+    "fcst_wind_gust_mph": 34.5,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": -4.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -27.6,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T10:00:00+00:00",
+    "fcst_wind_gust_mph": 34.5,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": -4.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -27.6,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T11:00:00+00:00",
+    "fcst_wind_gust_mph": 29.9,
+    "fcst_wind_speed_mph": 19.6,
+    "fcst_temp_f": -4.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -27.0,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T12:00:00+00:00",
+    "fcst_wind_gust_mph": 29.9,
+    "fcst_wind_speed_mph": 19.6,
+    "fcst_temp_f": -4.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -27.0,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T13:00:00+00:00",
+    "fcst_wind_gust_mph": 29.9,
+    "fcst_wind_speed_mph": 19.6,
+    "fcst_temp_f": -4.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -27.0,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T14:00:00+00:00",
+    "fcst_wind_gust_mph": 31.1,
+    "fcst_wind_speed_mph": 19.6,
+    "fcst_temp_f": -3.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -25.7,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T15:00:00+00:00",
+    "fcst_wind_gust_mph": 31.1,
+    "fcst_wind_speed_mph": 19.6,
+    "fcst_temp_f": -3.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -25.7,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T16:00:00+00:00",
+    "fcst_wind_gust_mph": 31.1,
+    "fcst_wind_speed_mph": 19.6,
+    "fcst_temp_f": -3.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -25.7,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T17:00:00+00:00",
+    "fcst_wind_gust_mph": 32.2,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": 3.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -18.4,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   },
+   {
+    "t": "2022-12-24T18:00:00+00:00",
+    "fcst_wind_gust_mph": 32.2,
+    "fcst_wind_speed_mph": 20.7,
+    "fcst_temp_f": 3.0,
+    "fcst_ice_in": 0.0,
+    "fcst_snow_in": 0.0,
+    "fcst_qpf_in": 0.0,
+    "fcst_pop_pct": 0.0,
+    "fcst_apparent_temp_f": -18.4,
+    "fcst_ice_cum": 0.0,
+    "fcst_snow_cum": 0.0
+   }
+  ],
+  "meta": {
+   "fcst_wind_gust_mph": {
+    "id": "fcst.wind_gust_mph",
+    "source": "NBM NBS KAMW run 2022-12-22T13:00:00Z + 2022-12-22T07:00:00Z (IEM archive)",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/mos.json?station=KAMW&model=NBS&runtime=2022-12-22T13:00:00Z",
+    "fetched_at": "2026-10-10T18:47:27.571650Z",
+    "source_time": "2022-12-22T13:00:00Z",
+    "unit": "mph",
+    "note": "forecast as issued before as_of; 3-hourly values held, 6-h amounts spread hourly"
+   },
+   "fcst_wind_speed_mph": {
+    "id": "fcst.wind_speed_mph",
+    "source": "NBM NBS KAMW run 2022-12-22T13:00:00Z + 2022-12-22T07:00:00Z (IEM archive)",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/mos.json?station=KAMW&model=NBS&runtime=2022-12-22T13:00:00Z",
+    "fetched_at": "2026-10-10T18:47:27.571650Z",
+    "source_time": "2022-12-22T13:00:00Z",
+    "unit": "mph",
+    "note": "forecast as issued before as_of; 3-hourly values held, 6-h amounts spread hourly"
+   },
+   "fcst_temp_f": {
+    "id": "fcst.temp_f",
+    "source": "NBM NBS KAMW run 2022-12-22T13:00:00Z + 2022-12-22T07:00:00Z (IEM archive)",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/mos.json?station=KAMW&model=NBS&runtime=2022-12-22T13:00:00Z",
+    "fetched_at": "2026-10-10T18:47:27.571650Z",
+    "source_time": "2022-12-22T13:00:00Z",
+    "unit": "degF",
+    "note": "forecast as issued before as_of; 3-hourly values held, 6-h amounts spread hourly"
+   },
+   "fcst_ice_in": {
+    "id": "fcst.ice_in",
+    "source": "NBM NBS KAMW run 2022-12-22T13:00:00Z + 2022-12-22T07:00:00Z (IEM archive)",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/mos.json?station=KAMW&model=NBS&runtime=2022-12-22T13:00:00Z",
+    "fetched_at": "2026-10-10T18:47:27.571650Z",
+    "source_time": "2022-12-22T13:00:00Z",
+    "unit": "in",
+    "note": "forecast as issued before as_of; 3-hourly values held, 6-h amounts spread hourly"
+   },
+   "fcst_snow_in": {
+    "id": "fcst.snow_in",
+    "source": "NBM NBS KAMW run 2022-12-22T13:00:00Z + 2022-12-22T07:00:00Z (IEM archive)",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/mos.json?station=KAMW&model=NBS&runtime=2022-12-22T13:00:00Z",
+    "fetched_at": "2026-10-10T18:47:27.571650Z",
+    "source_time": "2022-12-22T13:00:00Z",
+    "unit": "in",
+    "note": "forecast as issued before as_of; 3-hourly values held, 6-h amounts spread hourly"
+   },
+   "fcst_qpf_in": {
+    "id": "fcst.qpf_in",
+    "source": "NBM NBS KAMW run 2022-12-22T13:00:00Z + 2022-12-22T07:00:00Z (IEM archive)",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/mos.json?station=KAMW&model=NBS&runtime=2022-12-22T13:00:00Z",
+    "fetched_at": "2026-10-10T18:47:27.571650Z",
+    "source_time": "2022-12-22T13:00:00Z",
+    "unit": "in",
+    "note": "forecast as issued before as_of; 3-hourly values held, 6-h amounts spread hourly"
+   },
+   "fcst_pop_pct": {
+    "id": "fcst.pop_pct",
+    "source": "NBM NBS KAMW run 2022-12-22T13:00:00Z + 2022-12-22T07:00:00Z (IEM archive)",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/mos.json?station=KAMW&model=NBS&runtime=2022-12-22T13:00:00Z",
+    "fetched_at": "2026-10-10T18:47:27.571650Z",
+    "source_time": "2022-12-22T13:00:00Z",
+    "unit": "%",
+    "note": "forecast as issued before as_of; 3-hourly values held, 6-h amounts spread hourly"
+   },
+   "obs_wind_gust_mph": {
+    "id": "obs.wind_gust_mph",
+    "source": "IEM ASOS AMW (obhistory)",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=IA_ASOS&station=AMW&date=2022-12-22&full=true",
+    "fetched_at": "2026-10-10T18:47:15.801440Z",
+    "source_time": "2022-12-22T18:00:00Z",
+    "unit": "mph",
+    "note": "hourly max gust/wind (knots converted to mph), last temp, min feels-like"
+   },
+   "obs_wind_speed_mph": {
+    "id": "obs.wind_speed_mph",
+    "source": "IEM ASOS AMW (obhistory)",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=IA_ASOS&station=AMW&date=2022-12-22&full=true",
+    "fetched_at": "2026-10-10T18:47:15.801440Z",
+    "source_time": "2022-12-22T18:00:00Z",
+    "unit": "mph",
+    "note": "hourly max gust/wind (knots converted to mph), last temp, min feels-like"
+   },
+   "obs_temp_f": {
+    "id": "obs.temp_f",
+    "source": "IEM ASOS AMW (obhistory)",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=IA_ASOS&station=AMW&date=2022-12-22&full=true",
+    "fetched_at": "2026-10-10T18:47:15.801440Z",
+    "source_time": "2022-12-22T18:00:00Z",
+    "unit": "degF",
+    "note": "hourly max gust/wind (knots converted to mph), last temp, min feels-like"
+   },
+   "obs_apparent_temp_f": {
+    "id": "obs.apparent_temp_f",
+    "source": "IEM ASOS AMW (obhistory)",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=IA_ASOS&station=AMW&date=2022-12-22&full=true",
+    "fetched_at": "2026-10-10T18:47:15.801440Z",
+    "source_time": "2022-12-22T18:00:00Z",
+    "unit": "degF",
+    "note": "hourly max gust/wind (knots converted to mph), last temp, min feels-like"
+   },
+   "obs_visibility_mi": {
+    "id": "obs.visibility_mi",
+    "source": "IEM ASOS AMW (obhistory)",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=IA_ASOS&station=AMW&date=2022-12-22&full=true",
+    "fetched_at": "2026-10-10T18:47:15.801440Z",
+    "source_time": "2022-12-22T18:00:00Z",
+    "unit": "mi",
+    "note": "hourly max gust/wind (knots converted to mph), last temp, min feels-like"
+   },
+   "obs_precip_in": {
+    "id": "obs.precip_in",
+    "source": "IEM ASOS AMW (obhistory)",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=IA_ASOS&station=AMW&date=2022-12-22&full=true",
+    "fetched_at": "2026-10-10T18:47:15.801440Z",
+    "source_time": "2022-12-22T18:00:00Z",
+    "unit": "in",
+    "note": "hourly max gust/wind (knots converted to mph), last temp, min feels-like"
+   },
+   "obs_freezing_precip": {
+    "id": "obs.freezing_precip",
+    "source": "IEM ASOS AMW (obhistory)",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=IA_ASOS&station=AMW&date=2022-12-22&full=true",
+    "fetched_at": "2026-10-10T18:47:15.801440Z",
+    "source_time": "2022-12-22T18:00:00Z",
+    "unit": "flag",
+    "note": "hourly max gust/wind (knots converted to mph), last temp, min feels-like"
+   },
+   "obs_snow_obs": {
+    "id": "obs.snow_obs",
+    "source": "IEM ASOS AMW (obhistory)",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/obhistory.json?network=IA_ASOS&station=AMW&date=2022-12-22&full=true",
+    "fetched_at": "2026-10-10T18:47:15.801440Z",
+    "source_time": "2022-12-22T18:00:00Z",
+    "unit": "flag",
+    "note": "hourly max gust/wind (knots converted to mph), last temp, min feels-like"
+   },
+   "fcst_apparent_temp_f": {
+    "id": "fcst.temp_f",
+    "source": "NBM NBS KAMW run 2022-12-22T13:00:00Z + 2022-12-22T07:00:00Z (IEM archive)",
+    "source_url": "https://mesonet.agron.iastate.edu/api/1/mos.json?station=KAMW&model=NBS&runtime=2022-12-22T13:00:00Z",
+    "fetched_at": "2026-10-10T18:47:27.571650Z",
+    "source_time": "2022-12-22T13:00:00Z",
+    "unit": "degF",
+    "note": "Calculated from the saved forecast temperature and wind with the NWS wind chill formula; missing wind uses temperature unchanged.",
+    "derived": true,
+    "input_ids": [
+     "fcst.temp_f",
+     "fcst.wind_speed_mph"
+    ]
+   }
+  },
+  "threshold_lines": [
+   {
+    "chart": "ice_cum",
+    "value": 0.25,
+    "label": "fcst ice quarter inch (0.25 in)",
+    "rule_id": "winter.fcst_ice_quarter_inch",
+    "verified": true,
+    "level": "extreme"
+   },
+   {
+    "chart": "ice_cum",
+    "value": 0.1,
+    "label": "fcst ice tenth inch (0.1 in)",
+    "rule_id": "winter.fcst_ice_tenth_inch",
+    "verified": false,
+    "level": "significant"
+   },
+   {
+    "chart": "ice_cum",
+    "value": 0.01,
+    "label": "fcst ice any (0.01 in)",
+    "rule_id": "winter.fcst_ice_any",
+    "verified": true,
+    "level": "minor"
+   },
+   {
+    "chart": "snow_cum",
+    "value": 6.0,
+    "label": "fcst snow warning 12h (6 in)",
+    "rule_id": "winter.fcst_snow_warning_12h",
+    "verified": false,
+    "level": "significant"
+   },
+   {
+    "chart": "snow_cum",
+    "value": 3.0,
+    "label": "fcst snow advisory 24h (3 in)",
+    "rule_id": "winter.fcst_snow_advisory_24h",
+    "verified": false,
+    "level": "minor"
+   },
+   {
+    "chart": "wind",
+    "value": 80.0,
+    "label": "destructive gust (80 mph)",
+    "rule_id": "wind.destructive_gust",
+    "verified": true,
+    "level": "extreme"
+   },
+   {
+    "chart": "wind",
+    "value": 58.0,
+    "label": "fcst gust warning (58 mph)",
+    "rule_id": "wind.fcst_gust_warning",
+    "verified": true,
+    "level": "significant"
+   },
+   {
+    "chart": "wind",
+    "value": 45.0,
+    "label": "fcst gust advisory (45 mph)",
+    "rule_id": "wind.fcst_gust_advisory",
+    "verified": false,
+    "level": "minor"
+   },
+   {
+    "chart": "temp",
+    "value": -35.0,
+    "label": "fcst wind chill extreme (-35 degF)",
+    "rule_id": "cold.fcst_wind_chill_extreme",
+    "verified": false,
+    "level": "significant"
+   },
+   {
+    "chart": "temp",
+    "value": -20.0,
+    "label": "fcst wind chill advisory (-20 degF)",
+    "rule_id": "cold.fcst_wind_chill_advisory",
+    "verified": false,
+    "level": "minor"
+   }
+  ],
+  "windows": [
+   {
+    "kind": "hours",
+    "label": "Facility hours",
+    "start": "2022-12-22T13:30:00+00:00",
+    "end": "2022-12-22T22:30:00+00:00"
+   },
+   {
+    "kind": "am_commute",
+    "label": "AM commute",
+    "start": "2022-12-22T12:00:00+00:00",
+    "end": "2022-12-22T14:00:00+00:00"
+   },
+   {
+    "kind": "pm_commute",
+    "label": "PM commute",
+    "start": "2022-12-22T22:00:00+00:00",
+    "end": "2022-12-23T00:00:00+00:00"
+   },
+   {
+    "kind": "hours",
+    "label": "Facility hours",
+    "start": "2022-12-23T13:30:00+00:00",
+    "end": "2022-12-23T22:30:00+00:00"
+   },
+   {
+    "kind": "am_commute",
+    "label": "AM commute",
+    "start": "2022-12-23T12:00:00+00:00",
+    "end": "2022-12-23T14:00:00+00:00"
+   },
+   {
+    "kind": "pm_commute",
+    "label": "PM commute",
+    "start": "2022-12-23T22:00:00+00:00",
+    "end": "2022-12-24T00:00:00+00:00"
+   },
+   {
+    "kind": "am_commute",
+    "label": "AM commute",
+    "start": "2022-12-24T12:00:00+00:00",
+    "end": "2022-12-24T14:00:00+00:00"
+   },
+   {
+    "kind": "pm_commute",
+    "label": "PM commute",
+    "start": "2022-12-24T22:00:00+00:00",
+    "end": "2022-12-25T00:00:00+00:00"
+   }
+  ]
+ },
+ "note": "Retained immutable 2022-12-22 18:00 UTC replay snapshot, with a read-time chart projection. Source observations, forecasts and rules are unchanged; no hindsight snowfall totals are inserted."
+}

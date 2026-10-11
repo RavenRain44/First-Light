@@ -33,6 +33,9 @@ const args = arg === "--test" ? ["-m", "pytest", "-q"]
   : arg === "--daily-history" ? ["-m", "scripts.build_daily_history", ...process.argv.slice(3)]
   : arg === "--cameras" ? ["-m", "scripts.cache_cameras"]
   : arg === "--examples" ? ["-m", "scripts.seed_example_decisions"]
+  : arg === "--dataset-cloud" ? ["-m", "scripts.dataset_cloud", ...process.argv.slice(3)]
+  : arg === "--dataset-repo" ? ["-m", "scripts.dataset_repo", ...process.argv.slice(3)]
+  : arg === "--analyze-risk" ? ["-m", "scripts.analyze_risk", ...process.argv.slice(3)]
   : arg === "--backtest-ai" ? ["-m", "scripts.backtest_ai", ...process.argv.slice(3)]
   : ["-m", "uvicorn", "app.main:app", "--reload", "--port", getApiPort(), "--timeout-graceful-shutdown", "5"];
 const child = spawn(py, args, { cwd: backend, stdio: "inherit" });

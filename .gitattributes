@@ -1,3 +1,5 @@
 # Shell scripts and configs that run on Linux servers must keep LF line endings.
 *.sh text eol=lf
 deploy/Caddyfile text eol=lf
+# Frozen dataset files are checksummed byte for byte; never convert their line endings.
+backend/data/backtesting/** -text

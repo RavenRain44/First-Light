@@ -50,7 +50,9 @@ IMMUTABLE_TRIGGERS = [
 ]
 
 
-MIGRATIONS = [("readiness_level", "VARCHAR NOT NULL DEFAULT ''"), ("readiness_json", "VARCHAR NOT NULL DEFAULT '{}'")]
+MIGRATIONS = [("readiness_level", "VARCHAR NOT NULL DEFAULT ''"), ("readiness_json", "VARCHAR NOT NULL DEFAULT '{}'"),
+              ("sufficiency_status", "VARCHAR NOT NULL DEFAULT ''"), ("sufficiency_json", "VARCHAR NOT NULL DEFAULT '{}'")]
+CONTEXT_MIGRATIONS = [("evidence_status", "VARCHAR NOT NULL DEFAULT ''"), ("decision_basis", "VARCHAR NOT NULL DEFAULT ''")]
 
 
 def make_engine(url: str):
@@ -64,10 +66,11 @@ def make_engine(url: str):
     with eng.begin() as conn:
         # Additive migrations for databases created before a column existed. Old snapshots keep
         # the default (not recomputed): the record shows only what was computed at the time.
-        cols = {r[1] for r in conn.execute(text("PRAGMA table_info(snapshot)"))}
-        for name, ddl in MIGRATIONS:
-            if name not in cols:
-                conn.execute(text(f"ALTER TABLE snapshot ADD COLUMN {name} {ddl}"))
+        for table, migrations in (("snapshot", MIGRATIONS), ("decisioncontext", CONTEXT_MIGRATIONS)):
+            cols = {r[1] for r in conn.execute(text(f"PRAGMA table_info({table})"))}
+            for name, ddl in migrations:
+                if name not in cols:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
         for t in IMMUTABLE_TRIGGERS:
             conn.execute(text(t))
     return eng

@@ -26,10 +26,20 @@ export function suggestionReasons(snap: Snapshot): string[] {
     if (!valid.has(r.rule_id) || seen.has(r.rule_id) || !r.text.trim()) return false;
     seen.add(r.rule_id);
     return true;
-  }).slice(0, 3).map((r) => r.text.trim().replace(/[.!?]+$/, ""));
+  }).slice(0, 3).map((r) => {
+    // A sensor count is a pavement alert, not an amount of accumulated ice.
+    const cited = rules.find((rule) => rule.rule_id === r.rule_id)!;
+    return cited.metric === "rwis_ice_sensors" ? sensorReason(cited) : r.text.trim().replace(/[.!?]+$/, "");
+  });
   if (phrases.length) return phrases;
-  if (rules.length) return rules.slice(0, 3).map((r) => r.metric === "alert_present" ? `${r.observed_value} in effect` : r.label);
+  if (rules.length) return rules.slice(0, 3).map((r) => r.metric === "alert_present" ? `${r.observed_value} in effect`
+    : r.metric === "rwis_ice_sensors" ? sensorReason(r) : r.label);
   return ["no operating-status threshold being crossed in the available data"];
+}
+
+function sensorReason(rule: RuleResult): string {
+  const count = rule.observed_value;
+  return `${count} nearby pavement sensor${count === 1 ? "" : "s"} reporting an ice watch/warning condition`;
 }
 
 export function joinReasons(reasons: string[]): string {
@@ -42,6 +52,8 @@ export interface MetricDefinition {
   unit: string;
   hazard: string;
   contextHazards?: string[];
+  /** A recorded observation aggregate, plotted once rather than as a forecast. */
+  signal?: string;
   series: { key: string; name: string; color: string; forecast?: boolean }[];
 }
 
@@ -58,41 +70,98 @@ export const METRICS: MetricDefinition[] = [
     { key: "fcst_snow_cum", name: "Forecast snow", color: "var(--series-2)", forecast: true }] },
   { id: "temp", title: "Temperature & feels-like", unit: "°F", hazard: "cold", contextHazards: ["winter"], series: [
     { key: "obs_temp_f", name: "Observed temperature (hourly report)", color: "var(--series-1)" },
+    { key: "obs_apparent_temp_f", name: "Observed feels-like", color: "var(--series-3)" },
+    { key: "obs_pavement_temp_f", name: "Observed pavement temperature (nearby minimum)", color: "var(--series-3)" },
     { key: "fcst_temp_f", name: "Forecast temperature", color: "var(--series-2)", forecast: true },
     { key: "fcst_apparent_temp_f", name: "Forecast feels-like", color: "var(--series-3)", forecast: true }] },
   { id: "pop", title: "Precipitation probability", unit: "%", hazard: "winter", contextHazards: ["wind"], series: [
     { key: "fcst_pop_pct", name: "Forecast probability", color: "var(--series-2)", forecast: true }] },
+  { id: "rwis", title: "Pavement ice alerts", unit: "sensors", hazard: "winter", signal: "rwis_ice_sensors", series: [
+    { key: "obs_rwis_ice_sensors", name: "Sensors reporting an ice watch/warning", color: "var(--series-1)" }] },
+  { id: "freezing", title: "Observed freezing precipitation (last 3 hours)", unit: "hours", hazard: "winter", signal: "obs_freezing_precip_hours_3h", series: [
+    { key: "obs_freezing_precip_hours_3h", name: "Hours reporting freezing rain, drizzle or ice pellets", color: "var(--series-1)" }] },
+  { id: "observed-ice", title: "Measured ice accretion (last 3 hours)", unit: "in", hazard: "winter", signal: "obs_ice_accretion_3h_in", series: [
+    { key: "obs_ice_accretion_3h_in", name: "Observed ice accretion", color: "var(--series-1)" }] },
+  { id: "roads", title: "Commute road conditions", unit: "rank", hazard: "winter", signal: "road_worst_rank", series: [
+    { key: "obs_road_worst_rank", name: "Worst reported commute-corridor condition", color: "var(--series-1)" }] },
 ];
 
 export function metricForRule(rule: RuleResult): string | undefined {
   if (rule.metric.includes("gust")) return "wind";
   if (rule.metric.startsWith("fcst_ice")) return "ice";
   if (rule.metric.startsWith("fcst_snow")) return "snow";
+  if (rule.metric === "rwis_ice_sensors") return "rwis";
+  if (rule.metric === "obs_freezing_precip_hours_3h") return "freezing";
+  if (rule.metric === "obs_ice_accretion_3h_in") return "observed-ice";
+  if (rule.metric === "road_worst_rank") return "roads";
   if (rule.metric.includes("apparent")) return "temp";
   return undefined;
 }
 
+export function metricHasData(snap: Snapshot, metric: MetricDefinition, data: Timeseries): boolean {
+  return metricRows(snap, metric, data).some((row) => metric.series.some((s) =>
+    typeof row[s.key] === "number" && Number.isFinite(row[s.key])));
+}
+
+function winterMetrics(snap: Snapshot, rule: RuleResult, data: Timeseries): string[] {
+  const event = String(rule.observed_value ?? "");
+  // Named events are unambiguous; generic winter alerts need their actual text or measurements.
+  if (/blizzard/i.test(event)) return ["snow", "wind", "temp"];
+  if (/snow/i.test(event)) return /\bice\b|freezing rain|freezing drizzle|sleet/i.test(event) ? ["snow", "ice"] : ["snow"];
+  if (/ice storm|freezing rain|freezing drizzle/i.test(event)) return ["ice"];
+  const text = [event, ...(snap.alerts ?? []).filter((a) => event.split(", ").includes(a.event))
+    .flatMap((a) => [a.headline, a.description])].join(" ");
+  const kinds = [/\bsnow\b|\bblizzard\b/i.test(text) ? "snow" : null,
+    /\bice\b|icing|freezing rain|freezing drizzle|sleet/i.test(text) ? "ice" : null].filter((id): id is string => !!id);
+  if (kinds.length) return kinds;
+  const start = Math.floor(Date.parse(snap.as_of) / 3600e3) * 3600e3;
+  const end = rule.window_end ? Date.parse(rule.window_end) : start + 48 * 3600e3;
+  // A zero or missing accumulation does not identify the type of winter event.
+  return ["snow", "ice"].filter((id) => data.rows.some((row) => Date.parse(row.t) >= start && Date.parse(row.t) < end
+    && [row[`fcst_${id}_in`], row[`fcst_${id}_cum`]].some((v) => typeof v === "number" && v > 0))
+    || supportingRules(snap).some((r) => metricForRule(r) === id));
+}
+
+function ruleMetrics(snap: Snapshot, rule: RuleResult, data: Timeseries): string[] {
+  const direct = metricForRule(rule);
+  if (direct) return [direct];
+  if (rule.hazard === "winter") return rule.metric === "alert_present" ? winterMetrics(snap, rule, data) : [];
+  return ({ wind: ["wind"], cold: ["temp"] } as Record<string, string[]>)[rule.hazard] ?? [];
+}
+
 export function relevantMetrics(snap: Snapshot, data: Timeseries): MetricDefinition[] {
+  if (snap.historical_context?.control?.kind === "normal-weather") {
+    return ["temp", "wind"].map((id) => METRICS.find((metric) => metric.id === id)!);
+  }
+  if (hasBlizzardWarning(snap)) {
+    const start = Math.floor(Date.parse(snap.as_of) / 3600e3) * 3600e3;
+    const snow = METRICS.find((m) => m.id === "snow")!;
+    const newSnow = metricRows(snap, snow, data).some((row) => row.ts >= start && row.ts < start + 24 * 3600e3
+      && [row.fcst_snow_in, row.fcst_snow_cum].some((v) => typeof v === "number" && v > 0));
+    // A blizzard may be blowing existing snow after snowfall ends. Show the actual
+    // wind, dangerous cold and roads rather than leading with an all-zero snow line.
+    const ids = [...(newSnow ? ["snow"] : []), "wind", "temp", "roads"];
+    const metrics = ids.map((id) => METRICS.find((m) => m.id === id)!).filter((m) => metricHasData(snap, m, data));
+    return metrics.length ? metrics.slice(0, 3) : [METRICS[0], METRICS.find((m) => m.id === "temp")!];
+  }
   const ids: string[] = [];
   const add = (id: string | undefined) => { if (id && !ids.includes(id)) ids.push(id); };
   const supporting = supportingRules(snap);
-  const hasData = (m: MetricDefinition) => m.series.some((s) => data.rows.some((row) => typeof row[s.key] === "number"));
-  for (const r of supporting) {
-    const winterContext = /snow|blizzard/i.test(String(r.observed_value)) ? "snow" : "ice";
-    add(metricForRule(r) ?? ({ wind: "wind", winter: winterContext, cold: "temp" } as Record<string, string>)[r.hazard]);
-  }
+  const hasData = (m: MetricDefinition) => metricHasData(snap, m, data);
+  for (const r of supporting) for (const id of ruleMetrics(snap, r, data)) add(id);
   const closest = snap.rules.filter((r) => r.available && r.margin_pct !== null)
     .sort((a, b) => Math.abs(a.margin_pct!) - Math.abs(b.margin_pct!));
   const hazards = [...new Set(supporting.map((r) => r.hazard))];
-  for (const r of closest.filter((r) => hazards.includes(r.hazard) && Math.abs(r.margin_pct!) <= 50)) {
-    const metric = METRICS.find((m) => m.id === metricForRule(r));
-    if (metric && hasData(metric)) add(metric.id);
-  }
   // Supporting context stays relevant to the active hazard, even when it has no numeric rule.
-  const contextMetrics: Record<string, string[]> = { wind: ["pop", "temp"], winter: ["temp", "snow", "pop"], cold: ["wind"] };
+  const contextMetrics: Record<string, string[]> = { wind: ["pop", "temp"], winter: ["temp", "pop"], cold: ["wind"] };
   for (const hazard of hazards) for (const metricId of contextMetrics[hazard] ?? []) {
     const metric = METRICS.find((m) => m.id === metricId)!;
     if (hasData(metric)) add(metric.id);
+  }
+  // Do not pad an active event with unrelated hazards or an all-zero snow/ice forecast.
+  if (hazards.length) {
+    for (const hazard of hazards) if (!ids.length) add(contextMetrics[hazard]?.[0]);
+    return ids.slice(0, 2).map((id) => METRICS.find((m) => m.id === id)!);
   }
   for (const r of closest) {
     const metric = METRICS.find((m) => m.id === metricForRule(r));
@@ -106,10 +175,53 @@ export function relevantMetrics(snap: Snapshot, data: Timeseries): MetricDefinit
 
 export type ChartRow = Record<string, number | string | null> & { ts: number };
 
+export function hasBlizzardWarning(snap: Snapshot): boolean {
+  return supportingRules(snap).some((r) => r.metric === "alert_present" && /blizzard/i.test(String(r.observed_value)));
+}
+
+/** Keep a timestamped single observation inside the default view, even when its
+ *  report precedes the commute window where the rules apply its condition. */
+export function metricDomain(snap: Snapshot, metric: MetricDefinition, evidence: ReturnType<typeof metricEvidence>, full = false): [number, number] {
+  const asOf = Date.parse(snap.as_of), start = asOf - 12 * 3600e3, end = asOf + 48 * 3600e3;
+  if (full) return [start, end];
+  const window = evidence.window;
+  const domain: [number, number] = window ? [Math.max(start, Math.min(window.start - 3 * 3600e3, asOf - 2 * 3600e3)),
+    Math.min(end, Math.max(window.end + 3 * 3600e3, asOf + 4 * 3600e3))] : [asOf - 3 * 3600e3, asOf + 24 * 3600e3];
+  if (metric.signal) {
+    const times = evidence.rows.filter((r) => metric.series.some((s) => typeof r[s.key] === "number")).map((r) => r.ts);
+    if (times.length) domain[0] = Math.max(start, Math.min(domain[0], Math.min(...times) - 30 * 60000));
+  }
+  return domain;
+}
+
+function metricRows(snap: Snapshot, metric: MetricDefinition, data: Timeseries): ChartRow[] {
+  const byTime = new Map(data.rows.map((r) => [Date.parse(r.t), { ...r, ts: Date.parse(r.t) } as ChartRow]));
+  const asOf = Date.parse(snap.as_of);
+  const add = (ts: number, key: string, value: unknown) => {
+    if (!Number.isFinite(ts) || ts < asOf - 12 * 3600e3 || ts > asOf || typeof value !== "number" || !Number.isFinite(value)) return;
+    byTime.set(ts, { ...(byTime.get(ts) ?? { ts }), [key]: value });
+  };
+  for (const input of snap.inputs) {
+    const key = `obs_${input.metric}`;
+    if (input.kind === "scalar" && input.role === "observation" && input.source_time && metric.series.some((s) => s.key === key)) {
+      add(Date.parse(input.source_time), key, input.value);
+    }
+  }
+  if (metric.signal) {
+    const signal = snap.signals[metric.signal];
+    // Aggregates describe this evaluation; point measurements retain their recorded observation time.
+    const rule = snap.rules.find((r) => r.metric === metric.signal && r.available);
+    const ts = metric.id === "freezing" ? asOf : Date.parse(signal?.peak_time ?? rule?.time_of_peak ?? "");
+    if (signal?.available !== false) add(ts, metric.series[0].key, signal?.value ?? rule?.observed_value);
+  }
+  return [...byTime.values()].filter((r) => Number.isFinite(r.ts));
+}
+
 function seriesForRule(r: RuleResult, snap: Snapshot, metric: MetricDefinition): string[] {
   const observedGust = r.input_ids?.includes("obs.peak_gust_mph") || snap.inputs.some((i) => i.id === "obs.peak_gust_mph")
     ? "obs_peak_gust_mph" : "obs_wind_gust_mph";
   if (r.metric === "max_gust_mph") return [snap.signals[r.metric]?.role === "observation" ? observedGust : "fcst_wind_gust_mph"];
+  if (metric.signal) return metric.series.map((s) => s.key);
   if (metric.id === "wind") return [r.metric.startsWith("obs_") ? observedGust : "fcst_wind_gust_mph"];
   if (metric.id === "temp") return ["fcst_apparent_temp_f"];
   return metric.series.map((s) => s.key);
@@ -126,7 +238,7 @@ export function crossesThreshold(value: number, rule: Pick<RuleResult, "operator
 }
 
 export function metricEvidence(snap: Snapshot, metric: MetricDefinition, data: Timeseries) {
-  let rows: ChartRow[] = data.rows.map((r) => ({ ...r, ts: new Date(r.t).getTime() })).filter((r) => Number.isFinite(r.ts));
+  let rows: ChartRow[] = metricRows(snap, metric, data);
   if (metric.id === "wind" && (snap.inputs.some((i) => i.id === "obs.peak_gust_mph") || rows.some((r) => r.obs_peak_gust_mph !== undefined))) {
     // New snapshots distinguish hourly METAR wind from the peak gust used by the rules.
     // Archived snapshots retain their original gust series and provenance.
@@ -153,7 +265,8 @@ export function metricEvidence(snap: Snapshot, metric: MetricDefinition, data: T
       (!a.triggered && !b.triggered ? Math.abs(a.margin_pct ?? Infinity) - Math.abs(b.margin_pct ?? Infinity) : 0) ||
       b.level - a.level || b.score - a.score);
   const rule = matching.find((r) => seriesForRule(r, snap, metric).some((key) => rows.some((row) => typeof row[key] === "number")));
-  const context = ranked.find((r) => r.hazard === metric.hazard || metric.contextHazards?.includes(r.hazard));
+  const context = ranked.find((r) => ruleMetrics(snap, r, data).includes(metric.id) || metric.contextHazards?.includes(r.hazard)
+    || (metric.id === "pop" && (r.hazard === "winter" || r.hazard === "wind")));
   const driver = rule?.triggered ? rule : context;
   const window = driver?.window_start && driver.window_end ? {
     start: new Date(driver.window_start).getTime(), end: new Date(driver.window_end).getTime(),
@@ -180,7 +293,7 @@ export function metricEvidence(snap: Snapshot, metric: MetricDefinition, data: T
     const updates: Record<string, number | null> = {};
     for (const series of metric.series) {
       const value = row[series.key];
-      const focus = typeof value === "number" && pointInWindow(row) && (rule?.triggered
+      const focus = typeof value === "number" && (pointInWindow(row) || !!metric.signal) && (rule?.triggered
         ? keys.includes(series.key) && crossesThreshold(value, rule) : !!context);
       updates[`${series.key}_focus`] = focus ? value as number : null;
       if (focus) highlighted++;

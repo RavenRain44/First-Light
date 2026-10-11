@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Snapshot } from "../types";
 import { Badge, Card, fmtTime, fmtVal } from "../util";
+import { EvidenceNotice } from "./EvidenceNotice";
 
 export function AIPanel({ snap, onRegenerate }: { snap: Snapshot; onRegenerate?: () => void }) {
   const [copied, setCopied] = useState(false);
@@ -43,6 +44,7 @@ export function AIPanel({ snap, onRegenerate }: { snap: Snapshot; onRegenerate?:
         </button>
       )}
     </span>}>
+      {snap.sufficiency?.status !== "sufficient" && <div className="mb-4"><EvidenceNotice snap={snap} compact /></div>}
       <div>
         <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">In short</h3>
         <p key={`${snap.snapshot_id}-${snap.model_id}`} className="cc-fade mt-2 text-[15px] leading-relaxed">{overview || snap.posture.reasons.join(" ") || ai.headline}</p>

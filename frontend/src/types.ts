@@ -18,6 +18,7 @@ export interface ReplayTimeline {
 
 export interface ReplayEvent {
   id: string;
+  kind?: "normal-control";
   name: string;
   summary: string;
   timeline: ReplayPoint[];
@@ -169,8 +170,32 @@ export interface Facility {
   hypothetical?: boolean;
 }
 
+export type SufficiencyStatus = "sufficient" | "limited" | "insufficient" | "not_recorded";
+
+/** Evidence sufficiency, computed by deterministic rules (backend engine/sufficiency.py). */
+export interface Sufficiency {
+  status: SufficiencyStatus;
+  headline: string;
+  reasons: string[];
+  missing_sources: string[];
+  stale_sources: string[];
+  checks: { name: string; label: string; status: string; required: boolean; detail: string }[];
+  supports_all_clear: boolean;
+  reason_required: boolean;
+  hazard_evidence: string[];
+  forecast_coverage: number | null;
+  mode?: string;
+  mode_note?: string;
+  evaluated_as_of?: string;
+  policy_version?: string | null;
+  provisional?: boolean;
+  forecast_sources?: string[];
+}
+
 export interface Snapshot {
   historical_context?: any;
+  /** Missing on snapshots saved before sufficiency was tracked: treated as "not recorded", never sufficient. */
+  sufficiency?: Sufficiency | null;
   analogs_addon?: Snapshot['analogs'];
   snapshot_id: string;
   facility_id: string;
@@ -250,6 +275,10 @@ export interface Decision {
   notes: string | null;
   decided_at: string;
   label: string;
+  /** Evidence sufficiency when decided ("" = before this was tracked). */
+  evidence_status?: string;
+  /** "recommendation" | "override" | "manual_insufficient_evidence" | "manual_provisional_forecast". */
+  decision_basis?: string;
 }
 
 export interface CameraView { view: number; url: string; time: string; label: string }
@@ -280,7 +309,7 @@ export interface Timeseries {
   as_of: string;
   timezone: string;
   rows: ({ t: string } & Record<string, number | string | null>)[];
-  meta: Record<string, { source: string; source_time: string | null; fetched_at: string | null; source_url: string; note?: string }>;
+  meta: Record<string, { source: string; source_time: string | null; fetched_at: string | null; source_url: string; note?: string; derived?: boolean; input_ids?: string[]; provenance?: Record<string, any> }>;
   threshold_lines: { chart: string; value: number; label: string; rule_id: string; verified: boolean; level: string }[];
   windows: { kind: string; label: string; start: string; end: string }[];
 }

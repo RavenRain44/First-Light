@@ -14,6 +14,7 @@ class Search(BaseModel):
     mode: Literal['observation','archive']='observation'
     online: bool=False
     retry: bool=False
+    cloud_cache: bool=False
 
 class Build(BaseModel):
     start: str='2020-01-01'
@@ -29,8 +30,16 @@ async def search(req:Search):
     # Reject invalid dates before attempting a download.
     historical.local_instant(req.day,req.time)
     async with historical._day_lock:
-        try: return await historical.compute(req.day,req.time,req.mode,req.online,force=req.retry)
+        # Preserve explicitly requested cloud-cache restoration before accepting forecast-only evidence.
+        try: return await historical.compute(req.day,req.time,req.mode,req.online,force=req.retry,require_observations=req.cloud_cache)
         except SourceUnavailable as exc:
+            if req.cloud_cache:
+                from app import dataset_cloud
+                try:
+                    await asyncio.to_thread(dataset_cloud.restore,year=req.day[:4])
+                    return await historical.compute(req.day,req.time,req.mode,False)
+                except Exception as cloud_exc:
+                    return {'status':'unavailable','day':req.day,'detail':'Cloud cache unavailable: '+type(cloud_exc).__name__, 'snapshot':None}
             return {'status':'unavailable','day':req.day,'detail':str(exc),'snapshot':None}
 
 @router.post('/build',status_code=202)

@@ -18,5 +18,6 @@ def risk_tradeoffs(snapshot_id: str | None = None, time: str = "04:00"):
     if snapshot_id and not snap:
         raise HTTPException(404, "snapshot not found")
     scores = historical.overview()["metrics_by_time"].get(time) or {}
-    return {"errors": scores.get("error_analysis", {}), "range": scores.get("range"), "evaluation_time": time,
+    from app.risk_experiment import saved_report
+    return {"experiment":saved_report() if time=="04:00" else None,"errors": scores.get("error_analysis", {}), "range": scores.get("range"), "evaluation_time": time,
             "actions": assess_actions(snap, load_employees(), load_thresholds().timing) if snap else None}

@@ -1,6 +1,6 @@
 # Ames historical backtesting and replay
 
-Use **More tools → Replay a past storm**. Choose one of the seven curated events,
+Use **More tools → Replay a past storm**. Choose the normal-weather control, one of the seven curated weather events,
 a discovered AMW disruption, or enter any date and time. The default is **04:00
 America/Chicago**. Click **View historical weather**. Date/time changes clear the
 old display immediately; older responses cannot replace a newer selection.
@@ -14,6 +14,30 @@ they are not verified closure decisions at the synthetic USDA facility. Their
 original intraday snapshot APIs and fixture builder remain available. Arbitrary
 date/time searches create exact intraday results on demand, rather than silently
 choosing the nearest existing snapshot.
+
+## Normal-weather control
+
+**Jul 18, 2024 normal-weather control** is available in both replay tabs without an
+archive download. The fixture retains unchanged AMW METAR rows from the checksummed
+2024 source object in the frozen Ames dataset; it records the parent object, original
+source hash, subset hash, public source URL and retrieval time. Its independent daily
+outcome has 24/24 observed hours, no reported freezing precipitation or snow, and no
+defined station-level disruption. Missing gust reports remain null, not zero.
+
+Each selected-time report and hourly ribbon cell runs the current rules against only
+the preceding twelve hours of observations, excluding readings less than fifteen
+minutes old. The complete daily record is used only for the separate hindsight
+outcome. The control shows observed temperature and wind charts and does not call
+an inference provider or fetch missing weather. Forecasts and original warning
+history are explicitly unavailable: **Normal** is the rules' fallback and **Yellow**
+means incomplete evidence, rather than a hazard or verified all-clear. Replays remain
+read-only and cannot notify employees or record decisions.
+
+The **Feb 5, 2025 winter weather advisory** is labeled a **mild-weather case**, since
+it includes winter hazards and is unsuitable as an ordinary-weather negative control.
+This one quiet station day is illustrative: it is not office-decision evidence or a
+false-alarm rate. Adding it does not change the frozen 7,470-case scoring cohort,
+stored historical evaluations, or recorded human decisions.
 
 ## Completed local build
 
@@ -52,13 +76,26 @@ inputs come only from the preceding twelve hours, with a **15-minute assumed
 observation availability lag**. Actual ingestion times and original pre-correction
 observation versions are not archived; this is an observation-based reconstruction.
 
-Optional archive enrichment uses the existing NBS, SPC, road and RWIS adapters.
+Optional archive enrichment uses the NBS, SPC, road and RWIS adapters. When NBS
+is missing, stale or incomplete, original GFS MOS runs from IEM can fill forecast
+gaps. GFS contributes temperature, sustained wind and precipitation probability;
+its categorical snow/QPF fields are never treated as measured inches, and ice
+amounts and gusts remain unknown. Fresh primary values retain priority.
 Source issue/report times after the selected instant are rejected. Observation
 points beyond the cutoff are rejected as well. Forecast availability is conservatively
 estimated as nominal run/product issue plus two hours; exact publication timestamps
 are unavailable. Results are labeled **archived forecast reconstruction (estimated
 availability)**, rather than verified forecast backtests. Missing forecasts do not
 cause live NWS forecasts to be substituted.
+
+GFS-backed results are separately labelled **archived secondary forecast
+reconstruction (estimated availability)** and **provisional**. Confidence cannot
+exceed Medium. No Open-Meteo current forecast or after-event reanalysis is used in
+replay. The forecast archive can still support provisional advice when the yearly
+observation download is unavailable, but such cases cannot be independently graded
+without an observed outcome. Archive evaluation identity is now version 4, preserving
+earlier immutable results; the observation-only baseline and retained control keep
+their existing identity and inputs.
 
 Final VTEC event records can contain later changes to expiration or cancellation.
 They are **excluded from recommendation inputs** until original alert/update
@@ -221,3 +258,141 @@ Unfinished data coverage: the full multi-year archived forecast build, original
 alert issue/update timelines, historical facility operations/outages and camera
 frames, comprehensive school/USDA operating history, and explicitly normal proxy
 days. Only the observation baseline is built across the full supported range.
+
+## Correction and recall-first thresholds (2026-10-11)
+
+**The 7,470-day labels and observation-only results above overstate performance.** The yearly AMW download
+stored each report's whole METAR (remarks included) as its weather codes, and weather flags were substring
+matches. Remarks such as `LTG DSNT` (lightning distant) read as snow and `FZRANO` (freezing-rain sensor out) as
+freezing rain. Re-deriving every day from the raw reports with only the present-weather group
+(`adapters/historical_asos.py: present_weather`):
+
+- **117** disruptive days in 30 years, not 449 (332 labels were remark artifacts; summer "snow" days fell from 53 to 7).
+- The old 44% recall / 0 false alarms was largely circular: the same remark text triggered both the overnight
+  freezing-precipitation rule and the label. Corrected, 04:00 observations alone catch **7.7%** (9/117).
+- The live app is unaffected (IEM obhistory returns the present-weather codes only).
+
+Because forecasts are the only way to see weather that starts after 04:00, the evaluation adds the archived
+NBM/NBS forecast that was already published at each check time (IEM, available from 2019). The live app
+re-checks every few minutes, so the backtest also re-runs the engine **hourly from 04:00 to 14:00**. A disruptive
+day counts as caught only if a check flags *today* while the disruption is still happening or still ahead; a
+quiet day flagged by any check is a false alarm.
+
+Held-out 2023-2026 (12 disruptive days, 941 days):
+
+| Thresholds and checks | Disruptive days caught (recall) | False alarms | 2019-2022 recall |
+|---|---|---|---|
+| 2026-10-10.1, 04:00 only | 25.0% (3/12) | 13 | 65.2% |
+| 2026-10-11.1, 04:00 only | 41.7% (5/12) | 15 | 78.3% |
+| 2026-10-11.1, hourly 04:00-14:00 | 58.3% (7/12) | 15 | 78.3% |
+| **2026-10-11.2 (current), hourly** | **75.0% (9/12)** | **20** | 78.3% |
+| Not adopted: also forecast gust advisory 40 mph | 83.3% (10/12) | 40 | 78.3% |
+
+Changes in `config/thresholds.yaml` (all `basis: policy`):
+
+- **2026-10-11.1** (tuned on 2019-2022): forecast 45 mph gust and forecast -20 F wind chill raised from minor to
+  significant, so arrivals outside the morning commute trigger early dismissal or telework.
+- **2026-10-11.2**: forecast snow advisory lowered to 1.5 in and raised to significant. This was chosen after
+  reviewing the 2023-2026 misses and does not change 2019-2022 recall, so the 75% is **not independently
+  validated**. Held-out precision is 31% (about two false alarms per disruption caught), and 12 disruptive days
+  give a wide interval.
+
+Remaining held-out misses: a 59 mph gust at 16:00 that the 46 mph forecast did not support, and two events the
+hourly checks only flagged after they ended. NWS warnings would help with these but stay excluded: the VTEC
+archive keeps only final event records, not what had been issued by a given hour.
+
+Reproduce (needs the restored dataset; forecasts are cached in `var/backtest_http_cache`):
+
+```sh
+cd backend && .venv/Scripts/python -m scripts.recall_backtest --forecasts --checks hourly   # .venv/bin/python on Linux/macOS
+```
+
+The frozen cohort and its published releases still carry the old labels. Rebuilding a corrected cohort
+(new version) and re-publishing it is a follow-up; existing frozen artifacts are not edited.
+
+## Confirmed office-decision dataset (2026-10-11)
+
+Decision scoring and AI-explanation sampling now use only reviewed official office
+notices with dated corroboration (`confirmed-office-evidence-v1`). Current qualifying
+proxy records are ISU nonessential offices closed January 30, 2019 and reopening
+at noon January 31, 2019. Essential operations continued. The official notice and
+IEM's dated University Closure feature corroborate these dates and scope.
+
+Class cancellations and partial-campus/remote-flexibility notices are excluded:
+they do not establish whether offices actually opened. Raw evidence remains retained
+with exclusion reasons; historical weather archives and immutable evaluations are
+preserved. The date-search event picker defaults to qualifying dates. The curated
+storm timeline remains a separate weather reference, not decision ground truth.
+
+This is a high-confidence documentary-evidence category, **not a calibrated 95%
+probability**. Weather API observations establish conditions, not whether an office
+operated. No weather-only inference, guessed normal day or numerical confidence is
+promoted to a confirmed decision. No actual USDA operations are confirmed by these
+proxy notices. Two records from one episode cannot establish decision accuracy,
+false-alarm rates or reliable training performance. Independent station-weather
+impact scores remain separate and retain weather-only days.
+
+## Fixed 7,470-day safety and operational-loss experiment
+
+Run `npm run analyze:risk` from the repository root. Optional assumed missed-event
+cost ratios: `npm run analyze:risk -- --ratios 1 5 10 20 50`.
+No AI calls, external weather requests, notification delivery or production changes
+occur. The fixed manifest is `backend/var/cohorts/ames-7470-v1.json` (ignored).
+It pins evaluation IDs, artifact hashes, summary hashes, rule/config hashes, unique
+local dates and the 04:00 Central cutoff. Initial creation requires exactly 7,470
+eligible observation-only dates; an unexpected count fails explicitly. Repeated
+runs reuse the original evaluations, even when later attempts exist. Source archives
+and excluded immutable evaluations remain stored separately. The UI distinguishes
+the fixed analysis cohort from total archive coverage and forecast samples.
+
+The cohort excludes 3,133 next-workday evaluations, 351 incomplete outcomes and 14
+incomplete pre-evaluation inputs. Training is 1996–2018 (5,585 dates), validation
+2019–2022 (939), and final testing 2023–2026 (939). Seven dates are purged around
+split boundaries: a two-calendar-day gap on both sides and any identified consecutive
+disruptive episode spanning a boundary. The full manifest remains 7,470 dates;
+5,585 + 939 + 939 + 7 accounts for every date. No preprocessing/model fitting is
+performed in this experiment: it varies stored signed rule-margin classification
+cutoffs without altering scientific thresholds or rerunning the operating engine.
+This is retrospective sensitivity analysis, not a newly trained AI predictor.
+
+For each assumed cost ratio, select the lowest-loss candidate using validation
+only, then evaluate that fixed candidate on final-test dates. Test outcomes never
+choose the cutoff. Training results are reported as historical characterization.
+These final-test dates were already inspected during earlier baseline backtesting;
+this is not pristine prospective validation. No prospective model exists yet;
+future model deployment requires an untouched, versioned future evaluation stream.
+Reports contain per-split counts, confusion matrices, error rates, accuracy, balanced
+accuracy, precision, recall, specificity, Wilson intervals, cost losses and annual/
+hazard breakdowns. Wilson intervals do not correct correlated storm days. There
+are only 20 disruptive final-test days, so disruption recall remains uncertain.
+
+Completed local results: full-cohort baseline is unchanged (96.64% ordinary accuracy,
+72.05% balanced accuracy, 44.10% recall). On the separate 939-day final-test subset,
+existing rules catch 1 of 20 disruptions, miss 19, and produce zero false alarms.
+Ratios 1:1, 5:1 and 10:1 select the unchanged margin cutoff. Ratios 20:1 and 50:1
+select −75 percentage points of signed rule margin: 7 detected, 13 missed and 140
+false alarms among 919 quiet days. Recall increases from 5% to 35%, with six extra
+catches. At 20:1 assumed loss increases from 380 to 400; at 50:1 it falls from 950
+to 790. This is evidence of a trade-off, not a generally improved model. Whole-cohort
+44.10% recall must not be compared directly with final-subset recall as if the cohorts
+were identical. No production cutoff has changed.
+
+Cost weights are illustrative and unitless. Weather Type II errors may imply injury,
+commuting or stranding exposure, but do not prove an unsafe operating decision.
+Type I errors may delay services, unfinished work or revenue; closure is not assumed
+to mean unpaid leave or permanent task/income loss. Remote or later work may recover
+tasks; essential personnel may still travel during closure. Missing injury, crash,
+facility, payroll and task-recoverability data are explicit. AI explanation prompts
+preserve the deterministic posture and manager authority, and prohibit invented
+financial losses, probabilities or reporting instructions.
+
+Local report: `backend/var/analysis/ames-7470-v1-risk.json`; content-versioned reports
+are retained alongside it. No credentials, contact configuration or generated data
+are added to Git. An entirely new cohort/version is required for a different rule
+experiment; old results and manifests must not be silently overwritten.
+
+Verification for this experiment: 209 backend tests, 24 frontend tests and the
+production frontend build passed. Chrome verified the 7,470-day cohort display,
+chronological split counts, 20-day disruption sample warning, cost-ratio selection,
+and the 50:1 final-test comparison. A regression test confirms later evaluation
+attempts cannot replace the pinned original cohort. No production thresholds changed.

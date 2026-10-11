@@ -18,11 +18,13 @@ from adapters.iem_obs import IEMObsAdapter
 from adapters.iem_roads import IEMRoadsAdapter, IEMRWISAdapter
 from adapters.iem_vtec import IEMOutlookAdapter, IEMVTECAdapter
 from adapters.nws import NWSAlertsAdapter, NWSGridAdapter, resolve_point
+from adapters.secondary_forecast import ArchivedGFSAdapter, OpenMeteoAdapter
 from engine import confidence as conf
 from engine.counterfactual import Change, what_would_change
 from engine.features import Context, Signal, extract
 from engine.posture import PostureResult, decide, horizon_end
 from engine.readiness import Readiness, assess_readiness
+from engine.sufficiency import Sufficiency, assess_sufficiency
 from engine.scoring import HazardResult, RuleResult, Thresholds, evaluate_rules, load_thresholds, score_hazards
 
 
@@ -36,6 +38,7 @@ class Assessment(BaseModel):
     confidence: conf.Confidence
     changes: list[Change]
     readiness: Readiness
+    sufficiency: Sufficiency
     watch_next_6h: list[str]
     features: dict[str, float]
     alerts: list[dict]
@@ -66,10 +69,21 @@ async def gather(facility: Facility, as_of: datetime, mode: str) -> tuple[list[N
     run_mode = "live" if mode in ("live", "livecheck") else "replay"
     results = await asyncio.gather(*(a.run(facility, as_of, run_mode) for a in adapters))
     inputs = [i for inp, _ in results for i in inp]
-    return inputs, [s for _, s in results]
+    statuses = [s for _, s in results]
+    from engine.forecast_fallback import merge_backup, needs_backup
+    if needs_backup(assess(inputs, statuses, facility, as_of, mode, employees=[]), inputs):
+        backup = OpenMeteoAdapter(allow_demo_bypass=mode == "livecheck") if run_mode == "live" else ArchivedGFSAdapter()
+        try:
+            secondary, status = await asyncio.wait_for(backup.run(facility, as_of, run_mode), timeout=20)
+        except TimeoutError:
+            secondary, status = [], SourceStatus(adapter=backup.name, label=backup.label, status="unavailable",
+                                                  detail="Backup forecast exceeded the 20-second request budget.")
+        statuses.append(status)
+        inputs = merge_backup(inputs, secondary, as_of, run_mode == "live")
+    return inputs, statuses
 
 
-def _watch(ctx: Context, rules: list[RuleResult], facility: Facility) -> list[str]:
+def _watch(ctx: Context, rules: list[RuleResult], facility: Facility, sufficiency: Sufficiency | None = None) -> list[str]:
     tz = ZoneInfo(facility.timezone)
     now, end = ctx.as_of, ctx.as_of + timedelta(hours=6)
     fmt = lambda t: utc(t).astimezone(tz).strftime("%H:%M %Z")  # noqa: E731
@@ -104,7 +118,11 @@ def _watch(ctx: Context, rules: list[RuleResult], facility: Facility) -> list[st
     for r in rules:
         if r.triggered and r.metric == "obs_freezing_precip_hours_3h":
             items.append("Freezing precipitation observed at the facility ASOS in the last 3 h")
-    if not items:
+    if not items and sufficiency is not None and sufficiency.provisional:
+        items.append("Backup forecast in use: verify local warnings and missing measurements before the next commute")
+    elif not items and sufficiency is not None and not sufficiency.supports_all_clear:
+        items.append("Recheck for current data: the forecast is missing or out of date, so quiet output here is not an all-clear")
+    elif not items:
         items.append("No alerts starting or ending and no forecast thresholds approached in the next 6 hours")
     return items[:8]
 
@@ -151,10 +169,12 @@ def assess(inputs: list[NormalizedInput], statuses: list[SourceStatus], facility
     posture = decide(hazards, rules, ctx.as_of, facility, th)
     confidence = conf.compute(statuses, inputs, ctx, rules, hazards, mode)
     changes = what_would_change(ctx, th, facility, posture.posture, rules)
-    readiness = assess_readiness(hazards, rules, posture, confidence, ctx.alerts, ctx.as_of, facility, th)
+    sufficiency = assess_sufficiency(inputs, statuses, hazards, rules, posture, ctx.as_of, mode, facility.timezone, th.timing)
+    readiness = assess_readiness(hazards, rules, posture, confidence, ctx.alerts, ctx.as_of, facility, th, sufficiency)
     return Assessment(
         as_of=ctx.as_of, mode=mode, signals=ctx.signals, rules=rules, hazards=hazards, posture=posture,
-        confidence=confidence, changes=changes, readiness=readiness, watch_next_6h=_watch(ctx, rules, facility),
+        confidence=confidence, changes=changes, readiness=readiness, sufficiency=sufficiency,
+        watch_next_6h=_watch(ctx, rules, facility, sufficiency),
         features=feature_vector(ctx, rules, hazards, facility), alerts=ctx.alerts,
     )
 

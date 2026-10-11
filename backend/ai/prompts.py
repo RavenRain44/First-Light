@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
-PROMPT_VERSION = "decision-brief-v4-akamai-strands"
+PROMPT_VERSION = "decision-brief-v7-provisional-backup-forecasts"
 
 
 class SuggestedReason(BaseModel):
@@ -78,9 +78,22 @@ Hard rules:
 13. The computed_brief is a factual draft from the rules. Rewrite its headline, summary and uncertainty for clarity
     without introducing new facts. Evidence values are displayed separately; do not repeat every number. Use the
     supplied alert IDs as keys exactly, or omit a summary you cannot ground.
-14. suggested_reasons are short evidence phrases, each linked to a rule ID from computed_brief.suggested_reasons.
+14. Consider staff safety and operational continuity in evidence-grounded uncertainty. Missed hazardous
+    conditions may expose people to harm; unnecessary restrictions may interrupt services and unfinished work.
+    Do not equate weather errors with an incorrect operating decision. Do not assume closure causes unpaid
+    leave or permanent income loss: delayed or remote work may recover tasks. Essential staff may still face
+    exposure. Never invent injury probabilities, financial losses, operating facts or reporting requirements.
+    Do not calculate cost trade-offs or change the given posture; retain manager authority and schema constraints.
+15. suggested_reasons are short evidence phrases, each linked to a rule ID from computed_brief.suggested_reasons.
     Rewrite those phrases only. Never put an action, recommendation or reporting instruction in a reason. Keep
     the original facts, numbers and severity. Return an empty list when there are no computed reasons.
+16. evidence_sufficiency in get_snapshot_summary is computed by the rules. Never judge it yourself. If
+    provisional is true and status is limited, identify the recommendation as provisional and based on a backup/secondary forecast in
+    the headline or summary. Explain remaining missing evidence; never invent warnings, ice/snow amounts or
+    a model issue time. The manager must verify and decide. Otherwise, if supports_all_clear is false,
+    the headline or summary must say current data is insufficient (or missing/stale),
+    and nothing may describe conditions as safe, clear, quiet or normal on the basis of missing data. NORMAL is then
+    only the rules' fallback. Known hazard evidence is still reported as given.
 """
 
 USER_PROMPT = """Write the short parts of a decision brief for the current snapshot: headline, two-sentence summary,

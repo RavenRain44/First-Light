@@ -1,18 +1,29 @@
 import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import type { ReplayEvent, ReplayPoint, Snapshot } from "../../src/types";
+import type { NormalizedInput, ReplayEvent, ReplayPoint, Snapshot } from "../../src/types";
 
 const dist = fileURLToPath(new URL("../../dist/", import.meta.url));
 const history = fileURLToPath(new URL("../../../backend/fixtures/history/", import.meta.url));
-const events: ReplayEvent[] = await Promise.all(["ice-2023-02-22", "derecho-2020-08-10"].map(async (id) => {
+const blizzardFixture = JSON.parse(await readFile(fileURLToPath(new URL("../../../backend/fixtures/blizzard_2022-12-22T18Z_chart.json", import.meta.url)), "utf8"));
+const events: ReplayEvent[] = await Promise.all(["ice-2023-02-22", "derecho-2020-08-10", "blizzard-2022-12-22"].map(async (id) => {
   const data = JSON.parse(await readFile(`${history}${id}.json`, "utf8"));
   return { ...data.event, verification: data.verification, outcome: data.outcome, backtest: data.backtest, timeline: data.timeline };
 }));
+const controlFixture = JSON.parse(await readFile(`${history}normal-2024-07-18.json`, "utf8"));
+const controlTimeline: ReplayPoint[] = Array.from({ length: 24 }, (_, h) => ({
+  as_of: new Date(Date.parse(controlFixture.event.start) + h * 3600000).toISOString(),
+  posture: "NORMAL", readiness: "YELLOW", coverage: "partial", unavailable_sources: ["Archived forecast", "Historical warnings"],
+}));
+events.push({ ...controlFixture.event, timeline: controlTimeline,
+  verification: { checks: [{ product: "METAR coverage", ugc: "AMW", verified: true, events: [{ link: controlFixture.source.url }] }] },
+  outcome: { summary: "24/24 hours covered at AMW; no reported freezing precipitation or snow; no defined station-level disruption." },
+  backtest: { at_0400_local: { as_of: controlTimeline[4].as_of, posture: "NORMAL" }, verdict: "Quiet observed outcome; future conditions were unknown at 04:00.", label: "observations only; not a verified office decision" },
+});
 
 function snapshot(asOf: string, point: ReplayPoint, eventId: string | null): Snapshot {
   return {
-    snapshot_id: `test-${eventId ?? "custom"}-${asOf}`, as_of: asOf, created_at: asOf,
+    snapshot_id: `test-${eventId ?? "custom"}-${Date.parse(asOf)}`, as_of: asOf, created_at: asOf,
     mode: "replay", event_id: eventId, facility_id: "IA-AMES-SC", thresholds_version: "test", thresholds_sha256: "test",
     model_id: "deterministic-fallback", prompt_version: "test", content_sha256: "test", integrity_ok: true,
     facility: { id: "IA-AMES-SC", name: "Test facility", synthetic: true, state: "IA", timezone: "America/Chicago",
@@ -28,7 +39,84 @@ function snapshot(asOf: string, point: ReplayPoint, eventId: string | null): Sna
   };
 }
 
-async function mockApp(page: Page, options: { pendingAi?: boolean; failFirstEvent?: boolean; holdReplay?: boolean } = {}) {
+type Weather = "pavement" | "snow" | "ice" | "freezing";
+
+function withControl(report: Snapshot): Snapshot {
+  const past = controlFixture.source.rows.filter((r: any) => Date.parse(r.utc_valid) >= Date.parse(report.as_of) - 12 * 3600000
+    && Date.parse(r.utc_valid) <= Date.parse(report.as_of) - 15 * 60000);
+  report.mode = "backtest";
+  report.inputs = ["temp_f", "wind_speed_mph"].map((metric) => ({
+    id: `obs.${metric}`, kind: "series", role: "observation", metric, unit: metric === "temp_f" ? "degF" : "mph", value: null,
+    series: past.map((r: any) => ({ t: r.utc_valid, v: metric === "temp_f" ? r.tmpf : r.sknt * 1.150779 })), data: null,
+    source: "AMW archived routine/special METAR", source_url: controlFixture.source.url,
+    fetched_at: controlFixture.source.fetched_at, source_time: past.at(-1).utc_valid, note: "Assumed 15-minute availability lag",
+  }));
+  report.sufficiency = { status: "insufficient", headline: "Insufficient current data", reasons: ["Archived forecast and historical warnings unavailable"],
+    missing_sources: ["Archived NBS forecast", "Historical warnings"], stale_sources: [], checks: [], supports_all_clear: false,
+    reason_required: true, hazard_evidence: [], forecast_coverage: null,
+    evaluated_as_of: report.as_of, mode: "backtest", mode_note: "Historical reconstruction, not current weather", policy_version: "test" };
+  report.historical_context = { control: { kind: "normal-weather" }, status: "partial", reconstruction: "Retained observation-only normal-weather control",
+    as_of: report.as_of, outcome: { gradable: true, disruptive: false }, detail: "Quiet local weather verified by a complete daily station record; forecasts and warnings unknown.",
+    missing: ["Archived forecasts unavailable", "Historical warnings unavailable"], proxy_records: [], provenance: controlFixture.source };
+  return report;
+}
+
+function withWeather(report: Snapshot, weather: Weather): Snapshot {
+  const asOf = report.as_of, end = new Date(Date.parse(asOf) + 3 * 3600000).toISOString();
+  const sourceTime = new Date(Date.parse(asOf) - 30 * 60000).toISOString();
+  const pavement = weather === "pavement", freezing = weather === "freezing";
+  const metric = pavement ? "rwis_ice_sensors" : freezing ? "obs_freezing_precip_hours_3h" : "alert_present";
+  const label = pavement ? "RWIS sensors reporting ice" : freezing ? "Observed freezing precipitation"
+    : weather === "snow" ? "Winter Storm Warning" : "Ice Storm Warning";
+  const observed = pavement ? 1 : freezing ? 2 : label;
+  const rule = { rule_id: `winter.${weather}`, hazard: "winter", metric, label, operator: ">=", threshold: 1,
+    unit: pavement ? "sensors" : freezing ? "hours" : "alert", observed_value: observed, triggered: true, available: true,
+    margin_abs: 0, margin_pct: 0, time_of_peak: sourceTime, window_start: sourceTime, window_end: end, input_ids: [],
+    level: pavement ? 1 : 2, posture_effect: pavement ? "minor" : "significant", score: pavement ? 30 : 60,
+    verified: false, basis: "policy", anchor: "Test evidence", source_url: "https://example.test/weather", time_window: "Test window", detail: null };
+  const input = (metric: string, value: number, observation = false): NormalizedInput => ({
+    id: `${observation ? "obs" : "fcst"}.${metric}`, kind: observation ? "scalar" : "series",
+    metric, role: observation ? "observation" : "forecast", unit: metric.includes("temp") ? "degF" : "in", value: observation ? value : null,
+    series: observation ? null : [{ t: asOf, v: value }], data: null, source: "Recorded test weather",
+    source_url: "https://example.test/weather", source_time: sourceTime, fetched_at: asOf, note: null,
+  });
+  report.rules = [rule];
+  report.inputs = [input("temp_f", 28), input("snow_in", weather === "snow" ? 6 : 0), input("ice_in", weather === "ice" ? 0.3 : 0)];
+  if (pavement) report.inputs.push(input("pavement_temp_f", 28, true));
+  if (pavement || freezing) report.signals = { [metric]: { value: observed, available: true, role: "observation", peak_time: sourceTime } };
+  report.hazards = { winter: { hazard: "winter", label: "Winter / ice", score: rule.score, level: rule.level,
+    level_name: rule.posture_effect, triggered_rule_ids: [rule.rule_id], controlling_rule_ids: [rule.rule_id],
+    window_start: sourceTime, window_end: end, time_of_peak: sourceTime, posture: "DELAYED_ARRIVAL", posture_reason: "AM commute" } };
+  report.posture = { ...report.posture, posture: "DELAYED_ARRIVAL", contributing_hazards: ["winter"] };
+  report.readiness = { ...report.readiness!, level: "RED", decide_by: new Date(Date.parse(asOf) + 30 * 60000).toISOString(),
+    reasons: [pavement ? "Delayed Arrival must be announced by Wed 04:30 CST" : `${label} is happening now`] };
+  report.ai.suggested_reasons = [{ rule_id: rule.rule_id, text: pavement ? "RWIS sensors reporting ice of 1 sensors" : `${label} in effect` }];
+  if (weather === "snow") report.alerts = [{ id: "test", event: label, headline: "Heavy snow expected, 6 to 8 inches.",
+    description: null, instruction: null, severity: "Severe", certainty: "Likely", urgency: "Expected",
+    onset: sourceTime, ends: end, expires: end, sent: sourceTime, areaDesc: "Test county" }];
+  return report;
+}
+
+function withBackup(report: Snapshot): Snapshot {
+  const issue = new Date(Date.parse(report.as_of) - 4 * 3600000).toISOString();
+  report.mode = "backtest";
+  report.inputs = ["temp_f", "wind_speed_mph"].map((metric) => ({
+    id: `fcst.${metric}`, kind: "series", role: "forecast", metric, unit: metric === "temp_f" ? "degF" : "mph", value: null,
+    series: Array.from({ length: 48 }, (_, h) => ({ t: new Date(Date.parse(report.as_of) + h * 3600000).toISOString(), v: metric === "temp_f" ? 65 : 8 })),
+    data: { weather_fallback: true }, source: "Archived GFS MOS backup forecast (IEM)",
+    source_url: "https://example.test/original-forecast", fetched_at: report.as_of, source_time: issue, note: "Original forecast, available before the selected time",
+  }));
+  report.posture = { ...report.posture, posture: "NORMAL", guidance: [], contributing_hazards: [] };
+  report.readiness = { ...report.readiness!, level: "YELLOW", reasons: ["Backup forecast in use: verify missing evidence before deciding"], decide_by: null };
+  report.sufficiency = { status: "limited", headline: "Provisional recommendation · backup forecast", provisional: true,
+    forecast_sources: ["Archived GFS MOS backup forecast (IEM)"], reasons: ["Snow and ice amounts are unknown; verify local warnings."],
+    missing_sources: ["Original warning history"], stale_sources: [], checks: [], supports_all_clear: false,
+    reason_required: true, hazard_evidence: [], forecast_coverage: 1 };
+  report.confidence = { level: "medium", score: 0.65, factors: [] };
+  return report;
+}
+
+async function mockApp(page: Page, options: { pendingAi?: boolean; failFirstEvent?: boolean; holdReplay?: boolean; weather?: Weather; dateSearch?: boolean; blizzard?: boolean; backup?: boolean } = {}) {
   const loads: { event: string[]; replay: string[]; custom: string[]; ai: number } = { event: [], replay: [], custom: [], ai: 0 };
   const errors: string[] = [], unexpected: string[] = [];
   let failed = false;
@@ -49,7 +137,19 @@ async function mockApp(page: Page, options: { pendingAi?: boolean; failFirstEven
       if (url.pathname === "/api/risk-tradeoffs") return await route.fulfill({ json: { errors: {} } });
       if (url.pathname === "/api/past-decisions") return await route.fulfill({ json: { decisions: [], reviewing: [] } });
       if (url.pathname === "/api/roads") return await route.fulfill({ json: { status: "not_applicable", corridors: [] } });
-      if (url.pathname === "/api/timeseries") return await route.fulfill({ json: { rows: [], meta: {}, timezone: "America/Chicago" } });
+      if (url.pathname === "/api/timeseries") {
+        const report = saved.get(url.searchParams.get("snapshot_id")!);
+        if (options.blizzard && report?.snapshot_id === blizzardFixture.snapshot.snapshot_id) return await route.fulfill({ json: blizzardFixture.timeseries });
+        const rows = new Map<string, Record<string, string | number | null>>();
+        for (const input of report?.inputs ?? []) for (const point of input.series ?? []) {
+          const row = rows.get(point.t) ?? { t: point.t };
+          const key = `${input.role === "observation" ? "obs" : "fcst"}_${input.metric}`;
+          row[key] = point.v;
+          if (key === "fcst_snow_in" || key === "fcst_ice_in") row[key.replace("_in", "_cum")] = point.v;
+          rows.set(point.t, row);
+        }
+        return await route.fulfill({ json: { rows: [...rows.values()], meta: {}, timezone: "America/Chicago" } });
+      }
       if (url.pathname === "/api/backtesting") return await route.fulfill({ json: {
         jobs: [], proxy_records: [], latest_disruptive_days: [], supported_start: "1996-01-01", supported_end: "2026-10-10",
         storage: { source_years: [], compressed_source_bytes: 0, compressed_evaluation_bytes: 0, mean_evaluation_bytes: 0, db_bytes: 0 },
@@ -65,8 +165,12 @@ async function mockApp(page: Page, options: { pendingAi?: boolean; failFirstEven
       if (replayEvent) {
         const asOf = url.searchParams.get("as_of")!;
         loads.replay.push(asOf);
-        const point = replayEvent.timeline.find((item) => Date.parse(item.as_of) === Date.parse(asOf))!;
-        const report = snapshot(asOf, point, replayEvent.id);
+        const point = replayEvent.timeline.find((item) => Date.parse(item.as_of) === Date.parse(asOf)) ?? replayEvent.timeline[4];
+        const report = options.blizzard && Date.parse(asOf) === Date.parse(blizzardFixture.snapshot.as_of)
+          ? structuredClone(blizzardFixture.snapshot) : snapshot(asOf, point, replayEvent.id);
+        if (replayEvent.kind === "normal-control") withControl(report);
+        if (options.backup) withBackup(report);
+        if (options.weather) withWeather(report, options.weather);
         if (options.pendingAi) report.ai_addon = { status: "pending" };
         saved.set(report.snapshot_id, report);
         if (options.holdReplay) await replayGate;
@@ -99,11 +203,96 @@ async function mockApp(page: Page, options: { pendingAi?: boolean; failFirstEven
   await page.goto("http://replay.test/");
   await page.getByRole("button", { name: "More tools", exact: true }).click();
   await page.getByRole("menuitem", { name: "Replay a past storm" }).click();
-  await page.getByRole("button", { name: "Curated storm timeline", exact: true }).click();
+  if (!options.dateSearch) await page.getByRole("button", { name: "Curated storm timeline", exact: true }).click();
   return { loads, errors, unexpected, releaseReplay };
 }
 
 const loading = (page: Page) => page.getByRole("status").filter({ hasText: /^Loading .*The report and timeline/ });
+
+for (const width of [390, 1280]) test(`backup forecast remains provisional and identifies unknown ice at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 1000 });
+  const app = await mockApp(page, { backup: true });
+  await page.getByRole("combobox", { name: /^Event\b/ }).selectOption("normal-2024-07-18");
+  const dashboard = page.getByTestId("cooper-dashboard");
+  await expect(dashboard).toHaveAttribute("data-condition", "YELLOW");
+  await expect(dashboard.getByRole("heading", { level: 2 })).toHaveText("Provisional forecast · verify before deciding");
+  await expect(page.getByTestId("backup-source")).toContainText("Archived GFS MOS");
+  await expect(page.getByTestId("evidence-notice")).toContainText("Snow and ice amounts are unknown");
+  await expect(page.getByTestId("provisional-label")).toBeVisible();
+  await expect(page.getByTestId("fallback-label")).toHaveCount(0);
+  await expect(page.getByTestId("suggested-action")).toContainText("Based on a backup forecast");
+  await expect(dashboard).toContainText("This is a replay of past weather");
+  await page.getByTestId("forecast-charts").getByText("View forecast charts", { exact: true }).click();
+  await expect(page.getByTestId("forecast-charts").locator('figure[data-metric="temp"]')).toBeVisible();
+  await expect(page.getByTestId("forecast-charts").locator('figure[data-metric="wind"]')).toBeVisible();
+  await expect(page.locator('figure[data-metric="ice"]')).toHaveCount(0);
+  expect(app.errors).toEqual([]); expect(app.unexpected).toEqual([]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+for (const width of [390, 1280]) test(`the archived pre-Christmas blizzard shows its wind chill and older road point at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 900 });
+  const app = await mockApp(page, { blizzard: true });
+  await page.getByRole("combobox", { name: /^Event\b/ }).selectOption("blizzard-2022-12-22");
+  await expect(page.getByTestId("replay-selected-time")).toContainText("Dec 22, 2022, 04:00 CST");
+  const event = events.find((e) => e.id === "blizzard-2022-12-22")!;
+  const index = event.timeline.findIndex((p) => Date.parse(p.as_of) === Date.parse(blizzardFixture.snapshot.as_of));
+  await page.getByRole("group", { name: "Recommended posture by hour" }).getByRole("button").nth(index).click();
+  await expect(page.getByTestId("replay-selected-time")).toContainText("Dec 22, 2022, 12:00 CST");
+  const metrics = page.getByRole("region", { name: "Concerning weather data" });
+  await expect(metrics.locator("figure")).toHaveCount(3);
+  await expect(metrics).toContainText("0.00 in of additional snow");
+  await expect(metrics.locator("figure").first()).toHaveAttribute("data-metric", "wind");
+  const cold = metrics.locator('[data-metric="temp"]');
+  await expect(cold.locator("figcaption")).toContainText("-37°F");
+  await expect(cold).toContainText("Observed feels-like");
+  await expect(cold).toContainText("Forecast feels-like");
+  await expect(cold).toContainText(blizzardFixture.snapshot.rules.find((r: any) => r.rule_id === "cold.fcst_wind_chill_extreme").label);
+  await expect(cold.locator(".recharts-line-curve").first()).toBeVisible();
+  const roads = metrics.locator('[data-metric="roads"]');
+  await expect(roads.locator("figcaption")).toContainText("Travel advisory");
+  await expect(roads.locator("figcaption")).toContainText("07:37 CST");
+  await expect(roads.locator(".recharts-reference-dot")).toBeVisible();
+  await roads.getByRole("button", { name: "Show full timeline" }).click();
+  await expect(roads.locator(".recharts-reference-dot")).toBeVisible();
+  await expect(metrics.locator('[data-metric="snow"], [data-metric="ice"]')).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect(app.errors).toEqual([]); expect(app.unexpected).toEqual([]);
+});
+
+for (const dateSearch of [false, true]) test(`normal-weather control is available offline in ${dateSearch ? "date search" : "curated timeline"} with observed charts and no all-clear`, async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const app = await mockApp(page, { dateSearch });
+  await page.getByRole("combobox", { name: dateSearch ? "Listed event" : /^Event\b/ }).selectOption(controlFixture.event.id);
+  if (dateSearch) {
+    await expect(page.getByLabel("Date", { exact: true })).toHaveValue("2024-07-18");
+    await expect(page.getByRole("combobox", { name: "Reconstruction" })).toHaveValue("observation");
+    await page.getByLabel("Time · America/Chicago").fill("04:17");
+    await page.getByRole("button", { name: "View historical weather", exact: true }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Retained observation-only" })).toContainText("No defined local disruption observed");
+    expect(app.loads.replay).toEqual(["2024-07-18T09:17:00.000Z"]);
+  } else {
+    await expect(page.getByTestId("replay-selected-time")).toContainText("Jul 18, 2024, 04:00 CDT");
+    await expect(page.getByText("24/24 hours covered at AMW", { exact: false })).toBeVisible();
+    await expect(page.getByText("observations only; not a verified office decision", { exact: true })).toBeVisible();
+  }
+  const dashboard = page.getByTestId("cooper-dashboard");
+  await expect(dashboard).toHaveAttribute("data-condition", "YELLOW");
+  await expect(dashboard.getByRole("heading", { name: "Insufficient current data", exact: true })).toBeVisible();
+  await expect(dashboard.getByTestId("suggested-action")).toContainText("Normal is only the fallback");
+  await expect(dashboard).toContainText("no decision is recorded and no one is alerted");
+  const metrics = page.getByRole("region", { name: "Observed weather for this control" });
+  await expect(metrics.locator("figure").first()).toHaveAttribute("data-metric", "temp");
+  await expect(metrics.locator("figure").nth(1)).toHaveAttribute("data-metric", "wind");
+  await expect(metrics).toContainText("Observed wind (hourly report)");
+  await expect(metrics.locator(".recharts-line-curve").first()).toBeVisible();
+  await expect(metrics.locator('[data-metric="snow"], [data-metric="ice"]')).toHaveCount(0);
+  expect(await page.evaluate(() => [...document.querySelectorAll("body *")]
+    .filter((e) => e.getBoundingClientRect().width > 0 && e.getBoundingClientRect().right > innerWidth + 1)
+    .map((e) => `${e.tagName}.${e.getAttribute("class")}: ${e.textContent?.slice(0, 70)}`).slice(-10))).toEqual([]);
+  expect(app.loads.ai).toBe(0); expect(app.loads.custom).toEqual([]);
+  expect(app.errors).toEqual([]); expect(app.unexpected).toEqual([]);
+});
 
 test("an untouched curated timeline settles once and stays stable across parent renders and AI completion", async ({ page }) => {
   const app = await mockApp(page, { pendingAi: true });
@@ -118,6 +307,33 @@ test("an untouched curated timeline settles once and stays stable across parent 
   expect(app.loads.replay).toEqual([events[0].backtest.at_0400_local.as_of]);
   expect(app.loads.ai).toBe(1);
   await expect(loading(page)).toHaveCount(0);
+  expect(app.errors).toEqual([]); expect(app.unexpected).toEqual([]);
+});
+
+for (const [weather, primary, title] of [
+  ["pavement", "rwis", "Decision due soon: delayed arrival"],
+  ["snow", "snow", "Send communication immediately: Winter Storm Warning"],
+  ["ice", "ice", "Send communication immediately: Ice Storm Warning"],
+  ["freezing", "freezing", "Send communication immediately: Observed freezing precipitation"],
+] as const) test(`${weather} events show the correct evidence graph and readiness explanation`, async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const app = await mockApp(page, { weather });
+  const dashboard = page.getByTestId("cooper-dashboard");
+  await expect(dashboard).toHaveAttribute("data-condition", "RED");
+  await expect(dashboard.getByRole("heading", { name: title, exact: true })).toBeVisible();
+  const metrics = page.getByRole("region", { name: "Concerning weather data" });
+  await expect(metrics.locator("figure").first()).toHaveAttribute("data-metric", primary);
+  await expect(metrics.locator("figure").nth(1)).toHaveAttribute("data-metric", "temp");
+  if (weather === "pavement") {
+    await expect(dashboard.getByTestId("readiness-urgency")).toContainText("weather hazard is rated minor");
+    await expect(dashboard.getByTestId("suggested-action")).toContainText("1 nearby pavement sensor reporting an ice watch/warning condition");
+    await expect(metrics).toContainText("not inches of ice or affected roads");
+    await expect(metrics.locator('[data-metric="rwis"]')).toContainText("1 sensor");
+  }
+  if (weather !== "ice") await expect(metrics.locator('[data-metric="ice"]')).toHaveCount(0);
+  if (weather !== "snow") await expect(metrics.locator('[data-metric="snow"]')).toHaveCount(0);
+  await expect(metrics.locator(".recharts-reference-area").first()).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect(app.errors).toEqual([]); expect(app.unexpected).toEqual([]);
 });
 

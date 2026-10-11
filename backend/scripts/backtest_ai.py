@@ -51,7 +51,8 @@ def sample(limit: int, mode: str, seed: int) -> list[dict]:
     """Up to half the sample from days the rules flagged (where the writing matters most), the rest quiet days."""
     with session() as s:
         rows = [json.loads(r.summary_json) for r in s.exec(select(HistoricalEvaluation)).all()]
-    rows = [r for r in rows if r["requested_mode"] == mode and r.get("recommendation")]
+    confirmed_days = {r["day"] for r in historical.proxies()}
+    rows = [r for r in rows if r["requested_mode"] == mode and r.get("recommendation") and r["day"] in confirmed_days]
     latest: dict[str, dict] = {}
     for r in rows:  # one attempt per day
         latest[r["day"]] = r
@@ -127,7 +128,7 @@ async def main() -> None:
     if settings.model_provider == "none" or not model_enabled():
         raise SystemExit("AI is off (MODEL_PROVIDER=none or no AKAMAI_API_KEY / Strands). Configure it in .env first.")
     report = await run(days)
-    report.update({"mode": a.mode, "seed": a.seed, "created_at": datetime.now(timezone.utc).isoformat()})
+    report.update({"mode": a.mode, "seed": a.seed, "decision_filter": "confirmed-office-evidence-v1", "created_at": datetime.now(timezone.utc).isoformat()})
     out = settings.db_path.parent / "ai_backtest"
     out.mkdir(parents=True, exist_ok=True)
     path = out / f"ai_backtest_{a.mode}_{datetime.now():%Y%m%d_%H%M%S}.json"

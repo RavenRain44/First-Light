@@ -146,6 +146,7 @@ def test_record_decision_tags_demo_mode(monkeypatch):
     from app.routers import core
     add_snapshot("s", "live", CALM, "2026-10-20")
     SNAPS["s"]["facility"] = {"id": FAC.id}
+    SNAPS["s"]["sufficiency"] = {"status": "sufficient", "reason_required": False, "supports_all_clear": True}
     monkeypatch.setattr(core.snapshots, "get", lambda sid: SNAPS.get(sid))
     monkeypatch.setattr(core.settings, "demo_mode", True)
     import app.camera_archive as ca

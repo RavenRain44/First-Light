@@ -70,7 +70,7 @@ EVENTS = [
      "start": T("2025-03-04T06:00"), "end": T("2025-03-05T20:00"), "impact_day": "2025-03-05",
      "expect": [("IAZ048", "BZ", "W"), ("IAZ048", "HW", "W")],
      "summary": "Rain changing to snow with a Blizzard Warning and a High Wind Warning on Wednesday."},
-    {"id": "advisory-2025-02-05", "name": "Feb 5, 2025 winter weather advisory (control case)", "hazard": "winter",
+    {"id": "advisory-2025-02-05", "name": "Feb 5, 2025 winter weather advisory (mild-weather case)", "hazard": "winter",
      "start": T("2025-02-04T16:00"), "end": T("2025-02-06T06:00"), "impact_day": "2025-02-05",
      "expect": [("IAZ048", "WW", "Y")],
      "summary": "Advisory-level light wintry mix starting midday Wednesday; included to test for over-calling."},

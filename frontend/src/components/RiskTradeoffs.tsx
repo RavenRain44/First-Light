@@ -41,6 +41,7 @@ export function RiskTradeoffs({ data, error }: { data: Data | null; error: strin
     <div className="space-y-6 text-sm">
       {main ? <WeatherErrors kind={main[0]} a={main[1]} data={data} /> :
         <p>Not enough data yet. Build the multi-year history (More tools → Thresholds & backtest) to see how often the weather warnings were wrong.</p>}
+      {data.experiment && <ChronologicalExperiment report={data.experiment} />}
       {data.actions && <ActionRisks a={data.actions} />}
     </div>
   );
@@ -51,6 +52,7 @@ function WeatherErrors({ kind, a, data }: { kind: string; a: ErrorAnalysis; data
   const zeroFa = w.confusion.false_alarm === 0 && w.false_positive_rate.ci95;
   return (
     <section>
+      <p className="mb-3">Missed hazardous conditions can expose staff to injury, unsafe commuting or stranding. Unnecessary restrictions can delay services and unfinished work. Income effects and task recoverability depend on employment arrangements; neither injury nor financial loss is measured here. Essential staff may still travel during closure.</p>
       <h3 className="font-semibold">How often the weather warnings were wrong</h3>
       <p className="mt-1 text-xs text-muted">
         {w.n.toLocaleString()} weekdays, {data.range?.start} to {data.range?.end}, checked at {data.evaluation_time} against what the Ames airport
@@ -110,7 +112,7 @@ function Tradeoff({ a }: { a: ErrorAnalysis }) {
                 <td className="pr-3">{pct(a.weather.false_negative_rate.rate)}</td><td>{pct(a.weather.false_positive_rate.rate)}</td></tr>
             </tbody>
           </table>
-          <p className="mt-1 text-xs text-muted">Each setting moves every weather threshold by the same share of its value. Rows are descriptive results on past days, not a tuned or validated threshold.</p>
+          <p className="mt-1 text-xs text-muted">Each setting classifies stored signed rule margins at a different cutoff; it does not rerun the full operating engine or change scientific hazard definitions. Rows are descriptive results on past days, not a tuned or validated threshold.</p>
         </div>
       </details>
       <details className="mt-3">
@@ -173,4 +175,10 @@ function ActionCard({ s }: { s: ActionScenario }) {
       <ul className="list-disc pl-5 text-xs">{s.costs_of_acting.map((r) => <li key={r}>{r}</li>)}</ul>
     </li>
   );
+}
+
+function ChronologicalExperiment({report:r}:{report:any}) {
+  const [ratio,setRatio]=useState('10');
+  const s=r.scenarios.find((v:any)=>String(v.ratio)===ratio)??r.scenarios[0];
+  return <section className="border-t border-edge pt-4"><h3 className="font-semibold">Chronological safety / operational-loss comparison</h3><p className="mt-2">Fixed cohort: {r.cohort_n.toLocaleString()} days at 04:00 Central. Training {r.splits.training.baseline.n.toLocaleString()}, validation {r.splits.validation.baseline.n.toLocaleString()}, final test {r.splits.test.baseline.n.toLocaleString()}; {r.boundary_excluded_days.length} boundary days purged.</p><p className="text-xs text-muted">{r.method} Threshold selected on validation only; production recommendations stay unchanged. Test disruption sample: {r.test_positive_count} days; {r.test_disruption_sample_status}.</p><label className="mt-3 block">Assumed missed-disruption cost relative to a false alarm <select className="ml-2 rounded border border-edge bg-surface p-1" value={ratio} onChange={e=>setRatio(e.target.value)}>{r.scenarios.map((v:any)=><option key={v.ratio} value={String(v.ratio)}>{v.ratio}:1</option>)}</select></label><p className="mt-2">Selected rule-margin offset: {s.selected_offset_pct}%. Final-test recall {pct(s.test.recall)} versus {pct(s.baseline_test.recall)} with existing rules; balanced accuracy {pct(s.test.balanced_accuracy)} versus {pct(s.baseline_test.balanced_accuracy)}.</p><p>Additional disruptions caught: {s.additional_disruptions_caught}. Additional false alarms: {s.additional_false_alarms}. Misses: {s.test.confusion.missed_disruption} versus {s.baseline_test.confusion.missed_disruption}. Assumed test loss: {s.test_loss} versus {s.baseline_test_loss}.</p><details className="mt-2"><summary>Method, provenance & limitations</summary><p>Manifest {r.cohort_version} · SHA {r.cohort_sha}. Missing values remain unavailable, not zero. No model fitting, injury probabilities or financial losses.</p>{r.limitations.map((x:string)=><p className="mt-1 text-xs" key={x}>{x}</p>)}<p>Future performance needs prospective out-of-sample evaluation. Current test dates were inspected in earlier baseline analyses.</p></details></section>;
 }

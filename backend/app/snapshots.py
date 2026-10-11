@@ -18,7 +18,7 @@ from engine.evaluate import Assessment, assess, gather, json_ready
 from engine.scoring import load_thresholds
 
 CONTENT_FIELDS = ("facility", "roster", "as_of", "mode", "inputs", "sources", "signals", "rules", "hazards",
-                  "posture", "confidence", "changes", "readiness", "watch_next_6h", "analogs", "features", "ai",
+                  "posture", "confidence", "changes", "readiness", "sufficiency", "watch_next_6h", "analogs", "features", "ai",
                   "thresholds_version", "thresholds_sha256", "model_id", "prompt_version")
 
 
@@ -46,6 +46,7 @@ def build_snapshot_dict(facility: Facility, a: Assessment, inputs, statuses, mod
         "confidence": a.confidence,
         "changes": a.changes,
         "readiness": a.readiness,
+        "sufficiency": a.sufficiency,
         "watch_next_6h": a.watch_next_6h,
         "features": a.features,
         "alerts": a.alerts,
@@ -57,7 +58,7 @@ def build_snapshot_dict(facility: Facility, a: Assessment, inputs, statuses, mod
 
 # Fields added after the first snapshots were written. When absent they are left out of the
 # hash, so older records still verify against the hash they were stored with.
-LATER_FIELDS = {"readiness"}
+LATER_FIELDS = {"readiness", "sufficiency"}
 
 
 def content_hash(snap: dict) -> str:
@@ -79,6 +80,7 @@ def store(snap: dict) -> dict:
         rules_json=_dumps(snap["rules"]), hazards_json=_dumps(snap["hazards"]), posture_json=_dumps(snap["posture"]),
         confidence_json=_dumps(snap["confidence"]), changes_json=_dumps(snap["changes"]),
         readiness_level=snap["readiness"]["level"], readiness_json=_dumps(snap["readiness"]),
+        sufficiency_status=snap["sufficiency"]["status"], sufficiency_json=_dumps(snap["sufficiency"]),
         watch_json=_dumps(snap["watch_next_6h"]), analogs_json=_dumps(snap["analogs"]),
         features_json=_dumps(snap["features"]), ai_json=_dumps(snap["ai"]),
     )
@@ -101,6 +103,8 @@ def row_to_dict(row: Snapshot, include_inputs: bool = True) -> dict:
         "posture": json.loads(row.posture_json), "confidence": json.loads(row.confidence_json),
         "changes": json.loads(row.changes_json), "watch_next_6h": json.loads(row.watch_json),
         "readiness": json.loads(row.readiness_json or "{}") or None,
+        # None for snapshots saved before sufficiency was tracked; never read as "sufficient".
+        "sufficiency": json.loads(row.sufficiency_json or "{}") or None,
         "analogs": json.loads(row.analogs_json), "features": json.loads(row.features_json),
         "ai": json.loads(row.ai_json),
     }

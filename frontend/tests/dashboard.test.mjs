@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { METRICS, crossesThreshold, metricEvidence, relevantMetrics, suggestionReasons } from "../src/dashboard.ts";
+import { METRICS, crossesThreshold, metricDomain, metricEvidence, relevantMetrics, suggestionReasons } from "../src/dashboard.ts";
+import { readFileSync } from "node:fs";
 
 const asOf = "2026-01-13T06:00:00Z";
 const at = (hour) => `2026-01-13T${String(hour).padStart(2, "0")}:00:00Z`;
@@ -40,6 +41,114 @@ test("a snow warning chooses snowfall rather than ice as its primary graph", () 
   const s = snap([rule("snow-warning", "alert_present", { hazard: "winter", observed_value: "Winter Storm Warning for heavy snow" })]);
   const d = data([{ t: at(8), fcst_snow_cum: 6, fcst_temp_f: 10 }]);
   assert.deepEqual(relevantMetrics(s, d).map((m) => m.id), ["snow", "temp"]);
+});
+
+test("generic winter warnings use matching alert descriptions and do not borrow unrelated alerts", () => {
+  const rules = [rule("winter-warning", "alert_present", { hazard: "winter", observed_value: "Winter Storm Warning" })];
+  const s = snap(rules, { alerts: [
+    { event: "Winter Storm Warning", headline: "Heavy snow expected. Total snow accumulation 6 to 8 inches." },
+    { event: "Ice Storm Watch", headline: "Freezing rain possible next week." },
+  ] });
+  const d = data([{ t: at(8), fcst_snow_cum: 6, fcst_ice_cum: 0, fcst_temp_f: 20 }]);
+  assert.deepEqual(relevantMetrics(s, d).map((m) => m.id), ["snow", "temp"]);
+  assert.equal(metricEvidence(s, METRICS.find((m) => m.id === "ice"), d).context, undefined);
+  s.alerts[0].headline = "Freezing rain expected. Ice accumulations around a quarter inch.";
+  assert.deepEqual(relevantMetrics(s, d).map((m) => m.id), ["ice", "temp"]);
+});
+
+test("snowstorms, ice storms and mixed precipitation select their own measurements", () => {
+  const d = data([{ t: at(8), fcst_snow_cum: 6, fcst_ice_cum: 0.25, fcst_temp_f: 20 }]);
+  for (const [event, expected] of [["Blizzard Warning", ["snow", "temp"]], ["Ice Storm Warning", ["ice", "temp"]],
+    ["Winter Storm Warning for snow and freezing rain", ["snow", "ice"]]]) {
+    const s = snap([rule("winter-warning", "alert_present", { hazard: "winter", observed_value: event })]);
+    assert.deepEqual(relevantMetrics(s, d).map((m) => m.id), expected);
+  }
+});
+
+test("a generic winter advisory does not identify a precipitation type from a zero forecast", () => {
+  const s = snap([rule("advisory", "alert_present", { hazard: "winter", observed_value: "Winter Weather Advisory" })]);
+  const d = data([{ t: at(8), fcst_snow_cum: 0, fcst_ice_cum: 0, fcst_temp_f: 20, fcst_pop_pct: 50 }]);
+  assert.deepEqual(relevantMetrics(s, d).map((m) => m.id), ["temp", "pop"]);
+  d.rows[0].fcst_snow_cum = 3;
+  assert.deepEqual(relevantMetrics(s, d).map((m) => m.id), ["snow", "temp"]);
+});
+
+test("one icy pavement sensor shows its observed count and temperature, not zero forecast ice or snow", () => {
+  const s = snap([rule("rwis", "rwis_ice_sensors", { hazard: "winter", observed_value: 1, threshold: 1,
+    unit: "sensors", level: 1, time_of_peak: at(5), window_start: at(5), window_end: at(9) })], {
+    signals: { rwis_ice_sensors: { value: 1, available: true, peak_time: at(5) } },
+    inputs: [{ kind: "scalar", role: "observation", metric: "pavement_temp_f", source_time: at(5), value: 28 }],
+    ai: { suggested_reasons: [{ rule_id: "rwis", text: "RWIS sensors reporting ice of 1 sensors" }] },
+  });
+  const d = data([{ t: at(8), fcst_ice_cum: 0, fcst_snow_cum: 0 }]);
+  assert.deepEqual(relevantMetrics(s, d).map((m) => m.id), ["rwis", "temp"]);
+  assert.deepEqual(suggestionReasons(s), ["1 nearby pavement sensor reporting an ice watch/warning condition"]);
+  const evidence = metricEvidence(s, METRICS.find((m) => m.id === "rwis"), d);
+  assert.equal(evidence.rows.length, 1);
+  assert.equal(evidence.rows[0].ts, Date.parse(at(5)));
+  assert.equal(evidence.rows[0].obs_rwis_ice_sensors_focus, 1);
+  assert.equal(evidence.rule.rule_id, "rwis");
+  assert.equal(evidence.peak.value, 1);
+  const temp = metricEvidence(s, METRICS.find((m) => m.id === "temp"), d);
+  assert.equal(temp.peak.value, 28);
+});
+
+test("freezing precipitation, measured ice and covered roads retain their observed source and units", () => {
+  for (const [metricId, signalId, value, unit] of [["freezing", "obs_freezing_precip_hours_3h", 2, "hours"],
+    ["observed-ice", "obs_ice_accretion_3h_in", 0.02, "in"], ["roads", "road_worst_rank", 3, "rank"]]) {
+    const s = snap([rule("observed", signalId, { hazard: "winter", observed_value: value, threshold: value,
+      unit, time_of_peak: at(5), window_start: at(5), window_end: at(9) })], {
+      signals: { [signalId]: { value, available: true, peak_time: at(5) } },
+    });
+    const d = data([{ t: at(8), fcst_ice_cum: 0, fcst_snow_cum: 0, fcst_temp_f: 20 }]);
+    const metrics = relevantMetrics(s, d);
+    assert.deepEqual(metrics.map((m) => m.id), [metricId, "temp"]);
+    assert.equal(metrics[0].unit, unit);
+    const evidence = metricEvidence(s, metrics[0], d);
+    assert.equal(evidence.peak.value, value);
+    assert.equal(evidence.rows.length, 1);
+    assert.equal(evidence.rows[0].ts, Date.parse(metricId === "freezing" ? asOf : at(5)));
+    assert.equal(evidence.highlighted, 1);
+  }
+});
+
+test("missing snow forecasts stay missing while blizzards use their available wind context", () => {
+  const s = snap([rule("blizzard", "alert_present", { hazard: "winter", observed_value: "Blizzard Warning" })]);
+  const d = data([{ t: at(8), fcst_ice_cum: 0, fcst_wind_gust_mph: 10 }]);
+  assert.deepEqual(relevantMetrics(s, d).map((m) => m.id), ["wind"]);
+  assert.equal(metricEvidence(s, METRICS.find((m) => m.id === "snow"), d).peak, null);
+});
+
+test("the pre-Christmas blizzard shows wind, dangerous cold and a timestamped travel advisory after new snow ends", () => {
+  const { snapshot: s, timeseries: d } = JSON.parse(readFileSync(new URL("../../backend/fixtures/blizzard_2022-12-22T18Z_chart.json", import.meta.url)));
+  assert.equal(s.signals.fcst_snow_24h_in.value, 0);
+  assert.deepEqual(relevantMetrics(s, d).map((m) => m.id), ["wind", "temp", "roads"]);
+  const cold = metricEvidence(s, METRICS.find((m) => m.id === "temp"), d);
+  assert.equal(cold.rule.rule_id, "cold.fcst_wind_chill_extreme");
+  assert.equal(cold.peak.value, s.signals.fcst_min_apparent_24h_f.value);
+  assert.ok(cold.highlighted > 0);
+  assert.ok(cold.rows.some((r) => r.obs_apparent_temp_f < -35));
+  const roadMetric = METRICS.find((m) => m.id === "roads");
+  const roads = metricEvidence(s, roadMetric, d);
+  assert.equal(roads.peak.value, 4);
+  assert.equal(roads.peak.ts, Date.parse("2022-12-22T13:37:00Z"));
+  assert.equal(roads.highlighted, 1);
+  const domain = metricDomain(s, roadMetric, roads);
+  assert.ok(domain[0] < roads.peak.ts && roads.peak.ts < domain[1]);
+  assert.equal(roads.rows.length, 1); // one report, never a fabricated road trend
+});
+
+test("a road report before the commute window stays visible without being moved to evaluation time", () => {
+  const s = snap([rule("roads", "road_worst_rank", { hazard: "winter", observed_value: 4, threshold: 4,
+    time_of_peak: at(1), window_start: at(5), window_end: at(9) })], {
+    signals: { road_worst_rank: { available: true, value: 4, peak_time: at(1) } },
+  });
+  const metric = METRICS.find((m) => m.id === "roads"), d = data([]);
+  const evidence = metricEvidence(s, metric, d);
+  assert.equal(evidence.peak.ts, Date.parse(at(1)));
+  assert.equal(evidence.highlighted, 1);
+  assert.ok(metricDomain(s, metric, evidence)[0] < evidence.peak.ts);
+  assert.deepEqual(metricDomain(s, metric, evidence, true), [Date.parse(asOf) - 12 * 3600e3, Date.parse(asOf) + 48 * 3600e3]);
 });
 
 test("only the recorded threshold, series and hazard window are highlighted", () => {

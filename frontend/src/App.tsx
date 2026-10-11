@@ -9,7 +9,7 @@ import { PanelBoundary } from "./components/ErrorBoundary";
 import { GlanceRow } from "./components/GlanceRow";
 import { Header, type Mode, type View } from "./components/Header";
 import { DecisionStep } from "./components/DecisionStep";
-import { AnalogsPanel, RecordTimeline } from "./components/HistoryPanel";
+import { AnalogsPanel } from "./components/HistoryPanel";
 import { LiveCheckPanel } from "./components/LiveCheckPanel";
 import { ReplayPanel } from "./components/ReplayPanel";
 import { RoadsPanel } from "./components/RoadsPanel";
@@ -227,11 +227,10 @@ export default function App() {
                   <PanelBoundary name="Analogs"><AnalogsPanel snap={shown} /></PanelBoundary>
                 </Section>
               )}
-              <Section id="technical" title="Technical details & decision record" innerTitles open={open.has("technical")} onToggle={() => toggle("technical")}
-                summary="Hazard scores, confidence factors, past decisions, cloud copy and raw data sources">
+              <Section id="technical" title="Technical details" innerTitles open={open.has("technical")} onToggle={() => toggle("technical")}
+                summary="Hazard scores, confidence factors, cloud copy and raw data sources">
                 <PanelBoundary name="Technical summary"><TechnicalSummary snap={shown} /></PanelBoundary>
                 <PanelBoundary name="Threat breakdown"><ThreatPanel snap={shown} /></PanelBoundary>
-                <PanelBoundary name="Decision record"><RecordTimeline snap={shown} refreshKey={recordKey} onOpen={(id) => viewDecisionWeather(id,null)} /></PanelBoundary>
                 <PanelBoundary name="Cloud copy"><CloudCopyPanel snap={shown} refreshKey={recordKey} /></PanelBoundary>
                 <PanelBoundary name="Raw data"><RawDataDrawer snap={shown} /></PanelBoundary>
               </Section>

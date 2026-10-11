@@ -48,7 +48,8 @@ class Thresholds(BaseModel):
 @lru_cache
 def load_thresholds(path: str | None = None) -> Thresholds:
     p = Path(path) if path else THRESHOLDS_PATH
-    text = p.read_bytes()
+    # Hash with LF line endings so a Windows checkout (CRLF) identifies the same rules as Linux and the datasets.
+    text = p.read_bytes().replace(b"\r\n", b"\n")
     raw = yaml.safe_load(text)
     return Thresholds(
         version=raw["version"],

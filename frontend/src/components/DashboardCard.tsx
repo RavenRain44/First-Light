@@ -1,6 +1,8 @@
+import { EvidenceNotice } from "./EvidenceNotice";
+import { evidenceState, normalIsFallback } from "../evidence";
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { api } from "../api";
-import { ACTIONS, METRICS, joinReasons, relevantMetrics, suggestionReasons, supportingRules } from "../dashboard";
+import { ACTIONS, METRICS, hasBlizzardWarning, joinReasons, relevantMetrics, suggestionReasons, supportingRules } from "../dashboard";
 import { cooperPresentation, forecastOverview, type ForecastValue } from "../cooper";
 import type { Snapshot, Timeseries } from "../types";
 import { Badge, PostureBadge, READINESS, Skeleton, ago, fmtDayLong, fmtTime } from "../util";
@@ -39,6 +41,7 @@ export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotif
   const unavailable = snap.sources.filter((s) => s.status === "unavailable");
   const people = snap.roster && !snap.roster.hypothetical ? snap.roster.expected_in_building : undefined;
   const canDecide = !readOnly && snap.mode !== "backtest" && !snap.facility.hypothetical;
+  const evidence = evidenceState(snap);
 
   return (
     <article className="card min-w-0 overflow-hidden" aria-labelledby={`${id}-action`} data-testid="cooper-dashboard" data-condition={presentation.level ?? "UNKNOWN"}>
@@ -46,10 +49,13 @@ export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotif
         style={{ background: condition?.color ?? "var(--surface-2)", color: presentation.level === "RED" ? "#fff" : condition ? "#1f2937" : "var(--text-primary)" }}>
         <p className="text-xs font-semibold uppercase tracking-wider">{condition ? `Condition ${condition.label}` : "Condition unavailable"} · Colonel Cooper readiness</p>
         <h2 id={`${id}-action`} className="mt-2 text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">{presentation.title}</h2>
+        {presentation.urgencyExplanation && <p className="mt-2 text-sm" data-testid="readiness-urgency">{presentation.urgencyExplanation}</p>}
         {presentation.level === "WHITE" && <p className="mt-2 text-sm">Keep routine monitoring; review again when the forecast changes.</p>}
         {snap.historical_context && <p className="mt-2 text-sm">Historical rating uses supplied inputs only; missing forecasts and alerts remain unknown.</p>}
       </header>
       <section className="p-5 sm:p-8">
+        {!evidence.supports_all_clear || evidence.status !== "sufficient" || snap.mode !== "live"
+          ? <div className="mb-5"><EvidenceNotice snap={snap} onRefresh={onRefresh} busy={busy} /></div> : null}
         <dl className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm sm:grid-cols-4" data-testid="dashboard-metadata">
           <div><dt className="text-xs text-muted">Confidence</dt><dd className="mt-1 font-semibold capitalize">{snap.confidence.level}</dd></div>
           <div><dt className="text-xs text-muted">People expected</dt><dd className="mt-1 font-semibold">{people ?? "Unavailable"}</dd></div>
@@ -81,7 +87,12 @@ export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotif
           <p className="font-semibold text-ink">Why this condition</p>
           <ul className="mt-1 list-disc space-y-1 pl-5">{presentation.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
         </div>}
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-sm"><span className="text-ink2">Suggested operating status:</span><PostureBadge p={snap.posture.posture} /></div>
+        {!presentation.urgent && (normalIsFallback(snap) || evidence.provisional) && (
+          <p className="mb-2 text-lg font-medium leading-relaxed" data-testid="suggested-action">{suggestionSentence(snap)}</p>
+        )}
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-sm"><span className="text-ink2">Suggested operating status:</span><PostureBadge p={snap.posture.posture} />
+          {normalIsFallback(snap) && <span className="font-semibold text-[var(--danger)]" data-testid="fallback-label">Fallback only, not confirmed by current data</span>}</div>
+        {evidence.provisional && <p className="mt-1 text-sm font-semibold" data-testid="provisional-label">Provisional · backup forecast · manager verification required</p>}
         <p className="mt-1 text-xs text-muted">OPM status: {snap.posture.opm_label}</p>
 
         {presentation.action && canDecide && (
@@ -137,7 +148,8 @@ function ForecastSummary({ snap }: { snap: Snapshot }) {
     {sources.length > 0 && <details className="mt-2 text-xs text-ink2">
       <summary className="min-h-9 cursor-pointer py-2 underline underline-offset-2">Forecast sources and issue times</summary>
       <ul className="space-y-2 py-2">{sources.map(({ input }) => <li key={input!.id} className="break-words">
-        {input!.metric.replace(/_/g, " ")}: {input!.source} · issued {fmtTime(input!.source_time, tz, { date: true, year: true })}
+        {input!.metric.replace(/_/g, " ")}: {input!.source} · {input!.source_time ? <>issued {fmtTime(input!.source_time, tz, { date: true, year: true })}</>
+          : <>model issue time unavailable; retrieved {fmtTime(input!.fetched_at, tz, { date: true, year: true })}</>}
         {input!.source_url.startsWith("https://") && <> · <a href={input!.source_url} target="_blank" rel="noreferrer" className="underline">View source</a></>}
       </li>)}</ul>
     </details>}
@@ -169,14 +181,17 @@ function ForecastStat({ label, value, text, children }: {
 export function RelevantMetrics({ snap }: { snap: Snapshot }) {
   const id = useId();
   const presentation = cooperPresentation(snap);
-  const active = presentation.urgent || (presentation.level === null && supportingRules(snap).length > 0);
+  const control = snap.historical_context?.control?.kind === "normal-weather";
+  const active = control || presentation.urgent || (presentation.level === null && supportingRules(snap).length > 0);
   const { data, error } = useTimeseries(snap, active);
   if (!active) return null;
   const metrics = data ? relevantMetrics(snap, data) : [];
   return (
     <section className="card p-5 sm:p-8" aria-labelledby={`${id}-metrics`}>
-      <h2 id={`${id}-metrics`} className="text-lg font-semibold">Concerning weather data</h2>
-      <p className="mt-1 text-sm text-ink2">Highlighted periods and points show the evidence behind the suggestion.</p>
+      <h2 id={`${id}-metrics`} className="text-lg font-semibold">{control ? "Observed weather for this control" : "Concerning weather data"}</h2>
+      <p className="mt-1 text-sm text-ink2">{control ? "Archived temperature and wind available by the selected evaluation time. The full-day outcome is shown separately from the recommendation inputs." : "Highlighted periods and points show the evidence behind the suggestion."}</p>
+      {hasBlizzardWarning(snap) && snap.signals.fcst_snow_24h_in?.available && snap.signals.fcst_snow_24h_in.value === 0 &&
+        <p className="mt-3 rounded-lg bg-[var(--surface-2)] p-3 text-sm text-ink2">The recorded forecast shows 0.00 in of additional snow in its evaluated window. It does not measure snow already on the ground. Blizzard warnings also cover strong winds and low visibility; review the wind, cold and road evidence below.</p>}
       {error ? <p role="status" className="mt-4 rounded-lg bg-[var(--surface-2)] p-4 text-sm">Chart data could not be loaded. The suggestion and the decision steps are still available.</p>
         : !data ? <div className="mt-4 space-y-4" aria-label="Loading relevant metrics"><Skeleton className="h-60" /><Skeleton className="h-40" /></div>
         : <div className="mt-4 space-y-4">{metrics.map((metric, index) =>
@@ -186,7 +201,14 @@ export function RelevantMetrics({ snap }: { snap: Snapshot }) {
   );
 }
 
-/** "Due to <reasons>, <action>." The same sentence on Today and on Notify staff. */
+/** "Due to <reasons>, <action>." The same sentence on Today and on Notify staff. Never an all-clear
+ *  when the evidence is insufficient: NORMAL is then only the rules' fallback. */
 export function suggestionSentence(snap: Snapshot) {
+  if (normalIsFallback(snap)) {
+    return <>Current data is insufficient to confirm conditions. <strong className="font-semibold">Normal is only the fallback</strong>: recheck for current data, or record a manual decision with your reason.</>;
+  }
+  if (evidenceState(snap).provisional) {
+    return <>Based on a backup forecast, <strong className="font-semibold">{ACTIONS[snap.posture.posture]}</strong>. Verify the missing evidence before making the final decision.</>;
+  }
   return <>Due to {joinReasons(suggestionReasons(snap))}, <strong className="font-semibold">{ACTIONS[snap.posture.posture]}</strong>.</>;
 }
