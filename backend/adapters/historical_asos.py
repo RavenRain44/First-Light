@@ -9,6 +9,7 @@ import gzip
 import hashlib
 import io
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlencode
@@ -34,6 +35,17 @@ def source_url(year):
     return 'https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py?' + urlencode(params)
 
 
+# METAR present-weather groups, e.g. -SN, +TSRA, FZRA, VCSH, BLSN (WMO/FMH-1 code table).
+_WX = re.compile(r"^(?:[+-]|VC)?(?:MI|PR|BC|DR|BL|SH|TS|FZ)?(?:DZ|RA|SN|SG|IC|PL|GR|GS|UP|BR|FG|FU|VA|DU|SA|HZ|PY|PO|SQ|FC|SS|DS)*$")
+
+
+def present_weather(metar):
+    """Weather codes from the body of a METAR only. Remarks are excluded: they contain text such as
+    'LTG DSNT' (lightning distant) or 'FZRANO' (freezing-rain sensor out) that must not read as snow or ice."""
+    body = (metar or '').split(' RMK', 1)[0].split()
+    return ' '.join(t for t in body if len(t) >= 2 and _WX.match(t) and t != 'VC')
+
+
 def parse_csv(text):
     text = '\n'.join(line for line in text.splitlines() if not line.startswith('#'))
     reader = csv.DictReader(io.StringIO(text))
@@ -47,7 +59,7 @@ def parse_csv(text):
             valid = datetime.fromisoformat(row['valid']).replace(tzinfo=timezone.utc)
         except (ValueError, KeyError):
             continue
-        item = {'utc_valid': valid.isoformat(), 'raw':row.get('metar',''), 'wxcodes':row.get('metar','')}
+        item = {'utc_valid': valid.isoformat(), 'raw':row.get('metar',''), 'wxcodes':present_weather(row.get('metar',''))}
         for field in FIELDS[:-1]:
             try: item[field] = float(row[field])
             except (ValueError, KeyError, TypeError): item[field] = None

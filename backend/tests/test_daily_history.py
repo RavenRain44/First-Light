@@ -194,3 +194,15 @@ def test_compact_ai_addon_is_explicit_and_preserves_original(env,monkeypatch):
             time.sleep(.01)
         assert value['ai_addon']['status']=='ok' and calls==[sid]
         assert value['integrity_ok'] and value['content_sha256']==original
+
+
+def test_present_weather_ignores_remarks():
+    """'LTG DSNT' and 'FZRANO' in remarks once read as snow and freezing rain (summer 'snow' days in the cohort)."""
+    from adapters.historical_asos import present_weather
+    assert present_weather('KAMW 202153Z AUTO 20010KT 10SM CLR 32/24 A2975 RMK AO2 LTG DSNT N AND NE SLP061') == ''
+    assert present_weather('KAMW 010153Z AUTO 05012KT 10SM CLR 01/M02 A2990 RMK AO2 FZRANO TSNO PLE15') == ''
+    assert present_weather('KAMW 110153Z AUTO 36015G20KT 6SM -SN BR OVC050 M01/M03 A3022 RMK AO2 SNB48') == '-SN BR'
+    assert present_weather('KAMW 010153Z 27030G45KT 1/4SM +TSRA BLSN VCSH OVC008 10/08 A2990 RMK AO2') == '+TSRA BLSN VCSH'
+    rows = parse_csv('station,valid,tmpf,feel,sknt,gust,vsby,p01i,metar\nAMW,2024-07-01 03:00,80,M,10,M,10,M,'
+                     'KAMW 010300Z AUTO 20010KT 10SM CLR 27/20 A2975 RMK AO2 LTG DSNT\n')
+    assert rows[0]['wxcodes'] == ''

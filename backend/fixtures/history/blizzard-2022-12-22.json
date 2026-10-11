@@ -355,7 +355,7 @@
  },
  "timeline": [
   {
-   "snapshot_id": "e92371cc4d6148e1bac49e9ca4898c4d",
+   "snapshot_id": "8193a06bb12f47cb800c4e9fdc6409a4",
    "as_of": "2022-12-21T12:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2022-12-21",
@@ -388,7 +388,7 @@
    }
   },
   {
-   "snapshot_id": "48bead9b0ebe47d3833b6ec538dedb5e",
+   "snapshot_id": "cf7ee101cc054146b8d5f0889e17012f",
    "as_of": "2022-12-21T13:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2022-12-21",
@@ -421,7 +421,7 @@
    }
   },
   {
-   "snapshot_id": "54794dc6362f4e6695c8ae8456191b8f",
+   "snapshot_id": "1ac0d2bf4daf4389a498383f03042cb6",
    "as_of": "2022-12-21T14:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2022-12-21",
@@ -454,7 +454,7 @@
    }
   },
   {
-   "snapshot_id": "2d17c58557ae481e97134bedc02ba975",
+   "snapshot_id": "edbaaf71aaa1457293c271bf4a05b0a3",
    "as_of": "2022-12-21T15:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2022-12-21",
@@ -487,7 +487,7 @@
    }
   },
   {
-   "snapshot_id": "87a7104459b34f809c6d8d2d85abebf1",
+   "snapshot_id": "91b95d5802f74559b4228a865444e5b6",
    "as_of": "2022-12-21T16:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2022-12-21",
@@ -520,7 +520,7 @@
    }
   },
   {
-   "snapshot_id": "a6e07a2978b849a4b9cf8a9269d2f7dd",
+   "snapshot_id": "bfe77ffe04be4b098faae31f10d3b92d",
    "as_of": "2022-12-21T17:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2022-12-21",
@@ -553,7 +553,7 @@
    }
   },
   {
-   "snapshot_id": "81272ab0e67c414d86064386991c585c",
+   "snapshot_id": "ea5ad8f4944945178104e5c472f3d794",
    "as_of": "2022-12-21T18:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2022-12-21",
@@ -587,7 +587,7 @@
    }
   },
   {
-   "snapshot_id": "408788c17fcc4885a05c026ca19f11bf",
+   "snapshot_id": "739fddc71b904a7fa56e6f66eb7a3b2e",
    "as_of": "2022-12-21T19:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2022-12-21",
@@ -621,7 +621,7 @@
    }
   },
   {
-   "snapshot_id": "79f893f833a74df19842b7f5d776e053",
+   "snapshot_id": "7f88ff79198049f28c0a934cd873cb95",
    "as_of": "2022-12-21T20:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2022-12-21",
@@ -655,7 +655,7 @@
    }
   },
   {
-   "snapshot_id": "1436d2e7c4ca492bbceda456d9485d42",
+   "snapshot_id": "61b5dd36678741e7a1a681bec260261d",
    "as_of": "2022-12-21T21:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2022-12-21",
@@ -689,7 +689,7 @@
    }
   },
   {
-   "snapshot_id": "61686376c1d54a7fb2f5e98b43ca5814",
+   "snapshot_id": "211fcd9710e54e84b970282417984fb2",
    "as_of": "2022-12-21T22:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2022-12-21",
@@ -723,7 +723,7 @@
    }
   },
   {
-   "snapshot_id": "5b7c5723a9a342e2897a326eea6d78bd",
+   "snapshot_id": "d0cbf016de984eb29f5dd284d91b1d27",
    "as_of": "2022-12-21T23:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -757,7 +757,7 @@
    }
   },
   {
-   "snapshot_id": "c1b1514166704a78a5c31bec022b3d6d",
+   "snapshot_id": "2658d83535a8490284be11c82afb0d82",
    "as_of": "2022-12-22T00:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -791,7 +791,7 @@
    }
   },
   {
-   "snapshot_id": "c7265efb50794ddabe4e27d0b271b623",
+   "snapshot_id": "b286bf217f8d40a5b5a8e12b5f11fa12",
    "as_of": "2022-12-22T01:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -825,7 +825,7 @@
    }
   },
   {
-   "snapshot_id": "8c132944585540b2a047cf8a7c3d9221",
+   "snapshot_id": "ce460142b0bf4308bf13188d47288362",
    "as_of": "2022-12-22T02:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -859,7 +859,7 @@
    }
   },
   {
-   "snapshot_id": "9df682343c7d44a3a9b48c590eb68eee",
+   "snapshot_id": "2d88333b64b040778f7f2f9d57d292f3",
    "as_of": "2022-12-22T03:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -893,7 +893,7 @@
    }
   },
   {
-   "snapshot_id": "dc302cfbe35d4f30a91f9f524e1befac",
+   "snapshot_id": "66375797883c4064baac57367abadf08",
    "as_of": "2022-12-22T04:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -927,7 +927,7 @@
    }
   },
   {
-   "snapshot_id": "25baac48a96a427c830251985662ddab",
+   "snapshot_id": "45226f64117343ae996d472a2cded6cc",
    "as_of": "2022-12-22T05:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -961,7 +961,7 @@
    }
   },
   {
-   "snapshot_id": "51d0135a28a64bfaaf2cea6a1bdcc467",
+   "snapshot_id": "63432b044c734e2a91d64ab3ec15540f",
    "as_of": "2022-12-22T06:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -995,7 +995,7 @@
    }
   },
   {
-   "snapshot_id": "d2d04bed0ba8428ca45e1fe3e0618990",
+   "snapshot_id": "4adc0d9cd9f24ddc9a942b4b134b742b",
    "as_of": "2022-12-22T07:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -1029,7 +1029,7 @@
    }
   },
   {
-   "snapshot_id": "d245462988a740f7b050b400133c33e3",
+   "snapshot_id": "7743814d96534e218f9ba8dc1b665f0c",
    "as_of": "2022-12-22T08:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -1063,7 +1063,7 @@
    }
   },
   {
-   "snapshot_id": "5ed9205d204f43a9a1c4ac3286bf12af",
+   "snapshot_id": "c53cfe227d31416890f137877d36ac0a",
    "as_of": "2022-12-22T09:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -1097,7 +1097,7 @@
    }
   },
   {
-   "snapshot_id": "e3cb359510b044d99d519b8606551c65",
+   "snapshot_id": "eeb289cd7f7b458c8c40672344167e3a",
    "as_of": "2022-12-22T10:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -1131,7 +1131,7 @@
    }
   },
   {
-   "snapshot_id": "b6a9e1105c77495ba38dc96a605b3d0b",
+   "snapshot_id": "8673e4b0cd064ecfb5a765a2877602dc",
    "as_of": "2022-12-22T11:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -1165,7 +1165,7 @@
    }
   },
   {
-   "snapshot_id": "c01b46a2842f492b81c8d2113d1b29ce",
+   "snapshot_id": "32a6a7f0370a464ba0717c95c4828a27",
    "as_of": "2022-12-22T12:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -1199,7 +1199,7 @@
    }
   },
   {
-   "snapshot_id": "66079f50d5ed4f67970ededf68d84803",
+   "snapshot_id": "d30de00258954e64b788fcf92d2e23e7",
    "as_of": "2022-12-22T13:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -1233,7 +1233,7 @@
    }
   },
   {
-   "snapshot_id": "f8e3691d1c5b495ca11b07dbaf5d3dd4",
+   "snapshot_id": "b57969305f454d00b0e9d6a3e4c345f7",
    "as_of": "2022-12-22T14:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -1267,7 +1267,7 @@
    }
   },
   {
-   "snapshot_id": "ebd995187fce45928239eb1249797fd3",
+   "snapshot_id": "1a447b8829f441cdbd48b583e777746f",
    "as_of": "2022-12-22T15:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -1301,7 +1301,7 @@
    }
   },
   {
-   "snapshot_id": "8430117fdf95449c9c8430d7f5ab29be",
+   "snapshot_id": "7a2df416736b4364bc925dc7eafae7fb",
    "as_of": "2022-12-22T16:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -1335,7 +1335,7 @@
    }
   },
   {
-   "snapshot_id": "82bbbc03add84fdf8bcf581eb935b0a9",
+   "snapshot_id": "d565d88a9dd24382b213f7c7e89ab950",
    "as_of": "2022-12-22T17:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2022-12-22",
@@ -1369,7 +1369,7 @@
    }
   },
   {
-   "snapshot_id": "1baca69dd9e641338e10d6a716c15f49",
+   "snapshot_id": "ecb56ef0c5c448e88586ab6a18367508",
    "as_of": "2022-12-22T18:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2022-12-22",
@@ -1402,7 +1402,7 @@
    }
   },
   {
-   "snapshot_id": "99ff9659f40e4c719ae5dcd8ca52792d",
+   "snapshot_id": "ccc66a459d6f4309aa1910e8a7f987c5",
    "as_of": "2022-12-22T19:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2022-12-22",
@@ -1435,7 +1435,7 @@
    }
   },
   {
-   "snapshot_id": "f1ae3984a06b46469a6adcad89111b83",
+   "snapshot_id": "a4e32c9bf11e4d70a258bc5c853640b9",
    "as_of": "2022-12-22T20:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2022-12-22",
@@ -1468,7 +1468,7 @@
    }
   },
   {
-   "snapshot_id": "fb1eef9b087440909b0db40e79771b3b",
+   "snapshot_id": "26ea11c263ec4edaa6d5c58a0fb9cd21",
    "as_of": "2022-12-22T21:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2022-12-22",
@@ -1501,7 +1501,7 @@
    }
   },
   {
-   "snapshot_id": "46fed00dbaf54482ba8c2547718ef822",
+   "snapshot_id": "26aafe4dc7944271a55267b556ab982b",
    "as_of": "2022-12-22T22:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2022-12-22",
@@ -1534,7 +1534,7 @@
    }
   },
   {
-   "snapshot_id": "de1a76ae4a5e4bf8bed8511fb65d4323",
+   "snapshot_id": "91b7b63ec0ca42c59d2a57daf5f2a423",
    "as_of": "2022-12-22T23:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2022-12-23",
@@ -1567,7 +1567,7 @@
    }
   },
   {
-   "snapshot_id": "543c182282c54fcb9da519168cd42e9d",
+   "snapshot_id": "197f947845fe41cfbe7052089aae1bd3",
    "as_of": "2022-12-23T00:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2022-12-23",

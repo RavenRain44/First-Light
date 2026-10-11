@@ -165,7 +165,7 @@
    "readiness": "RED"
   },
   "first_orange_or_red": {
-   "as_of": "2025-03-04T09:00:00+00:00",
+   "as_of": "2025-03-04T06:00:00+00:00",
    "readiness": "ORANGE"
   },
   "first_non_normal": {
@@ -182,12 +182,12 @@
  },
  "timeline": [
   {
-   "snapshot_id": "4ced4f7e87d4449cb623c2ed596c9688",
+   "snapshot_id": "7e9e7af5aa6f4b10817b250668e78bcf",
    "as_of": "2025-03-04T06:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
    "confidence": "high",
-   "readiness": "YELLOW",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 40,
@@ -202,26 +202,26 @@
     "cold_alert_level": 0.0,
     "fcst_ice_in": 0.01,
     "fcst_snow_in": 3.7,
-    "hours_to_peak": 18.0,
+    "hours_to_peak": 21.0,
     "max_gust_mph": 49.5,
     "min_apparent_f": 13.1,
     "obs_freezing_hours": 0.0,
-    "peak_local_hour": 18.0,
+    "peak_local_hour": 21.0,
     "road_worst_rank": 0.0,
     "spc_rank": 0.0,
     "wind_alert_level": 1.0,
-    "wind_level": 1.0,
+    "wind_level": 2.0,
     "winter_alert_level": 1.0,
     "winter_level": 1.0
    }
   },
   {
-   "snapshot_id": "56422e543f5247a28ba02b2bd7cbbbe2",
+   "snapshot_id": "310b73e5568447259c1d3ff6c16937db",
    "as_of": "2025-03-04T07:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
    "confidence": "high",
-   "readiness": "YELLOW",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 40,
@@ -236,26 +236,26 @@
     "cold_alert_level": 0.0,
     "fcst_ice_in": 0.01,
     "fcst_snow_in": 3.7,
-    "hours_to_peak": 17.0,
+    "hours_to_peak": 20.0,
     "max_gust_mph": 49.5,
     "min_apparent_f": 13.1,
     "obs_freezing_hours": 0.0,
-    "peak_local_hour": 18.0,
+    "peak_local_hour": 21.0,
     "road_worst_rank": 0.0,
     "spc_rank": 0.0,
     "wind_alert_level": 1.0,
-    "wind_level": 1.0,
+    "wind_level": 2.0,
     "winter_alert_level": 1.0,
     "winter_level": 1.0
    }
   },
   {
-   "snapshot_id": "e68c552c918842f38e55f3bdf5952bf2",
+   "snapshot_id": "9e0d77c8bd8045d3a39366816c67dc15",
    "as_of": "2025-03-04T08:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
    "confidence": "high",
-   "readiness": "YELLOW",
+   "readiness": "ORANGE",
    "scores": {
     "cold": 0,
     "wind": 40,
@@ -270,21 +270,21 @@
     "cold_alert_level": 0.0,
     "fcst_ice_in": 0.01,
     "fcst_snow_in": 3.7,
-    "hours_to_peak": 16.0,
+    "hours_to_peak": 19.0,
     "max_gust_mph": 49.5,
     "min_apparent_f": 13.1,
     "obs_freezing_hours": 0.0,
-    "peak_local_hour": 18.0,
+    "peak_local_hour": 21.0,
     "road_worst_rank": 0.0,
     "spc_rank": 0.0,
     "wind_alert_level": 1.0,
-    "wind_level": 1.0,
+    "wind_level": 2.0,
     "winter_alert_level": 1.0,
     "winter_level": 1.0
    }
   },
   {
-   "snapshot_id": "d2307b70216b4bdbb2163b8d5841d74e",
+   "snapshot_id": "797da00ae0b449c0be6867fb0c3c4c80",
    "as_of": "2025-03-04T09:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -293,7 +293,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 0
+    "winter": 35
    },
    "alerts": [
     "High Wind Warning"
@@ -313,11 +313,11 @@
     "wind_alert_level": 2.0,
     "wind_level": 2.0,
     "winter_alert_level": 0.0,
-    "winter_level": 0.0
+    "winter_level": 1.0
    }
   },
   {
-   "snapshot_id": "361bd96ea2864d94af39e24c5110f9e4",
+   "snapshot_id": "6e762956d4ec46fd9c2214c94f03cf78",
    "as_of": "2025-03-04T10:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -326,7 +326,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 0
+    "winter": 35
    },
    "alerts": [
     "High Wind Warning"
@@ -346,11 +346,11 @@
     "wind_alert_level": 2.0,
     "wind_level": 2.0,
     "winter_alert_level": 0.0,
-    "winter_level": 0.0
+    "winter_level": 1.0
    }
   },
   {
-   "snapshot_id": "016516bc596c4de4a7e56c93c59e5f92",
+   "snapshot_id": "f0b07e2d101a4b738f264058e5ae8b01",
    "as_of": "2025-03-04T11:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -359,7 +359,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 0
+    "winter": 35
    },
    "alerts": [
     "High Wind Warning"
@@ -379,11 +379,11 @@
     "wind_alert_level": 2.0,
     "wind_level": 2.0,
     "winter_alert_level": 0.0,
-    "winter_level": 0.0
+    "winter_level": 1.0
    }
   },
   {
-   "snapshot_id": "f440164e8f9a4b4d973e8d44805dd0fa",
+   "snapshot_id": "299ac57c8d2542df8e6291bef68a4fd7",
    "as_of": "2025-03-04T12:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -392,7 +392,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 0
+    "winter": 35
    },
    "alerts": [
     "High Wind Warning"
@@ -412,11 +412,11 @@
     "wind_alert_level": 2.0,
     "wind_level": 2.0,
     "winter_alert_level": 0.0,
-    "winter_level": 0.0
+    "winter_level": 1.0
    }
   },
   {
-   "snapshot_id": "59d096b015a84191b75159b016275800",
+   "snapshot_id": "2268aecd91ad4883b6c08e4832ed9600",
    "as_of": "2025-03-04T13:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -425,7 +425,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 0
+    "winter": 35
    },
    "alerts": [
     "High Wind Warning"
@@ -445,11 +445,11 @@
     "wind_alert_level": 2.0,
     "wind_level": 2.0,
     "winter_alert_level": 0.0,
-    "winter_level": 0.0
+    "winter_level": 1.0
    }
   },
   {
-   "snapshot_id": "cd508b1f4a154dafb8af4a219f366b90",
+   "snapshot_id": "7f7573415b2a4d358fcdb3ad9a8292f9",
    "as_of": "2025-03-04T14:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -458,7 +458,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 0
+    "winter": 35
    },
    "alerts": [
     "High Wind Warning"
@@ -478,11 +478,11 @@
     "wind_alert_level": 2.0,
     "wind_level": 2.0,
     "winter_alert_level": 0.0,
-    "winter_level": 0.0
+    "winter_level": 1.0
    }
   },
   {
-   "snapshot_id": "6d08643e347e4644b4da4cccd67f9ab8",
+   "snapshot_id": "4a4443fc1bf9420387f0101e8d65411d",
    "as_of": "2025-03-04T15:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -491,7 +491,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 0
+    "winter": 35
    },
    "alerts": [
     "High Wind Warning"
@@ -511,11 +511,11 @@
     "wind_alert_level": 2.0,
     "wind_level": 2.0,
     "winter_alert_level": 0.0,
-    "winter_level": 0.0
+    "winter_level": 1.0
    }
   },
   {
-   "snapshot_id": "c443e7cd67904fe19d30f0ecdd56a0d2",
+   "snapshot_id": "b89b96cc7ec848888a527bc2b0061a8c",
    "as_of": "2025-03-04T16:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -524,7 +524,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 0
+    "winter": 35
    },
    "alerts": [
     "High Wind Warning"
@@ -544,11 +544,11 @@
     "wind_alert_level": 2.0,
     "wind_level": 2.0,
     "winter_alert_level": 0.0,
-    "winter_level": 0.0
+    "winter_level": 1.0
    }
   },
   {
-   "snapshot_id": "c1a8c690692848bb940be2665c681510",
+   "snapshot_id": "e166efadb862422595774418098201ea",
    "as_of": "2025-03-04T17:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -557,7 +557,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 0
+    "winter": 35
    },
    "alerts": [
     "High Wind Warning"
@@ -577,11 +577,11 @@
     "wind_alert_level": 2.0,
     "wind_level": 2.0,
     "winter_alert_level": 0.0,
-    "winter_level": 0.0
+    "winter_level": 1.0
    }
   },
   {
-   "snapshot_id": "6c234d5fc3ec4c1fbfc192e802f3719f",
+   "snapshot_id": "14ace3441f4e4e418fee0cc9419916e6",
    "as_of": "2025-03-04T18:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -590,7 +590,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 85
+    "winter": 90
    },
    "alerts": [
     "Blizzard Warning",
@@ -615,7 +615,7 @@
    }
   },
   {
-   "snapshot_id": "ff69d4a4455a4ab3b8248285a96af9cd",
+   "snapshot_id": "8ce001509b294acbadcfe931fcdc73c2",
    "as_of": "2025-03-04T19:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -624,7 +624,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 85
+    "winter": 90
    },
    "alerts": [
     "Blizzard Warning",
@@ -649,7 +649,7 @@
    }
   },
   {
-   "snapshot_id": "13dfc41a74d34b1ab647fff2c4b6bf23",
+   "snapshot_id": "92a1f006ab5d4bdfa5ff3f7d577a2168",
    "as_of": "2025-03-04T20:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -658,7 +658,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 85
+    "winter": 90
    },
    "alerts": [
     "Blizzard Warning",
@@ -683,7 +683,7 @@
    }
   },
   {
-   "snapshot_id": "274e2ee83f3141b9a18870caced3774f",
+   "snapshot_id": "97c0b40376d147998ba75ac8690d9416",
    "as_of": "2025-03-04T21:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -692,7 +692,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 85
+    "winter": 90
    },
    "alerts": [
     "Blizzard Warning",
@@ -717,7 +717,7 @@
    }
   },
   {
-   "snapshot_id": "8aeb3f6c0b5343d1b60022064dd5ec72",
+   "snapshot_id": "632c8277e34047e9a4809c4d29f956e8",
    "as_of": "2025-03-04T22:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -726,7 +726,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 85
+    "winter": 90
    },
    "alerts": [
     "Blizzard Warning",
@@ -751,7 +751,7 @@
    }
   },
   {
-   "snapshot_id": "96e31a9f38584c79aff5f425bfd4c5af",
+   "snapshot_id": "e8a9ee4270b54529a072755b0f7419fc",
    "as_of": "2025-03-04T23:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -760,7 +760,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 85
+    "winter": 90
    },
    "alerts": [
     "Blizzard Warning",
@@ -785,7 +785,7 @@
    }
   },
   {
-   "snapshot_id": "fd17ba7ed7ec4c42b3cefc40d71f4205",
+   "snapshot_id": "6c6a92bf9a864cc4a1830de7d4dc883c",
    "as_of": "2025-03-05T00:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -794,7 +794,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 85
+    "winter": 90
    },
    "alerts": [
     "Blizzard Warning",
@@ -819,7 +819,7 @@
    }
   },
   {
-   "snapshot_id": "06dabc746ec447c28852be6887a2c3f1",
+   "snapshot_id": "295f803b794a4705968b2bf19fbd53be",
    "as_of": "2025-03-05T01:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -828,7 +828,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 85
+    "winter": 90
    },
    "alerts": [
     "Blizzard Warning",
@@ -853,7 +853,7 @@
    }
   },
   {
-   "snapshot_id": "8147661f8b324f06acbf64bec3b02588",
+   "snapshot_id": "ccca23c08635483bae82489e6a090aa6",
    "as_of": "2025-03-05T02:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -862,7 +862,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 85
+    "winter": 90
    },
    "alerts": [
     "Blizzard Warning",
@@ -887,7 +887,7 @@
    }
   },
   {
-   "snapshot_id": "567af542dd6e4562807bb61a5714bcc3",
+   "snapshot_id": "2578e9ff1a664b01a1bfa440cb17f084",
    "as_of": "2025-03-05T03:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -896,7 +896,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 85
+    "winter": 90
    },
    "alerts": [
     "Blizzard Warning",
@@ -921,7 +921,7 @@
    }
   },
   {
-   "snapshot_id": "5e88a0eaa8874d64a591a453bbdd094c",
+   "snapshot_id": "9cb21d66ccca43e7b261097f90ce4c52",
    "as_of": "2025-03-05T04:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -930,7 +930,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 85
+    "winter": 90
    },
    "alerts": [
     "Blizzard Warning",
@@ -955,7 +955,7 @@
    }
   },
   {
-   "snapshot_id": "284bb487fa1143a1970900d4eaebd10d",
+   "snapshot_id": "65ddc369a74940cca34d4a7349b6a07c",
    "as_of": "2025-03-05T05:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -964,7 +964,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 85
+    "winter": 90
    },
    "alerts": [
     "Blizzard Warning",
@@ -989,7 +989,7 @@
    }
   },
   {
-   "snapshot_id": "7d826c1bdc004ea9b94d77344e455db7",
+   "snapshot_id": "3f08264a520a4bf8acb72e2830eb56e4",
    "as_of": "2025-03-05T06:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -998,7 +998,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 95
+    "winter": 100
    },
    "alerts": [
     "Blizzard Warning",
@@ -1023,7 +1023,7 @@
    }
   },
   {
-   "snapshot_id": "ccd6bbb04df1462da2b68fd02568b6c4",
+   "snapshot_id": "3bc1fc705a894926b2ff5de9ff18f203",
    "as_of": "2025-03-05T07:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1032,7 +1032,7 @@
    "scores": {
     "cold": 0,
     "wind": 80,
-    "winter": 95
+    "winter": 100
    },
    "alerts": [
     "Blizzard Warning",
@@ -1057,7 +1057,7 @@
    }
   },
   {
-   "snapshot_id": "0642f0a98d6a476bbe52a534c48abffe",
+   "snapshot_id": "324f1d6fa15140d59164ee79d5fb5a1a",
    "as_of": "2025-03-05T08:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1091,7 +1091,7 @@
    }
   },
   {
-   "snapshot_id": "5077bd36d2284de683cd80aa699718c5",
+   "snapshot_id": "c2ee81d5340848ea8204c21ff5a4bee3",
    "as_of": "2025-03-05T09:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1125,7 +1125,7 @@
    }
   },
   {
-   "snapshot_id": "682cddc88494419c8a39698c16184078",
+   "snapshot_id": "f1437094e4df4915b4cf7f2d3b1fc5cc",
    "as_of": "2025-03-05T10:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1159,7 +1159,7 @@
    }
   },
   {
-   "snapshot_id": "ee4886e3b1024050bdb3153ce34bfd81",
+   "snapshot_id": "f43b1d0997cf4598a697b348647278ef",
    "as_of": "2025-03-05T11:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1193,7 +1193,7 @@
    }
   },
   {
-   "snapshot_id": "ffe55a4fd64649e7b51ea147f4c953cd",
+   "snapshot_id": "9df7996578cd4fe8bc20a547f004ee0c",
    "as_of": "2025-03-05T12:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1227,7 +1227,7 @@
    }
   },
   {
-   "snapshot_id": "4c7b6cb0b1c74f139e4f75864a8b98be",
+   "snapshot_id": "0a20a3bd0c2a4a948c023748f8f2fd3d",
    "as_of": "2025-03-05T13:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1261,7 +1261,7 @@
    }
   },
   {
-   "snapshot_id": "e99c721016c44c9d9b00ac4283f887ac",
+   "snapshot_id": "aa980697fd704851a4c3213ee6b0415f",
    "as_of": "2025-03-05T14:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1295,7 +1295,7 @@
    }
   },
   {
-   "snapshot_id": "62860d424ebf4796bc9bfa3536798f03",
+   "snapshot_id": "4236f190981b4578967300bdf7dcfc85",
    "as_of": "2025-03-05T15:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1329,7 +1329,7 @@
    }
   },
   {
-   "snapshot_id": "40022477aecc46378e2233b9f37e26ca",
+   "snapshot_id": "5e85eef1d80d4087a62da555931c51a2",
    "as_of": "2025-03-05T16:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1363,7 +1363,7 @@
    }
   },
   {
-   "snapshot_id": "7c591b99c2844711ba9d1cae9dfd04ae",
+   "snapshot_id": "317584f7cc2c47afb45326efe9f213a8",
    "as_of": "2025-03-05T17:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1397,7 +1397,7 @@
    }
   },
   {
-   "snapshot_id": "a2a9b2a44e0d43d5b74e538b5ee272df",
+   "snapshot_id": "bb4ead27df9448f09ec1fb8471637a18",
    "as_of": "2025-03-05T18:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1431,7 +1431,7 @@
    }
   },
   {
-   "snapshot_id": "cbe18068409d4b7fabbdecf8d973564f",
+   "snapshot_id": "611260d741184d79b8c701b5effd7776",
    "as_of": "2025-03-05T19:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1465,7 +1465,7 @@
    }
   },
   {
-   "snapshot_id": "22aa354051cb4be8904c1155d101e998",
+   "snapshot_id": "d337f381e3674226bc5b09a9f395003f",
    "as_of": "2025-03-05T20:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
