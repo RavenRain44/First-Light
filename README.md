@@ -463,3 +463,7 @@ Real tests are separate: **Send real test emails / gateway texts** uses the SMTP
 test. Missing credentials show **Not configured**, rather than simulated success.
 See [delivery setup](docs/notification-delivery-setup.md). No real delivery was attempted
 while developing this feature; provider integration tests use mocks.
+
+For publishing the frozen historical dataset and restoring yearly caches, see [Cloud datasets](docs/cloud-datasets.md).
+
+The frozen testing data is also included directly in Git: run `npm run dataset:repo -- restore` after setup. See [Repository datasets](docs/repository-datasets.md) and [preserved metrics](backend/data/backtesting/metrics/README.md).

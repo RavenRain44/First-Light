@@ -127,6 +127,8 @@ def test_action_risk_is_qualitative_and_missing_inputs_are_unknown():
 
 
 def test_endpoint_is_read_only(tmp_path, monkeypatch):
+    from app.config import settings
+    monkeypatch.setattr(settings, "db_path", tmp_path / "risk.db")
     from app.main import app
     from app.routers import risk
     old = db._engine

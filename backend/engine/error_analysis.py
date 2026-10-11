@@ -52,8 +52,8 @@ def rates(pairs: Iterable[tuple[bool, bool]]) -> dict:
     }
 
 
-# Move every numeric threshold in config/thresholds.yaml by this % of its value: negative = easier to
-# trigger (warn earlier), positive = harder. 0 = the thresholds as configured today.
+# Cutoffs on retained signed rule margins (percentage points), not edits to
+# scientific thresholds or a full operating-engine rerun. Lower cutoffs warn earlier.
 OFFSETS = (-75, -50, -25, -10, 0, 10, 25, 50)
 
 

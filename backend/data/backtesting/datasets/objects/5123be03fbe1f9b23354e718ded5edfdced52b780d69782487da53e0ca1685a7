@@ -1,0 +1,521 @@
+{
+  "created_at": "2026-10-11T06:51:24.487938+00:00",
+  "evaluation_time": "04:00 America/Chicago",
+  "range": {
+    "start": "1996-09-30",
+    "end": "2026-10-10"
+  },
+  "rules_sha": "5595dc7aaa89d380131c6e10e8eccd38acd832a6516c0f7678e9938ed0d98877",
+  "kind": "observation-based reconstruction",
+  "current": {
+    "n": 7470,
+    "correct": 7219,
+    "accuracy": 0.9663989290495315,
+    "balanced_accuracy": 0.720489977728285,
+    "precision": 1.0,
+    "recall": 0.44097995545657015,
+    "specificity": 1.0,
+    "confusion": {
+      "true_positive": 198,
+      "true_negative": 7021,
+      "false_alarm": 0,
+      "missed_disruption": 251
+    },
+    "accuracy_95pct_wilson": [
+      0.9620667288713015,
+      0.9702516654602026
+    ],
+    "status": "descriptive estimate"
+  },
+  "previous": {
+    "n": 7470,
+    "correct": 7219,
+    "accuracy": 0.9663989290495315,
+    "balanced_accuracy": 0.720489977728285,
+    "precision": 1.0,
+    "recall": 0.44097995545657015,
+    "confusion": {
+      "true_positive": 198,
+      "true_negative": 7021,
+      "false_alarm": 0,
+      "missed_disruption": 251
+    }
+  },
+  "errors": {
+    "weather": {
+      "n": 7470,
+      "confusion": {
+        "true_positive": 198,
+        "true_negative": 7021,
+        "false_alarm": 0,
+        "missed_disruption": 251
+      },
+      "false_positive_rate": {
+        "count": 0,
+        "n": 7021,
+        "denominator": "non-disruptive days",
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.0005468593056959461
+        ],
+        "status": "descriptive estimate",
+        "reason": null
+      },
+      "false_negative_rate": {
+        "count": 251,
+        "n": 449,
+        "denominator": "disruptive days",
+        "rate": 0.5590200445434298,
+        "ci95": [
+          0.5127861095723082,
+          0.6042526077186826
+        ],
+        "status": "descriptive estimate",
+        "reason": null
+      },
+      "false_alarm_share_of_warnings": {
+        "count": 0,
+        "n": 198,
+        "denominator": "warnings issued",
+        "rate": 0.0,
+        "ci95": [
+          0.0,
+          0.01903274647049964
+        ],
+        "status": "descriptive estimate",
+        "reason": null
+      }
+    },
+    "sweep": [
+      {
+        "offset_pct": -75,
+        "current_thresholds": false,
+        "n": 7470,
+        "confusion": {
+          "true_positive": 245,
+          "true_negative": 6081,
+          "false_alarm": 940,
+          "missed_disruption": 204
+        },
+        "false_positive_rate": {
+          "count": 940,
+          "n": 7021,
+          "denominator": "non-disruptive days",
+          "rate": 0.13388406209941603,
+          "ci95": [
+            0.12611851116807318,
+            0.14205004084596792
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        },
+        "false_negative_rate": {
+          "count": 204,
+          "n": 449,
+          "denominator": "disruptive days",
+          "rate": 0.45434298440979953,
+          "ci95": [
+            0.4088686034726292,
+            0.500592011453208
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        },
+        "false_alarm_share_of_warnings": {
+          "count": 940,
+          "n": 1185,
+          "denominator": "warnings issued",
+          "rate": 0.7932489451476793,
+          "ci95": [
+            0.7692609306585441,
+            0.8153417615756442
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        }
+      },
+      {
+        "offset_pct": -50,
+        "current_thresholds": false,
+        "n": 7470,
+        "confusion": {
+          "true_positive": 210,
+          "true_negative": 6707,
+          "false_alarm": 314,
+          "missed_disruption": 239
+        },
+        "false_positive_rate": {
+          "count": 314,
+          "n": 7021,
+          "denominator": "non-disruptive days",
+          "rate": 0.04472297393533685,
+          "ci95": [
+            0.040131970773962425,
+            0.049811922053457344
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        },
+        "false_negative_rate": {
+          "count": 239,
+          "n": 449,
+          "denominator": "disruptive days",
+          "rate": 0.532293986636971,
+          "ci95": [
+            0.48606289776172534,
+            0.5779771550956092
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        },
+        "false_alarm_share_of_warnings": {
+          "count": 314,
+          "n": 524,
+          "denominator": "warnings issued",
+          "rate": 0.5992366412213741,
+          "ci95": [
+            0.5567013145042167,
+            0.6403274911071638
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        }
+      },
+      {
+        "offset_pct": -25,
+        "current_thresholds": false,
+        "n": 7470,
+        "confusion": {
+          "true_positive": 199,
+          "true_negative": 6995,
+          "false_alarm": 26,
+          "missed_disruption": 250
+        },
+        "false_positive_rate": {
+          "count": 26,
+          "n": 7021,
+          "denominator": "non-disruptive days",
+          "rate": 0.0037031761857285288,
+          "ci95": [
+            0.002528455756126497,
+            0.005420705688310911
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        },
+        "false_negative_rate": {
+          "count": 250,
+          "n": 449,
+          "denominator": "disruptive days",
+          "rate": 0.5567928730512249,
+          "ci95": [
+            0.5105541180479122,
+            0.6020680438736074
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        },
+        "false_alarm_share_of_warnings": {
+          "count": 26,
+          "n": 225,
+          "denominator": "warnings issued",
+          "rate": 0.11555555555555555,
+          "ci95": [
+            0.08008865074450557,
+            0.16392991930569506
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        }
+      },
+      {
+        "offset_pct": -10,
+        "current_thresholds": false,
+        "n": 7470,
+        "confusion": {
+          "true_positive": 198,
+          "true_negative": 7019,
+          "false_alarm": 2,
+          "missed_disruption": 251
+        },
+        "false_positive_rate": {
+          "count": 2,
+          "n": 7021,
+          "denominator": "non-disruptive days",
+          "rate": 0.0002848597065945022,
+          "ci95": [
+            7.81206470423702e-05,
+            0.0010381465154798422
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        },
+        "false_negative_rate": {
+          "count": 251,
+          "n": 449,
+          "denominator": "disruptive days",
+          "rate": 0.5590200445434298,
+          "ci95": [
+            0.5127861095723082,
+            0.6042526077186826
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        },
+        "false_alarm_share_of_warnings": {
+          "count": 2,
+          "n": 200,
+          "denominator": "warnings issued",
+          "rate": 0.01,
+          "ci95": [
+            0.0027466006037749346,
+            0.03572248519617954
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        }
+      },
+      {
+        "offset_pct": 0,
+        "current_thresholds": true,
+        "n": 7470,
+        "confusion": {
+          "true_positive": 198,
+          "true_negative": 7021,
+          "false_alarm": 0,
+          "missed_disruption": 251
+        },
+        "false_positive_rate": {
+          "count": 0,
+          "n": 7021,
+          "denominator": "non-disruptive days",
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0005468593056959461
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        },
+        "false_negative_rate": {
+          "count": 251,
+          "n": 449,
+          "denominator": "disruptive days",
+          "rate": 0.5590200445434298,
+          "ci95": [
+            0.5127861095723082,
+            0.6042526077186826
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        },
+        "false_alarm_share_of_warnings": {
+          "count": 0,
+          "n": 198,
+          "denominator": "warnings issued",
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.01903274647049964
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        }
+      },
+      {
+        "offset_pct": 10,
+        "current_thresholds": false,
+        "n": 7470,
+        "confusion": {
+          "true_positive": 173,
+          "true_negative": 7021,
+          "false_alarm": 0,
+          "missed_disruption": 276
+        },
+        "false_positive_rate": {
+          "count": 0,
+          "n": 7021,
+          "denominator": "non-disruptive days",
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0005468593056959461
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        },
+        "false_negative_rate": {
+          "count": 276,
+          "n": 449,
+          "denominator": "disruptive days",
+          "rate": 0.6146993318485523,
+          "ci95": [
+            0.5688913739474764,
+            0.6585612275802983
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        },
+        "false_alarm_share_of_warnings": {
+          "count": 0,
+          "n": 173,
+          "denominator": "warnings issued",
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.021723395400177335
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        }
+      },
+      {
+        "offset_pct": 25,
+        "current_thresholds": false,
+        "n": 7470,
+        "confusion": {
+          "true_positive": 173,
+          "true_negative": 7021,
+          "false_alarm": 0,
+          "missed_disruption": 276
+        },
+        "false_positive_rate": {
+          "count": 0,
+          "n": 7021,
+          "denominator": "non-disruptive days",
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0005468593056959461
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        },
+        "false_negative_rate": {
+          "count": 276,
+          "n": 449,
+          "denominator": "disruptive days",
+          "rate": 0.6146993318485523,
+          "ci95": [
+            0.5688913739474764,
+            0.6585612275802983
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        },
+        "false_alarm_share_of_warnings": {
+          "count": 0,
+          "n": 173,
+          "denominator": "warnings issued",
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.021723395400177335
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        }
+      },
+      {
+        "offset_pct": 50,
+        "current_thresholds": false,
+        "n": 7470,
+        "confusion": {
+          "true_positive": 173,
+          "true_negative": 7021,
+          "false_alarm": 0,
+          "missed_disruption": 276
+        },
+        "false_positive_rate": {
+          "count": 0,
+          "n": 7021,
+          "denominator": "non-disruptive days",
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.0005468593056959461
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        },
+        "false_negative_rate": {
+          "count": 276,
+          "n": 449,
+          "denominator": "disruptive days",
+          "rate": 0.6146993318485523,
+          "ci95": [
+            0.5688913739474764,
+            0.6585612275802983
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        },
+        "false_alarm_share_of_warnings": {
+          "count": 0,
+          "n": 173,
+          "denominator": "warnings issued",
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.021723395400177335
+          ],
+          "status": "descriptive estimate",
+          "reason": null
+        }
+      }
+    ],
+    "sensitivity": {
+      "assumed": true,
+      "label": "Assumed, unitless scenario costs for comparing thresholds. Illustrative only, not measured losses.",
+      "rows": [
+        {
+          "ratio": 1,
+          "best_offset_pct": 0,
+          "best_loss": 251,
+          "current_rules_loss": 251
+        },
+        {
+          "ratio": 2,
+          "best_offset_pct": 0,
+          "best_loss": 502,
+          "current_rules_loss": 502
+        },
+        {
+          "ratio": 5,
+          "best_offset_pct": 0,
+          "best_loss": 1255,
+          "current_rules_loss": 1255
+        },
+        {
+          "ratio": 10,
+          "best_offset_pct": 0,
+          "best_loss": 2510,
+          "current_rules_loss": 2510
+        },
+        {
+          "ratio": 20,
+          "best_offset_pct": 0,
+          "best_loss": 5020,
+          "current_rules_loss": 5020
+        },
+        {
+          "ratio": 50,
+          "best_offset_pct": -75,
+          "best_loss": 11140,
+          "current_rules_loss": 12550
+        }
+      ]
+    },
+    "tradeoff": "Making the thresholds 25% easier to trigger would catch 1 more disruptive day, at the cost of 26 more false alarms.",
+    "label": "Weather label from local AMW station observations. Not proof that a closure was or was not necessary.",
+    "zero_errors_note": "Zero observed errors does not establish zero future risk; see the 95% range."
+  },
+  "excluded": {
+    "Recommendation targets a different scheduled facility day": 3133,
+    "Incomplete routine/special METAR coverage for independent daily outcome": 351,
+    "Incomplete pre-evaluation input coverage": 14
+  },
+  "same_confusion": true,
+  "method": "Regraded every eligible stored observation reconstruction using independent daily station weather labels. No new trained predictor is present. No AI calls or notifications. Office closure labels are separate."
+}

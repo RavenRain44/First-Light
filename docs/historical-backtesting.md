@@ -221,3 +221,90 @@ Unfinished data coverage: the full multi-year archived forecast build, original
 alert issue/update timelines, historical facility operations/outages and camera
 frames, comprehensive school/USDA operating history, and explicitly normal proxy
 days. Only the observation baseline is built across the full supported range.
+
+## Confirmed office-decision dataset (2026-10-11)
+
+Decision scoring and AI-explanation sampling now use only reviewed official office
+notices with dated corroboration (`confirmed-office-evidence-v1`). Current qualifying
+proxy records are ISU nonessential offices closed January 30, 2019 and reopening
+at noon January 31, 2019. Essential operations continued. The official notice and
+IEM's dated University Closure feature corroborate these dates and scope.
+
+Class cancellations and partial-campus/remote-flexibility notices are excluded:
+they do not establish whether offices actually opened. Raw evidence remains retained
+with exclusion reasons; historical weather archives and immutable evaluations are
+preserved. The date-search event picker defaults to qualifying dates. The curated
+storm timeline remains a separate weather reference, not decision ground truth.
+
+This is a high-confidence documentary-evidence category, **not a calibrated 95%
+probability**. Weather API observations establish conditions, not whether an office
+operated. No weather-only inference, guessed normal day or numerical confidence is
+promoted to a confirmed decision. No actual USDA operations are confirmed by these
+proxy notices. Two records from one episode cannot establish decision accuracy,
+false-alarm rates or reliable training performance. Independent station-weather
+impact scores remain separate and retain weather-only days.
+
+## Fixed 7,470-day safety and operational-loss experiment
+
+Run `npm run analyze:risk` from the repository root. Optional assumed missed-event
+cost ratios: `npm run analyze:risk -- --ratios 1 5 10 20 50`.
+No AI calls, external weather requests, notification delivery or production changes
+occur. The fixed manifest is `backend/var/cohorts/ames-7470-v1.json` (ignored).
+It pins evaluation IDs, artifact hashes, summary hashes, rule/config hashes, unique
+local dates and the 04:00 Central cutoff. Initial creation requires exactly 7,470
+eligible observation-only dates; an unexpected count fails explicitly. Repeated
+runs reuse the original evaluations, even when later attempts exist. Source archives
+and excluded immutable evaluations remain stored separately. The UI distinguishes
+the fixed analysis cohort from total archive coverage and forecast samples.
+
+The cohort excludes 3,133 next-workday evaluations, 351 incomplete outcomes and 14
+incomplete pre-evaluation inputs. Training is 1996–2018 (5,585 dates), validation
+2019–2022 (939), and final testing 2023–2026 (939). Seven dates are purged around
+split boundaries: a two-calendar-day gap on both sides and any identified consecutive
+disruptive episode spanning a boundary. The full manifest remains 7,470 dates;
+5,585 + 939 + 939 + 7 accounts for every date. No preprocessing/model fitting is
+performed in this experiment: it varies stored signed rule-margin classification
+cutoffs without altering scientific thresholds or rerunning the operating engine.
+This is retrospective sensitivity analysis, not a newly trained AI predictor.
+
+For each assumed cost ratio, select the lowest-loss candidate using validation
+only, then evaluate that fixed candidate on final-test dates. Test outcomes never
+choose the cutoff. Training results are reported as historical characterization.
+These final-test dates were already inspected during earlier baseline backtesting;
+this is not pristine prospective validation. No prospective model exists yet;
+future model deployment requires an untouched, versioned future evaluation stream.
+Reports contain per-split counts, confusion matrices, error rates, accuracy, balanced
+accuracy, precision, recall, specificity, Wilson intervals, cost losses and annual/
+hazard breakdowns. Wilson intervals do not correct correlated storm days. There
+are only 20 disruptive final-test days, so disruption recall remains uncertain.
+
+Completed local results: full-cohort baseline is unchanged (96.64% ordinary accuracy,
+72.05% balanced accuracy, 44.10% recall). On the separate 939-day final-test subset,
+existing rules catch 1 of 20 disruptions, miss 19, and produce zero false alarms.
+Ratios 1:1, 5:1 and 10:1 select the unchanged margin cutoff. Ratios 20:1 and 50:1
+select −75 percentage points of signed rule margin: 7 detected, 13 missed and 140
+false alarms among 919 quiet days. Recall increases from 5% to 35%, with six extra
+catches. At 20:1 assumed loss increases from 380 to 400; at 50:1 it falls from 950
+to 790. This is evidence of a trade-off, not a generally improved model. Whole-cohort
+44.10% recall must not be compared directly with final-subset recall as if the cohorts
+were identical. No production cutoff has changed.
+
+Cost weights are illustrative and unitless. Weather Type II errors may imply injury,
+commuting or stranding exposure, but do not prove an unsafe operating decision.
+Type I errors may delay services, unfinished work or revenue; closure is not assumed
+to mean unpaid leave or permanent task/income loss. Remote or later work may recover
+tasks; essential personnel may still travel during closure. Missing injury, crash,
+facility, payroll and task-recoverability data are explicit. AI explanation prompts
+preserve the deterministic posture and manager authority, and prohibit invented
+financial losses, probabilities or reporting instructions.
+
+Local report: `backend/var/analysis/ames-7470-v1-risk.json`; content-versioned reports
+are retained alongside it. No credentials, contact configuration or generated data
+are added to Git. An entirely new cohort/version is required for a different rule
+experiment; old results and manifests must not be silently overwritten.
+
+Verification for this experiment: 209 backend tests, 24 frontend tests and the
+production frontend build passed. Chrome verified the 7,470-day cohort display,
+chronological split counts, 20-day disruption sample warning, cost-ratio selection,
+and the 50:1 final-test comparison. A regression test confirms later evaluation
+attempts cannot replace the pinned original cohort. No production thresholds changed.

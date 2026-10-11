@@ -16,7 +16,7 @@ export type ActionRisk = {
   staff: { expected_in_building: number; essential: number; telework_eligible: number; no_remote_option: number };
   missing_inputs: string[]; scenarios: ActionScenario[];
 };
-export type RiskTradeoffs = { errors: Record<string, ErrorAnalysis>; range: { start: string | null; end: string | null } | null; evaluation_time: string; actions: ActionRisk | null };
+export type RiskTradeoffs = { experiment?: any; errors: Record<string, ErrorAnalysis>; range: { start: string | null; end: string | null } | null; evaluation_time: string; actions: ActionRisk | null };
 
 export const RATIOS = [1, 2, 5, 10, 20, 50];
 
