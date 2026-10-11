@@ -3,7 +3,7 @@ import type { Snapshot } from "../types";
 import { Badge, fmtTime, readinessColor } from "../util";
 
 export type Mode = "live" | "replay" | "livecheck";
-export type View = "today" | "notifications" | "thresholds";
+export type View = "today" | "notifications" | "decisions" | "thresholds";
 
 const TOOLS: { id: "replay" | "livecheck" | "thresholds"; label: string; hint: string }[] = [
   { id: "replay", label: "Replay a past storm", hint: "See what the system would have said during a real past event" },
@@ -51,6 +51,7 @@ export function Header({ snap, mode, setMode, view, setView, demo, theme, toggle
           <NavTab on={view === "notifications"} onClick={() => setView("notifications")}
             dot={snap?.readiness ? readinessColor(snap.readiness.level) : undefined}
             title={snap?.readiness ? `Risk: Condition ${snap.readiness.level.toLowerCase()}` : undefined}>Notify staff</NavTab>
+          <NavTab on={view === "decisions"} onClick={() => setView("decisions")}>Decision log</NavTab>
           <div ref={menuRef} className="relative">
             <button onClick={() => setMenu((m) => !m)} aria-haspopup="menu" aria-expanded={menu}
               className={`rounded-lg px-3 py-2 ${mode !== "live" || view === "thresholds" ? "font-semibold text-[var(--accent)]" : "text-ink2 hover:text-ink"}`}>

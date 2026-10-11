@@ -3,6 +3,7 @@ import { api } from "./api";
 import { AIPanel } from "./components/AIPanel";
 import { AlertsPanel } from "./components/AlertsPanel";
 import { RelevantMetrics, SuggestedAction, useTimeseries } from "./components/DashboardCard";
+import { DecisionLogView } from "./components/DecisionLogView";
 import { NotificationsView } from "./components/NotificationsView";
 import { PanelBoundary } from "./components/ErrorBoundary";
 import { GlanceRow } from "./components/GlanceRow";
@@ -149,9 +150,9 @@ export default function App() {
           {err && <div role="alert" className="card p-3 text-sm">Could not load the app: {err}. <button className="btn ml-2" onClick={()=>run(()=>api.latest())}>Retry</button></div>}
           {shown ? <PanelBoundary name="Decision"><DecisionStep snap={shown} onDecided={(id) => { setNotificationDecision(id); if (id) setRecordKey((k) => k + 1); }} /></PanelBoundary>
             : <Skeleton className="h-48" />}
-          {notificationDecision !== null && <NotificationsView key={notificationDecision} decisionId={notificationDecision} onBack={() => setView("today")} onSnapshot={(id, decisionId)=>{setSavedDecisionId(decisionId); savedWeatherRef.current=true;setSavedWeather(true);setView("today");run(()=>api.snapshot(id));}} />}
+          {notificationDecision !== null && <NotificationsView key={notificationDecision} decisionId={notificationDecision} onBack={() => setView("today")} />}
         </div>
-      ) : view === "thresholds" ? <div className="cc-fade"><ThresholdsView /></div> : (
+      ) : view === "decisions" ? <DecisionLogView timezone={shown?.facility.timezone ?? "America/Chicago"} onSnapshot={(id, decisionId)=>{setSavedDecisionId(decisionId);savedWeatherRef.current=true;setSavedWeather(true);setView("today");run(()=>api.snapshot(id));}} /> : view === "thresholds" ? <div className="cc-fade"><ThresholdsView /></div> : (
         <>
           {mode === "replay" && <ReplayPanel onSnapshot={setSnap} busy={busy} setBusy={setBusy} current={snap} />}
           {mode === "livecheck" && <LiveCheckPanel onSnapshot={setSnap} busy={busy} setBusy={setBusy} />}

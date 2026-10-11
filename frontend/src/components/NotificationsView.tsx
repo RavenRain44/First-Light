@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { Card, Skeleton } from "../util";
 
@@ -20,98 +20,6 @@ function Feedback({tone, title, text}: {tone: "success" | "warning" | "error"; t
     <p className="mt-1 whitespace-pre-wrap">{text}</p>
   </div>;
 }
-
-function GroupEditor({ group: g, pack: p, contacts, actor, run, onDirty }: any) {
-  const [sms, setSms] = useState(g.sms_intro);
-  const [email, setEmail] = useState(g.email_intro);
-  const [schedule, setSchedule] = useState(g.schedule_override ?? "");
-  const [scenario, setScenario] = useState(g.scenario);
-  const [selected, setSelected] = useState<string[]>(g.test_contacts);
-  const [employeeIds, setEmployeeIds] = useState<string[]>(g.recipient_ids ?? g.recipients.map((r: any) => r.id));
-  const [recipient, setRecipient] = useState(g.recipients[0]?.name ?? "Recipient");
-  const dirty = sms !== g.sms_intro || email !== g.email_intro || schedule !== (g.schedule_override ?? "") || scenario !== g.scenario || JSON.stringify(selected) !== JSON.stringify(g.test_contacts) || JSON.stringify(employeeIds) !== JSON.stringify(g.recipient_ids ?? g.recipients.map((r: any) => r.id));
-  useEffect(() => { onDirty(g.id, dirty); return () => onDirty(g.id, false); }, [g.id, dirty, onDirty]);
-  const editable = p.status === "draft";
-  return <div className="card space-y-3 p-4">
-    <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold">{g.title} · {employeeIds.length} of {g.recipients.length} selected</h3><span className="text-sm">{g.approved && !dirty ? `Approved by ${g.approved_by}` : "Needs review"}</span></div>
-    <p className="text-sm text-ink2">{g.instruction}</p>
-    <p className="text-xs text-muted">Reporting instructions are fixed by the recorded decision. Edit the explanation below. Changes require fresh approval.</p>
-    <div className="grid gap-3 md:grid-cols-2">
-      <label className="grid gap-1 text-sm">SMS explanation<textarea className={input} rows={3} maxLength={120} value={sms} disabled={!editable} onChange={e => setSms(e.target.value)} /></label>
-      <label className="grid gap-1 text-sm">Email explanation<textarea className={input} rows={3} maxLength={2000} value={email} disabled={!editable} onChange={e => setEmail(e.target.value)} /></label>
-    </div>
-    <div className="flex flex-wrap gap-3">
-      <label className="grid gap-1 text-sm">Timing override (ISO time with offset; blank = recipient schedule)<input className={input} placeholder="2026-10-12T07:30:00-05:00" value={schedule} disabled={!editable} onChange={e => setSchedule(e.target.value)} /></label>
-      <label className="grid gap-1 text-sm">Simulated provider outcome<select className={input} value={scenario} disabled={!editable} onChange={e => setScenario(e.target.value)}><option value="success">Success</option><option value="failure">Failure</option><option value="delay">Five-minute delay</option></select></label>
-    </div>
-    <details><summary className="cursor-pointer text-sm">Choose recipients in this group</summary><label className="mt-2 block text-sm"><input type="checkbox" disabled={!editable} checked={employeeIds.length === g.recipients.length} onChange={e => setEmployeeIds(e.target.checked ? g.recipients.map((r: any) => r.id) : [])} /> Select all {g.recipients.length} group members</label><ul className="mt-2 max-h-72 space-y-2 overflow-auto text-sm">{g.recipients.map((r: any) => <li key={r.id}><label><input type="checkbox" disabled={!editable} checked={employeeIds.includes(r.id)} onChange={e => setEmployeeIds(e.target.checked ? [...employeeIds, r.id] : employeeIds.filter(id => id !== r.id))} /> <strong>{r.name}</strong></label> · {r.channels.join(" + ")} · {time(schedule || r.due_at, p.timezone)}<br />{r.reason}<br /><span className="text-xs text-muted">{r.schedule_source} · work start {r.work_start}{r.accessibility_followup ? " · manager accessibility follow-up needed" : ""}</span></li>)}</ul></details>
-    <details><summary className="cursor-pointer text-sm">Add separate test contacts (simulation only)</summary><div className="mt-2 grid gap-2">{contacts.length === 0 && <p className="text-sm">No local test contacts configured.</p>}{contacts.map((c: any) => <label key={c.id} className="text-sm"><input type="checkbox" disabled={!editable} checked={selected.includes(c.id)} onChange={e => setSelected(e.target.checked ? [...selected, c.id] : selected.filter(x => x !== c.id))} /> {c.name} · {c.channel} · {c.address}</label>)}</div></details>
-    <details><summary className="cursor-pointer text-sm">Personalized message previews</summary><select className={`${input} mt-2`} value={recipient} onChange={e => setRecipient(e.target.value)}>{g.recipients.map((r: any) => <option key={r.id}>{r.name}</option>)}</select><div className="mt-2 grid gap-3 md:grid-cols-2">{["sms", "email"].map(c => <div key={c}><h4 className="text-sm font-semibold">{c.toUpperCase()} · simulated{c === "sms" ? ` · ${(g.previews?.sms ?? "").length} characters` : ""}</h4><p className="whitespace-pre-wrap text-sm">{(g.previews?.[c] ?? "").replace("Recipient:", `${recipient}:`).replace(c === "sms" ? g.sms_intro : g.email_intro, c === "sms" ? sms : email)}</p></div>)}</div></details>
-    {editable && <div className="flex gap-2"><button className={button} disabled={!actor.trim() || !dirty} onClick={() => run(() => request(`/packages/${p.id}/groups/${g.id}`, "PUT", { version: p.version, actor, sms_intro: sms, email_intro: email, schedule_override: schedule || null, scenario, test_contacts: selected, recipient_ids: employeeIds }))}>Save edits · clear approval</button><button className={button} disabled={!actor.trim() || dirty || g.approved} onClick={() => run(() => request(`/packages/${p.id}/groups/${g.id}/approve`, "POST", { version: p.version, actor }))}>Approve this group</button></div>}
-  </div>;
-}
-
-function NotificationTools() {
-  const [state, setState] = useState<any>(null);
-  const [decisions, setDecisions] = useState<any[]>([]);
-  const [decision, setDecision] = useState("");
-  const [pid, setPid] = useState("");
-  const [actor, setActor] = useState("");
-  const [fallback, setFallback] = useState("");
-  const [clock, setClock] = useState("");
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [audit, setAudit] = useState<any[] | null>(null);
-  const [dirtyGroups, setDirtyGroups] = useState<Record<string, boolean>>({});
-  const onDirty = useCallback((id: string, dirty: boolean) => setDirtyGroups(cur => ({ ...cur, [id]: dirty })), []);
-  const [inbox, setInbox] = useState("");
-  const refresh = async () => {
-    const [data, ds] = await Promise.all([request(""), api.decisions()]);
-    setState(data); setDecisions(ds);
-    setActor(cur => cur || ds[0]?.decided_by || "");
-    setPid(cur => cur || data.packages[0]?.id || "");
-    setDecision(cur => cur || (ds[0]?.id ? String(ds[0].id) : ""));
-  };
-  useEffect(() => { refresh().catch(e => setError(e.message)); const id = window.setInterval(() => refresh().catch(e => setError(e.message)), 5000); return () => clearInterval(id); }, []);
-  const run = async (fn: () => Promise<any>) => {
-    setBusy(true); setError("");
-    try { const result = await fn(); if (result?.id) setPid(result.id); await refresh(); setAudit(null); }
-    catch (e: any) { setError(e.message); }
-    finally { setBusy(false); }
-  };
-  const p = state?.packages.find((x: any) => x.id === pid);
-  const messages = state?.packages.flatMap((x: any) => x.messages.map((m: any) => ({ ...m, package: x }))) ?? [];
-  return <div className="space-y-4">
-    <Card title="Employee notifications" right={<span className="rounded-full bg-[var(--tint)] px-2 py-0.5 text-xs font-semibold text-[var(--accent)]">SIMULATION ONLY</span>}>
-      <p className="text-sm text-ink2">Review group drafts, approve them, then send once. SMS and email stay inside this app; nothing reaches a phone or mailbox.</p>
-      {error && <p role="alert" className="mt-2 text-sm text-[var(--danger)]">{error}</p>}
-      <div className="mt-3 flex flex-wrap items-end gap-3">
-        <label className="grid gap-1 text-sm">Reviewing manager<input className={input} value={actor} placeholder="Name, title" onChange={e => setActor(e.target.value)} /></label>
-        <label className="grid gap-1 text-sm">Recorded decision<select className={input} value={decision} onChange={e => setDecision(e.target.value)}><option value="">Select decision</option>{decisions.map(d => <option key={d.id} value={d.id}>#{d.id} · {d.decision_posture} · {d.decided_by}</option>)}</select></label>
-        <label className="grid gap-1 text-sm">Awareness fallback start<input className={input} type="time" value={fallback} onChange={e => setFallback(e.target.value)} /></label>
-        <button className={button} disabled={busy || !decision} onClick={() => run(() => request("/packages", "POST", { decision_id: Number(decision), fallback_start: fallback || null }))}>Create / open drafts</button>
-      </div>
-      <p className="mt-2 text-xs text-muted">Record a live or replay decision on the Dashboard first. Missing employee schedules fall back to facility opening time, unless overridden here. The synthetic roster represents the current assignment scenario.</p>
-    </Card>
-    <Card title="Simulation clock">
-      <p className="text-sm">{state?.demo_clock ? "Demo clock" : "Real-time simulation clock"}: {state?.now ? time(state.now, p?.timezone ?? "America/Chicago") : "Loading…"}. Weather evaluation time is unchanged.</p>
-      <div className="mt-2 flex flex-wrap gap-2"><input aria-label="Demo clock ISO timestamp" className={input} value={clock} placeholder="2026-10-12T04:00:00-05:00" onChange={e => setClock(e.target.value)} /><button className={button} disabled={busy || !actor.trim() || !clock} onClick={() => run(() => request("/clock", "PUT", { now: clock, actor }))}>Set / advance demo clock</button><button className={button} disabled={busy || !actor.trim() || !state} onClick={() => run(() => request("/clock", "PUT", { now: new Date(new Date(state.now).getTime() + 60 * 60 * 1000).toISOString(), actor }))}>Advance 1 hour</button><button className={button} disabled={busy || !actor.trim()} onClick={() => run(() => request("/clock", "PUT", { now: null, actor }))}>Reset to real time</button></div>
-    </Card>
-    {state?.packages.length > 0 && <label className="grid gap-1 text-sm">Notification package<select className={input} value={pid} onChange={e => { setPid(e.target.value); setAudit(null); }}>{state.packages.map((x: any) => <option key={x.id} value={x.id}>Decision #{x.decision_id} · {x.decision_day} · {x.posture} · {x.status}</option>)}</select></label>}
-    {p && <>
-      <Card title={`Decision #${p.decision_id} · ${p.posture}`}><p className="text-sm">{p.facility_name} · {p.decision_day} · {p.timezone} · {p.draft_source}</p><p className="text-xs text-muted">Snapshot {p.snapshot_id} · status {p.status}</p><p className="mt-2 text-sm">{p.messages.filter((m: any) => m.status === "simulated_sent").length} simulated deliveries · {p.messages.filter((m: any) => ["scheduled", "queued", "delayed"].includes(m.status)).length} pending · {p.messages.filter((m: any) => m.status === "simulated_failed").length} failed</p></Card>
-      {p.status === "dispatched" && <Card title="This package has already been sent"><p className="text-sm">Sent messages are preserved. Create a follow-up draft to edit messages, choose several recipients in each group, review and send another update.</p><button className={`${button} mt-2`} disabled={busy || actor.trim().length < 2} onClick={() => run(() => request(`/packages/${p.id}/followup`, "POST", { version: p.version, actor }))}>Create editable follow-up draft</button></Card>}
-      <fieldset disabled={busy} className="space-y-3">{p.groups.map((g: any) => <GroupEditor key={`${p.id}:${g.id}:${g.sms_intro}:${g.email_intro}:${g.approved}:${g.schedule_override}:${g.scenario}:${g.test_contacts.join(",")}:${(g.recipient_ids ?? []).join(",")}`} group={g} pack={p} contacts={state.contacts} actor={actor} run={run} onDirty={onDirty} />)}</fieldset>
-      {p.groups.length === 0 && <Card title="No changed reporting instructions"><p className="text-sm">The team was already notified. To write another manager-reviewed update, create recipient groups below.</p><button className={`${button} mt-2`} disabled={busy || p.status !== "draft"} onClick={() => run(() => request("/packages", "POST", { decision_id: p.decision_id, include_unchanged: true }))}>Create groups for another update</button></Card>}
-      <details className="card p-3"><summary className="cursor-pointer">Excluded employees ({p.excluded.length})</summary><ul className="mt-2 space-y-1 text-sm">{p.excluded.map((r: any) => <li key={r.id}>{r.name}: {r.reason}</li>)}</ul></details>
-      <button className="btn btn-primary" disabled={busy || actor.trim().length < 2 || p.status !== "draft" || !p.groups.length || Object.values(dirtyGroups).some(Boolean) || p.groups.some((g: any) => ((g.recipient_ids ?? g.recipients.map((r: any) => r.id)).length > 0 || g.test_contacts.length > 0) && !g.approved) || p.groups.every((g: any) => (g.recipient_ids ?? g.recipients).length === 0 && g.test_contacts.length === 0)} onClick={() => run(() => request(`/packages/${p.id}/send`, "POST", { version: p.version, actor }))}>Send approved immediate messages & schedule updates · simulated</button>
-      <details className="card p-3"><summary className="cursor-pointer" onClick={() => request(`/packages/${p.id}/audit`).then(setAudit).catch(e => setError(e.message))}>Audit trail</summary>{audit?.map(a => <details key={a.id} className="mt-2 text-sm"><summary>{time(a.at, p.timezone)} · {a.actor} · {a.action}</summary><pre className="overflow-auto whitespace-pre-wrap text-xs">{JSON.stringify(JSON.parse(a.detail_json), null, 2)}</pre></details>)}</details>
-    </>}
-    <Card title="Simulated outbox" right={messages.length > 60 ? <span className="text-xs text-muted">showing 60 of {messages.length}</span> : undefined}><div className="max-h-[32rem] space-y-3 overflow-auto pr-1">{messages.length === 0 && <p className="text-sm">No messages sent or scheduled.</p>}{messages.slice(0, 60).map((m: any) => <details key={m.id} className="border-b border-edge pb-2 text-sm"><summary className="cursor-pointer">{m.recipient_name} · {m.channel} · {m.status} (simulated) · {time(m.due_at, m.package.timezone)}</summary><p>Destination: {m.address}</p><p>{m.reason}</p><p className="mt-2 whitespace-pre-wrap">{m.body}</p><ul className="mt-2 text-xs">{m.attempts.map((a: any, i: number) => <li key={i}>{time(a.at, m.package.timezone)} · {a.detail}</li>)}</ul>{m.status === "simulated_failed" && m.package.status === "dispatched" && <button className={`${button} mt-2`} disabled={busy || actor.trim().length < 2} onClick={() => run(() => request(`/packages/${m.package.id}/messages/${encodeURIComponent(m.id)}/retry`, "POST", { version: m.package.version, actor }))}>Retry with simulated success</button>}</details>)}</div></Card>
-    <Card title="Recipient inbox preview"><select aria-label="Recipient inbox" className={input} value={inbox} onChange={e => setInbox(e.target.value)}><option value="">Select recipient</option>{Array.from(new Set<string>(messages.map((m: any) => m.recipient_name))).map(n => <option key={n}>{n}</option>)}</select><div className="mt-3 space-y-3">{messages.filter((m: any) => m.recipient_name === inbox && m.status === "simulated_sent").map((m: any) => <div className="rounded-md border border-edge p-3" key={m.id}><p className="text-xs text-muted">{m.channel.toUpperCase()} · SIMULATED · Decision #{m.package.decision_id}</p><p className="whitespace-pre-wrap text-sm">{m.body}</p></div>)}</div><p className="mt-2 text-xs text-muted">Only successful simulated deliveries appear here. No acknowledgments are collected.</p></Card>
-  </div>;
-}
-
 
 /** Counts of people and messages for the selected recipients of some groups. */
 function tally(groups: any[]) {
@@ -187,11 +95,10 @@ function MessageComposer({ groups, p, update }: { groups: any[]; p: any; update:
   </section>;
 }
 
-export function NotificationsView({ decisionId, onBack, onSnapshot }: { decisionId?: number | null; onBack?: () => void; onSnapshot?: (id: string, decisionId: number) => void }) {
+export function NotificationsView({ decisionId, onBack }: { decisionId?: number | null; onBack?: () => void }) {
   const [p, setP] = useState<any>(null);
   const [groups, setGroups] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
-  const [decisionLog, setDecisionLog] = useState<any[]>([]);
   const [ready, setReady] = useState<any>({email: false, sms: false});
   const [actor, setActor] = useState("");
   const [busy, setBusy] = useState(false);
@@ -213,7 +120,6 @@ export function NotificationsView({ decisionId, onBack, onSnapshot }: { decision
   };
   const load = async () => {
     const [ds, data, setup] = await Promise.all([api.decisions(), request(""), request("/delivery-setup")]);
-    setDecisionLog(ds);
     const emails = data.contacts.filter((c: any) => c.channel === "email" || (c.channel === "sms" && c.gateway_address));
     setContacts(emails); setTestIds(emails.map((c: any) => c.id)); setReady(setup);
     const id = decisionId ?? ds[0]?.id;
@@ -274,7 +180,7 @@ export function NotificationsView({ decisionId, onBack, onSnapshot }: { decision
             <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
               <Stat label="Delivered (simulated)" value={msgCount(["simulated_sent"])} />
               <Stat label="Scheduled" value={msgCount(["scheduled", "queued", "delayed"])} hint="updates at work start" />
-              <Stat label="Failed (simulated)" value={msgCount(["simulated_failed"])} hint="retry in advanced tools" />
+              <Stat label="Failed (simulated)" value={msgCount(["simulated_failed"])} />
               <Stat label="Total messages" value={(p.messages ?? []).length} />
             </div>
             <p className="mt-3 text-sm text-ink2">Immediate alerts were delivered in the simulator; later updates are scheduled. Nothing reached a real phone or mailbox.</p>
@@ -326,16 +232,6 @@ export function NotificationsView({ decisionId, onBack, onSnapshot }: { decision
         {!testConfigured && <p className="mt-2 text-sm text-muted">{!testIds.length ? "Select at least one test contact to send." : "Configure SMTP and the gateway for your selected channels before sending."}</p>}
         <details className="mt-4 text-sm"><summary className="cursor-pointer">One-time SMTP email setup</summary><p className="mt-2">Configure SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD and SMTP_FROM in your local .env, then restart the API. Use your sending account’s SMTP host and app password.</p><p className="mt-2">Full instructions: docs/notification-delivery-setup.md. Credentials stay local.</p><button className={`${button} mt-2`} onClick={()=>perform(async()=>setReady(await request('/delivery-setup')), 'Connection settings refreshed. Use Verify SMTP login to check authentication.')}>Check connection settings</button></details>
       </details>
-      <details className="card p-4"><summary className="cursor-pointer font-semibold">Delivery history & advanced tools</summary><div className="mt-4"><NotificationTools /></div></details>
     </>}
-    <Card title="Decision log · saved weather">
-      <p className="text-sm text-muted">Each entry preserves the manager’s decision and the weather snapshot used at the time.</p>
-      <ul className="mt-3 space-y-2">{decisionLog.map(d=><li key={d.id} className="rounded-lg border border-edge p-3 text-sm">
-        <strong>Decision #{d.id} · {d.decision_posture.replaceAll('_',' ')}</strong> · {d.decided_by} · {p ? time(d.decided_at,p.timezone) : d.decided_at}
-        <p className="mt-1">{d.override_reason || d.notes || "Manager confirmed the assessment."}</p>
-        <button className={`${button} mt-2`} disabled={busy} onClick={()=>perform(async()=>install(await request('/packages','POST',{decision_id:d.id})), 'Saved decision opened.')}>Review decision</button>
-        {onSnapshot && <button className={`${button} ml-2 mt-2`} onClick={()=>onSnapshot(d.snapshot_id, d.id)}>View weather at decision time</button>}
-      </li>)}</ul>
-    </Card>
   </div>;
 }
