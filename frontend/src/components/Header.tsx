@@ -8,9 +8,10 @@ const MODES: { id: Mode; label: string }[] = [
   { id: "live", label: "Live" }, { id: "replay", label: "Replay" }, { id: "livecheck", label: "Live Check" },
 ];
 
-export function Header({ snap, mode, setMode, onRefresh, busy, demo, theme, toggleTheme }: {
+export function Header({ snap, mode, setMode, onRefresh, busy, demo, theme, toggleTheme, showSummary = true }: {
   snap: Snapshot | null; mode: Mode; setMode: (m: Mode) => void; onRefresh: () => void; busy: boolean;
   demo: boolean; theme: string; toggleTheme: () => void;
+  showSummary?: boolean;
 }) {
   const tz = snap?.facility.timezone ?? "America/Chicago";
   const ok = snap?.sources.filter((s) => s.status === "ok" || s.status === "empty").length ?? 0;
@@ -52,7 +53,7 @@ export function Header({ snap, mode, setMode, onRefresh, busy, demo, theme, togg
       </div>
 
       {/* decision strip */}
-      <section className="card p-5" aria-label="Current recommendation">
+      {showSummary && <section className="card p-5" aria-label="Current recommendation">
         {!snap ? <div className="h-24 animate-pulse rounded-xl bg-[var(--surface-2)]" /> : (
           <>
             {snap.facility.hypothetical && (
@@ -99,7 +100,7 @@ export function Header({ snap, mode, setMode, onRefresh, busy, demo, theme, togg
             )}
           </>
         )}
-      </section>
+      </section>}
     </header>
   );
 }

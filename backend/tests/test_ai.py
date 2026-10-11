@@ -10,7 +10,7 @@ import pytest
 
 from adapters.base import NormalizedInput, SourceStatus
 from ai import agent, fallback
-from ai.prompts import Interpretation
+from ai.prompts import Interpretation, SuggestedReason
 from ai.tools import VIEWS
 from app.facility import load_facility
 from app.snapshots import build_snapshot_dict
@@ -264,6 +264,41 @@ def test_headline_limit_is_part_of_the_workshop_schema(snap):
     assert "pattern" in Interpretation.model_json_schema()["properties"]["headline"]
     with pytest.raises(ValidationError):
         Interpretation(**{**fallback.build(snap).model_dump(), "headline": " ".join(["word"] * 16)})
+
+
+def test_suggested_reasons_are_grounded_phrases_not_actions(snap):
+    good = fallback.build(snap)
+    assert 1 <= len(good.suggested_reasons) <= 3
+    assert agent.validate(good, snap, agent.allowed_numbers(snap)) == []
+    valid_id = good.suggested_reasons[0].rule_id
+    for reasons, expected in [
+        ([SuggestedReason(rule_id="made-up", text="strong winds")], "supporting rules"),
+        ([SuggestedReason(rule_id=valid_id, text="strong winds")] * 2, "distinct"),
+        ([SuggestedReason(rule_id=valid_id, text="gusts of 123 mph")], "123"),
+        ([SuggestedReason(rule_id=valid_id, text="commute to the facility now")], "instructions"),
+        ([SuggestedReason(rule_id=valid_id, text="   ")], "instructions"),
+    ]:
+        bad = good.model_copy(update={"suggested_reasons": reasons})
+        assert any(expected in problem for problem in agent.validate(bad, snap, agent.allowed_numbers(snap)))
+
+
+def test_reason_schema_limits_model_to_computed_evidence(snap):
+    schema = agent._response_schema(snap)
+    expected = [reason.rule_id for reason in fallback.build(snap).suggested_reasons]
+    assert schema["properties"]["suggested_reasons"]["maxItems"] == len(expected)
+    assert schema["$defs"]["SuggestedReason"]["properties"]["rule_id"]["enum"] == expected
+    assert schema["$defs"]["SuggestedReason"]["additionalProperties"] is False
+    # Previously stored briefs still parse without the new field.
+    old = fallback.build(snap).model_dump()
+    old.pop("suggested_reasons")
+    assert Interpretation.model_validate(old).suggested_reasons == []
+
+
+def test_reason_phrases_translate_coded_weather_evidence_for_the_manager():
+    assert fallback._reason_phrase({"metric": "spc_day1_rank", "observed_value": 4.0}) == (
+        "a moderate risk of severe storms in the Storm Prediction Center outlook")
+    assert fallback._reason_phrase({"metric": "road_rank", "observed_value": 5, "unit": "rank"}) == (
+        "reported roads at travel not advised / closed")
 
 
 def test_bedrock_converse_transport(snap, monkeypatch):

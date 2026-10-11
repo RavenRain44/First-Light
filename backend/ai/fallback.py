@@ -56,6 +56,18 @@ def _rank_name(v) -> str:
     return RANK_NAMES.get(int(v), str(v))
 
 
+def _reason_phrase(rule: dict) -> str:
+    if rule["metric"] == "alert_present":
+        return f"{rule['observed_value']} in effect"
+    if rule["metric"] == "spc_day1_rank":
+        risk = {1: "marginal", 2: "slight", 3: "enhanced", 4: "moderate", 5: "high"}.get(rule["observed_value"])
+        if risk:
+            return f"a {risk} risk of severe storms in the Storm Prediction Center outlook"
+    if rule["unit"] == "rank":
+        return f"reported roads at {_rank_name(rule['observed_value'])}"
+    return f"{rule['label']} of {_fmt_val(rule['observed_value'], rule['unit'])}"
+
+
 def build(snap: dict, analogs: list[dict] | None = None) -> Interpretation:
     """`snap` is the serialized snapshot dict produced by app.snapshots."""
     tz = ZoneInfo(snap["facility"]["timezone"])
@@ -123,6 +135,10 @@ def build(snap: dict, analogs: list[dict] | None = None) -> Interpretation:
         summary=(f"{posture.replace('_', ' ').title()} is recommended. "
                  + (p["reasons"][0] if p["reasons"] else "No operating-status threshold is crossed for the decision day.")),
         evidence_rule_ids=[r["rule_id"] for r in key[:3]],
+        suggested_reasons=[{
+            "rule_id": r["rule_id"],
+            "text": _reason_phrase(r)[:180],
+        } for r in key[:3]],
         uncertainty=f"Confidence is {conf['level']}; {weakest['explanation']}",
         rationale_paragraph=" ".join(parts),
         what_would_change=[c["text"] for c in snap.get("changes", [])],
