@@ -83,10 +83,11 @@ def lookup(id):
     return snap
 
 
-def proxies(day=None):
+def proxies(day=None, include_unconfirmed=False):
     path = Path(__file__).resolve().parents[1] / 'data' / 'historical_closures.json'
     records = json.loads(path.read_text())['records'] if path.exists() else []
-    return [r for r in records if day is None or r['day'] == day]
+    from app.decision_evidence import eligible
+    return [r for r in records if (day is None or r['day'] == day) and (include_unconfirmed or eligible(r))]
 
 
 def observation_inputs(rows, as_of, provenance):
@@ -322,16 +323,35 @@ def overview():
         summary=json.loads(r.summary_json)
         dedup[(r.as_of,summary['requested_mode'])]=summary
     rows=list(dedup.values()); groups=defaultdict(list)
+    from app.risk_experiment import manifest_path
+    cohort=json.loads(manifest_path().read_text()) if manifest_path().exists() else None
+    cohort_ids={e['id'] for e in cohort['entries']} if cohort else None
     for r in rows:
         r['proxy_records'] = proxies(r['day'])
         clock=datetime.fromisoformat(r['as_of']).astimezone(ZoneInfo(load_facility().timezone)).strftime('%H:%M')
+        # The fixed observation analysis cohort excludes ineligible/new attempts;
+        # other clocks and forecast reconstruction remain explicitly separate.
+        if cohort_ids is not None and clock=='04:00' and r['requested_mode']=='observation' and r['id'] not in cohort_ids:
+            continue
         groups[clock].append(r)
+    if cohort:
+        retained={r.id:r for r in raw}
+        frozen=[]
+        with session() as s:
+            for item in cohort['entries']:
+                ev=retained.get(item['id']) or s.get(HistoricalEvaluation,item['id'])
+                if not ev or hashlib.sha256(ev.summary_json.encode()).hexdigest()!=item['summary_sha']:
+                    raise ValueError('Frozen analysis cohort evaluation unavailable or changed: '+item['id'])
+                v=json.loads(ev.summary_json);v['proxy_records']=proxies(v['day']);frozen.append(v)
+        groups['04:00']=[r for r in groups['04:00'] if r['requested_mode']!='observation']+frozen
     sources=list(archive_dir().glob('*.gz')) if archive_dir().exists() else []
     artifact_bytes=0
     with session() as s:
         from sqlalchemy import func
         artifact_bytes=s.exec(select(func.sum(func.length(HistoricalArtifact.payload)))).one() or 0
-    return {'supported_start':START,'supported_end':(datetime.now(ZoneInfo(load_facility().timezone)).date()-timedelta(days=1)).isoformat(),
+    from app.decision_evidence import describe
+    decision_dataset = describe(proxies(include_unconfirmed=True))
+    return {'analysis_cohort':{k:v for k,v in cohort.items() if k!='entries'} if cohort else None,'archive_evaluation_count':len(rows),'decision_dataset':decision_dataset,'supported_start':START,'supported_end':(datetime.now(ZoneInfo(load_facility().timezone)).date()-timedelta(days=1)).isoformat(),
             'default_start':'2020-01-01','default_time':'04:00','timezone':load_facility().timezone,
             'rules_sha':rules.sha256,'benchmark_sha':hashlib.sha256(dumps(proxies()).encode()).hexdigest(), 'metrics_by_time':{t:metrics(v) for t,v in groups.items()},
             'jobs':sorted(jobs,key=lambda j:j['created_at'],reverse=True), 'proxy_records':proxies(),

@@ -1,0 +1,2149 @@
+{
+  "created_at": "2026-10-11T06:43:24.208822+00:00",
+  "rules_sha": "5595dc7aaa89d380131c6e10e8eccd38acd832a6516c0f7678e9938ed0d98877",
+  "metrics": {
+    "impact": {
+      "observation-based reconstruction": {
+        "n": 7470,
+        "correct": 7219,
+        "accuracy": 0.9663989290495315,
+        "balanced_accuracy": 0.720489977728285,
+        "precision": 1.0,
+        "recall": 0.44097995545657015,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 198,
+          "true_negative": 7021,
+          "false_alarm": 0,
+          "missed_disruption": 251
+        },
+        "accuracy_95pct_wilson": [
+          0.9620667288713015,
+          0.9702516654602026
+        ],
+        "status": "descriptive estimate"
+      },
+      "archived forecast reconstruction (estimated availability)": {
+        "n": 6,
+        "correct": 2,
+        "accuracy": 0.3333333333333333,
+        "balanced_accuracy": 0.5,
+        "precision": 0.3333333333333333,
+        "recall": 1.0,
+        "specificity": 0.0,
+        "confusion": {
+          "true_positive": 2,
+          "true_negative": 0,
+          "false_alarm": 4,
+          "missed_disruption": 0
+        },
+        "accuracy_95pct_wilson": [
+          0.09676933255921683,
+          0.7000116786584712
+        ],
+        "status": "not enough data"
+      }
+    },
+    "error_analysis": {
+      "observation-based reconstruction": {
+        "weather": {
+          "n": 7470,
+          "confusion": {
+            "true_positive": 198,
+            "true_negative": 7021,
+            "false_alarm": 0,
+            "missed_disruption": 251
+          },
+          "false_positive_rate": {
+            "count": 0,
+            "n": 7021,
+            "denominator": "non-disruptive days",
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.0005468593056959461
+            ],
+            "status": "descriptive estimate",
+            "reason": null
+          },
+          "false_negative_rate": {
+            "count": 251,
+            "n": 449,
+            "denominator": "disruptive days",
+            "rate": 0.5590200445434298,
+            "ci95": [
+              0.5127861095723082,
+              0.6042526077186826
+            ],
+            "status": "descriptive estimate",
+            "reason": null
+          },
+          "false_alarm_share_of_warnings": {
+            "count": 0,
+            "n": 198,
+            "denominator": "warnings issued",
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.01903274647049964
+            ],
+            "status": "descriptive estimate",
+            "reason": null
+          }
+        },
+        "sweep": [
+          {
+            "offset_pct": -75,
+            "current_thresholds": false,
+            "n": 7470,
+            "confusion": {
+              "true_positive": 245,
+              "true_negative": 6081,
+              "false_alarm": 940,
+              "missed_disruption": 204
+            },
+            "false_positive_rate": {
+              "count": 940,
+              "n": 7021,
+              "denominator": "non-disruptive days",
+              "rate": 0.13388406209941603,
+              "ci95": [
+                0.12611851116807318,
+                0.14205004084596792
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            },
+            "false_negative_rate": {
+              "count": 204,
+              "n": 449,
+              "denominator": "disruptive days",
+              "rate": 0.45434298440979953,
+              "ci95": [
+                0.4088686034726292,
+                0.500592011453208
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            },
+            "false_alarm_share_of_warnings": {
+              "count": 940,
+              "n": 1185,
+              "denominator": "warnings issued",
+              "rate": 0.7932489451476793,
+              "ci95": [
+                0.7692609306585441,
+                0.8153417615756442
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            }
+          },
+          {
+            "offset_pct": -50,
+            "current_thresholds": false,
+            "n": 7470,
+            "confusion": {
+              "true_positive": 210,
+              "true_negative": 6707,
+              "false_alarm": 314,
+              "missed_disruption": 239
+            },
+            "false_positive_rate": {
+              "count": 314,
+              "n": 7021,
+              "denominator": "non-disruptive days",
+              "rate": 0.04472297393533685,
+              "ci95": [
+                0.040131970773962425,
+                0.049811922053457344
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            },
+            "false_negative_rate": {
+              "count": 239,
+              "n": 449,
+              "denominator": "disruptive days",
+              "rate": 0.532293986636971,
+              "ci95": [
+                0.48606289776172534,
+                0.5779771550956092
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            },
+            "false_alarm_share_of_warnings": {
+              "count": 314,
+              "n": 524,
+              "denominator": "warnings issued",
+              "rate": 0.5992366412213741,
+              "ci95": [
+                0.5567013145042167,
+                0.6403274911071638
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            }
+          },
+          {
+            "offset_pct": -25,
+            "current_thresholds": false,
+            "n": 7470,
+            "confusion": {
+              "true_positive": 199,
+              "true_negative": 6995,
+              "false_alarm": 26,
+              "missed_disruption": 250
+            },
+            "false_positive_rate": {
+              "count": 26,
+              "n": 7021,
+              "denominator": "non-disruptive days",
+              "rate": 0.0037031761857285288,
+              "ci95": [
+                0.002528455756126497,
+                0.005420705688310911
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            },
+            "false_negative_rate": {
+              "count": 250,
+              "n": 449,
+              "denominator": "disruptive days",
+              "rate": 0.5567928730512249,
+              "ci95": [
+                0.5105541180479122,
+                0.6020680438736074
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            },
+            "false_alarm_share_of_warnings": {
+              "count": 26,
+              "n": 225,
+              "denominator": "warnings issued",
+              "rate": 0.11555555555555555,
+              "ci95": [
+                0.08008865074450557,
+                0.16392991930569506
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            }
+          },
+          {
+            "offset_pct": -10,
+            "current_thresholds": false,
+            "n": 7470,
+            "confusion": {
+              "true_positive": 198,
+              "true_negative": 7019,
+              "false_alarm": 2,
+              "missed_disruption": 251
+            },
+            "false_positive_rate": {
+              "count": 2,
+              "n": 7021,
+              "denominator": "non-disruptive days",
+              "rate": 0.0002848597065945022,
+              "ci95": [
+                7.81206470423702e-05,
+                0.0010381465154798422
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            },
+            "false_negative_rate": {
+              "count": 251,
+              "n": 449,
+              "denominator": "disruptive days",
+              "rate": 0.5590200445434298,
+              "ci95": [
+                0.5127861095723082,
+                0.6042526077186826
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            },
+            "false_alarm_share_of_warnings": {
+              "count": 2,
+              "n": 200,
+              "denominator": "warnings issued",
+              "rate": 0.01,
+              "ci95": [
+                0.0027466006037749346,
+                0.03572248519617954
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            }
+          },
+          {
+            "offset_pct": 0,
+            "current_thresholds": true,
+            "n": 7470,
+            "confusion": {
+              "true_positive": 198,
+              "true_negative": 7021,
+              "false_alarm": 0,
+              "missed_disruption": 251
+            },
+            "false_positive_rate": {
+              "count": 0,
+              "n": 7021,
+              "denominator": "non-disruptive days",
+              "rate": 0.0,
+              "ci95": [
+                0.0,
+                0.0005468593056959461
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            },
+            "false_negative_rate": {
+              "count": 251,
+              "n": 449,
+              "denominator": "disruptive days",
+              "rate": 0.5590200445434298,
+              "ci95": [
+                0.5127861095723082,
+                0.6042526077186826
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            },
+            "false_alarm_share_of_warnings": {
+              "count": 0,
+              "n": 198,
+              "denominator": "warnings issued",
+              "rate": 0.0,
+              "ci95": [
+                0.0,
+                0.01903274647049964
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            }
+          },
+          {
+            "offset_pct": 10,
+            "current_thresholds": false,
+            "n": 7470,
+            "confusion": {
+              "true_positive": 173,
+              "true_negative": 7021,
+              "false_alarm": 0,
+              "missed_disruption": 276
+            },
+            "false_positive_rate": {
+              "count": 0,
+              "n": 7021,
+              "denominator": "non-disruptive days",
+              "rate": 0.0,
+              "ci95": [
+                0.0,
+                0.0005468593056959461
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            },
+            "false_negative_rate": {
+              "count": 276,
+              "n": 449,
+              "denominator": "disruptive days",
+              "rate": 0.6146993318485523,
+              "ci95": [
+                0.5688913739474764,
+                0.6585612275802983
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            },
+            "false_alarm_share_of_warnings": {
+              "count": 0,
+              "n": 173,
+              "denominator": "warnings issued",
+              "rate": 0.0,
+              "ci95": [
+                0.0,
+                0.021723395400177335
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            }
+          },
+          {
+            "offset_pct": 25,
+            "current_thresholds": false,
+            "n": 7470,
+            "confusion": {
+              "true_positive": 173,
+              "true_negative": 7021,
+              "false_alarm": 0,
+              "missed_disruption": 276
+            },
+            "false_positive_rate": {
+              "count": 0,
+              "n": 7021,
+              "denominator": "non-disruptive days",
+              "rate": 0.0,
+              "ci95": [
+                0.0,
+                0.0005468593056959461
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            },
+            "false_negative_rate": {
+              "count": 276,
+              "n": 449,
+              "denominator": "disruptive days",
+              "rate": 0.6146993318485523,
+              "ci95": [
+                0.5688913739474764,
+                0.6585612275802983
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            },
+            "false_alarm_share_of_warnings": {
+              "count": 0,
+              "n": 173,
+              "denominator": "warnings issued",
+              "rate": 0.0,
+              "ci95": [
+                0.0,
+                0.021723395400177335
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            }
+          },
+          {
+            "offset_pct": 50,
+            "current_thresholds": false,
+            "n": 7470,
+            "confusion": {
+              "true_positive": 173,
+              "true_negative": 7021,
+              "false_alarm": 0,
+              "missed_disruption": 276
+            },
+            "false_positive_rate": {
+              "count": 0,
+              "n": 7021,
+              "denominator": "non-disruptive days",
+              "rate": 0.0,
+              "ci95": [
+                0.0,
+                0.0005468593056959461
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            },
+            "false_negative_rate": {
+              "count": 276,
+              "n": 449,
+              "denominator": "disruptive days",
+              "rate": 0.6146993318485523,
+              "ci95": [
+                0.5688913739474764,
+                0.6585612275802983
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            },
+            "false_alarm_share_of_warnings": {
+              "count": 0,
+              "n": 173,
+              "denominator": "warnings issued",
+              "rate": 0.0,
+              "ci95": [
+                0.0,
+                0.021723395400177335
+              ],
+              "status": "descriptive estimate",
+              "reason": null
+            }
+          }
+        ],
+        "sensitivity": {
+          "assumed": true,
+          "label": "Assumed, unitless scenario costs for comparing thresholds. Illustrative only, not measured losses.",
+          "rows": [
+            {
+              "ratio": 1,
+              "best_offset_pct": 0,
+              "best_loss": 251,
+              "current_rules_loss": 251
+            },
+            {
+              "ratio": 2,
+              "best_offset_pct": 0,
+              "best_loss": 502,
+              "current_rules_loss": 502
+            },
+            {
+              "ratio": 5,
+              "best_offset_pct": 0,
+              "best_loss": 1255,
+              "current_rules_loss": 1255
+            },
+            {
+              "ratio": 10,
+              "best_offset_pct": 0,
+              "best_loss": 2510,
+              "current_rules_loss": 2510
+            },
+            {
+              "ratio": 20,
+              "best_offset_pct": 0,
+              "best_loss": 5020,
+              "current_rules_loss": 5020
+            },
+            {
+              "ratio": 50,
+              "best_offset_pct": -75,
+              "best_loss": 11140,
+              "current_rules_loss": 12550
+            }
+          ]
+        },
+        "tradeoff": "Making the thresholds 25% easier to trigger would catch 1 more disruptive day, at the cost of 26 more false alarms.",
+        "label": "Weather label from local AMW station observations. Not proof that a closure was or was not necessary.",
+        "zero_errors_note": "Zero observed errors does not establish zero future risk; see the 95% range."
+      },
+      "archived forecast reconstruction (estimated availability)": {
+        "weather": {
+          "n": 6,
+          "confusion": {
+            "true_positive": 2,
+            "true_negative": 0,
+            "false_alarm": 4,
+            "missed_disruption": 0
+          },
+          "false_positive_rate": {
+            "count": 4,
+            "n": 4,
+            "denominator": "non-disruptive days",
+            "rate": 1.0,
+            "ci95": [
+              0.5100999795960008,
+              1.0
+            ],
+            "status": "not enough data",
+            "reason": null
+          },
+          "false_negative_rate": {
+            "count": 0,
+            "n": 2,
+            "denominator": "disruptive days",
+            "rate": 0.0,
+            "ci95": [
+              0.0,
+              0.6576280471103807
+            ],
+            "status": "not enough data",
+            "reason": null
+          },
+          "false_alarm_share_of_warnings": {
+            "count": 4,
+            "n": 6,
+            "denominator": "warnings issued",
+            "rate": 0.6666666666666666,
+            "ci95": [
+              0.29998832134152864,
+              0.9032306674407831
+            ],
+            "status": "not enough data",
+            "reason": null
+          }
+        },
+        "sweep": [
+          {
+            "offset_pct": -75,
+            "current_thresholds": false,
+            "n": 6,
+            "confusion": {
+              "true_positive": 2,
+              "true_negative": 0,
+              "false_alarm": 4,
+              "missed_disruption": 0
+            },
+            "false_positive_rate": {
+              "count": 4,
+              "n": 4,
+              "denominator": "non-disruptive days",
+              "rate": 1.0,
+              "ci95": [
+                0.5100999795960008,
+                1.0
+              ],
+              "status": "not enough data",
+              "reason": null
+            },
+            "false_negative_rate": {
+              "count": 0,
+              "n": 2,
+              "denominator": "disruptive days",
+              "rate": 0.0,
+              "ci95": [
+                0.0,
+                0.6576280471103807
+              ],
+              "status": "not enough data",
+              "reason": null
+            },
+            "false_alarm_share_of_warnings": {
+              "count": 4,
+              "n": 6,
+              "denominator": "warnings issued",
+              "rate": 0.6666666666666666,
+              "ci95": [
+                0.29998832134152864,
+                0.9032306674407831
+              ],
+              "status": "not enough data",
+              "reason": null
+            }
+          },
+          {
+            "offset_pct": -50,
+            "current_thresholds": false,
+            "n": 6,
+            "confusion": {
+              "true_positive": 2,
+              "true_negative": 0,
+              "false_alarm": 4,
+              "missed_disruption": 0
+            },
+            "false_positive_rate": {
+              "count": 4,
+              "n": 4,
+              "denominator": "non-disruptive days",
+              "rate": 1.0,
+              "ci95": [
+                0.5100999795960008,
+                1.0
+              ],
+              "status": "not enough data",
+              "reason": null
+            },
+            "false_negative_rate": {
+              "count": 0,
+              "n": 2,
+              "denominator": "disruptive days",
+              "rate": 0.0,
+              "ci95": [
+                0.0,
+                0.6576280471103807
+              ],
+              "status": "not enough data",
+              "reason": null
+            },
+            "false_alarm_share_of_warnings": {
+              "count": 4,
+              "n": 6,
+              "denominator": "warnings issued",
+              "rate": 0.6666666666666666,
+              "ci95": [
+                0.29998832134152864,
+                0.9032306674407831
+              ],
+              "status": "not enough data",
+              "reason": null
+            }
+          },
+          {
+            "offset_pct": -25,
+            "current_thresholds": false,
+            "n": 6,
+            "confusion": {
+              "true_positive": 2,
+              "true_negative": 0,
+              "false_alarm": 4,
+              "missed_disruption": 0
+            },
+            "false_positive_rate": {
+              "count": 4,
+              "n": 4,
+              "denominator": "non-disruptive days",
+              "rate": 1.0,
+              "ci95": [
+                0.5100999795960008,
+                1.0
+              ],
+              "status": "not enough data",
+              "reason": null
+            },
+            "false_negative_rate": {
+              "count": 0,
+              "n": 2,
+              "denominator": "disruptive days",
+              "rate": 0.0,
+              "ci95": [
+                0.0,
+                0.6576280471103807
+              ],
+              "status": "not enough data",
+              "reason": null
+            },
+            "false_alarm_share_of_warnings": {
+              "count": 4,
+              "n": 6,
+              "denominator": "warnings issued",
+              "rate": 0.6666666666666666,
+              "ci95": [
+                0.29998832134152864,
+                0.9032306674407831
+              ],
+              "status": "not enough data",
+              "reason": null
+            }
+          },
+          {
+            "offset_pct": -10,
+            "current_thresholds": false,
+            "n": 6,
+            "confusion": {
+              "true_positive": 2,
+              "true_negative": 0,
+              "false_alarm": 4,
+              "missed_disruption": 0
+            },
+            "false_positive_rate": {
+              "count": 4,
+              "n": 4,
+              "denominator": "non-disruptive days",
+              "rate": 1.0,
+              "ci95": [
+                0.5100999795960008,
+                1.0
+              ],
+              "status": "not enough data",
+              "reason": null
+            },
+            "false_negative_rate": {
+              "count": 0,
+              "n": 2,
+              "denominator": "disruptive days",
+              "rate": 0.0,
+              "ci95": [
+                0.0,
+                0.6576280471103807
+              ],
+              "status": "not enough data",
+              "reason": null
+            },
+            "false_alarm_share_of_warnings": {
+              "count": 4,
+              "n": 6,
+              "denominator": "warnings issued",
+              "rate": 0.6666666666666666,
+              "ci95": [
+                0.29998832134152864,
+                0.9032306674407831
+              ],
+              "status": "not enough data",
+              "reason": null
+            }
+          },
+          {
+            "offset_pct": 0,
+            "current_thresholds": true,
+            "n": 6,
+            "confusion": {
+              "true_positive": 2,
+              "true_negative": 0,
+              "false_alarm": 4,
+              "missed_disruption": 0
+            },
+            "false_positive_rate": {
+              "count": 4,
+              "n": 4,
+              "denominator": "non-disruptive days",
+              "rate": 1.0,
+              "ci95": [
+                0.5100999795960008,
+                1.0
+              ],
+              "status": "not enough data",
+              "reason": null
+            },
+            "false_negative_rate": {
+              "count": 0,
+              "n": 2,
+              "denominator": "disruptive days",
+              "rate": 0.0,
+              "ci95": [
+                0.0,
+                0.6576280471103807
+              ],
+              "status": "not enough data",
+              "reason": null
+            },
+            "false_alarm_share_of_warnings": {
+              "count": 4,
+              "n": 6,
+              "denominator": "warnings issued",
+              "rate": 0.6666666666666666,
+              "ci95": [
+                0.29998832134152864,
+                0.9032306674407831
+              ],
+              "status": "not enough data",
+              "reason": null
+            }
+          },
+          {
+            "offset_pct": 10,
+            "current_thresholds": false,
+            "n": 6,
+            "confusion": {
+              "true_positive": 2,
+              "true_negative": 0,
+              "false_alarm": 4,
+              "missed_disruption": 0
+            },
+            "false_positive_rate": {
+              "count": 4,
+              "n": 4,
+              "denominator": "non-disruptive days",
+              "rate": 1.0,
+              "ci95": [
+                0.5100999795960008,
+                1.0
+              ],
+              "status": "not enough data",
+              "reason": null
+            },
+            "false_negative_rate": {
+              "count": 0,
+              "n": 2,
+              "denominator": "disruptive days",
+              "rate": 0.0,
+              "ci95": [
+                0.0,
+                0.6576280471103807
+              ],
+              "status": "not enough data",
+              "reason": null
+            },
+            "false_alarm_share_of_warnings": {
+              "count": 4,
+              "n": 6,
+              "denominator": "warnings issued",
+              "rate": 0.6666666666666666,
+              "ci95": [
+                0.29998832134152864,
+                0.9032306674407831
+              ],
+              "status": "not enough data",
+              "reason": null
+            }
+          },
+          {
+            "offset_pct": 25,
+            "current_thresholds": false,
+            "n": 6,
+            "confusion": {
+              "true_positive": 2,
+              "true_negative": 0,
+              "false_alarm": 4,
+              "missed_disruption": 0
+            },
+            "false_positive_rate": {
+              "count": 4,
+              "n": 4,
+              "denominator": "non-disruptive days",
+              "rate": 1.0,
+              "ci95": [
+                0.5100999795960008,
+                1.0
+              ],
+              "status": "not enough data",
+              "reason": null
+            },
+            "false_negative_rate": {
+              "count": 0,
+              "n": 2,
+              "denominator": "disruptive days",
+              "rate": 0.0,
+              "ci95": [
+                0.0,
+                0.6576280471103807
+              ],
+              "status": "not enough data",
+              "reason": null
+            },
+            "false_alarm_share_of_warnings": {
+              "count": 4,
+              "n": 6,
+              "denominator": "warnings issued",
+              "rate": 0.6666666666666666,
+              "ci95": [
+                0.29998832134152864,
+                0.9032306674407831
+              ],
+              "status": "not enough data",
+              "reason": null
+            }
+          },
+          {
+            "offset_pct": 50,
+            "current_thresholds": false,
+            "n": 6,
+            "confusion": {
+              "true_positive": 2,
+              "true_negative": 0,
+              "false_alarm": 4,
+              "missed_disruption": 0
+            },
+            "false_positive_rate": {
+              "count": 4,
+              "n": 4,
+              "denominator": "non-disruptive days",
+              "rate": 1.0,
+              "ci95": [
+                0.5100999795960008,
+                1.0
+              ],
+              "status": "not enough data",
+              "reason": null
+            },
+            "false_negative_rate": {
+              "count": 0,
+              "n": 2,
+              "denominator": "disruptive days",
+              "rate": 0.0,
+              "ci95": [
+                0.0,
+                0.6576280471103807
+              ],
+              "status": "not enough data",
+              "reason": null
+            },
+            "false_alarm_share_of_warnings": {
+              "count": 4,
+              "n": 6,
+              "denominator": "warnings issued",
+              "rate": 0.6666666666666666,
+              "ci95": [
+                0.29998832134152864,
+                0.9032306674407831
+              ],
+              "status": "not enough data",
+              "reason": null
+            }
+          }
+        ],
+        "sensitivity": {
+          "assumed": true,
+          "label": "Assumed, unitless scenario costs for comparing thresholds. Illustrative only, not measured losses.",
+          "rows": [
+            {
+              "ratio": 1,
+              "best_offset_pct": 0,
+              "best_loss": 4,
+              "current_rules_loss": 4
+            },
+            {
+              "ratio": 2,
+              "best_offset_pct": 0,
+              "best_loss": 4,
+              "current_rules_loss": 4
+            },
+            {
+              "ratio": 5,
+              "best_offset_pct": 0,
+              "best_loss": 4,
+              "current_rules_loss": 4
+            },
+            {
+              "ratio": 10,
+              "best_offset_pct": 0,
+              "best_loss": 4,
+              "current_rules_loss": 4
+            },
+            {
+              "ratio": 20,
+              "best_offset_pct": 0,
+              "best_loss": 4,
+              "current_rules_loss": 4
+            },
+            {
+              "ratio": 50,
+              "best_offset_pct": 0,
+              "best_loss": 4,
+              "current_rules_loss": 4
+            }
+          ]
+        },
+        "tradeoff": "Making the thresholds easier to trigger would not change any result in this sample.",
+        "label": "Weather label from local AMW station observations. Not proof that a closure was or was not necessary.",
+        "zero_errors_note": "Zero observed errors does not establish zero future risk; see the 95% range."
+      }
+    },
+    "impact_breakdowns": {
+      "observation-based reconstruction|year:2020": {
+        "n": 234,
+        "correct": 224,
+        "accuracy": 0.9572649572649573,
+        "balanced_accuracy": 0.5454545454545454,
+        "precision": 1.0,
+        "recall": 0.09090909090909091,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 1,
+          "true_negative": 223,
+          "false_alarm": 0,
+          "missed_disruption": 10
+        },
+        "accuracy_95pct_wilson": [
+          0.9231340801412434,
+          0.9766244145880217
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|hazard:winter": {
+        "n": 7468,
+        "correct": 7217,
+        "accuracy": 0.9663899303695769,
+        "balanced_accuracy": 0.7192393736017897,
+        "precision": 1.0,
+        "recall": 0.43847874720357943,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 196,
+          "true_negative": 7021,
+          "false_alarm": 0,
+          "missed_disruption": 251
+        },
+        "accuracy_95pct_wilson": [
+          0.9620565941945003,
+          0.9702436836914765
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2021": {
+        "n": 232,
+        "correct": 226,
+        "accuracy": 0.9741379310344828,
+        "balanced_accuracy": 0.5,
+        "precision": null,
+        "recall": 0.0,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 226,
+          "false_alarm": 0,
+          "missed_disruption": 6
+        },
+        "accuracy_95pct_wilson": [
+          0.9447348605916439,
+          0.9880946317455859
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2022": {
+        "n": 235,
+        "correct": 230,
+        "accuracy": 0.9787234042553191,
+        "balanced_accuracy": 0.5833333333333334,
+        "precision": 1.0,
+        "recall": 0.16666666666666666,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 1,
+          "true_negative": 229,
+          "false_alarm": 0,
+          "missed_disruption": 5
+        },
+        "accuracy_95pct_wilson": [
+          0.9511683270673893,
+          0.9908786195281786
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2023": {
+        "n": 246,
+        "correct": 240,
+        "accuracy": 0.975609756097561,
+        "balanced_accuracy": 0.5,
+        "precision": null,
+        "recall": 0.0,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 240,
+          "false_alarm": 0,
+          "missed_disruption": 6
+        },
+        "accuracy_95pct_wilson": [
+          0.9478183963904895,
+          0.9887750292039673
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2024": {
+        "n": 250,
+        "correct": 248,
+        "accuracy": 0.992,
+        "balanced_accuracy": 0.5,
+        "precision": null,
+        "recall": 0.0,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 248,
+          "false_alarm": 0,
+          "missed_disruption": 2
+        },
+        "accuracy_95pct_wilson": [
+          0.9713048854232084,
+          0.9978034088831621
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2025": {
+        "n": 249,
+        "correct": 245,
+        "accuracy": 0.9839357429718876,
+        "balanced_accuracy": 0.6,
+        "precision": 1.0,
+        "recall": 0.2,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 1,
+          "true_negative": 244,
+          "false_alarm": 0,
+          "missed_disruption": 4
+        },
+        "accuracy_95pct_wilson": [
+          0.9594301846118194,
+          0.9937357501077837
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|hazard:wind": {
+        "n": 2,
+        "correct": 2,
+        "accuracy": 1.0,
+        "balanced_accuracy": null,
+        "precision": 1.0,
+        "recall": 1.0,
+        "specificity": null,
+        "confusion": {
+          "true_positive": 2,
+          "true_negative": 0,
+          "false_alarm": 0,
+          "missed_disruption": 0
+        },
+        "accuracy_95pct_wilson": [
+          0.34237195288961925,
+          1
+        ],
+        "status": "not enough data"
+      },
+      "observation-based reconstruction|year:2026": {
+        "n": 196,
+        "correct": 189,
+        "accuracy": 0.9642857142857143,
+        "balanced_accuracy": 0.5,
+        "precision": null,
+        "recall": 0.0,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 189,
+          "false_alarm": 0,
+          "missed_disruption": 7
+        },
+        "accuracy_95pct_wilson": [
+          0.9281268215563168,
+          0.9825944697063633
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:1996": {
+        "n": 34,
+        "correct": 27,
+        "accuracy": 0.7941176470588235,
+        "balanced_accuracy": 0.8653846153846154,
+        "precision": 1.0,
+        "recall": 0.7307692307692307,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 19,
+          "true_negative": 8,
+          "false_alarm": 0,
+          "missed_disruption": 7
+        },
+        "accuracy_95pct_wilson": [
+          0.6320128389178601,
+          0.8965060397764868
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:1997": {
+        "n": 196,
+        "correct": 181,
+        "accuracy": 0.923469387755102,
+        "balanced_accuracy": 0.9278846153846154,
+        "precision": 1.0,
+        "recall": 0.8557692307692307,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 89,
+          "true_negative": 92,
+          "false_alarm": 0,
+          "missed_disruption": 15
+        },
+        "accuracy_95pct_wilson": [
+          0.8775818495951171,
+          0.953076031446668
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:1998": {
+        "n": 256,
+        "correct": 231,
+        "accuracy": 0.90234375,
+        "balanced_accuracy": 0.8397435897435898,
+        "precision": 1.0,
+        "recall": 0.6794871794871795,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 53,
+          "true_negative": 178,
+          "false_alarm": 0,
+          "missed_disruption": 25
+        },
+        "accuracy_95pct_wilson": [
+          0.8598142426223699,
+          0.932976442164054
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:1999": {
+        "n": 251,
+        "correct": 236,
+        "accuracy": 0.9402390438247012,
+        "balanced_accuracy": 0.5588235294117647,
+        "precision": 1.0,
+        "recall": 0.11764705882352941,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 2,
+          "true_negative": 234,
+          "false_alarm": 0,
+          "missed_disruption": 15
+        },
+        "accuracy_95pct_wilson": [
+          0.9037518963373127,
+          0.9634534578905686
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2000": {
+        "n": 244,
+        "correct": 233,
+        "accuracy": 0.9549180327868853,
+        "balanced_accuracy": 0.5,
+        "precision": null,
+        "recall": 0.0,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 233,
+          "false_alarm": 0,
+          "missed_disruption": 11
+        },
+        "accuracy_95pct_wilson": [
+          0.9210898575213023,
+          0.9746435463947473
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2001": {
+        "n": 257,
+        "correct": 252,
+        "accuracy": 0.980544747081712,
+        "balanced_accuracy": 0.6428571428571428,
+        "precision": 1.0,
+        "recall": 0.2857142857142857,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 2,
+          "true_negative": 250,
+          "false_alarm": 0,
+          "missed_disruption": 5
+        },
+        "accuracy_95pct_wilson": [
+          0.9552727707009676,
+          0.9916620740477227
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2002": {
+        "n": 256,
+        "correct": 254,
+        "accuracy": 0.9921875,
+        "balanced_accuracy": 0.8571428571428572,
+        "precision": 1.0,
+        "recall": 0.7142857142857143,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 5,
+          "true_negative": 249,
+          "false_alarm": 0,
+          "missed_disruption": 2
+        },
+        "accuracy_95pct_wilson": [
+          0.9719666598432031,
+          0.9978549545557232
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2003": {
+        "n": 256,
+        "correct": 247,
+        "accuracy": 0.96484375,
+        "balanced_accuracy": 0.5,
+        "precision": null,
+        "recall": 0.0,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 247,
+          "false_alarm": 0,
+          "missed_disruption": 9
+        },
+        "accuracy_95pct_wilson": [
+          0.9345465201697558,
+          0.9813961156514523
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2004": {
+        "n": 261,
+        "correct": 254,
+        "accuracy": 0.9731800766283525,
+        "balanced_accuracy": 0.5,
+        "precision": null,
+        "recall": 0.0,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 254,
+          "false_alarm": 0,
+          "missed_disruption": 7
+        },
+        "accuracy_95pct_wilson": [
+          0.9456838338093203,
+          0.9869491060309465
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2005": {
+        "n": 245,
+        "correct": 241,
+        "accuracy": 0.9836734693877551,
+        "balanced_accuracy": 0.7142857142857143,
+        "precision": 1.0,
+        "recall": 0.42857142857142855,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 3,
+          "true_negative": 238,
+          "false_alarm": 0,
+          "missed_disruption": 4
+        },
+        "accuracy_95pct_wilson": [
+          0.9587799131142327,
+          0.9936331882321661
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2006": {
+        "n": 259,
+        "correct": 253,
+        "accuracy": 0.9768339768339769,
+        "balanced_accuracy": 0.5714285714285714,
+        "precision": 1.0,
+        "recall": 0.14285714285714285,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 1,
+          "true_negative": 252,
+          "false_alarm": 0,
+          "missed_disruption": 6
+        },
+        "accuracy_95pct_wilson": [
+          0.9503887808788517,
+          0.9893406987773367
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2007": {
+        "n": 258,
+        "correct": 251,
+        "accuracy": 0.9728682170542635,
+        "balanced_accuracy": 0.6111111111111112,
+        "precision": 1.0,
+        "recall": 0.2222222222222222,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 2,
+          "true_negative": 249,
+          "false_alarm": 0,
+          "missed_disruption": 7
+        },
+        "accuracy_95pct_wilson": [
+          0.9450644475616178,
+          0.9867966470849167
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2008": {
+        "n": 253,
+        "correct": 244,
+        "accuracy": 0.9644268774703557,
+        "balanced_accuracy": 0.5909090909090909,
+        "precision": 1.0,
+        "recall": 0.18181818181818182,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 2,
+          "true_negative": 242,
+          "false_alarm": 0,
+          "missed_disruption": 9
+        },
+        "accuracy_95pct_wilson": [
+          0.9337866107666719,
+          0.9811742055496879
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2009": {
+        "n": 258,
+        "correct": 250,
+        "accuracy": 0.9689922480620154,
+        "balanced_accuracy": 0.6363636363636364,
+        "precision": 1.0,
+        "recall": 0.2727272727272727,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 3,
+          "true_negative": 247,
+          "false_alarm": 0,
+          "missed_disruption": 8
+        },
+        "accuracy_95pct_wilson": [
+          0.9400169137040865,
+          0.984205975248624
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2010": {
+        "n": 243,
+        "correct": 235,
+        "accuracy": 0.9670781893004116,
+        "balanced_accuracy": 0.5,
+        "precision": null,
+        "recall": 0.0,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 235,
+          "false_alarm": 0,
+          "missed_disruption": 8
+        },
+        "accuracy_95pct_wilson": [
+          0.9363924837984213,
+          0.9832256032663197
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2011": {
+        "n": 254,
+        "correct": 246,
+        "accuracy": 0.968503937007874,
+        "balanced_accuracy": 0.6666666666666666,
+        "precision": 1.0,
+        "recall": 0.3333333333333333,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 4,
+          "true_negative": 242,
+          "false_alarm": 0,
+          "missed_disruption": 8
+        },
+        "accuracy_95pct_wilson": [
+          0.9390914029099507,
+          0.9839559253722191
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2012": {
+        "n": 260,
+        "correct": 257,
+        "accuracy": 0.9884615384615385,
+        "balanced_accuracy": 0.7,
+        "precision": 1.0,
+        "recall": 0.4,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 2,
+          "true_negative": 255,
+          "false_alarm": 0,
+          "missed_disruption": 3
+        },
+        "accuracy_95pct_wilson": [
+          0.9666304926964924,
+          0.9960683387235718
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2013": {
+        "n": 259,
+        "correct": 248,
+        "accuracy": 0.9575289575289575,
+        "balanced_accuracy": 0.5769230769230769,
+        "precision": 1.0,
+        "recall": 0.15384615384615385,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 2,
+          "true_negative": 246,
+          "false_alarm": 0,
+          "missed_disruption": 11
+        },
+        "accuracy_95pct_wilson": [
+          0.9255615422223779,
+          0.9761222095125072
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2014": {
+        "n": 258,
+        "correct": 253,
+        "accuracy": 0.9806201550387597,
+        "balanced_accuracy": 0.5,
+        "precision": null,
+        "recall": 0.0,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 253,
+          "false_alarm": 0,
+          "missed_disruption": 5
+        },
+        "accuracy_95pct_wilson": [
+          0.9554430058117871,
+          0.9916945002223954
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2015": {
+        "n": 259,
+        "correct": 253,
+        "accuracy": 0.9768339768339769,
+        "balanced_accuracy": 0.5714285714285714,
+        "precision": 1.0,
+        "recall": 0.14285714285714285,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 1,
+          "true_negative": 252,
+          "false_alarm": 0,
+          "missed_disruption": 6
+        },
+        "accuracy_95pct_wilson": [
+          0.9503887808788517,
+          0.9893406987773367
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2016": {
+        "n": 258,
+        "correct": 248,
+        "accuracy": 0.9612403100775194,
+        "balanced_accuracy": 0.5454545454545454,
+        "precision": 1.0,
+        "recall": 0.09090909090909091,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 1,
+          "true_negative": 247,
+          "false_alarm": 0,
+          "missed_disruption": 10
+        },
+        "accuracy_95pct_wilson": [
+          0.9301336914229624,
+          0.9788127861421002
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2017": {
+        "n": 259,
+        "correct": 254,
+        "accuracy": 0.9806949806949807,
+        "balanced_accuracy": 0.6428571428571428,
+        "precision": 1.0,
+        "recall": 0.2857142857142857,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 2,
+          "true_negative": 252,
+          "false_alarm": 0,
+          "missed_disruption": 5
+        },
+        "accuracy_95pct_wilson": [
+          0.955611950080409,
+          0.99172667516004
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2018": {
+        "n": 252,
+        "correct": 234,
+        "accuracy": 0.9285714285714286,
+        "balanced_accuracy": 0.5263157894736842,
+        "precision": 1.0,
+        "recall": 0.05263157894736842,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 1,
+          "true_negative": 233,
+          "false_alarm": 0,
+          "missed_disruption": 18
+        },
+        "accuracy_95pct_wilson": [
+          0.8899284191517769,
+          0.9543439743917284
+        ],
+        "status": "descriptive estimate"
+      },
+      "observation-based reconstruction|year:2019": {
+        "n": 242,
+        "correct": 235,
+        "accuracy": 0.9710743801652892,
+        "balanced_accuracy": 0.5625,
+        "precision": 1.0,
+        "recall": 0.125,
+        "specificity": 1.0,
+        "confusion": {
+          "true_positive": 1,
+          "true_negative": 234,
+          "false_alarm": 0,
+          "missed_disruption": 7
+        },
+        "accuracy_95pct_wilson": [
+          0.9415070653409109,
+          0.9859193750987868
+        ],
+        "status": "descriptive estimate"
+      },
+      "archived forecast reconstruction (estimated availability)|year:2023": {
+        "n": 1,
+        "correct": 1,
+        "accuracy": 1.0,
+        "balanced_accuracy": null,
+        "precision": 1.0,
+        "recall": 1.0,
+        "specificity": null,
+        "confusion": {
+          "true_positive": 1,
+          "true_negative": 0,
+          "false_alarm": 0,
+          "missed_disruption": 0
+        },
+        "accuracy_95pct_wilson": [
+          0.20654329147389294,
+          1
+        ],
+        "status": "not enough data"
+      },
+      "archived forecast reconstruction (estimated availability)|hazard:winter": {
+        "n": 6,
+        "correct": 2,
+        "accuracy": 0.3333333333333333,
+        "balanced_accuracy": 0.5,
+        "precision": 0.3333333333333333,
+        "recall": 1.0,
+        "specificity": 0.0,
+        "confusion": {
+          "true_positive": 2,
+          "true_negative": 0,
+          "false_alarm": 4,
+          "missed_disruption": 0
+        },
+        "accuracy_95pct_wilson": [
+          0.09676933255921683,
+          0.7000116786584712
+        ],
+        "status": "not enough data"
+      },
+      "archived forecast reconstruction (estimated availability)|year:2024": {
+        "n": 5,
+        "correct": 1,
+        "accuracy": 0.2,
+        "balanced_accuracy": 0.5,
+        "precision": 0.2,
+        "recall": 1.0,
+        "specificity": 0.0,
+        "confusion": {
+          "true_positive": 1,
+          "true_negative": 0,
+          "false_alarm": 4,
+          "missed_disruption": 0
+        },
+        "accuracy_95pct_wilson": [
+          0.03622316096978745,
+          0.6244717358814613
+        ],
+        "status": "not enough data"
+      }
+    },
+    "proxy": {
+      "observation-based reconstruction|Ames Community School District": {
+        "n": 1,
+        "correct": 0,
+        "accuracy": 0.0,
+        "balanced_accuracy": null,
+        "precision": null,
+        "recall": 0.0,
+        "specificity": null,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 0,
+          "false_alarm": 0,
+          "missed_disruption": 1
+        },
+        "accuracy_95pct_wilson": [
+          0,
+          0.7934567085261071
+        ],
+        "status": "not enough data",
+        "exact_status": {
+          "n": 1,
+          "correct": 0,
+          "accuracy": 0.0
+        }
+      },
+      "observation-based reconstruction|type:school": {
+        "n": 2,
+        "correct": 0,
+        "accuracy": 0.0,
+        "balanced_accuracy": null,
+        "precision": null,
+        "recall": 0.0,
+        "specificity": null,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 0,
+          "false_alarm": 0,
+          "missed_disruption": 2
+        },
+        "accuracy_95pct_wilson": [
+          0,
+          0.6576280471103807
+        ],
+        "status": "not enough data",
+        "exact_status": {
+          "n": 2,
+          "correct": 0,
+          "accuracy": 0.0
+        }
+      },
+      "observation-based reconstruction|year:2024": {
+        "n": 3,
+        "correct": 0,
+        "accuracy": 0.0,
+        "balanced_accuracy": null,
+        "precision": null,
+        "recall": 0.0,
+        "specificity": null,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 0,
+          "false_alarm": 0,
+          "missed_disruption": 3
+        },
+        "accuracy_95pct_wilson": [
+          0,
+          0.5615060804490177
+        ],
+        "status": "not enough data",
+        "exact_status": {
+          "n": 2,
+          "correct": 0,
+          "accuracy": 0.0
+        }
+      },
+      "observation-based reconstruction|hazard:winter": {
+        "n": 5,
+        "correct": 0,
+        "accuracy": 0.0,
+        "balanced_accuracy": null,
+        "precision": null,
+        "recall": 0.0,
+        "specificity": null,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 0,
+          "false_alarm": 0,
+          "missed_disruption": 5
+        },
+        "accuracy_95pct_wilson": [
+          0,
+          0.43449149475208104
+        ],
+        "status": "not enough data",
+        "exact_status": {
+          "n": 4,
+          "correct": 0,
+          "accuracy": 0.0
+        }
+      },
+      "observation-based reconstruction|Nevada Community School District": {
+        "n": 1,
+        "correct": 0,
+        "accuracy": 0.0,
+        "balanced_accuracy": null,
+        "precision": null,
+        "recall": 0.0,
+        "specificity": null,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 0,
+          "false_alarm": 0,
+          "missed_disruption": 1
+        },
+        "accuracy_95pct_wilson": [
+          0,
+          0.7934567085261071
+        ],
+        "status": "not enough data",
+        "exact_status": {
+          "n": 1,
+          "correct": 0,
+          "accuracy": 0.0
+        }
+      },
+      "observation-based reconstruction|Iowa State University": {
+        "n": 3,
+        "correct": 0,
+        "accuracy": 0.0,
+        "balanced_accuracy": null,
+        "precision": null,
+        "recall": 0.0,
+        "specificity": null,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 0,
+          "false_alarm": 0,
+          "missed_disruption": 3
+        },
+        "accuracy_95pct_wilson": [
+          0,
+          0.5615060804490177
+        ],
+        "status": "not enough data",
+        "exact_status": {
+          "n": 2,
+          "correct": 0,
+          "accuracy": 0.0
+        }
+      },
+      "observation-based reconstruction|type:university": {
+        "n": 3,
+        "correct": 0,
+        "accuracy": 0.0,
+        "balanced_accuracy": null,
+        "precision": null,
+        "recall": 0.0,
+        "specificity": null,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 0,
+          "false_alarm": 0,
+          "missed_disruption": 3
+        },
+        "accuracy_95pct_wilson": [
+          0,
+          0.5615060804490177
+        ],
+        "status": "not enough data",
+        "exact_status": {
+          "n": 2,
+          "correct": 0,
+          "accuracy": 0.0
+        }
+      },
+      "observation-based reconstruction|year:2019": {
+        "n": 2,
+        "correct": 0,
+        "accuracy": 0.0,
+        "balanced_accuracy": null,
+        "precision": null,
+        "recall": 0.0,
+        "specificity": null,
+        "confusion": {
+          "true_positive": 0,
+          "true_negative": 0,
+          "false_alarm": 0,
+          "missed_disruption": 2
+        },
+        "accuracy_95pct_wilson": [
+          0,
+          0.6576280471103807
+        ],
+        "status": "not enough data",
+        "exact_status": {
+          "n": 2,
+          "correct": 0,
+          "accuracy": 0.0
+        }
+      },
+      "archived forecast reconstruction (estimated availability)|Ames Community School District": {
+        "n": 1,
+        "correct": 1,
+        "accuracy": 1.0,
+        "balanced_accuracy": null,
+        "precision": 1.0,
+        "recall": 1.0,
+        "specificity": null,
+        "confusion": {
+          "true_positive": 1,
+          "true_negative": 0,
+          "false_alarm": 0,
+          "missed_disruption": 0
+        },
+        "accuracy_95pct_wilson": [
+          0.20654329147389294,
+          1
+        ],
+        "status": "not enough data",
+        "exact_status": {
+          "n": 1,
+          "correct": 0,
+          "accuracy": 0.0
+        }
+      },
+      "archived forecast reconstruction (estimated availability)|type:school": {
+        "n": 2,
+        "correct": 2,
+        "accuracy": 1.0,
+        "balanced_accuracy": null,
+        "precision": 1.0,
+        "recall": 1.0,
+        "specificity": null,
+        "confusion": {
+          "true_positive": 2,
+          "true_negative": 0,
+          "false_alarm": 0,
+          "missed_disruption": 0
+        },
+        "accuracy_95pct_wilson": [
+          0.34237195288961925,
+          1
+        ],
+        "status": "not enough data",
+        "exact_status": {
+          "n": 2,
+          "correct": 0,
+          "accuracy": 0.0
+        }
+      },
+      "archived forecast reconstruction (estimated availability)|year:2024": {
+        "n": 3,
+        "correct": 3,
+        "accuracy": 1.0,
+        "balanced_accuracy": null,
+        "precision": 1.0,
+        "recall": 1.0,
+        "specificity": null,
+        "confusion": {
+          "true_positive": 3,
+          "true_negative": 0,
+          "false_alarm": 0,
+          "missed_disruption": 0
+        },
+        "accuracy_95pct_wilson": [
+          0.43849391955098227,
+          1
+        ],
+        "status": "not enough data",
+        "exact_status": {
+          "n": 2,
+          "correct": 0,
+          "accuracy": 0.0
+        }
+      },
+      "archived forecast reconstruction (estimated availability)|hazard:winter": {
+        "n": 3,
+        "correct": 3,
+        "accuracy": 1.0,
+        "balanced_accuracy": null,
+        "precision": 1.0,
+        "recall": 1.0,
+        "specificity": null,
+        "confusion": {
+          "true_positive": 3,
+          "true_negative": 0,
+          "false_alarm": 0,
+          "missed_disruption": 0
+        },
+        "accuracy_95pct_wilson": [
+          0.43849391955098227,
+          1
+        ],
+        "status": "not enough data",
+        "exact_status": {
+          "n": 2,
+          "correct": 0,
+          "accuracy": 0.0
+        }
+      },
+      "archived forecast reconstruction (estimated availability)|Nevada Community School District": {
+        "n": 1,
+        "correct": 1,
+        "accuracy": 1.0,
+        "balanced_accuracy": null,
+        "precision": 1.0,
+        "recall": 1.0,
+        "specificity": null,
+        "confusion": {
+          "true_positive": 1,
+          "true_negative": 0,
+          "false_alarm": 0,
+          "missed_disruption": 0
+        },
+        "accuracy_95pct_wilson": [
+          0.20654329147389294,
+          1
+        ],
+        "status": "not enough data",
+        "exact_status": {
+          "n": 1,
+          "correct": 0,
+          "accuracy": 0.0
+        }
+      },
+      "archived forecast reconstruction (estimated availability)|Iowa State University": {
+        "n": 1,
+        "correct": 1,
+        "accuracy": 1.0,
+        "balanced_accuracy": null,
+        "precision": 1.0,
+        "recall": 1.0,
+        "specificity": null,
+        "confusion": {
+          "true_positive": 1,
+          "true_negative": 0,
+          "false_alarm": 0,
+          "missed_disruption": 0
+        },
+        "accuracy_95pct_wilson": [
+          0.20654329147389294,
+          1
+        ],
+        "status": "not enough data",
+        "exact_status": {
+          "n": 0,
+          "correct": 0,
+          "accuracy": null
+        }
+      },
+      "archived forecast reconstruction (estimated availability)|type:university": {
+        "n": 1,
+        "correct": 1,
+        "accuracy": 1.0,
+        "balanced_accuracy": null,
+        "precision": 1.0,
+        "recall": 1.0,
+        "specificity": null,
+        "confusion": {
+          "true_positive": 1,
+          "true_negative": 0,
+          "false_alarm": 0,
+          "missed_disruption": 0
+        },
+        "accuracy_95pct_wilson": [
+          0.20654329147389294,
+          1
+        ],
+        "status": "not enough data",
+        "exact_status": {
+          "n": 0,
+          "correct": 0,
+          "accuracy": null
+        }
+      }
+    },
+    "proxy_unique_days": 3,
+    "proxy_institution_days": 5,
+    "proxy_counts_by_reconstruction": {
+      "observation-based reconstruction": {
+        "institution_days": 5,
+        "unique_days": 3
+      },
+      "archived forecast reconstruction (estimated availability)": {
+        "institution_days": 3,
+        "unique_days": 1
+      }
+    },
+    "announcement_time_known": 0,
+    "announcement_time_unknown": 5,
+    "announcement_before_evaluation": 3,
+    "institution_disagreements": {
+      "2024-01-12": [
+        "CLOSED",
+        "PARTIAL_CLOSURE"
+      ]
+    },
+    "coverage": {
+      "observation-based reconstruction": 10968,
+      "archived forecast reconstruction (estimated availability)": 6
+    },
+    "excluded": {
+      "Recommendation targets a different scheduled facility day": 3133,
+      "Incomplete routine/special METAR coverage for independent daily outcome": 351,
+      "Incomplete pre-evaluation input coverage": 14
+    },
+    "n": 10974,
+    "range": {
+      "start": "1996-09-30",
+      "end": "2026-10-10"
+    },
+    "mapping": "NORMAL = no operational disruption; every other comparable posture = disruption. Remote learning/partial closures only support broad agreement, not exact status.",
+    "limitations": [
+      "ASOS local disruption is not closure ground truth. No proxy notice means unknown, not open.",
+      "School calendars and policies differ from this synthetic workplace.",
+      "High ordinary accuracy can reflect many quiet days; use balanced accuracy and missed-impact counts.",
+      "Same-day institutions are correlated; unique-day counts are shown. Wilson intervals do not correct storm clustering.",
+      "Recommendations targeting another workday are excluded from same-day scores, including weekend searches.",
+      "Hazard breakdowns group by the recommendation engine\u2019s highest-scoring hazard (ties use engine ordering).",
+      "No threshold tuning performed; these are descriptive evaluations, not a held-out validation claim."
+    ]
+  },
+  "previous_observation": {
+    "n": 7470,
+    "correct": 7219,
+    "accuracy": 0.9663989290495315,
+    "balanced_accuracy": 0.720489977728285,
+    "recall": 0.44097995545657015,
+    "precision": 1,
+    "confusion": {
+      "true_positive": 198,
+      "true_negative": 7021,
+      "false_alarm": 0,
+      "missed_disruption": 251
+    }
+  },
+  "note": "No trained prediction model in the update; current rules plus retrospective threshold-margin sensitivity. No AI calls or notification sends."
+}

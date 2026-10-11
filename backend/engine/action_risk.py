@@ -17,6 +17,7 @@ from engine.posture import _at, _overlap
 # Each key input and the adapters that can supply it (live NWS, or the IEM archives used for past days).
 KEY_SOURCES = {"Forecast": ("nws_grid", "iem_mos"), "Weather alerts": ("nws_alerts", "iem_vtec"), "Road conditions": ("iem_roads",)}
 ALWAYS_MISSING = ["Facility status (power, heating, parking-lot and ramp condition) is not reported to the app.",
+                  "Whether delayed tasks are recoverable and whether restrictions affect income is not supplied.",
                   "Actual staffing levels and who can reach the site are not known until the day.",
                   "No injury, crash or financial-loss data for this facility: action-specific risk cannot be quantified."]
 DELAY_HOURS = 2  # typical delayed-arrival offset after opening
@@ -106,18 +107,18 @@ def assess_actions(snapshot: dict, employees: list[dict], timing: dict) -> dict:
         open_risks = ["Cannot rule out hazardous commuting: key inputs are missing"]
     scenarios = [
         scenario("NORMAL", "Normal operations", lvl_all, expected, "All expected staff commute at normal times",
-                 ["None from the decision itself"], open_risks),
+                 ["No restriction-related task delays; hazardous conditions may still disrupt work"], open_risks),
         scenario("DELAYED_ARRIVAL", "Delayed arrival", lvl_delayed, expected,
                  f"All expected staff commute about {DELAY_HOURS} hours later than usual",
-                 ["Lost morning productivity and services", "Some unscheduled leave"],
+                 ["Morning services or tasks may be delayed; later work may recover them", "Leave and income effects depend on employment arrangements; unpaid leave is not assumed"],
                  open_risks if lvl_delayed else ["Late-arriving staff may still meet lingering road hazards"] if lvl_all else []),
         scenario("TELEWORK", "Telework / unscheduled leave", min(lvl_all, 1), essential,
                  f"Only essential staff ({essential}) are expected to report",
-                 [f"{no_remote} staff have no telework option and must take leave", "In-person services and lab work paused",
+                 [f"{no_remote} staff lack a telework option; managers must determine authorized leave or reporting arrangements", "In-person services and lab work paused",
                   f"{remote_ok} telework-eligible staff work remotely"],
                  ["Essential staff still commute and need site access"] if lvl_all else []),
         scenario("CLOSED", "Closure", min(lvl_all, 1), essential, f"Only essential staff ({essential}) report under the closure plan",
-                 ["All public services stop for the day", "Largest leave and productivity cost",
+                 ["All public services stop for the day", "Potential service and productivity loss; magnitude and recoverability are unknown",
                   "Essential operations (animal care, facilities) still have to be staffed"],
                  ["Essential staff still commute and need site access"] if lvl_all else []),
     ]

@@ -4,7 +4,8 @@
     "No dated Ames USDA closure record for the seven curated events was verified in the public search.",
     "The USDA Ames ARS/APHIS operational-status page is a discovery lead, not a verified historical label: https://www.ars.usda.gov/midwest-area/ames/nadc/docs/location-support/ames-ars-and-aphis-operational-status/",
     "Initial evidence includes official Iowa State cold-weather notices corroborated by IEM\u2019s dated 2019 feature, and a local newspaper report for 2024. Closure-only evidence cannot establish specificity or balanced accuracy.",
-    "Calendar holidays, planned early releases, unrelated Ames-named schools, and closures elsewhere in Iowa were excluded."
+    "Calendar holidays, planned early releases, unrelated Ames-named schools, and closures elsewhere in Iowa were excluded.",
+    "Confirmed-office-evidence-v1 excludes class-only and partial-campus notices from decision training/scoring. Official dated-corroborated office notices qualify as high-confidence evidence without assigning an unsupported numerical probability."
   ],
   "records": [
     {
@@ -19,7 +20,15 @@
       "verification": "reported",
       "source_url": "https://www.aol.com/news/iowa-state-university-closes-campus-232924371.html",
       "source_title": "Ames Tribune report by Celia Brocker, syndicated by AOL, January 11, 2024",
-      "evidence": "Ames district canceled Friday classes ahead of the approaching winter storm."
+      "evidence": "Ames district canceled Friday classes ahead of the approaching winter storm.",
+      "decision_evidence": {
+        "reviewed": true,
+        "reviewed_on": "2026-10-11",
+        "category": "insufficient_office_confirmation",
+        "date_confirmed": true,
+        "probability": null,
+        "exclusion_reason": "Class cancellation does not establish office closure."
+      }
     },
     {
       "institution": "Nevada Community School District",
@@ -33,7 +42,15 @@
       "verification": "reported",
       "source_url": "https://www.aol.com/news/iowa-state-university-closes-campus-232924371.html",
       "source_title": "Ames Tribune report by Celia Brocker, syndicated by AOL, January 11, 2024",
-      "evidence": "Nevada district also canceled Friday classes before the storm."
+      "evidence": "Nevada district also canceled Friday classes before the storm.",
+      "decision_evidence": {
+        "reviewed": true,
+        "reviewed_on": "2026-10-11",
+        "category": "insufficient_office_confirmation",
+        "date_confirmed": true,
+        "probability": null,
+        "exclusion_reason": "Class cancellation does not establish office closure."
+      }
     },
     {
       "institution": "Iowa State University",
@@ -47,7 +64,15 @@
       "verification": "reported",
       "source_url": "https://www.aol.com/news/iowa-state-university-closes-campus-232924371.html",
       "source_title": "Ames Tribune report by Celia Brocker, syndicated by AOL, January 11, 2024",
-      "evidence": "Campus partially closed for winter weather, with remote work flexibility and essential services continuing."
+      "evidence": "Campus partially closed for winter weather, with remote work flexibility and essential services continuing.",
+      "decision_evidence": {
+        "reviewed": true,
+        "reviewed_on": "2026-10-11",
+        "category": "insufficient_office_confirmation",
+        "date_confirmed": true,
+        "probability": null,
+        "exclusion_reason": "Partial campus closure and flexible remote work do not establish whether the office was closed or open."
+      }
     },
     {
       "institution": "Iowa State University",
@@ -63,7 +88,16 @@
       "source_title": "Iowa State University Department of Economics: Classes canceled, offices closed",
       "corroborating_source_url": "https://mesonet3.agron.iastate.edu/onsite/features/cat.php?day=2019-01-29",
       "evidence": "Classes and nonessential university offices were closed during the record-cold episode; essential staff still reported.",
-      "note": "Official notice has no publication timestamp or explicit year; 2019 episode corroborated by IEM\u2019s January 29, 2019 University Closure feature. Do not infer announcement time. Tuesday scope was revised, so January 29 is not graded."
+      "note": "Official notice has no publication timestamp or explicit year; 2019 episode corroborated by IEM\u2019s January 29, 2019 University Closure feature. Do not infer announcement time. Tuesday scope was revised, so January 29 is not graded.",
+      "decision_evidence": {
+        "reviewed": true,
+        "reviewed_on": "2026-10-11",
+        "category": "official_with_dated_corroboration",
+        "date_confirmed": true,
+        "scope": "nonessential_offices",
+        "probability": null,
+        "rationale": "ISU official notice explicitly closes university offices through noon January 31; dated IEM January 29, 2019 University Closure feature corroborates this episode and reopening boundary. Essential operations are excluded from closure."
+      }
     },
     {
       "institution": "Iowa State University",
@@ -79,7 +113,16 @@
       "source_title": "Iowa State University Department of Economics: Classes canceled, offices closed",
       "corroborating_source_url": "https://mesonet3.agron.iastate.edu/onsite/features/cat.php?day=2019-01-29",
       "evidence": "University offices reopened at noon and classes resumed at 12:10 p.m.; the day is mapped to delayed arrival rather than a full closure.",
-      "note": "Official notice has no publication timestamp or explicit year; 2019 episode corroborated by IEM\u2019s January 29, 2019 University Closure feature. Do not infer announcement time. Tuesday scope was revised, so January 29 is not graded."
+      "note": "Official notice has no publication timestamp or explicit year; 2019 episode corroborated by IEM\u2019s January 29, 2019 University Closure feature. Do not infer announcement time. Tuesday scope was revised, so January 29 is not graded.",
+      "decision_evidence": {
+        "reviewed": true,
+        "reviewed_on": "2026-10-11",
+        "category": "official_with_dated_corroboration",
+        "date_confirmed": true,
+        "scope": "nonessential_offices",
+        "probability": null,
+        "rationale": "ISU official notice explicitly closes university offices through noon January 31; dated IEM January 29, 2019 University Closure feature corroborates this episode and reopening boundary. Essential operations are excluded from closure."
+      }
     }
   ]
 }

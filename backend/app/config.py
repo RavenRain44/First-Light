@@ -47,6 +47,8 @@ class Settings:
     obj_access_key: str = os.environ.get("OBJ_ACCESS_KEY", "")
     obj_secret_key: str = os.environ.get("OBJ_SECRET_KEY", "")
     obj_prefix: str = os.environ.get("OBJ_PREFIX", "")  # folder inside the bucket; e.g. "dev" for local runs
+    # Load the frozen backtesting dataset from the bucket's shared datasets/ folder when missing locally.
+    dataset_auto_restore: bool = _bool("DATASET_AUTO_RESTORE", True)
     obj_backup_hours: float = float(os.environ.get("OBJ_BACKUP_HOURS", "24"))
 
     demo_reference_now = None  # set at runtime in DEMO_MODE (see app.snapshots.demo_live_as_of)
