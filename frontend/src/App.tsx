@@ -90,6 +90,16 @@ export default function App() {
   const savedWeatherRef = useRef(false);
   const [savedDecisionId, setSavedDecisionId] = useState<number | null>(null);
   const [notificationDecision, setNotificationDecision] = useState<number | null>(null);
+  // Replay's initial-load effect depends on this callback. Keep its identity stable
+  // when busy, snapshot, or AI state changes, so accepting a report cannot reload it.
+  const onReplaySnapshot = useCallback((s: Snapshot | null) => {
+    if (modeRef.current !== "replay") return;
+    requestVersion.current++;
+    savedWeatherRef.current = false;
+    setSavedWeather(false);
+    setSavedDecisionId(null);
+    setSnap(s);
+  }, []);
   const [open, setOpen] = useState<Set<SectionId>>(new Set());
   const toggle = (id: SectionId) => setOpen((o) => { const n = new Set(o); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const openSection = (id: SectionId) => {
@@ -174,7 +184,7 @@ export default function App() {
         </div>
       ) : view === "decisions" ? <DecisionLogView timezone={shown?.facility.timezone ?? "America/Chicago"} onSnapshot={viewDecisionWeather} /> : view === "thresholds" ? <div className="cc-fade"><ThresholdsView /></div> : (
         <>
-          {mode === "replay" && <ReplayPanel onSnapshot={(s)=>{requestVersion.current++;savedWeatherRef.current=false;setSavedWeather(false);setSavedDecisionId(null);setSnap(s);}} busy={busy} setBusy={setBusy} current={snap} />}
+          {mode === "replay" && <ReplayPanel onSnapshot={onReplaySnapshot} busy={busy} setBusy={setBusy} current={snap} />}
           {mode === "livecheck" && <LiveCheckPanel onSnapshot={(s)=>{if(modeRef.current==='livecheck')setSnap(s);}} busy={busy} setBusy={setBusy} />}
           {err && <div role="alert" className="card border-l-4 border-l-[var(--danger)] p-3 text-sm">Could not load: {err}. The last good snapshot (if any) is still shown.</div>}
           {ready && shown ? (

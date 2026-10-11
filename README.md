@@ -160,7 +160,13 @@ npm test           # Backend tests: interval expansion, units, thresholds and ma
                    # and an end-to-end evaluation of the 2020 derecho from fixtures (offline)
 npm --prefix frontend test       # Chart evidence, missing data, reason citations and replay/DST dates
 npm --prefix frontend run build  # TypeScript and production bundle
+cd frontend
+npx playwright install chromium # Once, for the browser regression tests
+npm run test:browser             # Curated replay stays idle; playback, dates, and cancellation work
 ```
+
+Browser tests load the production dashboard with mocked API responses. They do not start the API,
+run inference, download weather archives, record decisions or send notifications.
 
 ## Dashboard
 
