@@ -256,7 +256,7 @@ sync status and signed links (one hour) to the snapshot's log, chart data and sa
 | `STRANDS_FALLBACK_ENABLED` | `true` | Try a Strands agent through Amazon Bedrock if Akamai fails |
 | `STRANDS_MODEL_ID` / `AWS_REGION` | `global.anthropic.claude-sonnet-4-6` / `us-east-1` | Strands Bedrock model and region; uses the AWS credential chain |
 | `OBJ_BUCKET` / `OBJ_ACCESS_KEY` / `OBJ_SECRET_KEY` | | Akamai Object Storage mirror (off when empty); see [Cloud storage](#cloud-storage) |
-| `OBJ_ENDPOINT` / `OBJ_REGION` | `https://us-ord-1.linodeobjects.com` / `us-ord-1` | Bucket region (Chicago) |
+| `OBJ_ENDPOINT` / `OBJ_REGION` | `https://us-ord-10.linodeobjects.com` / `us-ord` | Bucket region (Chicago) |
 | `OBJ_PREFIX` | | Folder inside the bucket; set `dev` on laptops so local test data stays apart from the server's |
 | `OBJ_BACKUP_HOURS` | `24` | How often the SQLite database is backed up to the bucket |
 
