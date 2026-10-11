@@ -26,6 +26,7 @@ from app.config import settings
 from app.db import session
 from app.facility import load_facility
 from app.models import HistoricalArtifact, HistoricalBuild, HistoricalEvaluation
+from engine import error_analysis
 from engine.evaluate import assess, gather, json_ready
 from engine.scoring import load_thresholds
 
@@ -196,6 +197,7 @@ async def compute(day, clock='04:00', reconstruction='observation', online=False
                'recommendation':snap['posture']['posture'] if inputs else None,
                'decision_day':snap['posture']['decision_day'],
                'hazard':max(snap['hazards'],key=lambda h:snap['hazards'][h]['score']),
+               'rule_margin_pct':error_analysis.day_margin(snap['rules']),
                'outcome':out,'selection_gradable':complete_inputs and bool(inputs),
                'missing':missing,'assumptions':assumptions,'provenance':{k:raw[k] for k in raw if k!='rows' and not k.startswith('_')},
                'source_coverage':[{ 'adapter':s.adapter, 'status':s.status, 'detail':s.detail} for s in statuses],
@@ -215,6 +217,21 @@ async def compute(day, clock='04:00', reconstruction='observation', online=False
             s.add(HistoricalEvaluation(id=id,day=day,as_of=as_of.isoformat(),rules_sha=rules.sha256, config_sha=config_sha,
                   reconstruction=kind,status=status,summary_json=dumps(summary),artifact_sha=sha)); s.commit()
     return {**summary,'snapshot':snap if inputs else None}
+
+
+_margins: dict[str,float|None] = {}
+
+
+def rule_margin(row):
+    """How close the day came to any threshold. Older summaries lack it; read it once from the immutable artifact."""
+    if 'rule_margin_pct' in row: return row['rule_margin_pct']
+    if row.get('id') is None: return None
+    if row['id'] not in _margins:
+        with session() as s:
+            ev = s.get(HistoricalEvaluation,row['id'])
+            blob = s.get(HistoricalArtifact,ev.artifact_sha) if ev and ev.artifact_sha else None
+        _margins[row['id']] = error_analysis.day_margin(json.loads(gzip.decompress(blob.payload)).get('rules',[])) if blob else None
+    return _margins[row['id']]
 
 
 def binary_metrics(pairs):
@@ -237,7 +254,7 @@ def binary_metrics(pairs):
 
 
 def metrics(rows):
-    impact=defaultdict(list); breakdown=defaultdict(list); proxy=defaultdict(list); proxy_exact=defaultdict(list)
+    weather=defaultdict(list); impact=defaultdict(list); breakdown=defaultdict(list); proxy=defaultdict(list); proxy_exact=defaultdict(list)
     excluded=Counter(); coverage=Counter(); proxy_days=set(); proxy_evidence={}; before=set(); disagreements={}; proxy_counts=defaultdict(set)
     for row in rows:
         kind=row['reconstruction']; coverage[kind]+=1
@@ -251,6 +268,8 @@ def metrics(rows):
         if same_day and row.get('selection_gradable') and row['outcome']['gradable'] and row['recommendation']:
             pair=(row['recommendation']!='NORMAL',row['outcome']['disruptive'])
             impact[kind].append(pair)
+            # Weather classification only; proxy closure records never enter these counts.
+            weather[kind].append({'current_prediction':pair[0],'observed':pair[1],'margin':rule_margin(row)})
             for category in ('year:'+row['day'][:4],'hazard:'+row['hazard']): breakdown[kind+'|'+category].append(pair)
         else: excluded['Recommendation targets a different scheduled facility day' if not same_day else row['outcome'].get('reason') or 'Incomplete pre-evaluation input coverage']+=1
         for record in row.get('proxy_records',[]):
@@ -270,7 +289,8 @@ def metrics(rows):
             announcement=record.get('announced_at') or record.get('announced_by')
             if announcement and datetime.fromisoformat(announcement)<=datetime.fromisoformat(row['as_of']): before.add((name,row['day']))
             disagreements.setdefault(row['day'],set()).add(status)
-    return {'impact':{k:binary_metrics(v) for k,v in impact.items()},'impact_breakdowns':{k:binary_metrics(v) for k,v in breakdown.items()},
+    return {'impact':{k:binary_metrics(v) for k,v in impact.items()},
+            'error_analysis':{k:error_analysis.analyse(v) for k,v in weather.items()},'impact_breakdowns':{k:binary_metrics(v) for k,v in breakdown.items()},
             'proxy':{k:{**binary_metrics(v),'exact_status':{'n':len(proxy_exact[k]),'correct':sum(proxy_exact[k]),'accuracy':sum(proxy_exact[k])/len(proxy_exact[k]) if proxy_exact[k] else None}} for k,v in proxy.items()},
             'proxy_unique_days':len(proxy_days),'proxy_institution_days':len(proxy_evidence),
             'proxy_counts_by_reconstruction':{k:{'institution_days':len(v),'unique_days':len({day for _,day in v})} for k,v in proxy_counts.items()},

@@ -14,6 +14,7 @@ import { LiveCheckPanel } from "./components/LiveCheckPanel";
 import { ReplayPanel } from "./components/ReplayPanel";
 import { RoadsPanel } from "./components/RoadsPanel";
 import { PastDecisions, pastSummary, usePastDecisions } from "./components/PastDecisions";
+import { RiskTradeoffs, riskSummary, useRiskTradeoffs } from "./components/RiskTradeoffs";
 import { RawDataDrawer } from "./components/RawDataDrawer";
 import { TechnicalSummary } from "./components/TechnicalDetails";
 import { CloudCopyPanel } from "./components/CloudCopyPanel";
@@ -23,7 +24,7 @@ import { TimelinePanel } from "./components/TimelinePanel";
 import type { Snapshot } from "./types";
 import { Section, Skeleton } from "./util";
 
-type SectionId = "why" | "past" | "alerts" | "charts" | "roads" | "analogs" | "technical";
+type SectionId = "why" | "past" | "risk" | "alerts" | "charts" | "roads" | "analogs" | "technical";
 
 function initialTheme(): string {
   try {
@@ -139,6 +140,7 @@ export default function App() {
 
   const alertCount = shown?.inputs.filter((i) => i.kind === "alert").length ?? 0;
   // Past decisions compare against the weather being viewed (live, replay or a saved snapshot).
+  const risk = useRiskTradeoffs(shown && shown.mode !== "livecheck" && !shown.facility.hypothetical ? shown.snapshot_id : undefined);
   const past = usePastDecisions(shown && shown.mode !== "livecheck" && !shown.facility.hypothetical ? shown : null);
   const viewDecisionWeather = (snapshotId: string, decisionId: number | null) => {
     setSnap(null); setErr(null); setMode('live');
@@ -194,6 +196,9 @@ export default function App() {
                   <PanelBoundary name="Past decisions"><PastDecisions past={past} onViewWeather={viewDecisionWeather} /></PanelBoundary>
                 </Section>
               )}
+              <Section id="risk" title="Errors & risk trade-offs" open={open.has("risk")} onToggle={() => toggle("risk")} summary={riskSummary(risk.data)}>
+                <PanelBoundary name="Errors & risk trade-offs"><RiskTradeoffs data={risk.data} error={risk.error} /></PanelBoundary>
+              </Section>
               <Section id="alerts" title="Weather alerts" open={open.has("alerts")} onToggle={() => toggle("alerts")}
                 summary={alertCount ? `${alertCount} active: ${[...new Set(shown.inputs.filter((i) => i.kind === "alert").map((i) => (i.data as any)?.event))].join(", ")}` : shown.historical_context ? "Historical alert inputs unavailable" : "No active National Weather Service alerts"}>
                 <PanelBoundary name="Alerts"><AlertsPanel snap={shown} /></PanelBoundary>
