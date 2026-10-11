@@ -18,7 +18,7 @@ from app import snapshots
 from app.config import settings
 from app.db import session
 from app.facility import get_facility, load_employees, roster_summary
-from app.models import Decision, HistoryEvent
+from app.models import Decision, DecisionContext, HistoryEvent
 from engine.posture import ORDER
 from engine.scoring import load_thresholds
 
@@ -284,6 +284,8 @@ def record_decision(d: DecisionIn, background_tasks: BackgroundTasks):
         s.add(row)
         s.commit()
         s.refresh(row)
+        # Demo-mode decisions use cached weather; Past decisions leaves them out.
+        s.add(DecisionContext(decision_id=row.id, demo_mode=settings.demo_mode)); s.commit()
         from app.camera_archive import pending, capture
         s.add(pending(row)); s.commit()
         camera_time = datetime.fromisoformat(snap["as_of"]) if snap["mode"] == "replay" else row.decided_at.replace(tzinfo=timezone.utc)

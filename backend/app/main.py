@@ -15,7 +15,7 @@ from app.notifications import delivery_loop
 from app.config import REPO_DIR, settings
 from app.db import get_engine
 from app.facility import load_facility
-from app.routers import cameras, core, history, livecheck, notifications
+from app.routers import cameras, core, history, livecheck, notifications, past
 
 log = logging.getLogger("closurecall")
 
@@ -55,6 +55,7 @@ app.include_router(history.router)
 app.include_router(livecheck.router)
 app.include_router(cameras.router)
 app.include_router(notifications.router)
+app.include_router(past.router)
 
 # Production container serves the built dashboard and API from one origin.
 # Vite remains the normal development server when no build is present.

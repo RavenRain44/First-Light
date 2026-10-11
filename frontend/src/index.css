@@ -44,6 +44,10 @@
   --b4-ink: #ffffff;
 
   --danger: #c2410c;
+  /* how a past decision went: always shown with words */
+  --outcome-good: #15803d;
+  --outcome-mixed: #b45309;
+  --outcome-bad: #b91c1c;
   --on-accent: #ffffff;
 
   /* Cooper readiness (fixed, theme-independent) */
@@ -87,6 +91,9 @@
     --b2-ink: #eaf1fb;
     --b4-ink: #0b1b2e;
     --danger: #fb923c;
+    --outcome-good: #4ade80;
+    --outcome-mixed: #fbbf24;
+    --outcome-bad: #f87171;
     --on-accent: #0b1b2e;
   }
 }
@@ -123,6 +130,9 @@
   --b2-ink: #eaf1fb;
   --b4-ink: #0b1b2e;
   --danger: #fb923c;
+  --outcome-good: #4ade80;
+  --outcome-mixed: #fbbf24;
+  --outcome-bad: #f87171;
   --on-accent: #0b1b2e;
 }
 

@@ -32,6 +32,11 @@ export const api = {
   thresholds: () => req<any>("/api/thresholds"),
   history: () => req<any[]>("/api/snapshots?limit=40"),
   decisions: () => req<Decision[]>("/api/decisions"),
+  pastDecisions: (snapshotId?: string) => req<{ decisions: import("./types").PastDecision[]; reviewing: number[] }>(
+    `/api/past-decisions${snapshotId ? `?snapshot_id=${encodeURIComponent(snapshotId)}` : ""}`),
+  reviewDecision: (id: number, body: { reviewer: string; verdict: import("./types").Verdict; note?: string }) =>
+    req<import("./types").DecisionReview>(`/api/decisions/${id}/review`, { method: "POST", body: JSON.stringify(body) }),
+  aiReviewDecision: (id: number) => req<import("./types").DecisionReview>(`/api/decisions/${id}/ai-review`, { method: "POST" }),
   record: (id: string) => req<any>(`/api/record/${id}`),
   decide: (body: { snapshot_id: string; decided_by: string; decision_posture: string; override_reason?: string; notes?: string }) =>
     req<Decision>("/api/decisions", { method: "POST", body: JSON.stringify(body) }),

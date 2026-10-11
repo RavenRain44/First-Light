@@ -256,3 +256,39 @@ export interface Timeseries {
   threshold_lines: { chart: string; value: number; label: string; rule_id: string; verified: boolean; level: string }[];
   windows: { kind: string; label: string; start: string; end: string }[];
 }
+
+export type Verdict = "good_call" | "too_lenient" | "too_strict" | "mixed";
+
+export interface DecisionReview {
+  source: "manager" | "ai" | "template";
+  verdict: Verdict;
+  confidence: number | null;
+  note: string | null;
+  reviewer: string;
+  created_at: string;
+  /** What actually happened that day (storm reports, gusts, roads), for AI and weather-check reviews. */
+  observed?: string | null;
+  impact?: string | null;
+}
+
+export interface PastDecision {
+  decision_id: number;
+  snapshot_id: string;
+  decided_by: string;
+  decided_at: string;
+  decision_day: string;
+  decision_posture: Posture;
+  recommended_posture: Posture;
+  followed_suggestion: boolean;
+  override_reason: string | null;
+  notes: string | null;
+  readiness_level: ReadinessLevel | null;
+  headline: string;
+  similarity_pct: number;
+  score: number;
+  /** Seeded demonstration decision on a historical storm. */
+  example: boolean;
+  review: DecisionReview | null;
+  review_due_at: string;
+  day_over: boolean;
+}

@@ -13,6 +13,14 @@ _engine = None
 # deleted (so build_history.py can be re-run); live/replay/livecheck rows and
 # all human decisions are permanent.
 IMMUTABLE_TRIGGERS = [
+    """CREATE TRIGGER IF NOT EXISTS decisioncontext_no_update BEFORE UPDATE ON decisioncontext
+       BEGIN SELECT RAISE(ABORT, 'decision context is immutable'); END""",
+    """CREATE TRIGGER IF NOT EXISTS decisioncontext_no_delete BEFORE DELETE ON decisioncontext
+       BEGIN SELECT RAISE(ABORT, 'decision context is immutable'); END""",
+    """CREATE TRIGGER IF NOT EXISTS decisionreview_no_update BEFORE UPDATE ON decisionreview
+       BEGIN SELECT RAISE(ABORT, 'decision reviews are append-only'); END""",
+    """CREATE TRIGGER IF NOT EXISTS decisionreview_no_delete BEFORE DELETE ON decisionreview
+       BEGIN SELECT RAISE(ABORT, 'decision reviews are append-only'); END""",
     """CREATE TRIGGER IF NOT EXISTS cameraframe_no_update BEFORE UPDATE ON decisioncameraframe
        BEGIN SELECT RAISE(ABORT, 'camera evidence is immutable'); END""",
     """CREATE TRIGGER IF NOT EXISTS cameraframe_no_delete BEFORE DELETE ON decisioncameraframe

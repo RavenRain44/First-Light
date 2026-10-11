@@ -12,6 +12,7 @@ import { AnalogsPanel, RecordTimeline } from "./components/HistoryPanel";
 import { LiveCheckPanel } from "./components/LiveCheckPanel";
 import { ReplayPanel } from "./components/ReplayPanel";
 import { RoadsPanel } from "./components/RoadsPanel";
+import { PastDecisions, pastSummary, usePastDecisions } from "./components/PastDecisions";
 import { RawDataDrawer } from "./components/RawDataDrawer";
 import { TechnicalSummary } from "./components/TechnicalDetails";
 import { ThreatPanel } from "./components/ThreatPanel";
@@ -20,7 +21,7 @@ import { TimelinePanel } from "./components/TimelinePanel";
 import type { Snapshot } from "./types";
 import { Section, Skeleton } from "./util";
 
-type SectionId = "why" | "alerts" | "charts" | "roads" | "analogs" | "technical";
+type SectionId = "why" | "past" | "alerts" | "charts" | "roads" | "analogs" | "technical";
 
 function initialTheme(): string {
   try {
@@ -127,6 +128,12 @@ export default function App() {
   }, [mode, recheck, view, savedWeather]);
 
   const alertCount = shown?.inputs.filter((i) => i.kind === "alert").length ?? 0;
+  // Past decisions compare against the weather being viewed (live, replay or a saved snapshot).
+  const past = usePastDecisions(shown && shown.mode !== "livecheck" && !shown.facility.hypothetical ? shown : null);
+  const viewDecisionWeather = (snapshotId: string, decisionId: number) => {
+    setSavedDecisionId(decisionId); savedWeatherRef.current = true; setSavedWeather(true); setView("today");
+    run(() => api.snapshot(snapshotId)); window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   // Active alerts are the one detail section worth opening without being asked.
   useEffect(() => { if (alertCount) setOpen((o) => new Set(o).add("alerts")); }, [shown?.snapshot_id, alertCount]);
   const ready = snap && (mode !== "livecheck" || snap.mode === "livecheck") && (mode !== "replay" || snap.mode !== "live");
@@ -163,6 +170,11 @@ export default function App() {
                 summary="The weather behind it, what would change it, and what to watch">
                 <PanelBoundary name="Interpretation"><AIPanel snap={shown} onRegenerate={aiEnabled && shown.mode !== "backtest" ? regenerate : undefined} /></PanelBoundary>
               </Section>
+              {!shown.facility.hypothetical && (
+                <Section id="past" title="Past decisions" open={open.has("past")} onToggle={() => toggle("past")} summary={pastSummary(past.rows)}>
+                  <PanelBoundary name="Past decisions"><PastDecisions past={past} onViewWeather={viewDecisionWeather} /></PanelBoundary>
+                </Section>
+              )}
               <Section id="alerts" title="Weather alerts" open={open.has("alerts")} onToggle={() => toggle("alerts")}
                 summary={alertCount ? `${alertCount} active: ${[...new Set(shown.inputs.filter((i) => i.kind === "alert").map((i) => (i.data as any)?.event))].join(", ")}` : "No active National Weather Service alerts"}>
                 <PanelBoundary name="Alerts"><AlertsPanel snap={shown} /></PanelBoundary>
