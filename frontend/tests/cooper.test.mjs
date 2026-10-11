@@ -159,3 +159,22 @@ test("old snapshots without readiness remain explicitly unknown with their forec
   assert.equal(forecastOverview(s).temperature.max, 65);
   assert.equal(cooperPresentation(snap("UNKNOWN")).level, null);
 });
+
+test("coastal Yellow messages describe the actual hazard without equating rain or a regional gauge with facility flooding", () => {
+  for (const [event, hazard, phrase] of [["Hurricane Watch", "tropical", "next 72 hours"],
+    ["Storm Surge Watch", "coastal", "regional gauge"], ["Flood Watch", "flood", "rainfall alone"]]) {
+    const s = snap("YELLOW", { rules: [rule(event, { hazard, level: 1 })], readiness: { level: "YELLOW", reasons: [`${event} issued`] } });
+    const presentation = cooperPresentation(s);
+    assert.equal(presentation.level, "YELLOW");
+    assert.ok(presentation.watch.toLowerCase().includes(phrase.toLowerCase()));
+  }
+});
+
+test("coastal Red communication names the source event and preserves deadline-only explanations", () => {
+  const s = snap("RED", { rules: [rule("Hurricane Warning", { hazard: "tropical", level: 3 })],
+    readiness: { level: "RED", reasons: ["Hurricane Warning is happening now"] } });
+  assert.equal(cooperPresentation(s).title, "Send communication immediately: Hurricane Warning");
+  s.readiness.reasons = ["Closed must be announced by Tue 04:30 EST"];
+  assert.equal(cooperPresentation(s).deadlineOnly, true);
+  assert.match(cooperPresentation(s).title, /^Decision due soon/);
+});

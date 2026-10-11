@@ -47,14 +47,16 @@ def hazard_timing(snapshot: dict, timing: dict) -> list[dict]:
         a, b = _dt(h.get("window_start")), _dt(h.get("window_end"))
         hits = [p for p, (s, e) in periods.items() if a and b and _overlap(a, b, s, e)]
         out.append({"hazard": h["label"], "level": h["level"], "level_name": h["level_name"],
-                    "overlaps": hits, "timing_known": bool(a and b)})
+                    "overlaps": hits, "timing_known": bool(a and b) and h.get("hazard_timing_known", True),
+                    "preparation_only": h.get("planning_only", False)})
     return out
 
 
 def missing_inputs(snapshot: dict) -> list[str]:
     status = {s["adapter"]: s for s in snapshot.get("sources", [])}
     out = []
-    for label, adapters in KEY_SOURCES.items():
+    sources = {**KEY_SOURCES, "Road conditions": ("ncdot_roads",)} if snapshot.get("facility", {}).get("state") == "NC" else KEY_SOURCES
+    for label, adapters in sources.items():
         found = [status[a] for a in adapters if a in status]
         if any(s["status"] == "ok" for s in found):
             continue
@@ -70,7 +72,7 @@ def missing_inputs(snapshot: dict) -> list[str]:
 
 def _level(hazards: list[dict], periods: set[str]) -> int:
     """Worst hazard level touching any of these periods; hazards with unknown timing count everywhere."""
-    return max((h["level"] for h in hazards if not h["timing_known"] or periods & set(h["overlaps"])), default=0)
+    return max((h["level"] for h in hazards if not h.get("preparation_only") and (not h["timing_known"] or periods & set(h["overlaps"]))), default=0)
 
 
 def _exposure(level: int, missing: bool) -> str:
@@ -79,6 +81,8 @@ def _exposure(level: int, missing: bool) -> str:
 
 
 def assess_actions(snapshot: dict, employees: list[dict], timing: dict) -> dict:
+    facility_id = snapshot["facility"]["id"]
+    employees = [e for e in employees if e.get("assigned_facility") in (None, facility_id) or e.get("this_week_location", e.get("current_location")) == facility_id]
     hazards = hazard_timing(snapshot, timing)
     missing = missing_inputs(snapshot)
     roster = snapshot.get("roster") or {}
@@ -99,8 +103,9 @@ def assess_actions(snapshot: dict, employees: list[dict], timing: dict) -> dict:
 
     open_risks = []
     if lvl_all:
+        walkway = "Flooded or debris-covered access paths may be unsafe; actual site conditions are unknown" if snapshot["facility"].get("state") == "NC" else "Injury exposure on untreated walkways (the north ramp is unheated and ices first)"
         open_risks = ["Hazardous commuting for staff on the affected corridors",
-                      "Injury exposure on untreated walkways (the north ramp is unheated and ices first)",
+                      walkway,
                       "Staff may be stranded on site if conditions worsen during the day",
                       "Delayed protective action if the hazard arrives earlier than forecast"]
     elif missing:

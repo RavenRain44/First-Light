@@ -43,7 +43,7 @@ def _setup(tmp_path, monkeypatch):
     return bucket, old
 
 
-def test_sync_mirrors_records_graphs_and_decision_cameras(tmp_path, monkeypatch):
+def test_sync_mirrors_records_graphs_and_decision_cameras(tmp_path, monkeypatch, cached_live_storm):
     bucket, old = _setup(tmp_path, monkeypatch)
     async def fake_capture(decision_id, facility_id, as_of, replay=False):
         """Stands in for app.camera_archive.capture: 3 saved angle frames, one camera unavailable."""
@@ -63,7 +63,7 @@ def test_sync_mirrors_records_graphs_and_decision_cameras(tmp_path, monkeypatch)
     monkeypatch.setattr("app.camera_archive.capture", fake_capture)
     try:
         with TestClient(app) as client:
-            snap = client.post("/api/evaluate", json={"mode": "replay", "as_of": "2020-08-10T16:00:00Z"}).json()
+            snap = client.post("/api/evaluate", json={"mode": "live"}).json()
             sid = snap["snapshot_id"]
             r = client.post("/api/decisions", json={"snapshot_id": sid, "decided_by": "Test Manager",
                                                     "decision_posture": snap["posture"]["posture"]})
@@ -97,7 +97,7 @@ def test_sync_mirrors_records_graphs_and_decision_cameras(tmp_path, monkeypatch)
         db.set_engine(old)
 
 
-def test_sync_waits_for_a_running_camera_capture(tmp_path, monkeypatch):
+def test_sync_waits_for_a_running_camera_capture(tmp_path, monkeypatch, cached_live_storm):
     bucket, old = _setup(tmp_path, monkeypatch)
 
     async def no_capture(*args, **kwargs):
@@ -106,7 +106,7 @@ def test_sync_waits_for_a_running_camera_capture(tmp_path, monkeypatch):
     monkeypatch.setattr("app.camera_archive.capture", no_capture)
     try:
         with TestClient(app) as client:
-            snap = client.post("/api/evaluate", json={"mode": "replay", "as_of": "2020-08-10T16:00:00Z"}).json()
+            snap = client.post("/api/evaluate", json={"mode": "live"}).json()
             did = client.post("/api/decisions", json={"snapshot_id": snap["snapshot_id"], "decided_by": "Test Manager",
                                                       "decision_posture": snap["posture"]["posture"]}).json()["id"]
             client.post("/api/storage/sync")
@@ -253,3 +253,37 @@ def test_error_analysis_reports_hourly_validation():
     assert v["current"] and v["thresholds_version"] == load_thresholds().version
     assert f["caught"] + f["missed"] == f["disruptive"] and 0 < f["recall"] <= 1 and 0 < f["accuracy"] <= 1
     assert v["checks"][0] == "04:00" and v["checks"][-1] == "14:00"
+
+
+def test_hourly_validation_is_not_reused_for_wilmington(monkeypatch):
+    from fastapi.testclient import TestClient
+    from app.main import app
+    from app.routers import risk
+    monkeypatch.setattr(risk.historical, 'overview', lambda facility_id: {'metrics_by_time': {}})
+    monkeypatch.setattr('app.risk_experiment.saved_report', lambda facility_id: None)
+    client = TestClient(app)
+    ames = client.get('/api/risk-tradeoffs', params={'facility_id': 'IA-AMES-SC'})
+    coastal = client.get('/api/risk-tradeoffs', params={'facility_id': 'NC-WILMINGTON-SC'})
+    assert ames.status_code == coastal.status_code == 200
+    assert ames.json()['validation']['current']
+    assert coastal.json()['validation'] is None
+
+
+def test_ames_dataset_publish_excludes_other_facility_reports_and_models(tmp_path,monkeypatch):
+    """An Ames release retains legacy unqualified Ames files while excluding the NC namespace."""
+    from app import dataset_cloud
+    bucket,old=_setup(tmp_path,monkeypatch)
+    try:
+        for folder,name in [('analysis','ames-7470-v1-risk.json'),('analysis','error_comparison.json'),
+                            ('models','legacy-baseline.npz'),('analysis','nc-wilmington-sc-observations-v1-risk.json'),
+                            ('models','NC-WILMINGTON-SC-baseline.npz')]:
+            p=tmp_path/folder/name;p.parent.mkdir(exist_ok=True);p.write_bytes(b'{}')
+        manifest={'version':'ames-test-scope-v1','facility_id':'IA-AMES-SC','station':'AMW','cohort_sha':'test','n':0,'entries':[]}
+        dataset_cloud.publish(manifest=manifest)
+        items=dataset_cloud.catalog(manifest['version'])['items']
+        assert 'analysis/ames-7470-v1-risk.json' in items
+        assert 'analysis/error_comparison.json' in items
+        assert 'models/legacy-baseline.npz' in items
+        assert not any('nc-wilmington-sc' in name.lower() for name in items)
+    finally:
+        storage.set_bucket(None);db.set_engine(old)

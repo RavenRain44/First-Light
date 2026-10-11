@@ -91,7 +91,10 @@ async def get_json(
     trim: tuple[str, Callable[[Any], Any]] | None = None,
     allow_demo_bypass: bool = False,
     ttl: int | None = None,
+    request_params: dict[str, str] | None = None,
 ) -> CachedResponse:
+    # Credentials in query parameters are sent to the provider only. They are
+    # excluded from the cache identity, persisted URL and public provenance.
     trim_name = trim[0] if trim else None
     key = cache_key(url, trim_name)
     path = _path(key)
@@ -116,21 +119,22 @@ async def get_json(
             gate = _iem_gate if "mesonet.agron.iastate.edu" in url else None
             if gate:
                 async with gate:
-                    resp = await _client_get().get(url)
+                    resp = await _client_get().get(url, params=request_params) if request_params else await _client_get().get(url)
             else:
-                resp = await _client_get().get(url)
+                resp = await _client_get().get(url, params=request_params) if request_params else await _client_get().get(url)
         except httpx.HTTPError as e:
             if cached is not None:  # stale beats nothing; caller sees the real fetched_at
                 return CachedResponse(
                     url, datetime.fromtimestamp(cached["fetched_at_epoch"], timezone.utc), cached["data"], True
                 )
-            raise SourceUnavailable(f"{type(e).__name__}: {e}") from e
+            detail = f"{type(e).__name__} fetching {url}" if request_params else f"{type(e).__name__}: {e}"
+            raise SourceUnavailable(detail) from None
         if resp.status_code >= 400:
             if cached is not None:
                 return CachedResponse(
                     url, datetime.fromtimestamp(cached["fetched_at_epoch"], timezone.utc), cached["data"], True
                 )
-            msg = f"HTTP {resp.status_code} from {url}: {resp.text[:200]}"
+            msg = f"HTTP {resp.status_code} from {url}" + ("" if request_params else f": {resp.text[:200]}")
             if historical and 400 <= resp.status_code < 500 and resp.status_code != 429:
                 # Archives don't change: remember "no data for this run/time" instead of re-asking.
                 _write(path, {"url": url, "trim": trim_name, "fetched_at_epoch": time.time(), "error": msg})

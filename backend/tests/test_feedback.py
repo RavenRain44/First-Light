@@ -308,7 +308,7 @@ def test_bracket_changes_are_separate_from_weather_accuracy(env):
     from engine.posture import horizon_end
     ctx=extract([],AT,[],horizon_end(AT,FAC,th.timing),FAC.timezone)
     left=compute([],[],ctx,[],{},"backtest")
-    right=compute([],[],ctx,[],{},"backtest",high.raw["confidence_brackets"])
+    right=compute([],[],ctx,[],{},"backtest",brackets=high.raw["confidence_brackets"])
     assert left.score==right.score  # changing labels does not manufacture evidence or improve prediction
 
 

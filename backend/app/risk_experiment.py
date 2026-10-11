@@ -20,33 +20,41 @@ RATIOS = (1, 5, 10, 20, 50)
 def digest(value):
     return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':')).encode()).hexdigest()
 
-def manifest_path(): return settings.db_path.parent/'cohorts'/f'{VERSION}.json'
-def report_path(): return settings.db_path.parent/'analysis'/f'{VERSION}-risk.json'
+def cohort_version(facility_id=None):
+    from app.facility import load_facility
+    site = load_facility(facility_id)
+    return VERSION if site.id == 'IA-AMES-SC' else f'{site.id.lower()}-observations-v1'
 
-def freeze():
+def manifest_path(facility_id=None): return settings.db_path.parent/'cohorts'/f'{cohort_version(facility_id)}.json'
+def report_path(facility_id=None): return settings.db_path.parent/'analysis'/f'{cohort_version(facility_id)}-risk.json'
+
+def freeze(facility_id=None):
     from app import historical as h
-    path=manifest_path()
+    facility=h.load_facility(facility_id)
+    path=manifest_path() if facility.id=="IA-AMES-SC" else manifest_path(facility.id)
     if path.exists(): return json.loads(path.read_text())
-    _,rules,config=h.identity(h.local_instant('2020-01-02'),'observation')
+    _,rules,config=h.identity(h.local_instant('2020-01-02',facility_id=facility.id),'observation',facility.id)
     with session() as s:
         from sqlalchemy import text
         rows=s.exec(select(HistoricalEvaluation).where(HistoricalEvaluation.rules_sha==rules.sha256,HistoricalEvaluation.config_sha==config).order_by(text('rowid'))).all()
     latest={}
     for r in rows:
         v=json.loads(r.summary_json)
-        if v['requested_mode']=='observation' and datetime.fromisoformat(v['as_of']).astimezone(ZoneInfo('America/Chicago')).strftime('%H:%M')=='04:00': latest[v['day']]=(r,v)
+        if v['requested_mode']=='observation' and datetime.fromisoformat(v['as_of']).astimezone(ZoneInfo(facility.timezone)).strftime('%H:%M')=='04:00': latest[v['day']]=(r,v)
     entries=[];excluded={}
     for day,(r,v) in sorted(latest.items()):
         target=v.get('decision_day')
         if target is None:
             from engine.posture import decision_day
-            target=decision_day(datetime.fromisoformat(v['as_of']),h.load_facility()).isoformat()
-        reason=('different decision day' if str(target)!=day else 'incomplete outcome' if not v['outcome']['gradable'] else 'incomplete inputs' if not v.get('selection_gradable') or not v.get('recommendation') else None)
+            target=decision_day(datetime.fromisoformat(v['as_of']),facility).isoformat()
+        reason=('different decision day' if str(target)!=day else 'incomplete outcome' if not v['outcome']['gradable'] or not v['outcome'].get('outcome_sufficient',True) else 'incomplete inputs' if not v.get('selection_gradable') or not v.get('recommendation') else None)
         if reason: excluded[reason]=excluded.get(reason,0)+1;continue
         entries.append({'id':r.id,'day':day,'artifact_sha':r.artifact_sha,'summary_sha':hashlib.sha256(r.summary_json.encode()).hexdigest()})
-    if len(entries)!=7470 or len({r['day'] for r in entries})!=7470:
+    if facility.id == 'IA-AMES-SC' and (len(entries)!=7470 or len({r['day'] for r in entries})!=7470):
         raise ValueError(f'Expected exactly 7470 unique eligible dates; found {len(entries)}. Cohort not silently changed.')
-    m={'version':VERSION,'created_at':datetime.now(timezone.utc).isoformat(),'n':len(entries),'evaluation_time':'04:00 America/Chicago','rules_sha':rules.sha256,'config_sha':config,'excluded':excluded,'entries':entries,'cohort_sha':digest(entries)}
+    if not entries:
+        raise ValueError('No independent gradable observation evaluations for this facility; build a site-specific cohort first.')
+    m={'version':cohort_version(facility.id),'facility_id':facility.id,'station':facility.asos_station,'created_at':datetime.now(timezone.utc).isoformat(),'n':len(entries),'evaluation_time':f'04:00 {facility.timezone}','rules_sha':rules.sha256,'config_sha':config,'excluded':excluded,'entries':entries,'cohort_sha':digest(entries)}
     path.parent.mkdir(parents=True,exist_ok=True)
     with path.open('x') as f: json.dump(m,f,indent=2)
     return m
@@ -114,14 +122,14 @@ def evaluate(rows,ratios=RATIOS):
             'test_disruption_sample_status':'not enough data for a reliable disruption-recall estimate' if sum(r['observed'] for r in splits['test'])<30 else 'descriptive estimate',
             'breakdowns':{str(x['ratio']):{category:score([r for r in splits['test'] if (r['day'][:4] if category.startswith('year:') else r['hazard'])==category.split(':',1)[1]],x['selected_offset_pct']) for category in sorted({'year:'+r['day'][:4] for r in splits['test']}|{'hazard:'+r['hazard'] for r in splits['test']})} for x in scenarios}}
 
-def run(ratios=RATIOS):
-    m=freeze();rows=load_rows(m);report=evaluate(rows,ratios)
-    report.update({'cohort_version':VERSION,'cohort_sha':m['cohort_sha'],'cohort_n':m['n'],'created_at':datetime.now(timezone.utc).isoformat(),'manifest_path':str(manifest_path()),'full_cohort_baseline':score(rows)})
-    p=report_path();p.parent.mkdir(parents=True,exist_ok=True)
+def run(ratios=RATIOS,facility_id=None):
+    m=freeze(facility_id);rows=load_rows(m);report=evaluate(rows,ratios)
+    report.update({'cohort_version':m['version'],'facility_id':m.get('facility_id','IA-AMES-SC'),'cohort_sha':m['cohort_sha'],'cohort_n':m['n'],'created_at':datetime.now(timezone.utc).isoformat(),'manifest_path':str(manifest_path(facility_id)),'full_cohort_baseline':score(rows)})
+    p=report_path(facility_id);p.parent.mkdir(parents=True,exist_ok=True)
     # Reports are versioned by content; latest is only a read-only UI pointer.
     immutable=p.with_name(p.stem+'-'+digest(report)[:12]+'.json');immutable.write_text(json.dumps(report,indent=2));p.write_text(json.dumps(report,indent=2))
     return report
 
-def saved_report():
-    p=report_path()
+def saved_report(facility_id=None):
+    p=report_path(facility_id)
     return json.loads(p.read_text()) if p.exists() else None

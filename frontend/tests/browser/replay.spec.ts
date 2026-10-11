@@ -132,6 +132,7 @@ async function mockApp(page: Page, options: { pendingAi?: boolean; failFirstEven
         const contentType = path.endsWith(".js") ? "text/javascript" : path.endsWith(".css") ? "text/css" : path.endsWith(".png") ? "image/png" : "text/html";
         return await route.fulfill({ contentType, body: await readFile(`${dist}${path}`) });
       }
+      if (url.pathname === "/api/facilities") return await route.fulfill({ json: [snapshot("2026-10-11T10:00:00Z", { as_of: "2026-10-11T10:00:00Z", posture: "NORMAL", readiness: "WHITE" }, null).facility] });
       if (url.pathname === "/api/health") return await route.fulfill({ json: { demo_mode: true, inference: { enabled: false }, model_provider: "none" } });
       if (url.pathname === "/api/snapshot/latest") return await route.fulfill({ json: { ...snapshot("2026-10-11T10:00:00Z", { as_of: "2026-10-11T10:00:00Z", posture: "NORMAL", readiness: "WHITE" }, null), mode: "live" } });
       if (url.pathname === "/api/risk-tradeoffs") return await route.fulfill({ json: { errors: {} } });
@@ -423,7 +424,7 @@ test("historical context stays explicit in dark mobile views and clears on retur
   await page.getByRole("button", {name:"Toggle dark mode"}).click();
   await page.setViewportSize({width:390,height:844});
   await expect(context.getByRole("button", {name:"Return to live"})).toBeVisible();
-  await page.screenshot({path:"/private/tmp/closure-call-historical-dark.png",animations:"disabled"});
+  await page.screenshot({path:test.info().outputPath("closure-call-historical-dark.png"),animations:"disabled"});
   await context.getByRole("button", {name:"Return to live"}).click();
   await expect(context).toContainText("DEMO · Cached weather");
   await expect(context).not.toContainText("HISTORICAL DATA");
@@ -435,8 +436,8 @@ test("historical context stays explicit in dark mobile views and clears on retur
 test("Today clears saved decision evidence before live data arrives", async ({ page }) => {
   await mockApp(page);
   const old = {...snapshot("2020-08-10T16:00:00Z", {as_of:"2020-08-10T16:00:00Z",posture:"CLOSED",readiness:"RED"}, null), mode:"live"};
-  await page.route("**/api/decisions", r => r.fulfill({json:[{id:99, snapshot_id:"saved-old", decision_posture:"CLOSED", decided_at:old.as_of, decided_by:"Test manager"}]}));
-  await page.route("**/api/snapshot/saved-old", r => r.fulfill({json:{...old,snapshot_id:"saved-old"}}));
+  await page.route(url => url.pathname === "/api/decisions", r => r.fulfill({json:[{id:99, facility_id:old.facility_id, snapshot_id:"saved-old", decision_posture:"CLOSED", decided_at:old.as_of, decided_by:"Test manager"}]}));
+  await page.route(url => url.pathname === "/api/snapshot/saved-old", r => r.fulfill({json:{...old,snapshot_id:"saved-old"}}));
   await page.getByRole("button", {name:"Decision log",exact:true}).click();
   await page.getByRole("button", {name:"View saved weather & cameras"}).click();
   const context = page.getByRole("complementary", {name:"Weather viewing context"});
@@ -446,7 +447,7 @@ test("Today clears saved decision evidence before live data arrives", async ({ p
   await expect(page.getByTestId("cooper-dashboard")).toHaveAttribute("data-condition","RED");
   let release = () => {};
   const gate = new Promise<void>(resolve => {release=resolve;});
-  await page.route("**/api/snapshot/latest", async route => {
+  await page.route(url => url.pathname === "/api/snapshot/latest", async route => {
     await gate;
     await route.fulfill({json:{...old,snapshot_id:"new-live",as_of:"2026-10-11T10:00:00Z",readiness:{...old.readiness,level:"WHITE"}}});
   });
@@ -463,15 +464,17 @@ test('notification groups support editing, selection, errors and simulated sends
   const app=await mockApp(page);
   const names=['Onsite telework','Onsite leave','Essential','Remote'];
   const groups=names.map((title,i)=>({id:`g${i}`,title,kind:i===3?'awareness':'onsite',instruction:'Follow reporting instructions.',instruction_text:'Follow reporting instructions.',location_text:'Test facility',decision_text:'Closed.',sms_intro:'Closed',email_intro:'Closed',recipient_ids:[`r${i}`],test_contacts:[],scenario:'success',recipients:[{id:`r${i}`,name:`Synthetic person ${i}`,channels:['email'],due_at:'2026-10-12T12:30:00Z'}]}));
-  const pack={id:1,decision_id:99,version:1,status:'draft',facility_name:'Test facility',timezone:'America/Chicago',decision_day:'2026-10-12',posture:'CLOSED',decided_by:'Test manager',draft_source:'Template',groups,excluded:[],messages:[]};
-  await page.route('**/api/decisions',r=>r.fulfill({json:[{id:99,snapshot_id:'test',decision_posture:'CLOSED',decided_at:'2026-10-12T09:00:00Z',decided_by:'Test manager'}]}));
-  await page.route('**/api/notifications',r=>r.fulfill({json:{contacts:[],packages:[pack]}}));
-  await page.route('**/api/notifications/delivery-setup',r=>r.fulfill({json:{email:false,sms:false}}));
-  await page.route('**/api/notifications/packages',r=>r.fulfill({json:pack}));
+  const pack={id:1,facility_id:'IA-AMES-SC',decision_id:99,version:1,status:'draft',facility_name:'Test facility',timezone:'America/Chicago',decision_day:'2026-10-12',posture:'CLOSED',decided_by:'Test manager',draft_source:'Template',groups,excluded:[],messages:[]};
+  await page.route(url=>url.pathname==='/api/decisions',r=>r.fulfill({json:[{id:99,facility_id:pack.facility_id,snapshot_id:'test',decision_posture:'CLOSED',decided_at:'2026-10-12T09:00:00Z',decided_by:'Test manager'}]}));
+  await page.route(url=>url.pathname==='/api/notifications',r=>r.fulfill({json:{facility_id:pack.facility_id,contacts:[],packages:[pack]}}));
+  await page.route(url=>url.pathname==='/api/notifications/delivery-setup',r=>r.fulfill({json:{email:false,sms:false}}));
+  await page.route(url=>url.pathname==='/api/notifications/packages',r=>r.fulfill({json:pack}));
   let attempts=0;
-  await page.route('**/api/notifications/packages/1/review',async r=>{
+  await page.route(url=>url.pathname==='/api/notifications/packages/1/review',async r=>{
     if(++attempts===1)return r.fulfill({status:409,json:{detail:'Draft changed; review again'}});
     const body=r.request().postDataJSON();
+    expect(new URL(r.request().url()).searchParams.get('facility_id')).toBe(pack.facility_id);
+    expect(body.facility_id).toBe(pack.facility_id);
     expect(body.approve_and_send).toBe(true);expect(body.groups).toHaveLength(4);
     expect(body.groups.every((g:any)=>g.decision_text==='Closed due to dangerous roads.')).toBe(true);
     expect(body.groups[3].recipient_ids).toEqual([]);

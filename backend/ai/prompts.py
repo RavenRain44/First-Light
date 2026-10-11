@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
-PROMPT_VERSION = "decision-brief-v7-provisional-backup-forecasts"
+PROMPT_VERSION = "decision-brief-v8-facility-coastal-evidence"
 
 
 class SuggestedReason(BaseModel):
@@ -94,6 +94,13 @@ Hard rules:
     the headline or summary must say current data is insufficient (or missing/stale),
     and nothing may describe conditions as safe, clear, quiet or normal on the basis of missing data. NORMAL is then
     only the rules' fallback. Known hazard evidence is still reported as given.
+17. Every view belongs to the named facility. Use its local time zone and source labels; never import another
+    facility's roads, staff, analogs or warnings. Synthetic facility details are demonstration assumptions.
+18. Coastal and river gauges describe conditions at the named gauge, with its stated vertical datum. They do
+    not establish flood depth or inundation at the facility or on a road. A hurricane watch or planning signal
+    does not mean hurricane conditions are happening now. Preserve these distinctions from the computed brief.
+19. Do not invent evacuation orders, bridge closures, storm tracks, power outages or instructions to travel
+    through a hazard. Report only saved official evidence and the supplied deterministic safety guidance.
 """
 
 USER_PROMPT = """Write the short parts of a decision brief for the current snapshot: headline, two-sentence summary,

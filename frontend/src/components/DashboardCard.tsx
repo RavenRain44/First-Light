@@ -1,8 +1,8 @@
 import { EvidenceNotice } from "./EvidenceNotice";
 import { evidenceState, normalIsFallback } from "../evidence";
 import { useEffect, useId, useState, type ReactNode } from "react";
-import { api } from "../api";
-import { ACTIONS, METRICS, hasBlizzardWarning, joinReasons, relevantMetrics, suggestionReasons, supportingRules } from "../dashboard";
+import { api, selectedApiGeneration } from "../api";
+import { ACTIONS, METRICS, coastalEvidence, hasBlizzardWarning, joinReasons, metricHasData, relevantMetrics, suggestionReasons, supportingRules } from "../dashboard";
 import { cooperPresentation, forecastOverview, type ForecastValue } from "../cooper";
 import type { Snapshot, Timeseries } from "../types";
 import { Badge, PostureBadge, READINESS, Skeleton, ago, fmtDayLong, fmtTime } from "../util";
@@ -12,16 +12,17 @@ import { MetricChart } from "./MetricChart";
 // One timeseries request per snapshot, shared by Relevant Metrics and the Forecast charts section.
 const tsCache = new Map<string, Promise<Timeseries>>();
 export function useTimeseries(snap: Snapshot, enabled: boolean): { data: Timeseries | null; error: string | null } {
-  const id = snap.snapshot_id;
+  const snapshotId = snap.snapshot_id;
+  const id = `${selectedApiGeneration()}:${snap.facility_id}:${snapshotId}`;
   const [state, setState] = useState<{ id: string; data: Timeseries | null; error: string | null } | null>(null);
   useEffect(() => {
     if (!enabled) return;
     let alive = true;
-    if (!tsCache.has(id)) tsCache.set(id, api.timeseries(id).catch((e) => { tsCache.delete(id); throw e; }));
+    if (!tsCache.has(id)) tsCache.set(id, api.timeseries(snapshotId).catch((e) => { tsCache.delete(id); throw e; }));
     tsCache.get(id)!.then((data) => alive && setState({ id, data, error: null }))
       .catch((e: Error) => alive && setState({ id, data: null, error: e.message }));
     return () => { alive = false; };
-  }, [id, enabled]);
+  }, [id, snapshotId, enabled]);
   return state?.id === id ? { data: state.data, error: state.error } : { data: null, error: null };
 }
 
@@ -98,7 +99,7 @@ export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotif
         {presentation.action && canDecide && (
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <button onClick={onGoNotify} className="btn btn-primary min-h-11 px-5 text-base">{presentation.action} <span aria-hidden>→</span></button>
-            <p className="text-xs text-ink2">{snap.mode === "replay" ? "Practice decision for this replay. " : ""}You make the final decision. Nothing is sent until you approve the alerts.</p>
+            <p className="text-xs text-ink2">You make the final decision. Nothing is sent until you approve the alerts.</p>
           </div>
         )}
         {!canDecide && <p className="mt-5 text-sm text-ink2">{snap.facility.hypothetical ? "This is a what-if check" : readOnly ? "This is a saved weather review" : "This is a replay of past weather"}, so no decision is recorded and no one is alerted.</p>}
@@ -128,7 +129,7 @@ function ForecastSummary({ snap }: { snap: Snapshot }) {
   const tz = snap.facility.timezone;
   const range = (value: ForecastValue, unit: string) => value.min === null || value.max === null ? "Unavailable"
     : value.min === value.max ? `${Math.round(value.min)}${unit}` : `${Math.round(value.min)}–${Math.round(value.max)}${unit}`;
-  const metrics = data ? METRICS.filter((m) => m.series.some((s) => data.rows.some((row) => typeof row[s.key] === "number"))
+  const metrics = data ? METRICS.filter((m) => metricHasData(snap, m, data)
     && (!["ice", "snow"].includes(m.id) || data.rows.some((row) => new Date(row.t).getTime() >= new Date(f.start).getTime()
       && new Date(row.t).getTime() < new Date(f.end).getTime() && Number(row[`fcst_${m.id}_in`]) > 0))) : [];
   const sources = [f.temperature, f.feelsLike, f.wind, f.gust, f.precipitation, f.sky].filter((v) => v.input && v.hours > 0);
@@ -182,23 +183,41 @@ export function RelevantMetrics({ snap }: { snap: Snapshot }) {
   const id = useId();
   const presentation = cooperPresentation(snap);
   const control = snap.historical_context?.control?.kind === "normal-weather";
-  const active = control || presentation.urgent || (presentation.level === null && supportingRules(snap).length > 0);
+  const coastal = coastalEvidence(snap);
+  const active = control || presentation.urgent || coastal.length > 0 || (presentation.level === null && supportingRules(snap).length > 0);
   const { data, error } = useTimeseries(snap, active);
   if (!active) return null;
   const metrics = data ? relevantMetrics(snap, data) : [];
   return (
     <section className="card p-5 sm:p-8" aria-labelledby={`${id}-metrics`}>
-      <h2 id={`${id}-metrics`} className="text-lg font-semibold">{control ? "Observed weather for this control" : "Concerning weather data"}</h2>
+      <h2 id={`${id}-metrics`} className="text-lg font-semibold">{control ? "Observed weather for this control" : coastal.length && !presentation.urgent ? "Coastal weather and access" : "Concerning weather data"}</h2>
       <p className="mt-1 text-sm text-ink2">{control ? "Archived temperature and wind available by the selected evaluation time. The full-day outcome is shown separately from the recommendation inputs." : "Highlighted periods and points show the evidence behind the suggestion."}</p>
       {hasBlizzardWarning(snap) && snap.signals.fcst_snow_24h_in?.available && snap.signals.fcst_snow_24h_in.value === 0 &&
         <p className="mt-3 rounded-lg bg-[var(--surface-2)] p-3 text-sm text-ink2">The recorded forecast shows 0.00 in of additional snow in its evaluated window. It does not measure snow already on the ground. Blizzard warnings also cover strong winds and low visibility; review the wind, cold and road evidence below.</p>}
       {error ? <p role="status" className="mt-4 rounded-lg bg-[var(--surface-2)] p-4 text-sm">Chart data could not be loaded. The suggestion and the decision steps are still available.</p>
         : !data ? <div className="mt-4 space-y-4" aria-label="Loading relevant metrics"><Skeleton className="h-60" /><Skeleton className="h-40" /></div>
-        : <div className="mt-4 space-y-4">{metrics.map((metric, index) =>
+        : <div className="mt-4 space-y-4">{coastal.length > 0 && <CoastalEvidence snap={snap} noCharts={!metrics.length} />}{metrics.map((metric, index) =>
           <PanelBoundary key={metric.id} name={metric.title}><MetricChart snap={snap} metric={metric} data={data} compact={index > 0} /></PanelBoundary>
         )}</div>}
     </section>
   );
+}
+
+/** Official alert evidence remains useful when a numeric forecast was never archived. */
+function CoastalEvidence({ snap, noCharts }: { snap: Snapshot; noCharts: boolean }) {
+  const rules = coastalEvidence(snap);
+  const tz = snap.facility.timezone;
+  return <aside className="rounded-xl border border-edge bg-[var(--surface-2)] p-4 text-sm" data-testid="coastal-evidence">
+    <h3 className="font-semibold">Weather and commute evidence</h3>
+    {noCharts && <p className="mt-2">No relevant numeric measurements are available to plot. Review the recorded warnings and timing; missing measurements do not establish safe conditions.</p>}
+    <ul className="mt-2 space-y-3">{rules.slice(0, 3).map((rule) => <li key={rule.rule_id}>
+      <p className="font-medium">{rule.metric === "alert_present" ? String(rule.observed_value) : rule.label}</p>
+      {rule.window_start && rule.window_end && <p className="mt-0.5 text-xs text-ink2">Recorded hazard window: {fmtTime(rule.window_start, tz)} – {fmtTime(rule.window_end, tz)}.</p>}
+      {rule.metric === "fcst_rain_24h_in" && <p className="mt-0.5 text-xs text-ink2">This is rainfall planning evidence. It does not confirm flooding at the facility.</p>}
+      {rule.source_url?.startsWith("https://") && <a href={rule.source_url} target="_blank" rel="noreferrer" className="mt-1 inline-block min-h-9 py-2 text-xs underline underline-offset-2">View recorded evidence source</a>}
+    </li>)}</ul>
+    <p className="mt-2 text-xs text-ink2">Official local instructions guide emergency actions. The manager approves the facility decision and any staff communication.</p>
+  </aside>;
 }
 
 /** "Due to <reasons>, <action>." The same sentence on Today and on Notify staff. Never an all-clear

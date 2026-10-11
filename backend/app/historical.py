@@ -20,7 +20,7 @@ from fastapi import HTTPException
 from sqlmodel import select
 from adapters.base import NormalizedInput, Point, SourceStatus, utc
 from adapters.cache import SourceUnavailable
-from adapters.historical_asos import START, archive_dir, year_rows
+from adapters.historical_asos import START, archive_dir, station_start, year_rows
 from adapters.iem_obs import UNITS, _t, obs_series
 from app import snapshots
 from app.config import settings
@@ -40,13 +40,14 @@ def dumps(obj):
     return json.dumps(json_ready(obj), default=str, separators=(',', ':'), sort_keys=True)
 
 
-def local_instant(day, clock='04:00'):
+def local_instant(day, clock='04:00', facility_id=None):
+    facility = load_facility(facility_id)
     try:
         d, t = date.fromisoformat(day), time.fromisoformat(clock)
         if t.second or t.microsecond or t.tzinfo:
             raise ValueError()
         naive = datetime.combine(d,t)
-        tz = ZoneInfo(load_facility().timezone)
+        tz = ZoneInfo(facility.timezone)
         choices = {naive.replace(tzinfo=tz,fold=f).astimezone(timezone.utc) for f in (0,1)
                    if naive.replace(tzinfo=tz,fold=f).astimezone(timezone.utc).astimezone(tz).replace(tzinfo=None) == naive}
         if len(choices) != 1:
@@ -54,18 +55,30 @@ def local_instant(day, clock='04:00'):
         instant = choices.pop()
     except (ValueError, TypeError):
         raise HTTPException(422,'Enter a valid date and HH:MM local time.')
-    if d < date.fromisoformat(START):
-        raise HTTPException(422,f'Outside supported AMW archive range (starts {START}); completeness varies by date.')
+    if d < date.fromisoformat(station_start(facility.asos_station)):
+        raise HTTPException(422,f'Outside supported {facility.asos_station} archive range (starts {station_start(facility.asos_station)}); completeness varies by date.')
     if d >= datetime.now(tz).date():
         raise HTTPException(422,'Future/current day: a complete historical outcome is not available yet.')
     return instant
 
 
-def identity(as_of, reconstruction):
-    rules = load_thresholds()
-    config = hashlib.sha256(dumps(load_facility()).encode()).hexdigest()
+def identity(as_of, reconstruction, facility_id=None):
+    facility = load_facility(facility_id)
+    rules = load_thresholds() if facility.id == "IA-AMES-SC" else load_thresholds(facility=facility)
+    config_data = facility.model_dump()
+    if facility.id == "IA-AMES-SC":
+        # Added schema defaults must not orphan existing Ames evaluations or
+        # invalidate resumable jobs. Real provider/policy changes still hash.
+        defaults = {"region_label": None, "forecast_zone": None, "county_ugc": None,
+                    "warning_ugcs": [], "policy_profile": "ames", "water_gauges": [],
+                    "coastal_gauge_ids": [], "provider_settings": {}}
+        for key, default in defaults.items():
+            if config_data.get(key) == default:
+                config_data.pop(key, None)
+    config = hashlib.sha256(dumps(config_data).encode()).hexdigest()
     pipeline = 'v4' if reconstruction == 'archive' else 'v2'
-    key = f'{as_of.isoformat()}|{rules.sha256}|{config}|{reconstruction}|{OUTCOME_VERSION}|{pipeline}'
+    outcome_version = OUTCOME_VERSION if facility.asos_station=='AMW' else f'{facility.asos_station}-local-disruption-v2'
+    key = f'{as_of.isoformat()}|{rules.sha256}|{config}|{reconstruction}|{outcome_version}|{pipeline}'
     return 'bt-' + hashlib.sha256(key.encode()).hexdigest()[:32], rules, config
 
 
@@ -80,11 +93,13 @@ def lookup(id):
         snap['integrity_ok'] = snapshots.content_hash(snap) == snap['content_sha256']
         snap['ai_addon'] = snapshots.interpretation(id)
         from engine import analogs
-        snap['analogs_addon'] = analogs.find_analogs(snap['features'])
+        snap['analogs_addon'] = analogs.find_analogs(snap['features'], facility_id=snap['facility']['id'], mode=snap['mode'])
     return snap
 
 
-def proxies(day=None, include_unconfirmed=False):
+def proxies(day=None, include_unconfirmed=False, facility_id=None):
+    if facility_id not in (None, "IA-AMES-SC"):
+        return []  # Ames institution closure evidence is not a Wilmington outcome.
     path = Path(__file__).resolve().parents[1] / 'data' / 'historical_closures.json'
     records = json.loads(path.read_text())['records'] if path.exists() else []
     from app.decision_evidence import eligible
@@ -92,11 +107,12 @@ def proxies(day=None, include_unconfirmed=False):
 
 
 def observation_inputs(rows, as_of, provenance):
+    station = provenance.get("station", "AMW")
     end = as_of - timedelta(minutes=15)
     past = [r for r in rows if as_of-timedelta(hours=12) <= _t(r['utc_valid']) <= end]
     series = obs_series(past)
     inputs = [NormalizedInput(id=f'obs.{m}',kind='series',role='observation',metric=m,unit=UNITS[m],
-              series=[Point(t=t,v=round(v,2)) for t,v in pts], source='AMW archived routine/special METAR',
+              series=[Point(t=t,v=round(v,2)) for t,v in pts], source=f'{station} archived routine/special METAR',
               source_url=provenance['url'], fetched_at=datetime.fromisoformat(provenance['fetched_at']),
               source_time=_t(past[-1]['utc_valid']) if past else None,
               note='Observation-based reconstruction; validity + assumed 15-minute latency, ingestion times not archived.')
@@ -104,7 +120,8 @@ def observation_inputs(rows, as_of, provenance):
     return inputs
 
 
-def outcome(rows, day, tz):
+def outcome(rows, day, tz, station="AMW"):
+    outcome_version = OUTCOME_VERSION if station == "AMW" else f"{station}-local-disruption-v2"
     start = datetime.combine(date.fromisoformat(day),time(),ZoneInfo(tz)).astimezone(timezone.utc)
     end = (datetime.combine(date.fromisoformat(day)+timedelta(days=1),time(),ZoneInfo(tz))).astimezone(timezone.utc)
     selected = [r for r in rows if start <= _t(r['utc_valid']) < end]
@@ -124,26 +141,48 @@ def outcome(rows, day, tz):
                       (snow >= 3 and visibility is not None and visibility <= .25) or
                       (cold is not None and cold <= -35))
     complete = len(hours) >= needed-2 and gap <= 3
-    return {'method':OUTCOME_VERSION,'scope':'Local AMW station evidence only; corridor, snowfall totals, power outages and off-station damage unavailable.',
+    return {'method':outcome_version,'scope':f'Local {station} station evidence only; corridor, rainfall flooding, surge, snowfall totals, power outages and off-station damage unavailable.',
             'gradable':complete, 'disruptive':disruptive if complete else None,
             'reason':None if complete else 'Incomplete routine/special METAR coverage for independent daily outcome',
             'hours':len(hours),'expected_hours':needed,'largest_gap_hours':round(gap,2),
             'max_gust_mph':gust,'freezing_precip_hours':fz,'snow_hours':snow,'min_visibility_mi':visibility,'min_feels_like_f':cold}
 
 
-async def compute(day, clock='04:00', reconstruction='observation', online=False, prefetched=None, force=False, require_observations=False):
-    as_of = local_instant(day,clock)
-    id, rules, config_sha = identity(as_of,reconstruction)
+async def compute(day, clock='04:00', reconstruction='observation', online=False, prefetched=None, force=False, require_observations=False, facility_id=None):
+    facility = load_facility(facility_id)
+    as_of = local_instant(day,clock,facility.id)
+    id, rules, config_sha = identity(as_of,reconstruction,facility.id)
+    if (facility.id == 'NC-WILMINGTON-SC' and reconstruction == 'archive' and prefetched is None
+            and not online and not force and not require_observations):
+        from app import nc_replay
+        for event_id, data in nc_replay.fixtures().items():
+            if datetime.fromisoformat(data['event']['start']) <= as_of <= datetime.fromisoformat(data['event']['end']):
+                snap=nc_replay.replay(event_id,as_of)
+                return {**snap['historical_context'],'requested_mode':'archive','recommendation':snap['posture']['posture'],
+                        'rules_sha':rules.sha256,'rules_version':rules.version,'snapshot':snap}
+
+    station_args = {} if facility.id == "IA-AMES-SC" else {"station": facility.asos_station, "network": f"{facility.state}_ASOS"}
+    site_proxies = lambda day: proxies(day) if facility.id == "IA-AMES-SC" else proxies(day,facility_id=facility.id)
     with session() as s:
         existing = s.get(HistoricalEvaluation,id)
         if existing and not force:
             meta = json.loads(existing.summary_json)
-            meta['proxy_records'] = proxies(day)
-            return {**meta,'snapshot':lookup(id) if meta.get('recommendation') else None}
-    facility = load_facility()
+            meta['proxy_records'] = site_proxies(day)
+            provenance=meta.get('provenance') or {}
+            observed=meta.get('outcome') or {}
+            station=provenance.get('station', 'AMW' if facility.id=='IA-AMES-SC' else None)
+            observation_coverage_proven = (station == facility.asos_station and provenance.get('raw_sha256')
+                and provenance.get('fetched_at') and observed.get('gradable')
+                and observed.get('hours',0)>0)
+            if not require_observations or observation_coverage_proven:
+                return {**meta,'snapshot':lookup(id) if meta.get('recommendation') else None}
+            # Keep the prior partial record immutable. A required observation check
+            # may restore evidence and must receive a new attempt id if it succeeds.
+            force=True
+
     observation_error = None
     try:
-        raw = prefetched or await year_rows(as_of.astimezone(ZoneInfo(facility.timezone)).year, online=online, retry=force and online)
+        raw = prefetched or await year_rows(as_of.astimezone(ZoneInfo(facility.timezone)).year, online=online, retry=force and online, **station_args)
     except SourceUnavailable as exc:
         if reconstruction != 'archive' or require_observations:
             raise
@@ -155,7 +194,7 @@ async def compute(day, clock='04:00', reconstruction='observation', online=False
     if day[5:] in ('01-01','12-31') and prefetched is None:
         other = int(day[:4]) + (-1 if day[5:]=='01-01' else 1)
         try:
-            adjacent = await year_rows(other,online=online)
+            adjacent = await year_rows(other,online=online, **station_args)
             rows = sorted(rows + adjacent['rows'],key=lambda r:r['utc_valid'])
             if observation_error is not None:
                 # Retain the actual neighboring archive's provenance, even if this year's download failed.
@@ -166,7 +205,7 @@ async def compute(day, clock='04:00', reconstruction='observation', online=False
     finish = begin+timedelta(hours=49)
     rows = rows[bisect_left(times,begin.isoformat()):bisect_right(times,finish.isoformat())]
     inputs = observation_inputs(rows,as_of,raw)
-    statuses = [SourceStatus(adapter='iem_obs',label='AMW archived observations',status='ok' if inputs else 'empty',urls=[raw['url']], n_inputs=len(inputs))]
+    statuses = [SourceStatus(adapter='iem_obs',label=f'{facility.asos_station} archived observations',status='ok' if inputs else 'empty',urls=[raw['url']], n_inputs=len(inputs))]
     kind = 'observation-based reconstruction'
     assumptions = ['Observation ingestion times unavailable: using validity + 15-minute lag.']
     if reconstruction == 'archive':
@@ -199,7 +238,7 @@ async def compute(day, clock='04:00', reconstruction='observation', online=False
     from ai.agent import interpret
     from ai.prompts import PROMPT_VERSION
     from engine import analogs
-    snap["analogs"] = analogs.find_analogs(snap["features"])
+    snap["analogs"] = analogs.find_analogs(snap["features"], facility_id=facility.id, mode=snap['mode'])
     snap['snapshot_id'] = id
     snap['ai'],snap['model_id'] = await interpret(snap,use_model=False)
     snap['prompt_version'] = PROMPT_VERSION
@@ -208,8 +247,10 @@ async def compute(day, clock='04:00', reconstruction='observation', online=False
     snap['content_sha256'] = snapshots.content_hash(snap)
     complete_inputs = len({p.t.replace(minute=0,second=0,microsecond=0) for i in inputs if i.id=='obs.temp_f' for p in i.series or []}) >= 8
     status = 'partial' if inputs else 'unavailable'
-    out = outcome(rows,day,facility.timezone)
-    summary = {'id':id, 'day':day,'as_of':as_of.isoformat(),'reconstruction':kind,'requested_mode':reconstruction,
+    out = outcome(rows,day,facility.timezone,facility.asos_station)
+    if facility.state=='NC':
+        out.update({'outcome_sufficient':False,'coastal_impacts':'unknown'})
+    summary = {'id':id, 'facility_id':facility.id, 'day':day,'as_of':as_of.isoformat(),'reconstruction':kind,'requested_mode':reconstruction,
                'pipeline_version':'v4' if reconstruction=='archive' else 'v2',
                'status':status,'detail':'Partial historical reconstruction; consult source coverage.' if inputs else 'Archive contains no usable pre-evaluation observations or forecasts.',
                'rules_sha':rules.sha256,'rules_version':rules.version,'config_sha':config_sha,
@@ -220,7 +261,7 @@ async def compute(day, clock='04:00', reconstruction='observation', online=False
                'outcome':out,'selection_gradable':complete_inputs and bool(inputs),
                'missing':missing,'assumptions':assumptions,'provenance':{k:raw[k] for k in raw if k!='rows' and not k.startswith('_')},
                'source_coverage':[{ 'adapter':s.adapter, 'status':s.status, 'detail':s.detail} for s in statuses],
-               'proxy_records':proxies(day)}
+               'proxy_records':site_proxies(day)}
     snap['historical_context'] = summary
     payload = gzip.compress(dumps(snap).encode(),mtime=0)
     sha = hashlib.sha256(payload).hexdigest()
@@ -272,7 +313,8 @@ def binary_metrics(pairs):
             'accuracy_95pct_wilson':interval,'status':'not enough data' if n<30 or recall is None or specificity is None else 'descriptive estimate'}
 
 
-def metrics(rows):
+def metrics(rows, facility_id=None):
+    facility = load_facility(facility_id)
     weather=defaultdict(list); impact=defaultdict(list); breakdown=defaultdict(list); proxy=defaultdict(list); proxy_exact=defaultdict(list)
     excluded=Counter(); coverage=Counter(); proxy_days=set(); proxy_evidence={}; before=set(); disagreements={}; proxy_counts=defaultdict(set)
     for row in rows:
@@ -282,15 +324,15 @@ def metrics(rows):
         target = row.get('decision_day')
         if target is None:
             from engine.posture import decision_day
-            target = decision_day(datetime.fromisoformat(row['as_of']), load_facility()).isoformat()
+            target = decision_day(datetime.fromisoformat(row['as_of']), facility).isoformat()
         same_day = str(target) == row['day']
-        if same_day and row.get('selection_gradable') and row['outcome']['gradable'] and row['recommendation']:
+        if same_day and row.get('selection_gradable') and row['outcome']['gradable'] and row['outcome'].get('outcome_sufficient',True) and row['recommendation']:
             pair=(row['recommendation']!='NORMAL',row['outcome']['disruptive'])
             impact[kind].append(pair)
             # Weather classification only; proxy closure records never enter these counts.
             weather[kind].append({'current_prediction':pair[0],'observed':pair[1],'margin':rule_margin(row)})
             for category in ('year:'+row['day'][:4],'hazard:'+row['hazard']): breakdown[kind+'|'+category].append(pair)
-        else: excluded['Recommendation targets a different scheduled facility day' if not same_day else row['outcome'].get('reason') or 'Incomplete pre-evaluation input coverage']+=1
+        else: excluded['Recommendation targets a different scheduled facility day' if not same_day else row['outcome'].get('reason') or ('Coastal impacts are not independently covered by station observations' if not row['outcome'].get('outcome_sufficient',True) else 'Incomplete pre-evaluation input coverage')]+=1
         for record in row.get('proxy_records',[]):
             if record.get('verification') not in ('official','reported') or record.get('cause')!='weather': continue
             status=record['status']
@@ -329,12 +371,14 @@ def metrics(rows):
                            'No threshold tuning performed; these are descriptive evaluations, not a held-out validation claim.']}
 
 
-def overview():
-    id, rules, config=identity(datetime.now(timezone.utc),'observation')
+def overview(facility_id=None):
+    facility = load_facility(facility_id)
+    id, rules, config=identity(datetime.now(timezone.utc),'observation',facility.id)
+    site_proxies = lambda day=None, **kwargs: proxies(day, **kwargs) if facility.id == "IA-AMES-SC" else proxies(day,facility_id=facility.id, **kwargs)
     with session() as s:
         from sqlalchemy import text
         raw=s.exec(select(HistoricalEvaluation).where(HistoricalEvaluation.rules_sha==rules.sha256,HistoricalEvaluation.config_sha==config).order_by(text('rowid'))).all()
-        jobs=[json.loads(j.state_json) for j in s.exec(select(HistoricalBuild)).all()]
+        jobs=[json.loads(j.state_json) for j in s.exec(select(HistoricalBuild)).all() if json.loads(j.state_json).get('facility_id','IA-AMES-SC') == facility.id]
     # One most recent attempt per time/type. Never pool different clock times.
     dedup={}
     for r in raw:
@@ -342,11 +386,12 @@ def overview():
         dedup[(r.as_of,summary['requested_mode'])]=summary
     rows=list(dedup.values()); groups=defaultdict(list)
     from app.risk_experiment import manifest_path
-    cohort=json.loads(manifest_path().read_text()) if manifest_path().exists() else None
+    cohort_file=manifest_path() if facility.id=='IA-AMES-SC' else manifest_path(facility.id)
+    cohort=json.loads(cohort_file.read_text()) if cohort_file.exists() else None
     cohort_ids={e['id'] for e in cohort['entries']} if cohort else None
     for r in rows:
-        r['proxy_records'] = proxies(r['day'])
-        clock=datetime.fromisoformat(r['as_of']).astimezone(ZoneInfo(load_facility().timezone)).strftime('%H:%M')
+        r['proxy_records'] = site_proxies(r['day'])
+        clock=datetime.fromisoformat(r['as_of']).astimezone(ZoneInfo(facility.timezone)).strftime('%H:%M')
         # The fixed observation analysis cohort excludes ineligible/new attempts;
         # other clocks and forecast reconstruction remain explicitly separate.
         if cohort_ids is not None and clock=='04:00' and r['requested_mode']=='observation' and r['id'] not in cohort_ids:
@@ -360,24 +405,24 @@ def overview():
                 ev=retained.get(item['id']) or s.get(HistoricalEvaluation,item['id'])
                 if not ev or hashlib.sha256(ev.summary_json.encode()).hexdigest()!=item['summary_sha']:
                     raise ValueError('Frozen analysis cohort evaluation unavailable or changed: '+item['id'])
-                v=json.loads(ev.summary_json);v['proxy_records']=proxies(v['day']);frozen.append(v)
+                v=json.loads(ev.summary_json);v['proxy_records']=site_proxies(v['day']);frozen.append(v)
         groups['04:00']=[r for r in groups['04:00'] if r['requested_mode']!='observation']+frozen
-    sources=list(archive_dir().glob('*.gz')) if archive_dir().exists() else []
+    sources=list(archive_dir().glob(f'{facility.asos_station}-*.gz')) if archive_dir().exists() else []
     artifact_bytes=0
     with session() as s:
         from sqlalchemy import func
-        artifact_bytes=s.exec(select(func.sum(func.length(HistoricalArtifact.payload)))).one() or 0
+        artifact_bytes=s.exec(select(func.sum(func.length(HistoricalArtifact.payload))).join(HistoricalEvaluation,HistoricalEvaluation.artifact_sha==HistoricalArtifact.sha256).where(HistoricalEvaluation.config_sha==config)).one() or 0
     from app.decision_evidence import describe
-    decision_dataset = describe(proxies(include_unconfirmed=True))
     from app.feedback import catalog
-    return {'operational_feedback':catalog(), 'analysis_cohort':{k:v for k,v in cohort.items() if k!='entries'} if cohort else None,'archive_evaluation_count':len(rows),'decision_dataset':decision_dataset,'supported_start':START,'supported_end':(datetime.now(ZoneInfo(load_facility().timezone)).date()-timedelta(days=1)).isoformat(),
-            'default_start':'2020-01-01','default_time':'04:00','timezone':load_facility().timezone,
-            'rules_sha':rules.sha256,'benchmark_sha':hashlib.sha256(dumps(proxies()).encode()).hexdigest(), 'metrics_by_time':{t:metrics(v) for t,v in groups.items()},
-            'jobs':sorted(jobs,key=lambda j:j['created_at'],reverse=True), 'proxy_records':proxies(),
+    decision_dataset = describe(site_proxies(include_unconfirmed=True))
+    return {'operational_feedback':catalog(), 'analysis_cohort':{k:v for k,v in cohort.items() if k!='entries'} if cohort else None,'archive_evaluation_count':len(rows),'decision_dataset':decision_dataset,'facility_id':facility.id,'supported_start':station_start(facility.asos_station),'supported_end':(datetime.now(ZoneInfo(facility.timezone)).date()-timedelta(days=1)).isoformat(),
+            'default_start':'2020-01-01','default_time':'04:00','timezone':facility.timezone,
+            'rules_sha':rules.sha256,'benchmark_sha':hashlib.sha256(dumps(site_proxies()).encode()).hexdigest(), 'metrics_by_time':{t:metrics(v,facility.id) for t,v in groups.items()},
+            'jobs':sorted(jobs,key=lambda j:j['created_at'],reverse=True), 'proxy_records':site_proxies(),
             'storage':{'evaluation_count':len(raw),'compressed_source_bytes':sum(p.stat().st_size for p in sources),
                        'compressed_evaluation_bytes':artifact_bytes,'mean_evaluation_bytes':artifact_bytes/max(1,len(raw)),
                        'db_bytes':settings.db_path.stat().st_size if settings.db_path.exists() else 0,
-                       'source_years':sorted([p.stem.split('.')[0].split('-')[-1] for p in sources])},
+                       'source_station':facility.asos_station,'source_years':sorted([p.stem.split('.')[0].split('-')[-1] for p in sources])},
             'latest_disruptive_days':sorted([r for r in rows if r['outcome'].get('disruptive')],key=lambda r:r['day'],reverse=True)[:100]}
 
 
@@ -393,16 +438,17 @@ def job_save(state):
         row.state_json=dumps(state); s.add(row); s.commit()
 
 
-def create_job(start,end,reconstruction='observation',online=False):
-    local_instant(start); local_instant(end)
+def create_job(start,end,reconstruction='observation',online=False,facility_id=None):
+    facility = load_facility(facility_id)
+    local_instant(start,facility_id=facility.id); local_instant(end,facility_id=facility.id)
     if start>end: raise HTTPException(422,'Start must precede end')
     with session() as s:
         for row in s.exec(select(HistoricalBuild)).all():
             prior=json.loads(row.state_json)
-            if prior['status'] in ('queued','running'):
+            if prior['status'] in ('queued','running') and prior.get('facility_id','IA-AMES-SC') == facility.id:
                 raise HTTPException(409,'A build is already active; cancel or resume it before starting another.')
-    _,rules,config=identity(local_instant(start),reconstruction)
-    state={'id':uuid4().hex,'start':start,'end':end,'mode':reconstruction,'online':online,'next_day':start,
+    _,rules,config=identity(local_instant(start,facility_id=facility.id),reconstruction,facility.id)
+    state={'id':uuid4().hex,'facility_id':facility.id,'start':start,'end':end,'mode':reconstruction,'online':online,'next_day':start,
            'rules_sha':rules.sha256,'config_sha':config,
            'status':'queued','processed':0,'failed':[],'created_at':datetime.now(timezone.utc).isoformat(),'seconds':0}
     job_save(state); return state
@@ -412,7 +458,9 @@ async def run_job(id):
     import time as timer
     state=job_get(id)
     if not state: return
-    _,rules,config=identity(local_instant(state['start']),state['mode'])
+    facility = load_facility(state.get('facility_id'))
+    station_args = {} if facility.id == 'IA-AMES-SC' else {'station': facility.asos_station, 'network': f'{facility.state}_ASOS'}
+    _,rules,config=identity(local_instant(state['start'],facility_id=facility.id),state['mode'],facility.id)
     if state.get('rules_sha',rules.sha256)!=rules.sha256 or state.get('config_sha',config)!=config:
         state['status']='interrupted';job_save(state)
         raise HTTPException(409,'Rules or facility configuration changed. Start a new build; prior results are preserved.')
@@ -424,17 +472,17 @@ async def run_job(id):
             if job_get(id)['status']=='cancelled': return
             try:
                 if year != day.year:
-                    year_data=await year_rows(day.year,online=state['online']); year=day.year
+                    year_data=await year_rows(day.year,online=state['online'], **station_args); year=day.year
                     # Keep adjacent years for boundary completeness without extra per-day downloads.
                     year_data={**year_data,'rows':list(year_data['rows'])}
                     for other in (day.year-1,day.year+1):
                         if other >= int(state['start'][:4])-1 and other <= datetime.now(timezone.utc).year:
-                            try: year_data['rows'] += (await year_rows(other,online=state['online']))['rows']
+                            try: year_data['rows'] += (await year_rows(other,online=state['online'], **station_args))['rows']
                             except Exception: pass
                     year_data['rows'].sort(key=lambda r:r['utc_valid'])
                     year_data['_times']=[r['utc_valid'] for r in year_data['rows']]
                 async with _day_lock:
-                    await compute(day.isoformat(),reconstruction=state['mode'],online=state['online'],prefetched=year_data)
+                    await compute(day.isoformat(),reconstruction=state['mode'],online=state['online'],prefetched=year_data,facility_id=facility.id)
             except asyncio.CancelledError: raise
             except Exception as exc:
                 state['failed'].append({'day':day.isoformat(),'reason':type(exc).__name__})

@@ -1,0 +1,205 @@
+# Wilmington demonstration policy. Alert definitions are official; assigning an
+# operating posture is this fictional facility's policy, never an NWS closure order.
+# This overlay has its own version/hash and does not alter Ames or saved snapshots.
+version: "wilmington-2026-10-11.1"
+profile: wilmington
+remove_rules:
+  - winter.road_closed
+  - winter.road_travel_advisory
+  - winter.road_completely_covered
+  - winter.road_partially_covered
+  - winter.rwis_ice
+rule_overrides:
+  wind.fcst_gust_advisory:
+    posture_effect: minor
+    anchor: "Wilmington demonstration policy: a 45 mph forecast gust prompts monitoring; it is not a hurricane warning or an automatic closure."
+  winter.fcst_snow_advisory_24h:
+    posture_effect: minor
+    anchor: "Wilmington demonstration policy: 1.5 in forecast snow prompts attention. This is not a verified local NWS warning threshold."
+timing:
+  am_commute: ["06:00", "08:00"]
+  pm_commute: ["16:00", "18:00"]
+  morning_core_end: "11:00"
+  winter_road_recovery_hours: 3
+  planning_horizon_hours: 72
+  coastal_departure_lead_hours: 6
+rules:
+  - id: tropical.hurricane_warning
+    hazard: tropical
+    metric: alert_present
+    events: [Hurricane Warning]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: extreme
+    score: 90
+    lookahead_hours: 72
+    time_window: "Official warning interval within the next 72 h; effective time is not local hazardous-wind arrival"
+    anchor: "Hurricane warning means hurricane conditions are expected. Facility policy: avoid reporting during the warning interval and prepare before conditions arrive. Actual evacuation instructions come from emergency authorities."
+    source_url: https://www.nhc.noaa.gov/aboutgloss.shtml
+    verified: false
+    basis: policy
+  - id: tropical.storm_warning
+    hazard: tropical
+    metric: alert_present
+    events: [Tropical Storm Warning]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: significant
+    score: 70
+    lookahead_hours: 72
+    time_window: "Official warning interval within the next 72 h; effective time is not local hazardous-wind arrival"
+    anchor: "Tropical storm warning means tropical storm conditions are expected. Facility policy: avoid affected commutes and consider remote operations."
+    source_url: https://www.nhc.noaa.gov/aboutgloss.shtml
+    verified: false
+    basis: policy
+  - id: tropical.watch
+    hazard: tropical
+    metric: alert_present
+    events: [Hurricane Watch, Tropical Storm Watch]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: minor
+    score: 35
+    planning_only: true
+    lookahead_hours: 72
+    time_window: "Official watch interval within the next 72 h"
+    anchor: "A watch identifies possible tropical conditions. Prepare staffing and communications, verify local arrival forecasts; a watch alone does not choose a closure."
+    source_url: https://www.nhc.noaa.gov/aboutgloss.shtml
+    verified: false
+    basis: policy
+  - id: coastal.storm_surge_warning
+    hazard: coastal
+    metric: alert_present
+    events: [Storm Surge Warning]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: extreme
+    score: 90
+    lookahead_hours: 72
+    time_window: "Official warning onset/end within the next 72 h"
+    anchor: "Danger of life-threatening inundation from rising water moving inland. Applies to the alert area, not proof that the synthetic facility is inundated. Follow official evacuation and road instructions."
+    source_url: https://www.nhc.noaa.gov/aboutgloss.shtml
+    verified: false
+    basis: policy
+  - id: coastal.flood_warning
+    hazard: coastal
+    metric: alert_present
+    events: [Coastal Flood Warning]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: significant
+    score: 70
+    lookahead_hours: 72
+    time_window: "Official warning onset/end within the next 72 h"
+    anchor: "Significant coastal flooding is expected or occurring in the warning area. Confirm affected low-lying routes; regional warning alone does not prove site inundation."
+    source_url: https://www.weather.gov/safety/flood-watch-warning
+    verified: false
+    basis: policy
+  - id: coastal.watch_advisory
+    hazard: coastal
+    metric: alert_present
+    events: [Storm Surge Watch, Coastal Flood Watch, Coastal Flood Advisory]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: minor
+    score: 35
+    planning_only: true
+    lookahead_hours: 72
+    time_window: "Official watch/advisory interval within the next 72 h"
+    anchor: "Prepare and check coastal routes. No facility inundation or closure is inferred from a watch/advisory alone."
+    source_url: https://www.weather.gov/safety/flood-watch-warning
+    verified: false
+    basis: policy
+  - id: flood.flash_warning
+    hazard: flood
+    metric: alert_present
+    events: [Flash Flood Warning, Flash Flood Emergency]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: extreme
+    score: 90
+    lookahead_hours: 72
+    time_window: "Official warning onset/end; travel recovery is not assumed when the warning expires"
+    anchor: "Flash flooding is imminent or occurring in the warned area. Never drive through floodwater; follow local emergency instructions. Facility policy: avoid affected travel."
+    source_url: https://www.weather.gov/safety/flood-watch-warning
+    verified: false
+    basis: policy
+  - id: flood.warning
+    hazard: flood
+    metric: alert_present
+    events: [Flood Warning]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: significant
+    score: 70
+    lookahead_hours: 72
+    time_window: "Official warning onset/end; travel recovery is not assumed when the warning expires"
+    anchor: "Flooding is imminent or occurring in the warned area. Confirm local roads and drainage; this does not establish flood depth at the facility."
+    source_url: https://www.weather.gov/safety/flood-watch-warning
+    verified: false
+    basis: policy
+  - id: flood.watch_advisory
+    hazard: flood
+    metric: alert_present
+    events: [Flood Watch, Flash Flood Watch, Flood Advisory]
+    operator: present
+    value: 1
+    unit: alert
+    posture_effect: minor
+    score: 30
+    planning_only: true
+    lookahead_hours: 72
+    time_window: "Official watch/advisory interval within the next 72 h"
+    anchor: "Monitor rainfall, drainage, and roads. A flood watch/advisory does not establish site flooding or automatically close the facility."
+    source_url: https://www.weather.gov/safety/flood-watch-warning
+    verified: false
+    basis: policy
+  - id: flood.heavy_rain_monitor
+    hazard: flood
+    metric: fcst_rain_24h_in
+    operator: ">="
+    value: 3
+    unit: in
+    posture_effect: minor
+    score: 30
+    planning_only: true
+    time_window: "Heaviest rolling 24 h of forecast rainfall within the next 72 h"
+    anchor: "Demonstration monitoring threshold, not a local flood forecast. Rainfall alone cannot determine flooding without drainage, saturation, water levels, and official warning evidence."
+    source_url: https://www.weather.gov/safety/flood
+    verified: false
+    basis: policy
+  - id: coastal.regional_gauge_monitor
+    hazard: coastal
+    metric: water_above_flood_stage_ft
+    operator: ">="
+    value: 0
+    unit: ft
+    posture_effect: minor
+    score: 35
+    planning_only: true
+    time_window: "Latest fresh gauge observation or originally issued gauge forecast within the next 72 h"
+    anchor: "Water reaches the gauge's published minor flood stage, in the same native units and vertical datum. This indicates regional gauge risk, not water depth or inundation at the synthetic facility."
+    source_url: https://water.noaa.gov/
+    verified: false
+    basis: policy
+  - id: access.commute_road_closed
+    hazard: access
+    metric: road_worst_rank
+    operator: ">="
+    value: 5
+    unit: rank
+    posture_effect: significant
+    score: 70
+    time_window: "Current NCDOT closure matched to a configured commute corridor"
+    anchor: "Facility travel policy for an actual matched closure. A road closure may have several causes; it does not assert floodwater or winter road coverage."
+    source_url: https://drivenc.gov/
+    verified: false
+    basis: policy

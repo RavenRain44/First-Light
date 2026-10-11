@@ -1,0 +1,38 @@
+{
+  "_synthetic": "SYNTHETIC demonstration facility near UNCW. Not a real USDA site, staffing record, flood-zone determination or approved emergency plan.",
+  "id": "NC-WILMINGTON-SC",
+  "name": "USDA Service Center (synthetic), Wilmington, NC",
+  "synthetic": true,
+  "lat": 34.2257,
+  "lon": -77.875,
+  "state": "NC",
+  "region_label": "Coastal North Carolina · Wilmington",
+  "timezone": "America/New_York",
+  "asos_station": "ILM",
+  "mos_station": "KILM",
+  "nws_office": "ILM",
+  "forecast_zone": "NCZ107",
+  "county_ugc": "NCC129",
+  "warning_ugcs": ["NCZ107", "NCC129"],
+  "policy_profile": "wilmington",
+  "hours": {"open": "07:30", "close": "16:30"},
+  "workdays": [0, 1, 2, 3, 4],
+  "commute_windows": {"am": ["06:00", "08:00"], "pm": ["16:00", "18:00"]},
+  "building_type": "Synthetic coastal service and laboratory campus; 270 fictitious assigned staff. Site elevation, surge exposure and emergency resources require local verification.",
+  "accessibility_notes": [
+    "Demonstration assumption: accessible entrances and parking require manager inspection after heavy rain or tropical weather",
+    "Facility elevation, drainage, backup power and flood-zone designation are not verified",
+    "Cape Fear River gauge reports regional water levels; it does not establish flooding at this inland facility",
+    "Use official local emergency instructions and manager-approved shelter or evacuation plans"
+  ],
+  "coastal_gauge_ids": ["WLON7"],
+  "water_gauges": [{"id": "WLON7", "kind": "tidal_river", "name": "Cape Fear River at Wilmington", "datum": "MLLW", "unit": "ft"}],
+  "provider_settings": {"roads": "ncdot", "cameras": "ncdot", "road_archive": false, "camera_archive": false, "road_counties": ["New Hanover", "Brunswick", "Pender"]},
+  "corridors": [
+    {"id": "nc_i40_castlehayne", "name": "I-40 · Castle Hayne to Wilmington", "coordinates": [[-77.902, 34.356], [-77.881, 34.3], [-77.872, 34.254], [-77.875, 34.226]]},
+    {"id": "nc_us17_hampstead", "name": "US-17 · Hampstead to Wilmington", "coordinates": [[-77.705, 34.378], [-77.78, 34.308], [-77.833, 34.269], [-77.875, 34.226]]},
+    {"id": "nc_us74_leland", "name": "US-74/76 · Leland and Cape Fear bridge approaches", "coordinates": [[-78.044, 34.235], [-77.971, 34.227], [-77.95, 34.228], [-77.916, 34.22], [-77.875, 34.226]]},
+    {"id": "nc_us421_south", "name": "US-421 · Monkey Junction to Wilmington", "coordinates": [[-77.907, 34.16], [-77.909, 34.194], [-77.902, 34.213], [-77.875, 34.226]]},
+    {"id": "nc_us74_wrightsville", "name": "US-74/76 · Wrightsville Beach and Eastwood Road", "coordinates": [[-77.798, 34.211], [-77.829, 34.223], [-77.849, 34.238], [-77.875, 34.226]]}
+  ]
+}

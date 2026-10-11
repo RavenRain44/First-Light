@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useFacility } from "../facility";
 import { api } from "../api";
 import { bestSetting, FORECAST_PERIOD, HELD_OUT_PERIOD, pct, RATIOS, rateText, scenarioLoss, settingLabel, type ActionScenario, type ErrorAnalysis, type Exposure, type PeriodScore, type RiskTradeoffs as Data, type Validation } from "../tradeoffs";
 
@@ -96,6 +97,7 @@ function ModelPerformance({ v }: { v: Validation }) {
 }
 
 function WeatherErrors({ kind, a, data }: { kind: string; a: ErrorAnalysis; data: Data }) {
+  const facility = useFacility();
   const w = a.weather;
   const zeroFa = w.confusion.false_alarm === 0 && w.false_positive_rate.ci95;
   return (
@@ -103,7 +105,7 @@ function WeatherErrors({ kind, a, data }: { kind: string; a: ErrorAnalysis; data
       <p className="mb-3">Missed hazardous conditions can expose staff to injury, unsafe commuting or stranding. Unnecessary restrictions can delay services and unfinished work. Income effects and task recoverability depend on employment arrangements; neither injury nor financial loss is measured here. Essential staff may still travel during closure.</p>
       <h3 className="font-semibold">How often the weather warnings were wrong</h3>
       <p className="mt-1 text-xs text-muted">
-        {w.n.toLocaleString()} weekdays, {data.range?.start} to {data.range?.end}, checked at {data.evaluation_time} against what the Ames airport
+        {w.n.toLocaleString()} weekdays, {data.range?.start} to {data.range?.end}, checked at {data.evaluation_time} against what the {facility.asos_station ?? "local"} airport
         station recorded that day ({kind}). {a.label}
       </p>
       <dl className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -129,13 +131,15 @@ function WeatherErrors({ kind, a, data }: { kind: string; a: ErrorAnalysis; data
 }
 
 function Tradeoff({ a }: { a: ErrorAnalysis }) {
+  const facility = useFacility();
+  const costsKey = `${COSTS_KEY}:${facility.id}`;
   const [costs, setCosts] = useState<{ fa: number; miss: number }>(() => {
-    try { return JSON.parse(localStorage.getItem(COSTS_KEY) || "") ?? { fa: 1, miss: 5 }; } catch { return { fa: 1, miss: 5 }; }
+    try { return JSON.parse(localStorage.getItem(costsKey) || "") ?? { fa: 1, miss: 5 }; } catch { return { fa: 1, miss: 5 }; }
   });
   const update = (k: "fa" | "miss", v: string) => {
     const n = Math.max(0, Number(v) || 0);
     const next = { ...costs, [k]: n };
-    setCosts(next); localStorage.setItem(COSTS_KEY, JSON.stringify(next));
+    setCosts(next); localStorage.setItem(costsKey, JSON.stringify(next));
   };
   const best = bestSetting(a.sweep, costs.fa, costs.miss);
   const current = a.weather.confusion;
@@ -228,5 +232,5 @@ function ActionCard({ s }: { s: ActionScenario }) {
 function ChronologicalExperiment({report:r}:{report:any}) {
   const [ratio,setRatio]=useState('10');
   const s=r.scenarios.find((v:any)=>String(v.ratio)===ratio)??r.scenarios[0];
-  return <section className="border-t border-edge pt-4"><h3 className="font-semibold">Chronological safety / operational-loss comparison</h3><p className="mt-2">Fixed cohort: {r.cohort_n.toLocaleString()} days at 04:00 Central. Training {r.splits.training.baseline.n.toLocaleString()}, validation {r.splits.validation.baseline.n.toLocaleString()}, final test {r.splits.test.baseline.n.toLocaleString()}; {r.boundary_excluded_days.length} boundary days purged.</p><p className="text-xs text-muted">{r.method} Threshold selected on validation only; production recommendations stay unchanged. Test disruption sample: {r.test_positive_count} days; {r.test_disruption_sample_status}.</p><label className="mt-3 block">Assumed missed-disruption cost relative to a false alarm <select className="ml-2 rounded border border-edge bg-surface p-1" value={ratio} onChange={e=>setRatio(e.target.value)}>{r.scenarios.map((v:any)=><option key={v.ratio} value={String(v.ratio)}>{v.ratio}:1</option>)}</select></label><p className="mt-2">Selected rule-margin offset: {s.selected_offset_pct}%. Final-test recall {pct(s.test.recall)} versus {pct(s.baseline_test.recall)} with existing rules; balanced accuracy {pct(s.test.balanced_accuracy)} versus {pct(s.baseline_test.balanced_accuracy)}.</p><p>Additional disruptions caught: {s.additional_disruptions_caught}. Additional false alarms: {s.additional_false_alarms}. Misses: {s.test.confusion.missed_disruption} versus {s.baseline_test.confusion.missed_disruption}. Assumed test loss: {s.test_loss} versus {s.baseline_test_loss}.</p><details className="mt-2"><summary>Method, provenance & limitations</summary><p>Manifest {r.cohort_version} · SHA {r.cohort_sha}. Missing values remain unavailable, not zero. No model fitting, injury probabilities or financial losses.</p>{r.limitations.map((x:string)=><p className="mt-1 text-xs" key={x}>{x}</p>)}<p>Future performance needs prospective out-of-sample evaluation. Current test dates were inspected in earlier baseline analyses.</p></details></section>;
+  return <section className="border-t border-edge pt-4"><h3 className="font-semibold">Chronological safety / operational-loss comparison</h3><p className="mt-2">Fixed cohort: {r.cohort_n.toLocaleString()} days at the facility’s 04:00 local evaluation. Training {r.splits.training.baseline.n.toLocaleString()}, validation {r.splits.validation.baseline.n.toLocaleString()}, final test {r.splits.test.baseline.n.toLocaleString()}; {r.boundary_excluded_days.length} boundary days purged.</p><p className="text-xs text-muted">{r.method} Threshold selected on validation only; production recommendations stay unchanged. Test disruption sample: {r.test_positive_count} days; {r.test_disruption_sample_status}.</p><label className="mt-3 block">Assumed missed-disruption cost relative to a false alarm <select className="ml-2 rounded border border-edge bg-surface p-1" value={ratio} onChange={e=>setRatio(e.target.value)}>{r.scenarios.map((v:any)=><option key={v.ratio} value={String(v.ratio)}>{v.ratio}:1</option>)}</select></label><p className="mt-2">Selected rule-margin offset: {s.selected_offset_pct}%. Final-test recall {pct(s.test.recall)} versus {pct(s.baseline_test.recall)} with existing rules; balanced accuracy {pct(s.test.balanced_accuracy)} versus {pct(s.baseline_test.balanced_accuracy)}.</p><p>Additional disruptions caught: {s.additional_disruptions_caught}. Additional false alarms: {s.additional_false_alarms}. Misses: {s.test.confusion.missed_disruption} versus {s.baseline_test.confusion.missed_disruption}. Assumed test loss: {s.test_loss} versus {s.baseline_test_loss}.</p><details className="mt-2"><summary>Method, provenance & limitations</summary><p>Manifest {r.cohort_version} · SHA {r.cohort_sha}. Missing values remain unavailable, not zero. No model fitting, injury probabilities or financial losses.</p>{r.limitations.map((x:string)=><p className="mt-1 text-xs" key={x}>{x}</p>)}<p>Future performance needs prospective out-of-sample evaluation. Current test dates were inspected in earlier baseline analyses.</p></details></section>;
 }

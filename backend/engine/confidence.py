@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 from pydantic import BaseModel
 
-from adapters.base import NormalizedInput, SourceStatus, utc
+from adapters.base import Facility, NormalizedInput, SourceStatus, utc
 from engine.features import Context
 from engine.scoring import HazardResult, RuleResult
 
@@ -17,6 +17,10 @@ from engine.scoring import HazardResult, RuleResult
 EXPECTED = {
     "live": {"nws_alerts": 0.30, "nws_grid": 0.30, "iem_obs": 0.20, "iem_roads": 0.10, "iem_rwis": 0.05, "iem_outlook": 0.05},
     "replay": {"iem_vtec": 0.30, "iem_mos": 0.30, "iem_obs": 0.20, "iem_roads": 0.10, "iem_rwis": 0.05, "iem_outlook": 0.05},
+}
+NC_EXPECTED = {
+    "live": {"nws_alerts": 0.30, "nws_grid": 0.25, "iem_obs": 0.20, "ncdot_roads": 0.10, "nwps_water": 0.10, "iem_outlook": 0.05},
+    "replay": {"iem_vtec": 0.35, "iem_mos": 0.35, "iem_obs": 0.25, "iem_outlook": 0.05},
 }
 WEIGHTS = {"completeness": 0.35, "freshness": 0.25, "agreement": 0.25, "certainty": 0.15}
 CERTAINTY = {"Observed": 1.0, "Likely": 0.9, "Possible": 0.6, "Unlikely": 0.4, "Unknown": 0.5}
@@ -35,9 +39,10 @@ class Confidence(BaseModel):
     factors: list[Factor]
 
 
-def _completeness(statuses: list[SourceStatus], mode: str, as_of: datetime) -> Factor:
-    exp = dict(EXPECTED["live" if mode in ("live", "livecheck") else "replay"])
-    if utc(as_of).month in (5, 6, 7, 8, 9):
+def _completeness(statuses: list[SourceStatus], mode: str, as_of: datetime, facility: Facility | None = None) -> Factor:
+    registry = NC_EXPECTED if facility is not None and facility.state == "NC" else EXPECTED
+    exp = dict(registry["live" if mode in ("live", "livecheck") else "replay"])
+    if registry is EXPECTED and utc(as_of).month in (5, 6, 7, 8, 9):
         exp.pop("iem_roads", None)  # Iowa DOT winter reporting is seasonal; not expected in summer
     by = {s.adapter: s for s in statuses}
     got, missing = 0.0, []
@@ -146,9 +151,9 @@ def _certainty(ctx: Context, rules: list[RuleResult], hazards: dict[str, HazardR
                               (" (inferred from VTEC significance)" if inferred else ""))
 
 
-def compute(statuses, inputs, ctx, rules, hazards, mode, brackets=None) -> Confidence:
+def compute(statuses, inputs, ctx, rules, hazards, mode, facility: Facility | None = None, brackets=None) -> Confidence:
     factors = [
-        _completeness(statuses, mode, ctx.as_of),
+        _completeness(statuses, mode, ctx.as_of, facility),
         _freshness(inputs, ctx.as_of),
         _agreement(ctx, inputs, hazards),
         _certainty(ctx, rules, hazards),

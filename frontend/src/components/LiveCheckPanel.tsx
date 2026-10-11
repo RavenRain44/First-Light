@@ -31,12 +31,12 @@ export function LiveCheckPanel({ onSnapshot, busy, setBusy }: { onSnapshot: (s: 
     <Card title="Live Check: run the engine on a real active NWS alert anywhere in the US"
       right={list && <span className="text-xs text-muted">{list.count} land alerts · fetched {ago(list.fetched_at)} · <button className="underline" onClick={load}>refresh</button></span>}>
       <div role="note" className="mb-4 rounded-xl border border-dashed border-[var(--accent)] bg-[var(--tint)] p-3 text-sm">
-        <strong>What-if, outside Iowa scope; NWS-only data, lower confidence.</strong> A hypothetical copy of the Ames facility is placed at the
-        alert's location. Iowa-only sources (ASOS obs via IEM, Iowa DOT roads, RWIS) show as unavailable, which lowers confidence. Always live, even in demo mode.
+        <strong>What-if location; configured sources may have limited coverage.</strong> A hypothetical copy of the selected facility is placed at the
+        alert's location. Sources without coverage for the hypothetical location appear as unavailable, which lowers confidence. Always live, even in demo mode.
       </div>
       <div className="mb-2 flex flex-wrap items-center gap-3 text-sm">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by event or area" className="rounded-md border border-edge bg-surface px-2 py-1" />
-        <label className="flex items-center gap-1"><input type="checkbox" checked={handledOnly} onChange={(e) => setHandledOnly(e.target.checked)} /> winter / wind / cold only</label>
+        <label className="flex items-center gap-1"><input type="checkbox" checked={handledOnly} onChange={(e) => setHandledOnly(e.target.checked)} /> hazards with configured rules only</label>
         <label className="flex items-center gap-1" title="Weekends and evenings otherwise push the decision to the next workday">
           <input type="checkbox" checked={assumeWorkday} onChange={(e) => setAssumeWorkday(e.target.checked)} /> treat today as a workday
         </label>

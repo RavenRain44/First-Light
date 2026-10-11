@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from "react";
+import { useUnsavedDraft } from "../facility";
+import { api, scopedRequest } from "../api";
 import { newRequestId } from "../requestId";
-import { api } from "../api";
 import { Card, Skeleton } from "../util";
 
-async function request(path: string, method = "GET", body?: unknown): Promise<any> {
-  const r = await fetch(`/api/notifications${path}`, { method, headers: { "content-type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
-  const data = await r.json();
-  if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail));
-  return data;
+function request(path: string, method = "GET", body?: unknown): Promise<any> {
+  return scopedRequest(`/api/notifications${path}`, { method, body: body === undefined ? undefined : JSON.stringify(body) });
 }
+
 const input = "min-w-0 max-w-full rounded-lg border border-edge bg-surface px-2 py-1";
 const button = "btn";
 const time = (t: string, tz: string) => new Intl.DateTimeFormat("en-US", { timeZone: tz, dateStyle: "medium", timeStyle: "short" }).format(new Date(t));
@@ -111,8 +110,11 @@ export function NotificationsView({ decisionId, onBack }: { decisionId?: number 
   const [testIds, setTestIds] = useState<string[]>([]);
   const [testResult, setTestResult] = useState<any>(null);
   const [smtpCheck, setSmtpCheck] = useState<any>(null);
+  const [dirty, setDirty] = useState(false);
+  useUnsavedDraft(dirty);
   const requestId = useRef<string>(newRequestId());
   const install = (pack: any) => {
+    setDirty(false);
     setP(pack); setGroups(pack.groups.map((g: any) => ({ ...g,
       location_text: g.location_text ?? `${pack.facility_name} · ${pack.decision_day} (${pack.timezone})`,
       decision_text: g.decision_text ?? `The manager recorded ${pack.posture.replaceAll('_',' ').toLowerCase()}: ${g.email_intro}`,
@@ -139,7 +141,7 @@ export function NotificationsView({ decisionId, onBack }: { decisionId?: number 
   };
   const edits = () => groups.map(g => ({id:g.id, location_text:g.location_text, decision_text:g.decision_text, instruction_text:g.instruction_text, sms_intro:g.sms_intro, email_intro:g.email_intro,
     recipient_ids:g.recipient_ids, test_contacts:g.test_contacts, schedule_override:g.schedule_override, scenario:g.scenario}));
-  const update = (id: string, patch: any) => setGroups(cur => cur.map(g => g.id === id ? {...g, ...patch} : {...g, ...(patch.location_text !== undefined ? {location_text:patch.location_text} : {}), ...(patch.decision_text !== undefined ? {decision_text:patch.decision_text} : {})}));
+  const update = (id: string, patch: any) => { setDirty(true); setGroups(cur => cur.map(g => g.id === id ? {...g, ...patch} : {...g, ...(patch.location_text !== undefined ? {location_text:patch.location_text} : {}), ...(patch.decision_text !== undefined ? {decision_text:patch.decision_text} : {})})); };
   const t = tally(groups);
   const sent = p?.status === "dispatched";
   const selectedContacts = contacts.filter(c => testIds.includes(c.id));

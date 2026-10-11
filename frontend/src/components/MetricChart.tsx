@@ -11,6 +11,7 @@ export function MetricChart({ snap, metric, data, compact = false }: {
   const [full, setFull] = useState(false);
   const evidence = metricEvidence(snap, metric, data);
   const { rows, rule, context, window, highlighted, keys } = evidence;
+  const stage = rule?.threshold ?? metric.waterLevel?.floodStage;
   const tz = snap.facility.timezone;
   const asOf = new Date(snap.as_of).getTime();
   const available = metric.series.filter((s) => rows.some((row) => typeof row[s.key] === "number"));
@@ -22,10 +23,11 @@ export function MetricChart({ snap, metric, data, compact = false }: {
     ? [{ ts: row.ts, value: row[key] as number }] : []));
   const peak = candidates.sort((a, b) => metric.id === "temp" ? a.value - b.value : b.value - a.value)[0];
   const values = visible.flatMap((row) => available.flatMap((s) => typeof row[s.key] === "number" ? [row[s.key] as number] : []));
-  const low = Math.min(0, ...values, rule?.threshold ?? 0);
-  const high = Math.max(...values, rule?.threshold ?? 0, metric.unit === "in" ? 0.01 : 1);
+  const low = Math.min(0, ...values, stage ?? 0);
+  const high = Math.max(...values, stage ?? 0, metric.unit === "in" ? 0.01 : 1);
   const pad = Math.max((high - low) * 0.12, metric.unit === "in" ? 0.02 : 1);
-  const format = (value: number) => metric.unit === "sensors" ? `${value} sensor${value === 1 ? "" : "s"}`
+  const format = (value: number) => metric.unit === "ft" ? `${value.toFixed(2)} ft`
+    : metric.unit === "sensors" ? `${value} sensor${value === 1 ? "" : "s"}`
     : fmtVal(value, metric.unit === "°F" ? "degF" : metric.unit);
   const tick = (value: number) => new Date(value).toLocaleString("en-US", { timeZone: tz, month: "short", day: "numeric", hour: "numeric", hour12: false });
   const label = rule?.triggered ? "Threshold crossed" : context ? "Hazard window" : "Weather context";
@@ -33,11 +35,11 @@ export function MetricChart({ snap, metric, data, compact = false }: {
     <figure aria-labelledby={`${id}-title`} className="min-w-0 rounded-xl border border-edge p-3 sm:p-4" data-metric={metric.id}>
       <figcaption className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h3 id={`${id}-title`} className="text-base font-semibold">{metric.title} <span className="text-xs font-normal text-muted">({metric.unit})</span></h3>
+          <h3 id={`${id}-title`} className="text-base font-semibold">{metric.title} <span className="text-xs font-normal text-muted">({metric.unit}{metric.waterLevel?.datum ? ` above ${metric.waterLevel.datum}` : ""})</span></h3>
           <p className="mt-0.5 text-xs text-ink2">{rule?.triggered ? "Evidence supporting the suggestion" : context ? "Context for the recorded alert or hazard" : "Supporting weather context"}</p>
         </div>
         {peak && <div className="text-right text-sm"><strong className="tabnum">{format(peak.value)}</strong>
-          <p className="text-[11px] text-muted">{metric.signal ? "Recorded observation" : `${metric.id === "temp" ? "Lowest" : metric.id === "ice" || metric.id === "snow" ? "Total" : "Peak"} in chart`} · {fmtTime(new Date(peak.ts).toISOString(), tz, { date: false })}</p></div>}
+          <p className="text-[11px] text-muted">{metric.signal ? "Recorded observation" : `${metric.id === "temp" ? "Lowest" : ["ice", "snow", "rain"].includes(metric.id) ? "Total" : "Peak"} in chart`} · {fmtTime(new Date(peak.ts).toISOString(), tz, { date: false })}</p></div>}
       </figcaption>
       {!available.length ? (
         <p className="mt-3 rounded-lg bg-[var(--surface-2)] p-4 text-sm text-ink2">No measurements are available for this chart. The recommendation still uses the recorded alerts and evidence; missing data does not establish safe conditions.</p>
@@ -52,10 +54,12 @@ export function MetricChart({ snap, metric, data, compact = false }: {
                 stroke="var(--axis)" tick={{ fill: "var(--text-muted)", fontSize: 10 }} allowDataOverflow />
               <YAxis domain={metric.unit === "%" ? [0, 100] : [low < 0 ? low - pad : 0, high + pad]}
                 allowDecimals={!["sensors", "hours", "rank"].includes(metric.unit)}
-                width={38} tickCount={compact ? 3 : 5} tickFormatter={(v: number) => metric.unit === "in" ? v.toFixed(2) : String(Math.round(v))}
+                width={38} tickCount={compact ? 3 : 5} tickFormatter={(v: number) => ["in", "ft"].includes(metric.unit) ? v.toFixed(2) : String(Math.round(v))}
                 stroke="var(--axis)" tick={{ fill: "var(--text-muted)", fontSize: 10 }} />
               {rule && <ReferenceLine y={rule.threshold} stroke="var(--data-focus)" strokeDasharray="5 4"
                 label={{ value: `Threshold ${format(rule.threshold)}${rule.verified ? "" : " *"}`, position: rule.threshold < low + (high - low) / 3 ? "insideBottomRight" : "insideTopRight", fill: "var(--data-focus)", fontSize: 10 }} />}
+              {!rule && typeof stage === "number" && <ReferenceLine y={stage} stroke="var(--data-focus)" strokeDasharray="5 4"
+                label={{ value: `Official minor flood stage ${format(stage)}`, position: "insideTopRight", fill: "var(--data-focus)", fontSize: 10 }} />}
               <ReferenceLine x={asOf} stroke="var(--text-muted)" strokeDasharray="3 3"
                 label={{ value: "As of", position: "insideTopLeft", fill: "var(--text-muted)", fontSize: 10 }} />
               <Tooltip content={<MetricTooltip tz={tz} snap={snap} data={data} format={format} />} />
@@ -87,8 +91,15 @@ export function MetricChart({ snap, metric, data, compact = false }: {
           {window && <span className="mt-1 block">Highlighted window: {fmtTime(new Date(window.start).toISOString(), tz)} – {fmtTime(new Date(window.end).toISOString(), tz)}.</span>}
           {metric.signal && <span className="mt-1 block">This is a recorded observation{peak ? ` reported at ${fmtTime(new Date(peak.ts).toISOString(), tz)}` : ""}, available by this evaluation, not a forecast of future conditions.</span>}
           {metric.id === "rwis" && <span className="mt-1 block">This counts nearby pavement sensor alerts, not inches of ice or affected roads. Verify conditions on staff commute routes before deciding.</span>}
-          {metric.id === "roads" && <span className="mt-1 block">Road scale: 0 normal, 1 wet/frost, 2 partially covered, 3 completely covered, 4 travel advisory, 5 travel not advised/closed.</span>}
-          {(rule ?? context)?.source_url.startsWith("https://") && <div className="mt-1"><a href={(rule ?? context)!.source_url} target="_blank" rel="noreferrer" className="inline-block underline underline-offset-2">View recorded evidence source</a></div>}
+          {metric.id === "rain" && <span className="mt-1 block">Forecast rainfall in the displayed 24-hour accumulation window. Rainfall supports preparation; it does not establish flood depth, a closed road or flooding at this facility.</span>}
+          {metric.waterLevel && <>
+            <span className="mt-1 block">Gauge {metric.waterLevel.stationId} · {metric.waterLevel.source}. {metric.waterLevel.datum ? `Levels are feet above ${metric.waterLevel.datum}.` : "The vertical datum is unavailable; no flood-stage comparison is shown."}</span>
+            <span className="mt-1 block">Observed readings describe water at this regional gauge; dashed readings are an issued forecast. This chart does not measure water depth or establish inundation at the facility or on a commute road.</span>
+            {metric.waterLevel.floodStage !== null && <span className="mt-1 block">Official minor flood stage at this gauge: {format(metric.waterLevel.floodStage)} above {metric.waterLevel.datum}. Compare only levels from this gauge and datum.</span>}
+          </>}
+          {metric.id === "roads" && <span className="mt-1 block">{snap.facility.state === "NC" ? "DriveNC reports are matched to the configured commute corridors. A closure report describes the affected road; it does not establish that all facility routes are closed." : "Road scale: 0 normal, 1 wet/frost, 2 partially covered, 3 completely covered, 4 travel advisory, 5 travel not advised/closed."}</span>}
+          {(rule ?? context)?.source_url?.startsWith("https://") && <div className="mt-1"><a href={(rule ?? context)!.source_url} target="_blank" rel="noreferrer" className="inline-block underline underline-offset-2">View recorded evidence source</a></div>}
+          {metric.waterLevel && available.map((series) => data.meta[series.key]?.source_url?.startsWith("https://") && <a key={series.key} href={data.meta[series.key].source_url} target="_blank" rel="noreferrer" className="mt-1 block underline underline-offset-2">View {series.forecast ? "issued forecast" : "observation"} source</a>)}
         </div>
       </>}
     </figure>

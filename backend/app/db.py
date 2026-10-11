@@ -71,11 +71,12 @@ def make_engine(url: str):
     with eng.begin() as conn:
         # Additive migrations for databases created before a column existed. Old snapshots keep
         # the default (not recomputed): the record shows only what was computed at the time.
-        for table, migrations in (("snapshot", MIGRATIONS), ("decisioncontext", CONTEXT_MIGRATIONS)):
+        for table, migrations in (("snapshot", MIGRATIONS), ("decisioncontext", CONTEXT_MIGRATIONS), ("historyevent", [("facility_id", "VARCHAR NOT NULL DEFAULT 'IA-AMES-SC'")])):
             cols = {r[1] for r in conn.execute(text(f"PRAGMA table_info({table})"))}
             for name, ddl in migrations:
                 if name not in cols:
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_historyevent_facility_id ON historyevent (facility_id)"))
         for t in IMMUTABLE_TRIGGERS:
             conn.execute(text(t))
     return eng

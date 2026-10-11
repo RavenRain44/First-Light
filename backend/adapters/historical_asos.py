@@ -27,8 +27,13 @@ def archive_dir():
     return settings.db_path.parent / 'historical_sources'
 
 
-def source_url(year):
-    params = [('station','AMW'), ('network','IA_ASOS'), ('year1',year), ('month1',1), ('day1',1),
+def station_start(station="AMW"):
+    """Advertised station coverage; neither date guarantees complete observations."""
+    return {"AMW": START, "ILM": "1942-06-01"}.get(station, START)
+
+
+def source_url(year, station="AMW", network="IA_ASOS"):
+    params = [('station',station), ('network',network), ('year1',year), ('month1',1), ('day1',1),
               ('year2',year+1), ('month2',1), ('day2',1), ('tz','Etc/UTC'), ('format','onlycomma'),
               ('latlon','no'), ('elev','no'), ('missing','M'), ('trace','T'), ('direct','no'),
               ('report_type',3), ('report_type',4)] + [('data',f) for f in FIELDS]
@@ -46,14 +51,14 @@ def present_weather(metar):
     return ' '.join(t for t in body if len(t) >= 2 and _WX.match(t) and t != 'VC')
 
 
-def parse_csv(text):
+def parse_csv(text, station="AMW"):
     text = '\n'.join(line for line in text.splitlines() if not line.startswith('#'))
     reader = csv.DictReader(io.StringIO(text))
     if not reader.fieldnames or 'valid' not in reader.fieldnames:
-        raise cache.SourceUnavailable('AMW archive returned no valid CSV header')
+        raise cache.SourceUnavailable(f'{station} archive returned no valid CSV header')
     rows = []
     for row in reader:
-        if row.get('station') != 'AMW':
+        if row.get('station') != station:
             continue
         try:
             valid = datetime.fromisoformat(row['valid']).replace(tzinfo=timezone.utc)
@@ -67,8 +72,10 @@ def parse_csv(text):
     return sorted(rows, key=lambda r:r['utc_valid'])
 
 
-async def year_rows(year, online=False, retry=False):
-    path = archive_dir() / f'AMW-{year}.json.gz'
+async def year_rows(year, online=False, retry=False, station="AMW", network="IA_ASOS"):
+    if not re.fullmatch(r"[A-Z0-9]{3,5}", station) or not re.fullmatch(r"[A-Z]{2}_ASOS", network):
+        raise ValueError("Invalid observation station/network")
+    path = archive_dir() / f'{station}-{year}.json.gz'
     # Current year is refreshed at most once per UTC day, never silently frozen forever.
     if path.exists():
         data = json.loads(gzip.decompress(path.read_bytes()))
@@ -83,14 +90,14 @@ async def year_rows(year, online=False, retry=False):
     if not online:
         raise cache.SourceUnavailable('Archive not cached. Enable online historical build explicitly.')
     async with _gate:
-        url = source_url(year)
+        url = source_url(year, station, network)
         for attempt in range(3):
             try:
                 async with httpx.AsyncClient(timeout=120, follow_redirects=True, headers={'User-Agent':settings.nws_user_agent}) as client:
                     response = await client.get(url)
                     response.raise_for_status()
-                rows = parse_csv(response.text)
-                data = {'url':url, 'fetched_at':datetime.now(timezone.utc).isoformat(),
+                rows = parse_csv(response.text, station)
+                data = {'station':station, 'network':network, 'url':url, 'fetched_at':datetime.now(timezone.utc).isoformat(),
                         'raw_sha256':hashlib.sha256(response.content).hexdigest(), 'rows':rows,
                         'availability':'validity time + assumed 15-minute latency; ingestion times unavailable'}
                 path.parent.mkdir(parents=True, exist_ok=True)
@@ -99,5 +106,5 @@ async def year_rows(year, online=False, retry=False):
                 tmp.replace(path)
                 return data
             except (httpx.HTTPError, cache.SourceUnavailable):
-                if attempt == 2: raise cache.SourceUnavailable(f'AMW {year} archive failed after three attempts')
+                if attempt == 2: raise cache.SourceUnavailable(f'{station} {year} archive failed after three attempts')
                 await asyncio.sleep(1 + attempt)

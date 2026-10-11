@@ -1,21 +1,23 @@
 import { useEffect, useState } from "react";
 import { BacktestingPanel } from "./BacktestingPanel";
+import { useFacility } from "../facility";
 import { api } from "../api";
 import { Badge, Card, PostureBadge, READINESS, Skeleton, fmtTime } from "../util";
 
 export function ThresholdsView() {
+  const facility = useFacility();
   const [th, setTh] = useState<any>(null);
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => { api.thresholds().then(setTh).catch((e) => setErr(e.message)); }, []);
   if (err) return <Card title="Thresholds"><p className="text-sm">{err}</p></Card>;
   if (!th) return <Card title="Thresholds"><Skeleton className="h-40" /></Card>;
-  const hazards = ["winter", "wind", "cold"];
+  const hazards = [...new Set(th.rules.map((r: any) => r.hazard))] as string[];
   return (
     <div className="space-y-4">
       <BacktestingPanel />
       <Card title="Backtest: recommendation at 04:00 local on the impact day vs. what happened"
         right={<span className="text-xs text-muted">simulated by rules (backtest), not real USDA decisions</span>}>
-        <p className="mb-3 text-sm text-muted">These seven curated examples retain their original simulation grading. The multi-year scores above use separate independent station-outcome labels; the two grading methods are not interchangeable.</p>
+        <p className="mb-3 text-sm text-muted">Curated examples retain their recorded simulation grading. The multi-year scores above use separate independent station-outcome labels; the two grading methods are not interchangeable.</p>
         {th.backtest.length === 0 ? <p className="text-sm">No history built yet (python -m scripts.build_history).</p> : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -27,7 +29,7 @@ export function ThresholdsView() {
                   <tr key={b.event_id} className="border-b border-edge/50 align-top">
                     <td className="py-1.5 pr-2">{b.name}</td>
                     <td><PostureBadge p={b.at_0400_local.posture} size="sm" /> <span className="text-xs text-muted">{b.at_0400_local.confidence}</span></td>
-                    <td className="text-xs tabnum">{b.first_non_normal ? `${fmtTime(b.first_non_normal.as_of, "America/Chicago")}` : "never"}</td>
+                    <td className="text-xs tabnum">{b.first_non_normal ? `${fmtTime(b.first_non_normal.as_of, facility.timezone)}` : "never"}</td>
                     <td>{b.outcome_severe ? <Badge tone="bad">yes</Badge> : <Badge>no</Badge>}</td>
                     <td className="text-xs">{b.verdict}</td>
                   </tr>
@@ -42,7 +44,7 @@ export function ThresholdsView() {
         <p className="mb-3 text-sm text-ink2">Every cutoff the engine uses, with its anchor and source. Rules marked ⚠ are plausible but not verified against a primary source; they are flagged everywhere they appear.</p>
         {hazards.map((h) => (
           <div key={h} className="mb-4">
-            <h3 className="mb-1 font-semibold capitalize">{h === "wind" ? "High wind / severe thunderstorm" : h === "winter" ? "Winter / ice" : "Extreme cold"}</h3>
+            <h3 className="mb-1 font-semibold capitalize">{h === "wind" ? "High wind / severe thunderstorm" : h === "winter" ? "Winter / ice" : h === "cold" ? "Extreme cold" : h.replaceAll("_", " ")}</h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead><tr className="border-b border-edge text-left text-xs uppercase text-ink2">

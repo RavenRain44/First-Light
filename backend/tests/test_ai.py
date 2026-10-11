@@ -68,6 +68,19 @@ def test_fallback_is_complete_and_numbers_validate(snap):
     assert agent.validate(interp, snap, agent.allowed_numbers(snap)) == []
 
 
+def test_saved_retrospective_analogs_cannot_enter_replay_inference_or_template(snap):
+    future = {"name": "Future storm outcome", "similarity_pct": 97, "recommended_posture": "CLOSED",
+              "outcome_summary": "Future storm caused closures", "label": "backtest"}
+    record = {**snap, "analogs": [future]}
+    assert VIEWS['get_analogs'](record) == []
+    assert fallback.build(record, record['analogs']).analog_comparison == ''
+    assert 'Future storm' not in agent._context(record)
+    assert record['analogs'] == [future]  # Reading does not rewrite the recorded facts.
+    live = {**record, "mode": "live"}
+    assert VIEWS['get_analogs'](live)[0]['name'] == future['name']
+    assert 'Future storm outcome' in fallback.build(live, live['analogs']).analog_comparison
+
+
 def test_validation_rejects_invented_numbers_and_posture(snap):
     allowed = agent.allowed_numbers(snap)
     bad = Interpretation(headline="Early dismissal today", rationale_paragraph=(
@@ -294,6 +307,8 @@ def test_reason_schema_limits_model_to_computed_evidence(snap):
 
 
 def test_reason_phrases_translate_coded_weather_evidence_for_the_manager():
+    assert fallback._reason_phrase({"metric": "road_worst_rank", "observed_value": 5, "unit": "rank", "hazard": "access"}) == (
+        "a reported full closure on a commute road")
     assert fallback._reason_phrase({"metric": "spc_day1_rank", "observed_value": 4.0}) == (
         "a moderate risk of severe storms in the Storm Prediction Center outlook")
     assert fallback._reason_phrase({"metric": "road_rank", "observed_value": 5, "unit": "rank"}) == (

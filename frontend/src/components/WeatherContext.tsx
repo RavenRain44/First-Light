@@ -1,4 +1,5 @@
 import type { Snapshot } from "../types";
+import { useFacility } from "../facility";
 import type { Mode } from "./Header";
 import { fmtTime } from "../util";
 
@@ -6,15 +7,16 @@ export function WeatherContext({ snap, mode, saved, decisionId, demo, error, onL
   snap: Snapshot | null; mode: Mode; saved: boolean; decisionId: number | null;
   demo: boolean; error: string | null; onLive: () => void;
 }) {
+  const facility = useFacility();
   const historical = saved || mode === "replay";
-  const tz = snap?.facility.timezone ?? "America/Chicago";
+  const tz = snap?.facility.timezone ?? facility.timezone;
   const title = saved ? `HISTORICAL DATA · Saved decision${decisionId ? ` #${decisionId}` : ""}`
     : historical ? "HISTORICAL DATA · Weather replay" : mode === "livecheck" ? "WHAT-IF CHECK" : demo ? "DEMO · Cached weather" : "LIVE";
   return <aside aria-label="Weather viewing context" className={`card border-l-4 p-4 ${historical ? "border-l-amber-500" : "border-l-[var(--accent)]"}`}>
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
         <p className="text-sm font-bold tracking-wide">{title}</p>
-        <p className="mt-1 text-sm">{snap?.facility.name ?? "Facility weather"} · {snap ? fmtTime(snap.as_of, tz, {date:true, year:true}) : "Loading weather…"} · {tz}</p>
+        <p className="mt-1 text-sm">{snap?.facility.name ?? facility.name} · {snap ? fmtTime(snap.as_of, tz, {date:true, year:true}) : "Loading weather…"} · {tz}</p>
       </div>
       {(historical || mode === "livecheck") && <button className="btn" onClick={onLive}>Return to live</button>}
     </div>

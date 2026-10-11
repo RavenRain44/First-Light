@@ -73,8 +73,12 @@ def review_dict(r: DecisionReview | None) -> dict | None:
 def list_past(current_snapshot_id: str | None, facility_id: str | None = None, now: datetime | None = None) -> tuple[list[dict], list[int]]:
     """Ranked past decisions, plus the ids of unreviewed ones whose AI review is now due."""
     now = now or datetime.now(timezone.utc)
-    f = get_facility(facility_id)
     current = snapshots.get(current_snapshot_id) if current_snapshot_id else None
+    recorded_facility = (current or {}).get("facility", {}).get("id") or (current or {}).get("facility_id")
+    if facility_id and recorded_facility and facility_id != recorded_facility:
+        from fastapi import HTTPException
+        raise HTTPException(404, "Snapshot does not belong to the selected facility")
+    f = get_facility(facility_id or recorded_facility)
     features = (current or {}).get("features") or {}
     with session() as s:
         rows = s.exec(select(Decision, Snapshot).join(Snapshot, Snapshot.snapshot_id == Decision.snapshot_id)

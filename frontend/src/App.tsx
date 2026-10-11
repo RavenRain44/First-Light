@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { api } from "./api";
+import { api, DEFAULT_FACILITY_ID, selectApiFacility } from "./api";
+import { FACILITY_OPTIONS, FacilityContext, hasUnsavedDraft } from "./facility";
 import { AIPanel } from "./components/AIPanel";
 import { AlertsPanel } from "./components/AlertsPanel";
 import { RelevantMetrics, SuggestedAction, useTimeseries } from "./components/DashboardCard";
@@ -21,7 +22,7 @@ import { CloudCopyPanel } from "./components/CloudCopyPanel";
 import { ThreatPanel } from "./components/ThreatPanel";
 import { ThresholdsView } from "./components/ThresholdsView";
 import { TimelinePanel } from "./components/TimelinePanel";
-import type { Snapshot } from "./types";
+import type { Facility, Snapshot } from "./types";
 import { WeatherContext } from "./components/WeatherContext";
 import { Section, Skeleton } from "./util";
 
@@ -35,7 +36,41 @@ function initialTheme(): string {
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
+function initialFacilityId() {
+  try { const saved = localStorage.getItem("cc-facility"); if (FACILITY_OPTIONS.some(f => f.id === saved)) return saved!; }
+  catch { /* Storage unavailable. */ }
+  return DEFAULT_FACILITY_ID;
+}
+
 export default function App() {
+  const [facilityId, setFacilityId] = useState(() => { const id = initialFacilityId(); selectApiFacility(id); return id; });
+  const [facilities, setFacilities] = useState<Facility[]>(FACILITY_OPTIONS);
+  const [registryError, setRegistryError] = useState("");
+  useEffect(() => {
+    let active = true;
+    api.facilities().then(list => {
+      if (!active || !list.length) return;
+      setFacilities(list);
+      setFacilityId(current => { if (list.some(f => f.id === current)) return current; selectApiFacility(list[0].id); return list[0].id; });
+    }).catch(() => { if (active) setRegistryError("Facility metadata could not be loaded; retry by reloading the page."); });
+    return () => { active = false; };
+  }, []);
+  const changeFacility = (id: string) => {
+    if (id === facilityId || !facilities.some(f => f.id === id)) return;
+    if (hasUnsavedDraft() && !window.confirm("You have unsaved decision or notification edits. Discard these edits and switch facilities?")) return;
+    selectApiFacility(id);
+    try { localStorage.setItem("cc-facility", id); } catch { /* Storage unavailable. */ }
+    setFacilityId(id);
+    window.scrollTo({ top: 0 });
+  };
+  const facility = facilities.find(f => f.id === facilityId) ?? facilities[0];
+  return <FacilityContext.Provider value={facility}><FacilitySession key={facilityId} facility={facility} facilities={facilities}
+    changeFacility={changeFacility} registryError={registryError} /></FacilityContext.Provider>;
+}
+
+function FacilitySession({ facility, facilities, changeFacility, registryError }: {
+  facility: Facility; facilities: Facility[]; changeFacility: (id: string) => void; registryError: string;
+}) {
   const [mode, setMode] = useState<Mode>("live");
   const modeRef = useRef(mode);
   modeRef.current = mode;
@@ -177,9 +212,10 @@ export default function App() {
 
   return (
     <div className={`mx-auto max-w-5xl space-y-4 p-3 sm:p-5 ${mode !== "live" || savedWeather ? "historical-workspace" : ""}`}>
-      <Header snap={shown} mode={mode} setMode={changeMode} view={view} setView={(next)=>{if(next==='notifications'&&(mode!=='live'||savedWeather)){changeMode('live');setNotificationDecision(null);}setView(next);}} demo={demo} theme={theme}
+      <Header facility={facility} facilities={facilities} onFacilityChange={changeFacility} snap={shown} mode={mode} setMode={changeMode} view={view} setView={(next)=>{if(next==='notifications'&&(mode!=='live'||savedWeather)){changeMode('live');setNotificationDecision(null);}setView(next);}} demo={demo} theme={theme}
         toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} />
 
+      {registryError && <p role="status" className="text-xs text-muted">{registryError}</p>}
       <WeatherContext snap={shown} mode={mode} saved={savedWeather} decisionId={savedDecisionId} demo={demo} error={err} onLive={() => {changeMode("live");setView("today");}} />
 
       {view === "notifications" ? (
@@ -189,7 +225,7 @@ export default function App() {
             : <Skeleton className="h-48" />}
           {notificationDecision !== null && <NotificationsView key={notificationDecision} decisionId={notificationDecision} onBack={() => setView("today")} />}
         </div>
-      ) : view === "decisions" ? <DecisionLogView timezone={shown?.facility.timezone ?? "America/Chicago"} onSnapshot={viewDecisionWeather} /> : view === "thresholds" ? <div className="cc-fade"><ThresholdsView /></div> : (
+      ) : view === "decisions" ? <DecisionLogView timezone={shown?.facility.timezone ?? facility.timezone} onSnapshot={viewDecisionWeather} /> : view === "thresholds" ? <div className="cc-fade"><ThresholdsView /></div> : (
         <>
           {mode === "replay" && <ReplayPanel onSnapshot={onReplaySnapshot} busy={busy} setBusy={setBusy} current={snap} />}
           {mode === "livecheck" && <LiveCheckPanel onSnapshot={(s)=>{if(modeRef.current==='livecheck')setSnap(s);}} busy={busy} setBusy={setBusy} />}
@@ -221,11 +257,11 @@ export default function App() {
                 <PanelBoundary name="Alerts"><AlertsPanel snap={shown} /></PanelBoundary>
               </Section>
               <Section id="charts" title="Forecast charts" open={open.has("charts")} onToggle={() => toggle("charts")}
-                summary={shown.historical_context?.requested_mode === "observation" ? "Archived observations before the selected time; forecast not supplied" : "Temperature, wind, ice, snow and precipitation: past 12 hours and next 48"}>
+                summary={shown.historical_context?.requested_mode === "observation" ? "Archived observations before the selected time; forecast not supplied" : facility.state === "NC" ? "Wind, rainfall and coastal water levels where supplied; review source coverage and forecast timing" : "Temperature, wind, ice, snow and precipitation: past 12 hours and next 48"}>
                 <PanelBoundary name="Timeline"><AllCharts snap={shown} /></PanelBoundary>
               </Section>
               <Section id="roads" title="Roads map & cameras" open={open.has("roads")} onToggle={() => toggle("roads")}
-                summary={mode === "live" && !savedWeather ? "Iowa DOT road conditions on commute routes, with live traffic cameras" : "Historical corridor evidence; camera images only where archived"}>
+                summary={mode === "live" && !savedWeather ? `${facility.state === "NC" ? "NCDOT" : "Iowa DOT"} road conditions on commute routes, with available traffic cameras` : "Historical corridor evidence; camera images only where archived"}>
                 <PanelBoundary name="Roads"><RoadsPanel snap={shown} historical={savedWeather} savedDecisionId={savedWeather ? savedDecisionId : null} /></PanelBoundary>
               </Section>
               {shown.analogs.length > 0 && (
@@ -248,7 +284,7 @@ export default function App() {
         </>
       )}
       <footer className="pb-6 text-center text-xs text-muted">
-        Closure Call · Hack Midwest 2026 USDA AI Challenge · Facility and roster are synthetic; weather, alerts and roads are real (NWS, Iowa Environmental Mesonet, Iowa DOT). Times shown in facility local time.
+        Closure Call · Hack Midwest 2026 USDA AI Challenge · Facility and roster are synthetic; weather sources include NWS and the Iowa Environmental Mesonet; roads use the selected state’s DOT, where available. Times shown in facility local time.
       </footer>
     </div>
   );
