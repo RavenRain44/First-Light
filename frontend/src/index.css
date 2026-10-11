@@ -201,6 +201,12 @@ input[type="range"] { accent-color: var(--accent); }
 }
 .cc-cam:hover { transform: scale(1.15); }
 .cc-cam-on { background: #1d4ed8; color: #ffffff; transform: scale(1.2); }
+.cc-cam-video, .cc-cam-dot { position: relative; }
+.cc-cam-video::after, .cc-cam-dot {
+  content: ""; width: 8px; height: 8px; border-radius: 9999px; background: #dc2626; border: 1.5px solid #ffffff;
+}
+.cc-cam-video::after { position: absolute; top: -3px; right: -3px; }
+.cc-cam-dot { display: inline-block; vertical-align: middle; }
 
 /* App logo: thin outline around the white cloud + soft drop shadow, light mode only */
 .app-logo {

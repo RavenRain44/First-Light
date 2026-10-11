@@ -1,0 +1,21 @@
+{
+    "images": [
+        {
+            "cid": "KCCI-000",
+            "name": "NEXRAD Overview",
+            "county": "",
+            "network": "",
+            "state": "",
+            "url": "https://mesonet.agron.iastate.edu/current/camrad.php?network=KCCI&ts=202302220600"
+        },
+        {
+            "cid": "KCCI-027",
+            "name": "ISU Ag Farm",
+            "county": "Boone",
+            "network": "KCCI",
+            "state": "IA",
+            "url": "https://mesonet.agron.iastate.edu/archive/data/2023/02/22/camera/KCCI-027/KCCI-027_202302221200.jpg"
+        }
+    ],
+    "generated_at": "2026-10-11T00:48:37Z"
+}

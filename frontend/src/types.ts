@@ -228,6 +228,14 @@ export interface CameraView { view: number; url: string; time: string; label: st
 
 export interface Camera {
   id: string;
+  /** "traffic": Iowa DOT 511 camera with live video (live view only); "rwis": weather-station stills;
+   *  "webcam": ISU campus / KCCI stills via IEM. RWIS and webcams are archived, so they follow Replay. */
+  kind: "traffic" | "rwis" | "webcam";
+  /** Who runs the camera, for webcams (e.g. "Iowa State University webcam via IEM"). */
+  source?: string;
+  /** HLS playlist for traffic cameras (absent offline). */
+  stream_url?: string;
+  snapshot_url?: string;
   name: string;
   lat: number;
   lon: number;

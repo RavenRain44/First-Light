@@ -6,6 +6,7 @@ import { api } from "../api";
 import type { Camera, Snapshot } from "../types";
 import { Card, Prov, Skeleton, fmtTime } from "../util";
 import { CameraViewer } from "./CameraViewer";
+import { useRoads } from "./GlanceRow";
 
 // Ordinal road severity: one consistent scale, always shown with its text label.
 export const RANK_COLOR: Record<number, string> = {
@@ -15,9 +16,10 @@ export const RANK_COLOR: Record<number, string> = {
 const cssVar = (c: string) => c.startsWith("var(") ? getComputedStyle(document.documentElement).getPropertyValue(c.slice(4, -1)).trim() || "#888" : c;
 
 const CAM_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>';
-const camIcon = (selected: boolean) => L.divIcon({
+// Traffic cameras (live video) get a filled red dot; RWIS weather-station cameras are stills only.
+const camIcon = (selected: boolean, video: boolean) => L.divIcon({
   className: "",
-  html: `<span class="cc-cam${selected ? " cc-cam-on" : ""}">${CAM_SVG}</span>`,
+  html: `<span class="cc-cam${selected ? " cc-cam-on" : ""}${video ? " cc-cam-video" : ""}">${CAM_SVG}</span>`,
   iconSize: [26, 26],
   iconAnchor: [13, 13],
 });
@@ -25,19 +27,12 @@ const camIcon = (selected: boolean) => L.divIcon({
 const CAMERA_REFRESH_MS = 5 * 60 * 1000;
 
 export function RoadsPanel({ snap, savedDecisionId, historical = false }: { snap: Snapshot; savedDecisionId?: number | null; historical?: boolean }) {
-  const [data, setData] = useState<any>(null);
-  const [err, setErr] = useState<string | null>(null);
+  const { data, err } = useRoads(historical ? {...snap, mode:"replay"} : snap);
   const [layers, setLayers] = useState({ roads: true, corridors: true, cameras: false });
   const [cams, setCams] = useState<{ status: string; detail: string | null; cameras: Camera[] } | null>(null);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<string | null>(null);
   const live = snap.mode === "live" && !historical;
-
-  useEffect(() => {
-    if (snap.facility.hypothetical) return;
-    setErr(null);
-    api.roads(live ? undefined : snap.as_of).then(setData).catch((e) => setErr(String(e.message ?? e)));
-  }, [snap.snapshot_id, live, snap.as_of, snap.facility.hypothetical]);
 
   // Cameras load only when the layer is on; they follow the replay clock and refresh while live.
   useEffect(() => {
@@ -51,6 +46,11 @@ export function RoadsPanel({ snap, savedDecisionId, historical = false }: { snap
   }, [layers.cameras, live, snap.as_of, snap.facility.hypothetical, historical, savedDecisionId]);
 
   const visibleCams = useMemo(() => (cams?.cameras ?? []).filter((c) => !hidden.has(c.id)), [cams, hidden]);
+  // Frame the traffic cameras and webcams around Ames; the far-off RWIS sites (~50+ km) stay on the map but would zoom it out too far.
+  const fitCams = useMemo(() => {
+    const near = visibleCams.filter((c) => c.kind !== "rwis");
+    return near.length ? near : visibleCams;
+  }, [visibleCams]);
   const selectedCam = visibleCams.find((c) => c.id === selected) ?? null;
   // A camera with no frame at the new replay hour simply disappears; close its viewer.
   useEffect(() => { if (selected && cams && !selectedCam) setSelected(null); }, [cams, selected, selectedCam]);
@@ -92,13 +92,15 @@ export function RoadsPanel({ snap, savedDecisionId, historical = false }: { snap
                   `${f.properties.label} (${f.properties.rank_label})<br/>reported ${fmtTime(f.properties.utc_valid?.replace("Z", ":00Z"), tz)}`, { sticky: true })} />
             )}
             {layers.cameras && visibleCams.map((c) => (
-              <Marker key={c.id} position={[c.lat, c.lon]} icon={camIcon(c.id === selected)} zIndexOffset={c.id === selected ? 1000 : 0}
+              <Marker key={c.id} position={[c.lat, c.lon]} icon={camIcon(c.id === selected, live && !!c.stream_url)} zIndexOffset={c.id === selected ? 1000 : 0}
                 eventHandlers={{ click: () => setSelected(c.id) }} keyboard title={`${c.name} camera`}>
-                <LTooltip direction="top" offset={[0, -12]}>{c.name} · {c.views.length} view{c.views.length > 1 ? "s" : ""}</LTooltip>
+                <LTooltip direction="top" offset={[0, -12]}>
+                  {c.name} · {live && c.stream_url ? "live video" : `${c.views.length} still view${c.views.length > 1 ? "s" : ""}`}
+                </LTooltip>
               </Marker>
             ))}
             <AutoResize />
-            <FitView center={center} points={layers.cameras ? visibleCams.map((c) => [c.lat, c.lon] as [number, number]) : []} />
+            <FitView center={center} points={layers.cameras ? fitCams.map((c) => [c.lat, c.lon] as [number, number]) : []} />
             <CircleMarker center={[data.facility.lat, data.facility.lon]} radius={8}
               pathOptions={{ color: cssVar("var(--surface-1)"), weight: 2, fillColor: cssVar("var(--text-primary)"), fillOpacity: 1 }}>
               <LTooltip permanent direction="right">Facility</LTooltip>
@@ -121,7 +123,10 @@ export function RoadsPanel({ snap, savedDecisionId, historical = false }: { snap
               <p className="mt-2 text-xs text-muted">{cams.detail ?? "No camera images available for this time."}</p>
             )}
             {layers.cameras && cams?.status === "ok" && !selectedCam && (
-              <p className="mt-2 text-xs text-muted">{historical ? "Click a camera to view its saved decision-time frames by angle." : "Click a camera on the map to see its latest image."}</p>
+              <p className="mt-2 text-xs text-muted">
+                {historical ? "Click a camera to view its saved decision-time frames by angle." : "Click a camera on the map."}{live && visibleCams.some((c) => c.stream_url) && <> Cameras with a <span className="cc-cam-dot" aria-hidden /> stream live video; the others show stills.</>}
+                {!live && " Replay shows weather-station and campus webcam stills archived at that time (traffic video is live only)."}
+              </p>
             )}
           </fieldset>
 

@@ -1,127 +1,126 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { api } from "../api";
-import { ACTIONS, joinReasons, relevantMetrics, suggestionReasons } from "../dashboard";
+import { ACTIONS, joinReasons, relevantMetrics, suggestionReasons, supportingRules } from "../dashboard";
 import type { Snapshot, Timeseries } from "../types";
-import { Badge, Skeleton, fmtTime } from "../util";
-import { AIPanel, WatchPanel } from "./AIPanel";
-import { AlertsPanel } from "./AlertsPanel";
-import { DecisionPanel } from "./DecisionPanel";
+import { Badge, CooperBanner, PostureBadge, Skeleton, ago, fmtClock, fmtDayLong, fmtTime } from "../util";
 import { PanelBoundary } from "./ErrorBoundary";
-import { AnalogsPanel, RecordTimeline } from "./HistoryPanel";
 import { MetricChart } from "./MetricChart";
-import { RawDataDrawer } from "./RawDataDrawer";
-import { RoadsPanel } from "./RoadsPanel";
-import { ThreatPanel } from "./ThreatPanel";
-import { TimelinePanel } from "./TimelinePanel";
 
-export function DashboardCard({ snap, recordKey, onRecorded, onNotify, onOpenRecord, onRegenerate, historical = false, savedDecisionId }: {
-  snap: Snapshot; recordKey: number; onRecorded: (id: number) => void; onNotify: (id: number) => void;
-  historical?: boolean; savedDecisionId?: number | null;
-  onOpenRecord: (id: string) => void;
-  onRegenerate?: () => void;
+// One timeseries request per snapshot, shared by Relevant Metrics and the Forecast charts section.
+const tsCache = new Map<string, Promise<Timeseries>>();
+export function useTimeseries(snap: Snapshot, enabled: boolean): { data: Timeseries | null; error: string | null } {
+  const id = snap.snapshot_id;
+  const [state, setState] = useState<{ id: string; data: Timeseries | null; error: string | null } | null>(null);
+  useEffect(() => {
+    if (!enabled) return;
+    let alive = true;
+    if (!tsCache.has(id)) tsCache.set(id, api.timeseries(id).catch((e) => { tsCache.delete(id); throw e; }));
+    tsCache.get(id)!.then((data) => alive && setState({ id, data, error: null }))
+      .catch((e: Error) => alive && setState({ id, data: null, error: e.message }));
+    return () => { alive = false; };
+  }, [id, enabled]);
+  return state?.id === id ? { data: state.data, error: state.error } : { data: null, error: null };
+}
+
+/** The top of Today: Cooper risk, the suggested action in one sentence, and the way to act on it.
+ *  Nothing is recorded or sent from here; the button only opens Notify staff. */
+export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotify }: {
+  snap: Snapshot; busy: boolean; onRefresh?: () => void; onRegenerate?: () => void; onGoNotify: () => void;
 }) {
   const id = useId();
-  const [open, setOpen] = useState(false);
-  const [visited, setVisited] = useState(false);
-  const [focusDecision, setFocusDecision] = useState(false);
-  const decisionRef = useRef<HTMLDivElement>(null);
-  const [data, setData] = useState<Timeseries | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
-    const controller = new AbortController();
-    setData(null); setError(null);
-    api.timeseries(snap.snapshot_id, controller.signal).then(setData)
-      .catch((e: Error) => { if (!controller.signal.aborted) setError(e.message); });
-    return () => controller.abort();
-  }, [snap.snapshot_id]);
-  useEffect(() => {
-    if (!open || !focusDecision) return;
-    const frame = requestAnimationFrame(() => {
-      const target = decisionRef.current;
-      target?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
-      (target?.querySelector("input") as HTMLInputElement | null)?.focus({ preventScroll: true });
-      setFocusDecision(false);
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [open, focusDecision]);
-  const showDecision = () => { setVisited(true); setOpen(true); setFocusDecision(true); };
+  const tz = snap.facility.timezone;
+  const r = snap.readiness;
   const pending = snap.ai_addon?.status === "pending";
   const provider = pending ? "Akamai brief in progress" : snap.model_id.startsWith("akamai:") ? "Powered by Akamai"
     : snap.model_id.startsWith("bedrock:") ? "AWS fallback" : snap.model_id === "deterministic-fallback" ? "Template suggestion" : "Archived AI brief";
-  const tz = snap.facility.timezone;
   const unavailable = snap.sources.filter((s) => s.status === "unavailable");
-  const metrics = data ? relevantMetrics(snap, data) : [];
+  const people = snap.roster && !snap.roster.hypothetical ? snap.roster.expected_in_building : undefined;
+  const canDecide = snap.mode !== "backtest" && !snap.facility.hypothetical;
+
   return (
     <article className="card overflow-hidden" aria-labelledby={`${id}-action`}>
+      <CooperBanner r={r} />
       <section className="p-5 sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 id={`${id}-action`} className="text-2xl font-semibold tracking-tight underline decoration-[var(--accent)] decoration-2 underline-offset-8">Suggested Action</h2>
+          <h2 id={`${id}-action`} className="text-2xl font-semibold tracking-tight">Suggested Action</h2>
           <div className="flex flex-wrap items-center gap-2">
             <Badge tone={snap.model_id.startsWith("bedrock:") ? "warn" : pending ? "neutral" : "info"}>{provider}</Badge>
             {onRegenerate && <button onClick={onRegenerate} disabled={pending} className="btn min-h-11 !px-2 !text-xs"
-              title="Ask Akamai to rewrite the suggestion from the same recorded evidence. Re-evaluate for fresh weather.">
-              <span aria-hidden>↻</span> {pending ? "Updating…" : "Regenerate"}
+              title="Ask Akamai to rewrite the suggestion from the same recorded evidence. Use Check again for fresh weather.">
+              <span aria-hidden className={pending ? "inline-block animate-spin" : ""}>↻</span> {pending ? "Updating…" : "Regenerate"}
             </button>}
           </div>
         </div>
-        <p className="mt-6 text-xl leading-relaxed sm:text-2xl" data-testid="suggested-action">
-          Due to {joinReasons(suggestionReasons(snap))}, <strong className="font-semibold">{ACTIONS[snap.posture.posture]}</strong>.
-        </p>
-        <p className="mt-3 text-sm text-ink2">The manager makes the final decision. Approval is required before operating instructions are communicated.</p>
-        {snap.posture.guidance.length > 0 && <div role="alert" className="mt-4 rounded-lg border-l-4 border-[var(--danger)] bg-[var(--surface-2)] px-3 py-2 text-sm font-medium">
-          {snap.posture.guidance.map((guidance) => <p key={guidance}>{guidance}</p>)}
-        </div>}
-        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-ink2">
-          <span className="capitalize">{snap.confidence.level} confidence</span>
-          <span>As of {fmtTime(snap.as_of, tz)}</span>
-          {snap.readiness?.decide_by && <span className={snap.readiness.deadline_passed ? "font-semibold text-[var(--danger)]" : "font-medium"}>
-            {snap.readiness.deadline_passed ? "Decision deadline passed: " : "Decide by "}{fmtTime(snap.readiness.decide_by, tz)}
-          </span>}
-          {snap.roster.expected_in_building !== undefined && <span>{snap.roster.expected_in_building} people expected on site</span>}
+
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <span className="text-sm font-medium text-ink2">{fmtDayLong(snap.posture.decision_day)}</span>
+          <PostureBadge p={snap.posture.posture} size="lg" />
+          {r?.decide_by && (
+            <span className={`text-lg font-semibold ${r.deadline_passed ? "text-[var(--danger)]" : ""}`}>
+              {r.deadline_passed ? "Deadline passed: decide now" : `Decide by ${fmtClock(r.decide_by, tz)}`}
+            </span>
+          )}
         </div>
+        <p className="mt-1 text-xs text-muted">OPM status: {snap.posture.opm_label}</p>
+
+        <p key={`${snap.snapshot_id}-${snap.model_id}`} className="cc-fade mt-5 text-xl leading-relaxed sm:text-2xl" data-testid="suggested-action">
+          {suggestionSentence(snap)}
+        </p>
+
+        {snap.posture.guidance.length > 0 && (
+          <div role="alert" className="mt-4 rounded-xl border-l-4 border-[var(--danger)] bg-[var(--surface-2)] px-4 py-2.5 font-medium">
+            {snap.posture.guidance.map((g) => <p key={g}>⚠ {g}</p>)}
+          </div>
+        )}
+
+        <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm text-ink2">
+          <li><span className="font-semibold capitalize text-ink">{snap.confidence.level}</span> confidence</li>
+          {people !== undefined && <li><span className="font-semibold text-ink">{people}</span> people expected in the building</li>}
+          <li>
+            {snap.mode === "live" ? <>Updated {ago(snap.as_of)}</> : <>As of {fmtTime(snap.as_of, tz)}</>}
+            {onRefresh && <> · <button onClick={onRefresh} disabled={busy} className="text-[var(--accent)] underline-offset-2 hover:underline disabled:opacity-50">{busy ? "Checking…" : "Check again"}</button></>}
+          </li>
+        </ul>
         {(snap.ai_addon?.status === "failed" || (snap.ai.validation && !snap.ai.validation.ok)) &&
           <p role="status" className="mt-3 text-xs text-ink2">Akamai's wording could not be verified. The suggestion uses the recorded rules and evidence.</p>}
         {snap.ai_addon?.regen_failed && <p role="status" className="mt-3 text-xs text-ink2">The new Akamai brief could not be verified. The previous brief is still shown.</p>}
-        {unavailable.length > 0 && <p className="mt-3 text-xs text-ink2">Unavailable: {unavailable.map((s) => s.label).join(", ")}. Missing data does not establish safe conditions.</p>}
-        <button onClick={showDecision} className="btn btn-primary mt-5 min-h-11">Review and record decision <span aria-hidden>→</span></button>
-      </section>
-      <hr className="border-edge" />
-      <section className="p-5 sm:p-8" aria-labelledby={`${id}-metrics`}>
-        <h2 id={`${id}-metrics`} className="text-lg font-semibold">Relevant Metrics</h2>
-        <p className="mt-1 text-sm text-ink2">Highlighted periods and points show the evidence behind the suggestion.</p>
-        {error ? <p role="status" className="mt-4 rounded-lg bg-[var(--surface-2)] p-4 text-sm">Chart data could not be loaded. The recorded suggestion and manager review remain available.</p>
-          : !data ? <div className="mt-4 space-y-4" aria-label="Loading relevant metrics"><Skeleton className="h-60" /><Skeleton className="h-40" /></div>
-          : <div className="mt-4 space-y-4">{metrics.map((metric, index) =>
-            <PanelBoundary key={metric.id} name={metric.title}><MetricChart snap={snap} metric={metric} data={data} compact={index > 0} /></PanelBoundary>
-          )}</div>}
-      </section>
-      <hr className="border-edge" />
-      <section>
-        <button id={`${id}-toggle`} aria-expanded={open} aria-controls={`${id}-details`}
-          onClick={() => { setVisited(true); setOpen(!open); }}
-          className="flex min-h-16 w-full items-center gap-3 bg-[var(--surface-2)] px-5 py-4 text-left hover:bg-[var(--tint)] sm:px-8">
-          <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className={`h-5 w-5 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}>
-            <path d="m5 7 5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span><span className="block font-semibold">More information</span><span className="block text-xs text-muted">Manager decision, supporting evidence, sources & history</span></span>
-        </button>
-        <div id={`${id}-details`} role="region" aria-labelledby={`${id}-toggle`} hidden={!open}>
-          {visited && <div className="space-y-4 p-4 sm:p-6">
-            <div ref={decisionRef} className="scroll-mt-4">
-              <PanelBoundary name="Manager decision"><DecisionPanel key={snap.snapshot_id} snap={snap} onRecorded={onRecorded} onNotify={onNotify} /></PanelBoundary>
-            </div>
-            <PanelBoundary name="Explanation"><AIPanel snap={snap} onRegenerate={onRegenerate} /></PanelBoundary>
-            <PanelBoundary name="Alerts"><AlertsPanel snap={snap} /></PanelBoundary>
-            <PanelBoundary name="Watch"><WatchPanel snap={snap} /></PanelBoundary>
-            <PanelBoundary name="Threat breakdown"><ThreatPanel snap={snap} /></PanelBoundary>
-            <PanelBoundary name="All weather metrics"><TimelinePanel snap={snap} data={data} /></PanelBoundary>
-            <PanelBoundary name="Roads and cameras"><RoadsPanel snap={snap} historical={historical} savedDecisionId={savedDecisionId} /></PanelBoundary>
-            <PanelBoundary name="Analogs"><AnalogsPanel snap={snap} /></PanelBoundary>
-            <PanelBoundary name="Decision record"><RecordTimeline snap={snap} refreshKey={recordKey} onOpen={onOpenRecord} /></PanelBoundary>
-            <PanelBoundary name="Raw data"><RawDataDrawer snap={snap} /></PanelBoundary>
-          </div>}
-        </div>
+        {unavailable.length > 0 && <p className="mt-3 text-sm text-ink2">Some data could not be loaded ({unavailable.map((s) => s.label).join(", ")}). Missing data does not mean conditions are safe.</p>}
+
+        {canDecide ? (
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <button onClick={onGoNotify} className="btn btn-primary min-h-11 px-5 text-base">Confirm decision &amp; notify staff <span aria-hidden>→</span></button>
+            <span className="text-xs text-muted">You make the final decision. Nothing is sent until you approve the alerts.</span>
+          </div>
+        ) : (
+          <p className="mt-6 text-sm text-ink2">{snap.facility.hypothetical ? "This is a what-if check" : "This is a replay of a past storm"}, so no decision is recorded and no one is alerted.</p>
+        )}
       </section>
     </article>
   );
+}
+
+/** Charts of the evidence behind the suggestion. Only shown when a weather rule is triggered;
+ *  on a calm day the charts stay in the collapsible Forecast charts section. */
+export function RelevantMetrics({ snap }: { snap: Snapshot }) {
+  const id = useId();
+  const active = supportingRules(snap).length > 0;
+  const { data, error } = useTimeseries(snap, active);
+  if (!active) return null;
+  const metrics = data ? relevantMetrics(snap, data) : [];
+  return (
+    <section className="card p-5 sm:p-8" aria-labelledby={`${id}-metrics`}>
+      <h2 id={`${id}-metrics`} className="text-lg font-semibold">Relevant Metrics</h2>
+      <p className="mt-1 text-sm text-ink2">Highlighted periods and points show the evidence behind the suggestion.</p>
+      {error ? <p role="status" className="mt-4 rounded-lg bg-[var(--surface-2)] p-4 text-sm">Chart data could not be loaded. The suggestion and the decision steps are still available.</p>
+        : !data ? <div className="mt-4 space-y-4" aria-label="Loading relevant metrics"><Skeleton className="h-60" /><Skeleton className="h-40" /></div>
+        : <div className="mt-4 space-y-4">{metrics.map((metric, index) =>
+          <PanelBoundary key={metric.id} name={metric.title}><MetricChart snap={snap} metric={metric} data={data} compact={index > 0} /></PanelBoundary>
+        )}</div>}
+    </section>
+  );
+}
+
+/** "Due to <reasons>, <action>." The same sentence on Today and on Notify staff. */
+export function suggestionSentence(snap: Snapshot) {
+  return <>Due to {joinReasons(suggestionReasons(snap))}, <strong className="font-semibold">{ACTIONS[snap.posture.posture]}</strong>.</>;
 }
