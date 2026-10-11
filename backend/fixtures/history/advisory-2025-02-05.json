@@ -29,7 +29,7 @@
   ]
  },
  "outcome": {
-  "summary": "1 storm reports within 25 mi (1 freezing rain); AMW peak gust 22 mph; worst commute corridor: partially covered.",
+  "summary": "1 storm reports within 25 mi (1 freezing rain); AMW peak gust 21 mph; worst commute corridor: partially covered.",
   "severe_impact": false,
   "lsr_count": 1,
   "lsr_by_type": {
@@ -55,8 +55,8 @@
   "max_reported_wind_mph": null,
   "max_reported_snow_in": null,
   "max_reported_ice_in": null,
-  "amw_peak_gust_mph": 21.9,
-  "amw_peak_gust_time": "2025-02-04T22:00:00+00:00",
+  "amw_peak_gust_mph": 20.7,
+  "amw_peak_gust_time": "2025-02-05T14:00:00+00:00",
   "amw_freezing_precip_hours": 0,
   "amw_snow_hours": 1,
   "worst_corridor_rank": 2.0,
@@ -88,7 +88,7 @@
  },
  "timeline": [
   {
-   "snapshot_id": "66b14a5e2ab14a8d9814837800a8c1fd",
+   "snapshot_id": "095671f477e94c43b9743684685cdb42",
    "as_of": "2025-02-04T16:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-04",
@@ -119,7 +119,7 @@
    }
   },
   {
-   "snapshot_id": "8d51ecfa854a4bf797b8004c4985b22a",
+   "snapshot_id": "98bcb6b07fdf42d38270962007e0ea09",
    "as_of": "2025-02-04T17:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-04",
@@ -150,7 +150,7 @@
    }
   },
   {
-   "snapshot_id": "87b2b7146cf84ee0973faa11db7d1295",
+   "snapshot_id": "56f9ec1688ad43019ea0122046325f7d",
    "as_of": "2025-02-04T18:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-05",
@@ -181,7 +181,7 @@
    }
   },
   {
-   "snapshot_id": "94676913f3b54da69c979b2ae75457fa",
+   "snapshot_id": "dfbd59c3709a40738964eb3e1a6245d0",
    "as_of": "2025-02-04T19:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-05",
@@ -212,7 +212,7 @@
    }
   },
   {
-   "snapshot_id": "65731eaa5cbb4791bafb851fa2860cc8",
+   "snapshot_id": "a00d8241ff0f4994b9c9cd036f9d9f6d",
    "as_of": "2025-02-04T20:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-05",
@@ -245,7 +245,7 @@
    }
   },
   {
-   "snapshot_id": "0953f191e75544a3b923d8d65a2ea61f",
+   "snapshot_id": "f716e35bef7144869b7b34a4efa66bc4",
    "as_of": "2025-02-04T21:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-05",
@@ -278,7 +278,7 @@
    }
   },
   {
-   "snapshot_id": "3e8732bb2bdb4bb0a7471d28b0283b16",
+   "snapshot_id": "24ed5105503a4230b9b986a8830c5555",
    "as_of": "2025-02-04T22:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-05",
@@ -311,7 +311,7 @@
    }
   },
   {
-   "snapshot_id": "5bf4e74f1dde4d4183a788de13c19e36",
+   "snapshot_id": "703f1d4465be4ab6a74e7c20710c9eee",
    "as_of": "2025-02-04T23:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-05",
@@ -344,7 +344,7 @@
    }
   },
   {
-   "snapshot_id": "801d3f8cd3584de2a4b939ce8eeb5392",
+   "snapshot_id": "adfdfed37d6943d3856b1bda0a36f875",
    "as_of": "2025-02-05T00:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-05",
@@ -377,7 +377,7 @@
    }
   },
   {
-   "snapshot_id": "146eb74673044b11916c5f5d96e1f885",
+   "snapshot_id": "e23c942352c1477aad297b845c904df9",
    "as_of": "2025-02-05T01:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-05",
@@ -410,7 +410,7 @@
    }
   },
   {
-   "snapshot_id": "ccfb493f15924e8d9e0c0967ef0140ba",
+   "snapshot_id": "3cce88aa39574be09f9802c4ef772fc8",
    "as_of": "2025-02-05T02:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-05",
@@ -443,7 +443,7 @@
    }
   },
   {
-   "snapshot_id": "b71584cea32646b5a849787913ab8333",
+   "snapshot_id": "c00cd566c0b7452f80746042e6bd4d68",
    "as_of": "2025-02-05T03:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-05",
@@ -476,7 +476,7 @@
    }
   },
   {
-   "snapshot_id": "d16d8553ed86479399dbd423de096578",
+   "snapshot_id": "23f3f9576d664b1fb13b7bf3fc3deb63",
    "as_of": "2025-02-05T04:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-05",
@@ -509,7 +509,7 @@
    }
   },
   {
-   "snapshot_id": "1f763dc9a4294c17a47ae78882fc11b5",
+   "snapshot_id": "f80392477b98446790c6726dd84bd849",
    "as_of": "2025-02-05T05:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-05",
@@ -542,7 +542,7 @@
    }
   },
   {
-   "snapshot_id": "fac8dcbc4b6b4f379b21401a501f7c6a",
+   "snapshot_id": "3c08f4900c4a4153a5a9f29e27a878d4",
    "as_of": "2025-02-05T06:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-05",
@@ -575,7 +575,7 @@
    }
   },
   {
-   "snapshot_id": "46cf046209b047179bc58241ee671034",
+   "snapshot_id": "628c8a58bbdd4185afaf15fe61c2e1fd",
    "as_of": "2025-02-05T07:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-05",
@@ -608,7 +608,7 @@
    }
   },
   {
-   "snapshot_id": "a9749b60a546449682dc1d7306e7cd91",
+   "snapshot_id": "a295ecdbd6de445fbce51fb09ee5fbf4",
    "as_of": "2025-02-05T08:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-05",
@@ -641,7 +641,7 @@
    }
   },
   {
-   "snapshot_id": "fe5dc1442d534e0c9d79303b9fa280fa",
+   "snapshot_id": "fbebb847ea9c454590cafd7556638b90",
    "as_of": "2025-02-05T09:00:00+00:00",
    "posture": "DELAYED_ARRIVAL",
    "decision_day": "2025-02-05",
@@ -674,7 +674,7 @@
    }
   },
   {
-   "snapshot_id": "fb9043ea2b92453aa46d9e253f73116c",
+   "snapshot_id": "d791dd15d0af40949e8d31f3ad141428",
    "as_of": "2025-02-05T10:00:00+00:00",
    "posture": "DELAYED_ARRIVAL",
    "decision_day": "2025-02-05",
@@ -707,7 +707,7 @@
    }
   },
   {
-   "snapshot_id": "fabbfc7ab0754a06921ff2b10ebaade4",
+   "snapshot_id": "0eb19dc68a004751a4e405941b77dac8",
    "as_of": "2025-02-05T11:00:00+00:00",
    "posture": "DELAYED_ARRIVAL",
    "decision_day": "2025-02-05",
@@ -740,7 +740,7 @@
    }
   },
   {
-   "snapshot_id": "19096c5ed6e246e9a0b787f23f9eee52",
+   "snapshot_id": "78e5d1a01c2444c3bd2ed4fb4926c497",
    "as_of": "2025-02-05T12:00:00+00:00",
    "posture": "DELAYED_ARRIVAL",
    "decision_day": "2025-02-05",
@@ -773,7 +773,7 @@
    }
   },
   {
-   "snapshot_id": "cc20291449444dceaee8bc29f5008739",
+   "snapshot_id": "24f87c23560247bb90c9d2ef79c61e66",
    "as_of": "2025-02-05T13:00:00+00:00",
    "posture": "DELAYED_ARRIVAL",
    "decision_day": "2025-02-05",
@@ -806,7 +806,7 @@
    }
   },
   {
-   "snapshot_id": "a06841375a25411c95022a3fb231b3d9",
+   "snapshot_id": "4d048beff8204d529e2d9edae6d453ca",
    "as_of": "2025-02-05T14:00:00+00:00",
    "posture": "DELAYED_ARRIVAL",
    "decision_day": "2025-02-05",
@@ -839,7 +839,7 @@
    }
   },
   {
-   "snapshot_id": "68842025d86f425e90494c0c47c9eb36",
+   "snapshot_id": "b4b7506c83c54674ac2a85506271e069",
    "as_of": "2025-02-05T15:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-05",
@@ -872,7 +872,7 @@
    }
   },
   {
-   "snapshot_id": "4a32a7746bde4ec3bb3a35ffbc79e674",
+   "snapshot_id": "e2d90af04e5e44fe81e561a1d754cd55",
    "as_of": "2025-02-05T16:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-05",
@@ -905,7 +905,7 @@
    }
   },
   {
-   "snapshot_id": "e7e697ef4e2f4358ac4f750bff92138a",
+   "snapshot_id": "2025752a5ddc4254a5879a9694032aed",
    "as_of": "2025-02-05T17:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-05",
@@ -938,7 +938,7 @@
    }
   },
   {
-   "snapshot_id": "e139cfdaaed6469ca5e9076e5ac587b0",
+   "snapshot_id": "1bd3743efc4d4660b8d0239a1253b610",
    "as_of": "2025-02-05T18:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-06",
@@ -971,7 +971,7 @@
    }
   },
   {
-   "snapshot_id": "cbc923b53ba84f3cb9d50f864c71930d",
+   "snapshot_id": "a47e5f701cbd4a228ce2069753267b7f",
    "as_of": "2025-02-05T19:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-06",
@@ -1004,7 +1004,7 @@
    }
   },
   {
-   "snapshot_id": "5a25d27d93e546d0a5e8ca1c62bb644c",
+   "snapshot_id": "05c91b6e4fe645f886acc39d98d55c5d",
    "as_of": "2025-02-05T20:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-06",
@@ -1037,7 +1037,7 @@
    }
   },
   {
-   "snapshot_id": "799fe943e50b4212aa8a0b213b6fcbec",
+   "snapshot_id": "c712e3fff76844278962b9b3756ce69b",
    "as_of": "2025-02-05T21:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-06",
@@ -1070,7 +1070,7 @@
    }
   },
   {
-   "snapshot_id": "b713ce9956cb458d9e7d6665868e222d",
+   "snapshot_id": "5eb090ab70604c4985c7cf1dcd3305c1",
    "as_of": "2025-02-05T22:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-06",
@@ -1103,7 +1103,7 @@
    }
   },
   {
-   "snapshot_id": "d51a00c659e749aea78ce11472c25423",
+   "snapshot_id": "294a6ea124e84a2d89d01bbbe60e274d",
    "as_of": "2025-02-05T23:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-06",
@@ -1136,7 +1136,7 @@
    }
   },
   {
-   "snapshot_id": "bbbc1ea4b17941c5b133eb64a8ea919a",
+   "snapshot_id": "ccc7ac24a6dc459ab449dc58a4bd0a89",
    "as_of": "2025-02-06T00:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-06",
@@ -1169,7 +1169,7 @@
    }
   },
   {
-   "snapshot_id": "fdd7705f8eff44d6859d93b9b4cd7d46",
+   "snapshot_id": "508f6c7f325649fcad5451dba5f55d57",
    "as_of": "2025-02-06T01:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-06",
@@ -1202,7 +1202,7 @@
    }
   },
   {
-   "snapshot_id": "13a71aafb6074991bef9583af178140e",
+   "snapshot_id": "9f2ffe26574b40e586ee83b11bc1057d",
    "as_of": "2025-02-06T02:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-06",
@@ -1235,7 +1235,7 @@
    }
   },
   {
-   "snapshot_id": "57cb154ec559499aa394fdf729c30a64",
+   "snapshot_id": "2b0097a5ac6c45e498840548bdd3ee93",
    "as_of": "2025-02-06T03:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-06",
@@ -1268,7 +1268,7 @@
    }
   },
   {
-   "snapshot_id": "876cb4d8ab394510a33890835284c250",
+   "snapshot_id": "27262cc537564815ac8eeff3f5337a18",
    "as_of": "2025-02-06T04:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-06",
@@ -1301,7 +1301,7 @@
    }
   },
   {
-   "snapshot_id": "61d74aed2b0e4b00800b5255b004e9dc",
+   "snapshot_id": "1360a2a2afc44febb982e8d993a9b611",
    "as_of": "2025-02-06T05:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-06",
@@ -1334,7 +1334,7 @@
    }
   },
   {
-   "snapshot_id": "6866cbd83a4b4b5eac4914015357d4c7",
+   "snapshot_id": "35a176c349554574bfab1a77b1e420dd",
    "as_of": "2025-02-06T06:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-02-06",

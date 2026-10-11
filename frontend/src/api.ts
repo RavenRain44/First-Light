@@ -1,4 +1,4 @@
-import type { Decision, Snapshot } from "./types";
+import type { Decision, Snapshot, Timeseries } from "./types";
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const r = await fetch(path, { headers: { "content-type": "application/json" }, ...init });
@@ -18,11 +18,12 @@ export const api = {
   facility: () => req<any>("/api/facility"),
   latest: (maxAge?: number) => req<Snapshot>(`/api/snapshot/latest${maxAge !== undefined ? `?max_age_seconds=${maxAge}` : ""}`),
   snapshot: (id: string) => req<Snapshot>(`/api/snapshot/${id}`),
+  regenerateBrief: (id: string) => req<import("./types").AiAddon>(`/api/snapshot/${id}/interpretation`, { method: "POST" }),
   interpretation: (id: string) => req<import("./types").AiAddon>(`/api/snapshot/${id}/interpretation`),
   evaluateLive: () => req<Snapshot>("/api/evaluate", { method: "POST", body: JSON.stringify({ mode: "live" }) }),
   evaluateReplay: (as_of: string, event_id?: string) =>
     req<Snapshot>("/api/evaluate", { method: "POST", body: JSON.stringify({ mode: "replay", as_of, event_id }) }),
-  timeseries: (snapshot_id: string) => req<any>(`/api/timeseries?snapshot_id=${snapshot_id}`),
+  timeseries: (snapshot_id: string, signal?: AbortSignal) => req<Timeseries>(`/api/timeseries?snapshot_id=${snapshot_id}`, { signal }),
   roads: (as_of?: string) => req<any>(`/api/roads${as_of ? `?as_of=${encodeURIComponent(as_of)}` : ""}`),
   cameras: (as_of?: string) => req<{ status: string; detail: string | null; as_of: string; cameras: import("./types").Camera[]; note: string; source_url?: string; fetched_at?: string }>(
     `/api/cameras${as_of ? `?as_of=${encodeURIComponent(as_of)}` : ""}`),

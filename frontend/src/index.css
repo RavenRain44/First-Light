@@ -26,8 +26,11 @@
   /* charts: observed (deep) vs forecast (mid) */
   --series-1: #1e3a8a;
   --series-2: #3b82f6;
+  --series-3: #7c3aed;
   --shade-commute: rgba(59, 130, 246, 0.10);
   --shade-hours: rgba(11, 27, 46, 0.035);
+  --data-focus: #a15c00;
+  --data-focus-fill: rgba(217, 119, 6, 0.12);
 
   /* ordinal blue scale, light -> deep (postures, scores, roads) */
   --b1: #dbeafe;
@@ -69,8 +72,11 @@
     --tint-strong: #1b3361;
     --series-1: #93c5fd;
     --series-2: #3b82f6;
+    --series-3: #c4b5fd;
     --shade-commute: rgba(96, 165, 250, 0.12);
     --shade-hours: rgba(255, 255, 255, 0.04);
+    --data-focus: #fbbf24;
+    --data-focus-fill: rgba(251, 191, 36, 0.12);
     --b1: #1b3361;
     --b2: #1e40af;
     --b3: #2563eb;
@@ -102,8 +108,11 @@
   --tint-strong: #1b3361;
   --series-1: #93c5fd;
   --series-2: #3b82f6;
+  --series-3: #c4b5fd;
   --shade-commute: rgba(96, 165, 250, 0.12);
   --shade-hours: rgba(255, 255, 255, 0.04);
+  --data-focus: #fbbf24;
+  --data-focus-fill: rgba(251, 191, 36, 0.12);
   --b1: #1b3361;
   --b2: #1e40af;
   --b3: #2563eb;
@@ -192,3 +201,15 @@ input[type="range"] { accent-color: var(--accent); }
 }
 .cc-cam:hover { transform: scale(1.15); }
 .cc-cam-on { background: #1d4ed8; color: #ffffff; transform: scale(1.2); }
+
+/* App logo: thin outline around the white cloud + soft drop shadow, light mode only */
+.app-logo {
+  filter:
+    drop-shadow(1px 0 0 #9db7d6) drop-shadow(-1px 0 0 #9db7d6)
+    drop-shadow(0 1px 0 #9db7d6) drop-shadow(0 -1px 0 #9db7d6)
+    drop-shadow(0 2px 3px rgb(15 40 80 / 0.22));
+}
+:root[data-theme="dark"] .app-logo { filter: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .app-logo { filter: none; }
+}

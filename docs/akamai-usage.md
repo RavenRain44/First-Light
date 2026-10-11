@@ -48,15 +48,23 @@ additional inference call. Existing packages remain readable without this new au
 
 ## Decision brief and grounding
 
-The brief leads with operating status and the manager's final authority, immediate safety guidance, the decide-by
-time, confidence and its weakest factor. A short summary explains why the posture applies to the work or commute
-window. Up to three cited rules show observed values, thresholds, timestamps and source links. Missing sources and
-unverified policy thresholds remain visible. The full rationale can be copied into the decision record.
+The single-column dashboard leads with **Suggested Action**: “Due to [one to three reasons], [action].” Akamai
+rewrites short evidence phrases tied to computed supporting rule IDs; the action always comes from the recorded
+posture. Manager authority, immediate safety guidance, decide-by time and confidence stay visible.
+**Relevant Metrics** shows two charts chosen from the supporting rules and active hazard, highlighting threshold
+crossings, peaks and recorded hazard windows. Chart thresholds come from the immutable snapshot, not current
+policy. Captions distinguish alert context from numeric threshold evidence; missing measurements remain gaps.
+The wind chart preserves hourly-report wind and the distinct observed peak gust used by the corrected rules.
+The visible **Regenerate** control rewrites the same evidence and retains the previous accepted brief while
+the new append-only interpretation is pending, or if it fails validation.
+**More information** starts collapsed and reveals the manager form, full explanation, alerts, watch items, all
+weather metrics, roads, analogs, history and raw sources. The full rationale can be copied into the decision record.
 
 Five read-only snapshot views are supplied together instead of a multi-call agent loop. Only roster counts are
 included, never employee names or contact details. The model receives the computed posture, confidence, triggered
 rules, alerts, roads, analogs and watch items. Source text is treated as data, not instructions. All generated text
-fields are checked for unsupported numbers; citations must reference triggered rules and existing alerts. The
+fields are checked for unsupported numbers; citations must reference triggered rules and existing alerts.
+Reason phrases must cite distinct computed supporting rules and cannot contain operating instructions. The
 rationale must name the computed posture and the manager's decision authority. These checks reduce hallucinations;
 they do not prove every natural-language claim is correct. Managers can inspect the underlying source evidence.
 Deterministic counterfactuals and safety watch items are preserved. Historical analogs are simulated by rules,
@@ -70,10 +78,13 @@ this off. Missing both providers does not prevent the manager from reviewing evi
 
 ## Usage bounds
 
-Each evaluation sends one Akamai chat request, with at most one repair for rejected or malformed output.
-SDK retries are disabled. Each attempt allows 2,000 output tokens, at most 48,000 input-context characters,
+Each evaluation immediately returns a template snapshot and starts a background Akamai brief when configured.
+The brief sends one chat request, with at most one repair for rejected or malformed output.
+SDK retries are disabled. Each attempt allows 700 output tokens, at most 48,000 input-context characters,
 and a 60-second deadline. Optional Bedrock gets at most one additional request. Per-request token counts,
-provider identity, validation outcomes and fallback reasons are stored with the immutable snapshot.
+provider identity, validation outcomes and fallback reasons are stored in a separate append-only interpretation
+record. The original snapshot and its hash stay unchanged. Expanding dashboard details or changing chart focus
+makes no inference request.
 Network/auth failures stop that provider immediately. History builds, replay playback and existing snapshot reads
 make no inference requests. Avoid leaving repeated evaluation or background refresh running during a demo.
 
@@ -126,6 +137,7 @@ The optional build secret preserves TLS verification and is not retained in the 
 
 ```bash
 DEMO_MODE=true MODEL_PROVIDER=none npm test
+npm --prefix frontend test
 npm --prefix frontend run build
 ```
 
@@ -145,5 +157,14 @@ was provisioned. These results establish the tested operations, not future share
 After the branch integration, the same replay with the 270-person roster passed again on the live service:
 one accepted brief request (3,554 input + 871 output tokens) and one accepted notification request
 (66 input + 33 output tokens), totaling 4,524 tokens. Both used `hackathon-chat` on Akamai with no repair or
-fallback. The integration suite covers 114 tests, including notification failure handling and the manager's
+fallback. The integration suite covered 114 tests, including notification failure handling and the manager's
 override flowing into an unapproved draft.
+
+The dashboard reason schema passed one live workshop request with 3,691 input and 389 output tokens
+(4,080 total), two cited reasons, successful validation and no repair or fallback. The updated backend suite
+has 119 tests and 15 frontend tests cover graph relevance, recorded windows, inclusive/strict thresholds, missing
+measurements and legacy briefs. Sixteen browser scenarios cover desktop/mobile, light/dark, keyboard expansion,
+manager overrides, chart failures, source tooltips, graph focus and background Akamai updates using intercepted
+local test responses. The accepted live Akamai brief was also rendered without an additional inference request.
+Checks after syncing integration also cover corrected hourly weather and successful/failed regeneration,
+including retention of the previous brief and unfinished manager input.

@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Snapshot } from "../types";
 import { Badge, Card, fmtTime, fmtVal, PostureBadge } from "../util";
 
-export function AIPanel({ snap }: { snap: Snapshot }) {
+export function AIPanel({ snap, onRegenerate }: { snap: Snapshot; onRegenerate?: () => void }) {
   const [copied, setCopied] = useState(false);
   const ai = snap.ai;
   const overview = ai.summary?.match(/.*?[.!?](?=\s|$)/gs)?.slice(0, 2).join(" ").trim() || ai.summary;
@@ -28,7 +28,7 @@ export function AIPanel({ snap }: { snap: Snapshot }) {
     } catch { /* clipboard blocked */ }
   };
   return (
-    <Card title="Decision brief" right={
+    <Card title="Evidence & explanation" right={<span className="flex flex-wrap items-center justify-end gap-2">{
       pending ? (
         <Badge tone="neutral" title="The template brief is shown now; the Akamai brief is being written in the background.">
           <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--accent)]" /> Akamai brief in progress…
@@ -37,8 +37,14 @@ export function AIPanel({ snap }: { snap: Snapshot }) {
         <Badge tone={template ? "neutral" : aws ? "warn" : "info"} title={`Model: ${snap.model_id} · ${snap.prompt_version}${addon?.created_at ? ` · added ${fmtTime(addon.created_at, snap.facility.timezone)}` : ""}`}>
           {template ? "Template brief" : aws ? "AWS fallback" : akamai ? `Powered by Akamai${addon?.seconds ? ` · +${Math.round(addon.seconds)} s` : ""}` : "Archived AI brief"}
         </Badge>
-      )
-    }>
+      )}
+      {onRegenerate && (
+        <button onClick={onRegenerate} disabled={pending} className="btn !px-2 !py-0.5 !text-xs"
+          title="Ask Akamai to rewrite this brief now from the same recorded data. Use Re-evaluate (top right) to fetch fresh weather first.">
+          <span aria-hidden className={`inline-block ${pending ? "animate-spin" : ""}`}>↻</span> {pending ? "Updating…" : "Regenerate"}
+        </button>
+      )}
+    </span>}>
       <div className="rounded-xl bg-[var(--surface-2)] p-4">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Recommended operating status</p>
         <PostureBadge p={snap.posture.posture} size="lg" />
@@ -99,6 +105,9 @@ export function AIPanel({ snap }: { snap: Snapshot }) {
         {!evidence.length && <p className="mt-2 text-sm text-ink2">No operating-status threshold is crossed. Check uncertainty and missing sources before accepting normal operations.</p>}
         {unavailable.length > 0 && <p className="mt-2 text-sm text-ink2">Unavailable sources: {unavailable.map((s) => s.label).join(", ")}. Missing data does not establish safe conditions.</p>}
       </div>
+      {addon?.regen_failed && (
+        <p role="status" className="mt-3 rounded-lg bg-[var(--surface-2)] p-3 text-xs text-ink2">The new Akamai brief could not be produced or verified; the previous brief is still shown.</p>
+      )}
       {addon?.status === "failed" && (
         <p role="status" className="mt-3 rounded-lg bg-[var(--surface-2)] p-3 text-xs text-ink2">The Akamai brief could not be produced or verified, so the template brief stays. It uses the same recorded evidence; the rules recommendation is unchanged.</p>
       )}

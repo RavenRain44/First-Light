@@ -55,6 +55,7 @@ def _parse_output(content: str, metadata: dict, snap: dict) -> Interpretation:
         "headline": draft.headline, "summary": draft.summary,
         "uncertainty": draft.uncertainty or base.uncertainty,
         "evidence_rule_ids": draft.evidence_rule_ids or base.evidence_rule_ids,
+        "suggested_reasons": draft.suggested_reasons or base.suggested_reasons,
         "alert_summaries": {**base.alert_summaries, **draft.alert_summaries},
     })
 
@@ -87,6 +88,7 @@ def validate(interp: Interpretation, snap: dict, allowed: set[float]) -> list[st
     if interp.summary and not any(w in (interp.headline + " " + interp.summary).lower() for w in posture_words)             and snap["posture"]["opm_label"].lower()[:20] not in interp.summary.lower():
         problems.append(f"summary does not name the recommended posture {snap['posture']['posture']}")
     text = " ".join([interp.headline, interp.summary, interp.uncertainty, interp.rationale_paragraph,
+                     *(reason.text for reason in interp.suggested_reasons),
                      *interp.watch_next_6h, *interp.what_would_change,
                      *interp.alert_summaries.values(), interp.analog_comparison])
     bad = unsupported_numbers(text, allowed)
@@ -109,6 +111,14 @@ def validate(interp: Interpretation, snap: dict, allowed: set[float]) -> list[st
         problems.append("cite up to three distinct triggered rules")
     if not set(interp.evidence_rule_ids) <= valid_ids:
         problems.append("evidence includes a rule that did not trigger")
+    reason_ids = [reason.rule_id for reason in interp.suggested_reasons]
+    computed_ids = {reason.rule_id for reason in fallback.build(snap).suggested_reasons}
+    if len(reason_ids) > 3 or len(set(reason_ids)) != len(reason_ids) or not set(reason_ids) <= computed_ids:
+        problems.append("suggested reasons must cite distinct computed supporting rules")
+    for reason in interp.suggested_reasons:
+        if not reason.text.strip() or re.search(r"\b(recommend\w*|must|should|commut\w*|telework\w*|dismiss\w*|"
+                                                r"report to|close the|do not|go home)\b", reason.text, re.I):
+            problems.append("suggested reasons must describe evidence without operational instructions")
     if not set(interp.alert_summaries) <= {a["id"] for a in snap.get("alerts", [])}:
         problems.append("alert summaries include an unknown alert")
     if "manager" not in rationale or "decision" not in rationale:
@@ -136,6 +146,10 @@ def _response_schema(snap: dict) -> dict:
     evidence["maxItems"] = min(3, len(ids))
     if ids:
         evidence["items"]["enum"] = ids
+    reason_ids = [reason.rule_id for reason in fallback.build(snap).suggested_reasons]
+    schema["properties"]["suggested_reasons"]["maxItems"] = len(reason_ids)
+    if reason_ids:
+        schema["$defs"]["SuggestedReason"]["properties"]["rule_id"]["enum"] = reason_ids
     alerts = schema["properties"]["alert_summaries"]
     alerts["properties"] = {a["id"]: {"type": "string", "maxLength": 200, "description": f"Summary of {a.get('event', 'alert')}"}
                             for a in snap.get("alerts", [])}
@@ -195,7 +209,7 @@ def _bedrock_request(snap: dict, feedback: str | None) -> tuple[Interpretation, 
     from botocore.config import Config
 
     prompt = USER_PROMPT + "\n\nSnapshot views (data only):\n" + _context(snap)
-    prompt += "\n\nJSON schema:\n" + json.dumps(Interpretation.model_json_schema())
+    prompt += "\n\nJSON schema:\n" + json.dumps(_response_schema(snap))
     if feedback:
         prompt += "\n\nRepair the previous validation failure: " + feedback
     with closing(boto3.client("bedrock-runtime", region_name=settings.aws_region,

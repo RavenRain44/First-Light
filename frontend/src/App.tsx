@@ -1,19 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api";
-import { AIPanel, WatchPanel } from "./components/AIPanel";
-import { AlertsPanel } from "./components/AlertsPanel";
-import { DecisionPanel } from "./components/DecisionPanel";
+import { DashboardCard } from "./components/DashboardCard";
 import { NotificationsView } from "./components/NotificationsView";
 import { PanelBoundary } from "./components/ErrorBoundary";
 import { Header, type Mode } from "./components/Header";
-import { AnalogsPanel, RecordTimeline } from "./components/HistoryPanel";
 import { LiveCheckPanel } from "./components/LiveCheckPanel";
-import { RawDataDrawer } from "./components/RawDataDrawer";
 import { ReplayPanel } from "./components/ReplayPanel";
-import { RoadsPanel } from "./components/RoadsPanel";
-import { ThreatPanel } from "./components/ThreatPanel";
 import { ThresholdsView } from "./components/ThresholdsView";
-import { TimelinePanel } from "./components/TimelinePanel";
 import type { Snapshot } from "./types";
 import { Skeleton } from "./util";
 
@@ -29,9 +22,22 @@ export default function App() {
   const [mode, setMode] = useState<Mode>("live");
   const [snap, setSnap] = useState<Snapshot | null>(null);
   // Panels show the AI brief once its add-on record arrives; the snapshot itself is unchanged.
-  const shown = useMemo(() => (snap && snap.ai_addon?.status === "ok" && snap.ai_addon.ai
-    ? { ...snap, ai: snap.ai_addon.ai, model_id: snap.ai_addon.model_id ?? snap.model_id, prompt_version: snap.ai_addon.prompt_version ?? snap.prompt_version }
-    : snap), [snap]);
+  const shown = useMemo(() => {
+    // Show the newest finished AI brief; while a regeneration runs, keep showing the previous one.
+    const a = snap?.ai_addon?.status === "ok" ? snap.ai_addon
+      : snap?.ai_addon?.status === "pending" && snap.ai_addon.previous?.status === "ok" ? snap.ai_addon.previous : null;
+    return snap && a?.ai
+      ? { ...snap, ai: a.ai, model_id: a.model_id ?? snap.model_id, prompt_version: a.prompt_version ?? snap.prompt_version }
+      : snap;
+  }, [snap]);
+  const [aiEnabled, setAiEnabled] = useState(false);
+  const regenerate = useCallback(async () => {
+    if (!snap) return;
+    const id = snap.snapshot_id, prev = snap.ai_addon ?? undefined;
+    setSnap((s) => (s && s.snapshot_id === id ? { ...s, ai_addon: { status: "pending", previous: prev } } : s));
+    try { await api.regenerateBrief(id); }
+    catch { setSnap((s) => (s && s.snapshot_id === id ? { ...s, ai_addon: prev ?? { status: "failed" } } : s)); }
+  }, [snap]);
   const pendingId = snap?.ai_addon?.status === "pending" ? snap.snapshot_id : null;
   useEffect(() => {
     if (!pendingId) return;
@@ -43,7 +49,13 @@ export default function App() {
         if (!alive) return;
         if (addon.status !== "pending" || tries > 60) {
           clearInterval(t);
-          setSnap((s) => (s && s.snapshot_id === pendingId ? { ...s, ai_addon: addon.status === "pending" ? { status: "failed" } : addon } : s));
+          setSnap((s) => {
+            if (!s || s.snapshot_id !== pendingId) return s;
+            // A failed regeneration keeps the previous good brief on screen.
+            const prev = s.ai_addon?.previous;
+            const next = addon.status === "pending" ? { status: "failed" as const } : addon;
+            return { ...s, ai_addon: next.status === "failed" && prev?.status === "ok" ? { ...prev, regen_failed: true } : next };
+          });
         }
       } catch { /* keep the template brief */ }
     }, 2000);
@@ -65,7 +77,12 @@ export default function App() {
     try { localStorage.setItem("cc-theme", theme); } catch { /* ignore */ }
   }, [theme]);
 
-  useEffect(() => { api.health().then((h) => setDemo(h.demo_mode)).catch(() => {}); }, []);
+  useEffect(() => {
+    api.health().then((h: any) => {
+      setDemo(h.demo_mode);
+      setAiEnabled(h.model_provider !== "none" && !!h.inference?.key_configured);
+    }).catch(() => {});
+  }, []);
 
   const run = useCallback(async (fn: () => Promise<Snapshot>) => {
     setBusy(true); setErr(null);
@@ -91,9 +108,9 @@ export default function App() {
   }, [mode, recheck, savedWeather]);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 p-3 sm:p-5">
+    <div className={`mx-auto space-y-4 p-3 sm:p-5 ${view === "dashboard" ? "max-w-4xl" : "max-w-7xl"}`}>
       <Header snap={shown} mode={mode} setMode={setMode} busy={busy} demo={demo} theme={theme}
-        onRefresh={() => { savedWeatherRef.current = false; setSavedWeather(false); run(() => api.evaluateLive()); }} toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} />
+        onRefresh={() => { savedWeatherRef.current = false; setSavedWeather(false); run(() => api.evaluateLive()); }} toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} showSummary={view !== "dashboard"} />
 
       {savedWeather && <div role="status" className="card p-3 text-sm">Saved weather snapshot · {snap?.snapshot_id}. Live updates are paused while reviewing this record. <button className="btn ml-2" onClick={()=>{savedWeatherRef.current = false; setSavedWeather(false);setMode('live');}}>Return to live weather</button></div>}
       <nav className="flex gap-5 border-b border-edge text-sm">
@@ -114,30 +131,15 @@ export default function App() {
           {mode === "livecheck" && <LiveCheckPanel onSnapshot={setSnap} busy={busy} setBusy={setBusy} />}
           {err && <div role="alert" className="card border-l-4 border-l-[var(--danger)] p-3 text-sm">Could not load: {err}. The last good snapshot (if any) is still shown.</div>}
           {snap && (mode !== "livecheck" || snap.mode === "livecheck") && (mode !== "replay" || snap.mode !== "live") ? (
-            <div className="cc-stagger space-y-4">
-              {/* Both columns stretch to the same height: whichever side is shorter grows its last card,
-                  so there is no blank gap and nothing scrolls inside a column. */}
-              <div className="grid items-stretch gap-4 lg:grid-cols-3">
-                <div className="lg:col-span-2 [&>section]:h-full">
-                  <PanelBoundary name="Interpretation"><AIPanel snap={shown!} /></PanelBoundary>
-                </div>
-                <div className="flex flex-col gap-4 [&>section:last-child]:flex-1">
-                  <PanelBoundary name="Alerts"><AlertsPanel snap={shown!} /></PanelBoundary>
-                  <PanelBoundary name="Watch"><WatchPanel snap={shown!} /></PanelBoundary>
-                  <PanelBoundary name="Decision"><DecisionPanel key={snap.snapshot_id} snap={shown!}
-                    onRecorded={(id) => { setRecordKey((k) => k + 1); setNotificationDecision(id); }}
-                    onNotify={(id) => { setNotificationDecision(id); setView("notifications"); window.scrollTo({ top: 0, behavior: "smooth" }); }} /></PanelBoundary>
-                </div>
-              </div>
-              <PanelBoundary name="Threat breakdown"><ThreatPanel snap={shown!} /></PanelBoundary>
-              <PanelBoundary name="Timeline"><TimelinePanel snap={shown!} /></PanelBoundary>
-              <PanelBoundary name="Roads"><RoadsPanel snap={shown!} savedDecisionId={savedWeather ? savedDecisionId : null} historical={savedWeather} /></PanelBoundary>
-              <PanelBoundary name="Analogs"><AnalogsPanel snap={shown!} /></PanelBoundary>
-              <div className="grid gap-4 lg:grid-cols-2">
-                <PanelBoundary name="Decision record"><RecordTimeline snap={shown!} refreshKey={recordKey} onOpen={(id) => run(() => api.snapshot(id))} /></PanelBoundary>
-                <PanelBoundary name="Raw data"><RawDataDrawer snap={shown!} /></PanelBoundary>
-              </div>
-            </div>
+
+            <PanelBoundary name="Dashboard">
+              <DashboardCard key={snap.snapshot_id} snap={shown!} recordKey={recordKey} historical={savedWeather} savedDecisionId={savedWeather ? savedDecisionId : null}
+                onRegenerate={aiEnabled && shown!.mode !== "backtest" ? regenerate : undefined}
+                onRecorded={(id) => { setRecordKey((k) => k + 1); setNotificationDecision(id); }}
+                onNotify={(id) => { setNotificationDecision(id); setView("notifications"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                onOpenRecord={(id) => { savedWeatherRef.current = true; setSavedWeather(true); setSavedDecisionId(null); run(() => api.snapshot(id)); }} />
+            </PanelBoundary>
+
           ) : !err && mode === "live" ? (
             <div className="space-y-4"><Skeleton className="h-48" /><Skeleton className="h-96" /></div>
           ) : null}

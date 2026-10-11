@@ -52,6 +52,7 @@ def test_brief_does_not_decide_and_manager_override_is_audited(tmp_path, monkeyp
                 time.sleep(0.05)
             assert addon["status"] == "ok" and addon["model_id"] == "akamai:hackathon-chat"
             assert addon["ai"]["summary"] and addon["ai"]["evidence_rule_ids"]
+            assert addon["ai"]["suggested_reasons"]
             assert addon["ai"]["inference"]["requests"][0]["usage"]["total_tokens"] == 300
             with engine.begin() as c, pytest.raises(DBAPIError, match="append-only"):
                 c.execute(text("UPDATE snapshotinterpretation SET status='failed'"))
@@ -87,6 +88,45 @@ def test_brief_does_not_decide_and_manager_override_is_audited(tmp_path, monkeyp
             assert stored["draft_inference"] == package["draft_inference"]
             audit = client.get(f"/api/notifications/packages/{package['id']}/audit").json()
             assert json.loads(audit[0]["detail_json"])["draft_inference"] == package["draft_inference"]
+    finally:
+        db.set_engine(old)
+        engine.dispose()
+
+
+def test_regenerate_brief_appends_a_new_addon(tmp_path, monkeypatch):
+    monkeypatch.setattr(settings, "demo_mode", True)
+    monkeypatch.setattr(settings, "model_provider", "akamai")
+    monkeypatch.setattr(settings, "akamai_api_key", "test-team-key")
+    old = db._engine
+    engine = db.make_engine(f"sqlite:///{tmp_path / 'regen.db'}")
+    db.set_engine(engine)
+    calls = []
+    async def inference(provider, snap, feedback):
+        calls.append(snap["snapshot_id"])
+        return fallback.build(snap).model_copy(update={"headline": f"Early dismissal brief {len(calls)}"}), {
+            "provider": "akamai", "model": "hackathon-chat", "usage": None}
+    monkeypatch.setattr(agent, "_run_agent", inference)
+
+    def wait(client, sid):
+        for _ in range(100):
+            a = client.get(f"/api/snapshot/{sid}/interpretation").json()
+            if a["status"] != "pending":
+                return a
+            time.sleep(0.05)
+        return a
+    try:
+        with TestClient(app) as client:
+            sid = client.post("/api/evaluate", json={"mode": "replay", "as_of": "2020-08-10T16:00:00Z"}).json()["snapshot_id"]
+            first = wait(client, sid)
+            assert first["status"] == "ok" and first["ai"]["headline"].endswith("1")
+            r = client.post(f"/api/snapshot/{sid}/interpretation")
+            assert r.status_code == 202 and r.json()["status"] in ("pending", "ok")
+            second = wait(client, sid)
+            assert second["ai"]["headline"].endswith("2") and len(calls) == 2
+            assert client.get(f"/api/snapshot/{sid}").json()["integrity_ok"]
+            assert client.post("/api/snapshot/nope/interpretation").status_code == 404
+            monkeypatch.setattr(settings, "model_provider", "none")
+            assert client.post(f"/api/snapshot/{sid}/interpretation").status_code == 409
     finally:
         db.set_engine(old)
         engine.dispose()
