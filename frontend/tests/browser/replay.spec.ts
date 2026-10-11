@@ -413,3 +413,85 @@ test("returning to live weather ignores an unfinished curated replay", async ({ 
     expect(app.errors).toEqual([]); expect(app.unexpected).toEqual([]);
   } finally { app.releaseReplay(); }
 });
+
+
+test("historical context stays explicit in dark mobile views and clears on return", async ({ page }) => {
+  const app = await mockApp(page);
+  const context = page.getByRole("complementary", {name:"Weather viewing context"});
+  await expect(context).toContainText("HISTORICAL DATA");
+  await expect(context).toContainText("America/Chicago");
+  await expect(page.locator(".historical-workspace")).toHaveCount(1);
+  await page.getByRole("button", {name:"Toggle dark mode"}).click();
+  await page.setViewportSize({width:390,height:844});
+  await expect(context.getByRole("button", {name:"Return to live"})).toBeVisible();
+  await page.screenshot({path:test.info().outputPath("closure-call-historical-dark.png"),animations:"disabled"});
+  await context.getByRole("button", {name:"Return to live"}).click();
+  await expect(context).toContainText("DEMO · Cached weather");
+  await expect(context).not.toContainText("HISTORICAL DATA");
+  await expect(page.locator(".historical-workspace")).toHaveCount(0);
+  expect(app.errors).toEqual([]);
+});
+
+
+test("Today clears saved decision evidence before live data arrives", async ({ page }) => {
+  await mockApp(page);
+  const old = {...snapshot("2020-08-10T16:00:00Z", {as_of:"2020-08-10T16:00:00Z",posture:"CLOSED",readiness:"RED"}, null), mode:"live"};
+  await page.route(url => url.pathname === "/api/decisions", r => r.fulfill({json:[{id:99, facility_id:old.facility_id, snapshot_id:"saved-old", decision_posture:"CLOSED", decided_at:old.as_of, decided_by:"Test manager"}]}));
+  await page.route(url => url.pathname === "/api/snapshot/saved-old", r => r.fulfill({json:{...old,snapshot_id:"saved-old"}}));
+  await page.getByRole("button", {name:"Decision log",exact:true}).click();
+  await page.getByRole("button", {name:"View saved weather & cameras"}).click();
+  const context = page.getByRole("complementary", {name:"Weather viewing context"});
+  await expect(context).toContainText("Saved decision #99");
+  await expect(page.getByTestId("dashboard-metadata")).toContainText("Weather as of");
+  await expect(page.getByTestId("dashboard-metadata")).not.toContainText("Last updated");
+  await expect(page.getByTestId("cooper-dashboard")).toHaveAttribute("data-condition","RED");
+  let release = () => {};
+  const gate = new Promise<void>(resolve => {release=resolve;});
+  await page.route(url => url.pathname === "/api/snapshot/latest", async route => {
+    await gate;
+    await route.fulfill({json:{...old,snapshot_id:"new-live",as_of:"2026-10-11T10:00:00Z",readiness:{...old.readiness,level:"WHITE"}}});
+  });
+  try {
+    await page.getByRole("button", {name:"Today",exact:true}).click();
+    await expect(page.getByTestId("cooper-dashboard")).toHaveCount(0);
+    await expect(context).not.toContainText("2020");
+    release();
+    await expect(page.getByTestId("cooper-dashboard")).toHaveAttribute("data-condition","WHITE");
+  } finally {release();}
+});
+
+test('notification groups support editing, selection, errors and simulated sends', async ({page}) => {
+  const app=await mockApp(page);
+  const names=['Onsite telework','Onsite leave','Essential','Remote'];
+  const groups=names.map((title,i)=>({id:`g${i}`,title,kind:i===3?'awareness':'onsite',instruction:'Follow reporting instructions.',instruction_text:'Follow reporting instructions.',location_text:'Test facility',decision_text:'Closed.',sms_intro:'Closed',email_intro:'Closed',recipient_ids:[`r${i}`],test_contacts:[],scenario:'success',recipients:[{id:`r${i}`,name:`Synthetic person ${i}`,channels:['email'],due_at:'2026-10-12T12:30:00Z'}]}));
+  const pack={id:1,facility_id:'IA-AMES-SC',decision_id:99,version:1,status:'draft',facility_name:'Test facility',timezone:'America/Chicago',decision_day:'2026-10-12',posture:'CLOSED',decided_by:'Test manager',draft_source:'Template',groups,excluded:[],messages:[]};
+  await page.route(url=>url.pathname==='/api/decisions',r=>r.fulfill({json:[{id:99,facility_id:pack.facility_id,snapshot_id:'test',decision_posture:'CLOSED',decided_at:'2026-10-12T09:00:00Z',decided_by:'Test manager'}]}));
+  await page.route(url=>url.pathname==='/api/notifications',r=>r.fulfill({json:{facility_id:pack.facility_id,contacts:[],packages:[pack]}}));
+  await page.route(url=>url.pathname==='/api/notifications/delivery-setup',r=>r.fulfill({json:{email:false,sms:false}}));
+  await page.route(url=>url.pathname==='/api/notifications/packages',r=>r.fulfill({json:pack}));
+  let attempts=0;
+  await page.route(url=>url.pathname==='/api/notifications/packages/1/review',async r=>{
+    if(++attempts===1)return r.fulfill({status:409,json:{detail:'Draft changed; review again'}});
+    const body=r.request().postDataJSON();
+    expect(new URL(r.request().url()).searchParams.get('facility_id')).toBe(pack.facility_id);
+    expect(body.facility_id).toBe(pack.facility_id);
+    expect(body.approve_and_send).toBe(true);expect(body.groups).toHaveLength(4);
+    expect(body.groups.every((g:any)=>g.decision_text==='Closed due to dangerous roads.')).toBe(true);
+    expect(body.groups[3].recipient_ids).toEqual([]);
+    await r.fulfill({json:{...pack,status:'dispatched',messages:[{status:'simulated_sent'}]}});
+  });
+  await page.getByRole('button',{name:'Decision log',exact:true}).click();
+  await page.getByRole('button',{name:'Review decision & alerts'}).click();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  for(const name of names)await expect(page.getByLabel(`Instructions for ${name}`,{exact:true})).toBeVisible();
+  await expect(page.locator('details').filter({has:page.locator('summary').filter({hasText:'Message preview'})})).toHaveAttribute('open','');
+  await expect(page.locator('details').filter({has:page.locator('summary').filter({hasText:'Recipients ·'})})).not.toHaveAttribute('open','');
+  await page.getByLabel('Shared decision',{exact:true}).fill('Closed due to dangerous roads.');
+  await page.getByLabel('Select group Remote',{exact:true}).uncheck();
+  await page.getByRole('button',{name:/3 · Approve and alert 3 people/}).click();
+  await expect(page.getByRole('alert')).toContainText('Draft changed; review again');
+  await page.getByRole('button',{name:/3 · Approve and alert 3 people/}).click();
+  await expect(page.getByRole('status').filter({hasText:'Approved alerts sent in the simulator'})).toBeVisible();
+  await expect(page.getByText('Delivered (simulated)',{exact:true})).toBeVisible();
+  expect(app.errors).toEqual([]);
+});

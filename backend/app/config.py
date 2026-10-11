@@ -41,8 +41,8 @@ class Settings:
     aws_region: str = os.environ.get("AWS_REGION", "us-east-1")
 
     # Akamai Object Storage (S3-compatible). Leave the bucket or keys empty to keep everything local.
-    obj_endpoint: str = os.environ.get("OBJ_ENDPOINT", "https://us-ord-1.linodeobjects.com")
-    obj_region: str = os.environ.get("OBJ_REGION", "us-ord-1")
+    obj_endpoint: str = os.environ.get("OBJ_ENDPOINT", "https://us-ord-10.linodeobjects.com")
+    obj_region: str = os.environ.get("OBJ_REGION", "us-ord")
     obj_bucket: str = os.environ.get("OBJ_BUCKET", "")
     obj_access_key: str = os.environ.get("OBJ_ACCESS_KEY", "")
     obj_secret_key: str = os.environ.get("OBJ_SECRET_KEY", "")

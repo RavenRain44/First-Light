@@ -23,6 +23,7 @@ import { ThreatPanel } from "./components/ThreatPanel";
 import { ThresholdsView } from "./components/ThresholdsView";
 import { TimelinePanel } from "./components/TimelinePanel";
 import type { Facility, Snapshot } from "./types";
+import { WeatherContext } from "./components/WeatherContext";
 import { Section, Skeleton } from "./util";
 
 type SectionId = "why" | "past" | "risk" | "alerts" | "charts" | "roads" | "analogs" | "technical";
@@ -110,7 +111,12 @@ function FacilitySession({ facility, facilities, changeFacility, registryError }
             return { ...s, ai_addon: next.status === "failed" && prev?.status === "ok" ? { ...prev, regen_failed: true } : next };
           });
         }
-      } catch { /* keep the template brief */ }
+      } catch {
+        if (alive && tries >= 60) {
+          clearInterval(t);
+          setSnap(s => s?.snapshot_id === pendingId ? {...s, ai_addon: s.ai_addon?.previous?.status === "ok" ? {...s.ai_addon.previous, regen_failed:true} : {status:"failed"}} : s);
+        }
+      }
     }, 2000);
     return () => { alive = false; clearInterval(t); };
   }, [pendingId]);
@@ -199,18 +205,19 @@ function FacilitySession({ facility, facilities, changeFacility, registryError }
     const changed = next !== mode || savedWeatherRef.current;
     if (changed) {requestVersion.current++;setBusy(false);}
     savedWeatherRef.current=false;setSavedWeather(false);setSavedDecisionId(null);setErr(null);
-    if (next !== mode) setSnap(null);
+    if (changed) setSnap(null);
     else if (next === 'live' && !snap && !changed) run(()=>api.latest());
     setMode(next);
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 p-3 sm:p-5">
+    <div className={`mx-auto max-w-5xl space-y-4 p-3 sm:p-5 ${mode !== "live" || savedWeather ? "historical-workspace" : ""}`}>
       <Header facility={facility} facilities={facilities} onFacilityChange={changeFacility} snap={shown} mode={mode} setMode={changeMode} view={view} setView={(next)=>{if(next==='notifications'&&(mode!=='live'||savedWeather)){changeMode('live');setNotificationDecision(null);}setView(next);}} demo={demo} theme={theme}
         toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} />
 
       {registryError && <p role="status" className="text-xs text-muted">{registryError}</p>}
-      {savedWeather && <div role="status" className="card p-3 text-sm">Saved weather snapshot · {snap?.snapshot_id}. Live updates are paused while reviewing this record. <button className="btn ml-2" onClick={()=>{requestVersion.current++;setBusy(false);setSnap(null);savedWeatherRef.current=false;setSavedWeather(false);setMode('live');}}>Return to live weather</button></div>}
+      <WeatherContext snap={shown} mode={mode} saved={savedWeather} decisionId={savedDecisionId} demo={demo} error={err} onLive={() => {changeMode("live");setView("today");}} />
+
       {view === "notifications" ? (
         <div className="cc-fade space-y-5">
           {err && <div role="alert" className="card p-3 text-sm">Could not load the app: {err}. <button className="btn ml-2" onClick={()=>run(()=>api.latest())}>Retry</button></div>}

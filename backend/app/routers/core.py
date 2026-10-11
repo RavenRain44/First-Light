@@ -242,6 +242,7 @@ def build_timeseries(snap: dict) -> dict:
                 r["fcst_apparent_temp_f"] = round(wind_chill_f(r["fcst_temp_f"], r.get("fcst_wind_speed_mph", 0.0)), 1)
         if any("fcst_apparent_temp_f" in r for r in ordered):
             meta["fcst_apparent_temp_f"] = {**meta["fcst_temp_f"], "unit": "degF",
+                "source": "Calculated from recorded forecast temperature and wind",
                 "note": "Calculated from the saved forecast temperature and wind with the NWS wind chill formula; missing wind uses temperature unchanged.",
                 "derived": True, "input_ids": apparent["input_ids"]}
     ice = snow = 0.0
@@ -256,7 +257,7 @@ def build_timeseries(snap: dict) -> dict:
     # Thresholds were saved with the assessment; use those values rather than
     # today's policy when opening a historical decision.
     lines = [{"chart": CHART_RULES[r["rule_id"]], "value": r["threshold"],
-              "label": f"{r['rule_id'].split('.', 1)[1].replace('_', ' ')} ({r['threshold']:g} {r['unit']})",
+              "label": f"{r.get('label', r['rule_id'].split('.', 1)[1].replace('_', ' '))} ({r['threshold']:g} {r['unit']})",
               "rule_id": r["rule_id"], "verified": r["verified"], "level": r["posture_effect"]}
              for r in snap.get("rules", []) if r["rule_id"] in CHART_RULES]
     return {"snapshot_id": snap["snapshot_id"], "as_of": snap["as_of"], "timezone": snap["facility"]["timezone"],

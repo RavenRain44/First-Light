@@ -9,6 +9,7 @@ services:
     env_file:
       - ../.env
     environment:
+      DEMO_MODE: "false"
       MODEL_PROVIDER: akamai
       DATABASE_PATH: /app/backend/var/closurecall.db
       HTTP_CACHE_DIR: /app/backend/var/http_cache

@@ -163,8 +163,8 @@ bucket layout.
 3. Add to the server's `.env` (and your local `.env` to test):
 
    ```bash
-   OBJ_ENDPOINT=https://us-ord-1.linodeobjects.com
-   OBJ_REGION=us-ord-1
+   OBJ_ENDPOINT=https://us-ord-10.linodeobjects.com
+   OBJ_REGION=us-ord
    OBJ_BUCKET=closurecall-<team>
    OBJ_ACCESS_KEY=...
    OBJ_SECRET_KEY=...
