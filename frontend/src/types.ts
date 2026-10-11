@@ -18,6 +18,7 @@ export interface ReplayTimeline {
 
 export interface ReplayEvent {
   id: string;
+  kind?: "normal-control";
   name: string;
   summary: string;
   timeline: ReplayPoint[];

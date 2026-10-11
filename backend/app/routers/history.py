@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
 from adapters.base import utc
-from app import snapshots, replay_timeline
+from app import snapshots, replay_timeline, replay_controls
 from app.db import session
 from app.facility import load_facility
 from app.models import HistoryEvent, Snapshot
@@ -35,7 +35,8 @@ async def custom_timeline(as_of: datetime):
 
 
 def _event_dict(e: HistoryEvent) -> dict:
-    return {"id": e.id, "name": e.name, "hazard": e.hazard, "start": utc(e.start).isoformat(), "end": utc(e.end).isoformat(),
+    name = e.name.replace("(control case)", "(mild-weather case)") if e.id == "advisory-2025-02-05" else e.name
+    return {"id": e.id, "name": name, "hazard": e.hazard, "start": utc(e.start).isoformat(), "end": utc(e.end).isoformat(),
             "impact_day": e.impact_day, "summary": e.summary, "verification": json.loads(e.verification_json),
             "outcome": json.loads(e.outcome_json), "backtest": json.loads(e.backtest_json)}
 
@@ -44,11 +45,13 @@ def _event_dict(e: HistoryEvent) -> dict:
 def events():
     with session() as s:
         rows = s.exec(select(HistoryEvent).order_by(HistoryEvent.start)).all()
-        return [_event_dict(e) for e in rows]
+        return [_event_dict(e) for e in rows if e.id != replay_controls.CONTROL_ID] + [replay_controls.event()]
 
 
 @router.get("/history/events/{event_id}")
 def event(event_id: str):
+    if event_id == replay_controls.CONTROL_ID:
+        return replay_controls.event()
     with session() as s:
         e = s.get(HistoryEvent, event_id)
         if not e:
@@ -70,6 +73,8 @@ async def replay(event_id: str, as_of: datetime):
     scripts/build_history.py); otherwise evaluates now in replay mode.
     """
     as_of = utc(as_of)
+    if event_id == replay_controls.CONTROL_ID:
+        return replay_controls.replay(as_of)
     with session() as s:
         if not s.get(HistoryEvent, event_id):
             raise HTTPException(404, "event not found")

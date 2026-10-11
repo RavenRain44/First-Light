@@ -9,6 +9,16 @@ const events: ReplayEvent[] = await Promise.all(["ice-2023-02-22", "derecho-2020
   const data = JSON.parse(await readFile(`${history}${id}.json`, "utf8"));
   return { ...data.event, verification: data.verification, outcome: data.outcome, backtest: data.backtest, timeline: data.timeline };
 }));
+const controlFixture = JSON.parse(await readFile(`${history}normal-2024-07-18.json`, "utf8"));
+const controlTimeline: ReplayPoint[] = Array.from({ length: 24 }, (_, h) => ({
+  as_of: new Date(Date.parse(controlFixture.event.start) + h * 3600000).toISOString(),
+  posture: "NORMAL", readiness: "YELLOW", coverage: "partial", unavailable_sources: ["Archived forecast", "Historical warnings"],
+}));
+events.push({ ...controlFixture.event, timeline: controlTimeline,
+  verification: { checks: [{ product: "METAR coverage", ugc: "AMW", verified: true, events: [{ link: controlFixture.source.url }] }] },
+  outcome: { summary: "24/24 hours covered at AMW; no reported freezing precipitation or snow; no defined station-level disruption." },
+  backtest: { at_0400_local: { as_of: controlTimeline[4].as_of, posture: "NORMAL" }, verdict: "Quiet observed outcome; future conditions were unknown at 04:00.", label: "observations only; not a verified office decision" },
+});
 
 function snapshot(asOf: string, point: ReplayPoint, eventId: string | null): Snapshot {
   return {
@@ -29,6 +39,26 @@ function snapshot(asOf: string, point: ReplayPoint, eventId: string | null): Sna
 }
 
 type Weather = "pavement" | "snow" | "ice" | "freezing";
+
+function withControl(report: Snapshot): Snapshot {
+  const past = controlFixture.source.rows.filter((r: any) => Date.parse(r.utc_valid) >= Date.parse(report.as_of) - 12 * 3600000
+    && Date.parse(r.utc_valid) <= Date.parse(report.as_of) - 15 * 60000);
+  report.mode = "backtest";
+  report.inputs = ["temp_f", "wind_speed_mph"].map((metric) => ({
+    id: `obs.${metric}`, kind: "series", role: "observation", metric, unit: metric === "temp_f" ? "degF" : "mph", value: null,
+    series: past.map((r: any) => ({ t: r.utc_valid, v: metric === "temp_f" ? r.tmpf : r.sknt * 1.150779 })), data: null,
+    source: "AMW archived routine/special METAR", source_url: controlFixture.source.url,
+    fetched_at: controlFixture.source.fetched_at, source_time: past.at(-1).utc_valid, note: "Assumed 15-minute availability lag",
+  }));
+  report.sufficiency = { status: "insufficient", headline: "Insufficient current data", reasons: ["Archived forecast and historical warnings unavailable"],
+    missing_sources: ["Archived NBS forecast", "Historical warnings"], stale_sources: [], checks: [], supports_all_clear: false,
+    reason_required: true, hazard_evidence: [], forecast_coverage: null,
+    evaluated_as_of: report.as_of, mode: "backtest", mode_note: "Historical reconstruction, not current weather", policy_version: "test" };
+  report.historical_context = { control: { kind: "normal-weather" }, status: "partial", reconstruction: "Retained observation-only normal-weather control",
+    as_of: report.as_of, outcome: { gradable: true, disruptive: false }, detail: "Quiet local weather verified by a complete daily station record; forecasts and warnings unknown.",
+    missing: ["Archived forecasts unavailable", "Historical warnings unavailable"], proxy_records: [], provenance: controlFixture.source };
+  return report;
+}
 
 function withWeather(report: Snapshot, weather: Weather): Snapshot {
   const asOf = report.as_of, end = new Date(Date.parse(asOf) + 3 * 3600000).toISOString();
@@ -66,7 +96,7 @@ function withWeather(report: Snapshot, weather: Weather): Snapshot {
   return report;
 }
 
-async function mockApp(page: Page, options: { pendingAi?: boolean; failFirstEvent?: boolean; holdReplay?: boolean; weather?: Weather } = {}) {
+async function mockApp(page: Page, options: { pendingAi?: boolean; failFirstEvent?: boolean; holdReplay?: boolean; weather?: Weather; dateSearch?: boolean } = {}) {
   const loads: { event: string[]; replay: string[]; custom: string[]; ai: number } = { event: [], replay: [], custom: [], ai: 0 };
   const errors: string[] = [], unexpected: string[] = [];
   let failed = false;
@@ -114,8 +144,9 @@ async function mockApp(page: Page, options: { pendingAi?: boolean; failFirstEven
       if (replayEvent) {
         const asOf = url.searchParams.get("as_of")!;
         loads.replay.push(asOf);
-        const point = replayEvent.timeline.find((item) => Date.parse(item.as_of) === Date.parse(asOf))!;
+        const point = replayEvent.timeline.find((item) => Date.parse(item.as_of) === Date.parse(asOf)) ?? replayEvent.timeline[4];
         const report = snapshot(asOf, point, replayEvent.id);
+        if (replayEvent.kind === "normal-control") withControl(report);
         if (options.weather) withWeather(report, options.weather);
         if (options.pendingAi) report.ai_addon = { status: "pending" };
         saved.set(report.snapshot_id, report);
@@ -149,11 +180,45 @@ async function mockApp(page: Page, options: { pendingAi?: boolean; failFirstEven
   await page.goto("http://replay.test/");
   await page.getByRole("button", { name: "More tools", exact: true }).click();
   await page.getByRole("menuitem", { name: "Replay a past storm" }).click();
-  await page.getByRole("button", { name: "Curated storm timeline", exact: true }).click();
+  if (!options.dateSearch) await page.getByRole("button", { name: "Curated storm timeline", exact: true }).click();
   return { loads, errors, unexpected, releaseReplay };
 }
 
 const loading = (page: Page) => page.getByRole("status").filter({ hasText: /^Loading .*The report and timeline/ });
+
+for (const dateSearch of [false, true]) test(`normal-weather control is available offline in ${dateSearch ? "date search" : "curated timeline"} with observed charts and no all-clear`, async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const app = await mockApp(page, { dateSearch });
+  await page.getByRole("combobox", { name: dateSearch ? "Listed event" : /^Event\b/ }).selectOption(controlFixture.event.id);
+  if (dateSearch) {
+    await expect(page.getByLabel("Date", { exact: true })).toHaveValue("2024-07-18");
+    await expect(page.getByRole("combobox", { name: "Reconstruction" })).toHaveValue("observation");
+    await page.getByLabel("Time · America/Chicago").fill("04:17");
+    await page.getByRole("button", { name: "View historical weather", exact: true }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Retained observation-only" })).toContainText("No defined local disruption observed");
+    expect(app.loads.replay).toEqual(["2024-07-18T09:17:00.000Z"]);
+  } else {
+    await expect(page.getByTestId("replay-selected-time")).toContainText("Jul 18, 2024, 04:00 CDT");
+    await expect(page.getByText("24/24 hours covered at AMW", { exact: false })).toBeVisible();
+    await expect(page.getByText("observations only; not a verified office decision", { exact: true })).toBeVisible();
+  }
+  const dashboard = page.getByTestId("cooper-dashboard");
+  await expect(dashboard).toHaveAttribute("data-condition", "YELLOW");
+  await expect(dashboard.getByRole("heading", { name: "Insufficient current data", exact: true })).toBeVisible();
+  await expect(dashboard.getByTestId("suggested-action")).toContainText("Normal is only the fallback");
+  await expect(dashboard).toContainText("no decision is recorded and no one is alerted");
+  const metrics = page.getByRole("region", { name: "Observed weather for this control" });
+  await expect(metrics.locator("figure").first()).toHaveAttribute("data-metric", "temp");
+  await expect(metrics.locator("figure").nth(1)).toHaveAttribute("data-metric", "wind");
+  await expect(metrics).toContainText("Observed wind (hourly report)");
+  await expect(metrics.locator(".recharts-line-curve").first()).toBeVisible();
+  await expect(metrics.locator('[data-metric="snow"], [data-metric="ice"]')).toHaveCount(0);
+  expect(await page.evaluate(() => [...document.querySelectorAll("body *")]
+    .filter((e) => e.getBoundingClientRect().width > 0 && e.getBoundingClientRect().right > innerWidth + 1)
+    .map((e) => `${e.tagName}.${e.getAttribute("class")}: ${e.textContent?.slice(0, 70)}`).slice(-10))).toEqual([]);
+  expect(app.loads.ai).toBe(0); expect(app.loads.custom).toEqual([]);
+  expect(app.errors).toEqual([]); expect(app.unexpected).toEqual([]);
+});
 
 test("an untouched curated timeline settles once and stays stable across parent renders and AI completion", async ({ page }) => {
   const app = await mockApp(page, { pendingAi: true });

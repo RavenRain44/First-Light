@@ -128,6 +128,9 @@ function ruleMetrics(snap: Snapshot, rule: RuleResult, data: Timeseries): string
 }
 
 export function relevantMetrics(snap: Snapshot, data: Timeseries): MetricDefinition[] {
+  if (snap.historical_context?.control?.kind === "normal-weather") {
+    return ["temp", "wind"].map((id) => METRICS.find((metric) => metric.id === id)!);
+  }
   const ids: string[] = [];
   const add = (id: string | undefined) => { if (id && !ids.includes(id)) ids.push(id); };
   const supporting = supportingRules(snap);

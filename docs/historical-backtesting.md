@@ -1,6 +1,6 @@
 # Ames historical backtesting and replay
 
-Use **More tools → Replay a past storm**. Choose one of the seven curated events,
+Use **More tools → Replay a past storm**. Choose the normal-weather control, one of the seven curated weather events,
 a discovered AMW disruption, or enter any date and time. The default is **04:00
 America/Chicago**. Click **View historical weather**. Date/time changes clear the
 old display immediately; older responses cannot replace a newer selection.
@@ -14,6 +14,30 @@ they are not verified closure decisions at the synthetic USDA facility. Their
 original intraday snapshot APIs and fixture builder remain available. Arbitrary
 date/time searches create exact intraday results on demand, rather than silently
 choosing the nearest existing snapshot.
+
+## Normal-weather control
+
+**Jul 18, 2024 normal-weather control** is available in both replay tabs without an
+archive download. The fixture retains unchanged AMW METAR rows from the checksummed
+2024 source object in the frozen Ames dataset; it records the parent object, original
+source hash, subset hash, public source URL and retrieval time. Its independent daily
+outcome has 24/24 observed hours, no reported freezing precipitation or snow, and no
+defined station-level disruption. Missing gust reports remain null, not zero.
+
+Each selected-time report and hourly ribbon cell runs the current rules against only
+the preceding twelve hours of observations, excluding readings less than fifteen
+minutes old. The complete daily record is used only for the separate hindsight
+outcome. The control shows observed temperature and wind charts and does not call
+an inference provider or fetch missing weather. Forecasts and original warning
+history are explicitly unavailable: **Normal** is the rules' fallback and **Yellow**
+means incomplete evidence, rather than a hazard or verified all-clear. Replays remain
+read-only and cannot notify employees or record decisions.
+
+The **Feb 5, 2025 winter weather advisory** is labeled a **mild-weather case**, since
+it includes winter hazards and is unsuitable as an ordinary-weather negative control.
+This one quiet station day is illustrative: it is not office-decision evidence or a
+false-alarm rate. Adding it does not change the frozen 7,470-case scoring cohort,
+stored historical evaluations, or recorded human decisions.
 
 ## Completed local build
 

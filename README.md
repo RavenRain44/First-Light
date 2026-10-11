@@ -65,6 +65,16 @@ Timeline cells use the rules engine without model calls or snapshot writes; the 
 report is saved and receives its usual AI brief. Central-time spring-forward gaps are rejected,
 and a repeated fall-back hour starts at its first occurrence with an explicit note.
 
+For a quiet-weather comparison, choose **Jul 18, 2024 normal-weather control** in
+either replay tab. Its retained AMW observations work offline, with 24/24 hours of
+daily coverage and no defined station-level disruption. Replay inputs include only
+observations available by the selected time, with an assumed 15-minute delay.
+Temperature and wind charts show those inputs; the full-day outcome is separate.
+This control uses no paid inference. Missing forecasts and original warning history
+remain unknown, so the rules return **Normal (fallback)** with **Yellow** attention
+for incomplete evidence. It does not prove the office stayed open or establish a
+false-alarm rate. The February 5, 2025 advisory remains a mild-weather example.
+
 ### Run the demo offline
 
 ```bash

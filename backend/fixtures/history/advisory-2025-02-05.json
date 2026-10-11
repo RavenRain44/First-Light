@@ -1,7 +1,7 @@
 {
  "event": {
   "id": "advisory-2025-02-05",
-  "name": "Feb 5, 2025 winter weather advisory (control case)",
+  "name": "Feb 5, 2025 winter weather advisory (mild-weather case)",
   "hazard": "winter",
   "start": "2025-02-04T16:00:00+00:00",
   "end": "2025-02-06T06:00:00+00:00",

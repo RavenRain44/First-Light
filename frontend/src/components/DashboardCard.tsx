@@ -179,14 +179,15 @@ function ForecastStat({ label, value, text, children }: {
 export function RelevantMetrics({ snap }: { snap: Snapshot }) {
   const id = useId();
   const presentation = cooperPresentation(snap);
-  const active = presentation.urgent || (presentation.level === null && supportingRules(snap).length > 0);
+  const control = snap.historical_context?.control?.kind === "normal-weather";
+  const active = control || presentation.urgent || (presentation.level === null && supportingRules(snap).length > 0);
   const { data, error } = useTimeseries(snap, active);
   if (!active) return null;
   const metrics = data ? relevantMetrics(snap, data) : [];
   return (
     <section className="card p-5 sm:p-8" aria-labelledby={`${id}-metrics`}>
-      <h2 id={`${id}-metrics`} className="text-lg font-semibold">Concerning weather data</h2>
-      <p className="mt-1 text-sm text-ink2">Highlighted periods and points show the evidence behind the suggestion.</p>
+      <h2 id={`${id}-metrics`} className="text-lg font-semibold">{control ? "Observed weather for this control" : "Concerning weather data"}</h2>
+      <p className="mt-1 text-sm text-ink2">{control ? "Archived temperature and wind available by the selected evaluation time. The full-day outcome is shown separately from the recommendation inputs." : "Highlighted periods and points show the evidence behind the suggestion."}</p>
       {error ? <p role="status" className="mt-4 rounded-lg bg-[var(--surface-2)] p-4 text-sm">Chart data could not be loaded. The suggestion and the decision steps are still available.</p>
         : !data ? <div className="mt-4 space-y-4" aria-label="Loading relevant metrics"><Skeleton className="h-60" /><Skeleton className="h-40" /></div>
         : <div className="mt-4 space-y-4">{metrics.map((metric, index) =>
