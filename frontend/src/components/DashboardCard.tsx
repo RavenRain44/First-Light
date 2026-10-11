@@ -24,8 +24,8 @@ export function useTimeseries(snap: Snapshot, enabled: boolean): { data: Timeser
 
 /** The top of Today: Cooper risk, the suggested action in one sentence, and the way to act on it.
  *  Nothing is recorded or sent from here; the button only opens Notify staff. */
-export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotify }: {
-  snap: Snapshot; busy: boolean; onRefresh?: () => void; onRegenerate?: () => void; onGoNotify: () => void;
+export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotify, readOnly = false }: {
+  snap: Snapshot; busy: boolean; onRefresh?: () => void; onRegenerate?: () => void; onGoNotify: () => void; readOnly?: boolean;
 }) {
   const id = useId();
   const tz = snap.facility.timezone;
@@ -35,11 +35,11 @@ export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotif
     : snap.model_id.startsWith("strands:") ? "Strands fallback" : snap.model_id === "deterministic-fallback" ? "Template suggestion" : "Archived AI brief";
   const unavailable = snap.sources.filter((s) => s.status === "unavailable");
   const people = snap.roster && !snap.roster.hypothetical ? snap.roster.expected_in_building : undefined;
-  const canDecide = snap.mode !== "backtest" && !snap.facility.hypothetical;
+  const canDecide = !readOnly && snap.mode !== "backtest" && !snap.facility.hypothetical;
 
   return (
     <article className="card overflow-hidden" aria-labelledby={`${id}-action`}>
-      <CooperBanner r={r} />
+      <CooperBanner r={snap.historical_context && r ? {...r,meaning:`${r.meaning} Historical rating uses supplied inputs only; missing forecasts and alerts remain unknown.`} : r} />
       <section className="p-5 sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 id={`${id}-action`} className="text-2xl font-semibold tracking-tight">Suggested Action</h2>
@@ -92,7 +92,7 @@ export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotif
             <span className="text-xs text-muted">You make the final decision. Nothing is sent until you approve the alerts.</span>
           </div>
         ) : (
-          <p className="mt-6 text-sm text-ink2">{snap.facility.hypothetical ? "This is a what-if check" : "This is a replay of a past storm"}, so no decision is recorded and no one is alerted.</p>
+          <p className="mt-6 text-sm text-ink2">{snap.facility.hypothetical ? "This is a what-if check" : readOnly ? "This is a saved weather review" : "This is a replay of past weather"}, so no decision is recorded and no one is alerted.</p>
         )}
       </section>
     </article>

@@ -114,6 +114,11 @@ def row_to_dict(row: Snapshot, include_inputs: bool = True) -> dict:
 
 
 def get(snapshot_id: str) -> dict | None:
+    if snapshot_id.startswith("bt-"):
+        from app.historical import lookup
+        compact = lookup(snapshot_id)
+        if compact is not None:
+            return compact
     with session() as s:
         row = s.get(Snapshot, snapshot_id)
         return row_to_dict(row) if row else None
@@ -249,7 +254,7 @@ def ensure_interpretation(snap: dict) -> dict:
     from ai import agent as ai_agent
 
     addon = interpretation(snap["snapshot_id"])
-    if addon["status"] == "none" and ai_agent.model_enabled():
+    if addon["status"] == "none" and snap["mode"] != "backtest" and not snap.get("historical_context") and ai_agent.model_enabled():
         _start_enrichment(snap)
         addon = interpretation(snap["snapshot_id"])
     snap["ai_addon"] = addon
@@ -268,5 +273,10 @@ def regenerate_interpretation(snapshot_id: str) -> dict | None:
         return None
     if not ai_agent.model_enabled():
         return {"status": "unavailable"}
+    if snapshot_id.startswith("bt-"):
+        with session() as s:
+            persisted = s.get(Snapshot,snapshot_id)
+        if not persisted:
+            store(snap)
     _start_enrichment(snap)
     return interpretation(snapshot_id)

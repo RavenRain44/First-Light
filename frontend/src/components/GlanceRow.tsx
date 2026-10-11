@@ -5,23 +5,28 @@ import { latest, maxAhead } from "../util";
 
 // One roads request per snapshot time, shared by the glance tile and the roads map.
 const roadsCache = new Map<string, Promise<any>>();
-export function useRoads(snap: Snapshot): { data: any; err: string | null } {
+export function useRoads(snap: Snapshot, frozen = false): { data: any; err: string | null } {
   const live = snap.mode === "live";
+  const historicalContext = snap.historical_context ?? (frozen ? true : undefined);
   const key = live ? `live:${snap.snapshot_id}` : snap.as_of;
   const [state, setState] = useState<{ key: string; data: any; err: string | null } | null>(null);
   useEffect(() => {
-    if (snap.facility.hypothetical) return;
+    if (snap.facility.hypothetical || historicalContext) return;
     let alive = true;
     if (!roadsCache.has(key)) roadsCache.set(key, api.roads(live ? undefined : snap.as_of).catch((e) => { roadsCache.delete(key); throw e; }));
     roadsCache.get(key)!.then((data) => alive && setState({ key, data, err: null }))
       .catch((e) => alive && setState({ key, data: null, err: String(e.message ?? e) }));
     return () => { alive = false; };
-  }, [key, live, snap.as_of, snap.facility.hypothetical]);
+  }, [key, live, snap.as_of, snap.facility.hypothetical, historicalContext]);
+  if (historicalContext) {
+    const roads = snap.inputs.filter(i=>i.kind==='road');
+    return {err:null,data:{as_of:snap.as_of,status:roads.length?'partial':'unavailable',detail:roads.length?'Historical corridor summaries saved in this reconstruction; statewide geometry unavailable.':'Road archive not supplied for this reconstruction. Current roads are not substituted.',source:'Saved historical corridor evidence',source_url:roads[0]?.source_url,fetched_at:roads[0]?.fetched_at,rank_labels:{0:'Seasonal / normal',1:'Wet or frost',2:'Partially covered',3:'Completely covered',4:'Travel advisory',5:'Travel not advised / closed'},geojson:{type:'FeatureCollection',features:[]},facility:snap.facility,corridors:snap.facility.corridors.map(c=>{const input=roads.find(i=>i.data?.corridor===c.id);return {...c,worst_rank:input?.value??null,worst_rank_label:input?.data?.rank_label??'No report',worst_label:input?.data?.label,worst_updated:input?.source_time,n_segments:input?.data?.n_segments??0,commuters_in_building:snap.roster?.commuters_by_corridor?.[c.id]??0,commuters_assigned:0};}),local_commuters_in_building:snap.roster?.commuters_by_corridor?.local??0}};
+  }
   return state?.key === key ? { data: state.data, err: state.err } : { data: null, err: null };
 }
 
 /** Three plain-language tiles: weather right now, alerts, and commute roads. Each opens its section. */
-export function GlanceRow({ snap, onOpen }: { snap: Snapshot; onOpen: (section: "charts" | "alerts" | "roads") => void }) {
+export function GlanceRow({ snap, onOpen, historical = false }: { snap: Snapshot; historical?: boolean; onOpen: (section: "charts" | "alerts" | "roads") => void }) {
   const temp = latest(snap, "obs.temp_f");
   const feels = latest(snap, "obs.apparent_temp_f");
   const wind = latest(snap, "obs.wind_speed_mph");
@@ -29,11 +34,11 @@ export function GlanceRow({ snap, onOpen }: { snap: Snapshot; onOpen: (section: 
   const rain = maxAhead(snap, "fcst.pop_pct", 12);
   const snow = maxAhead(snap, "fcst.snow_in", 24);
   const alerts = snap.inputs.filter((i) => i.kind === "alert").map((i) => (i.data as any)?.event as string).filter(Boolean);
-  const roads = useRoads(snap);
+  const roads = useRoads(snap,historical);
 
   return (
     <div className="grid gap-3 sm:grid-cols-3">
-      <Tile label="Weather now" onClick={() => onOpen("charts")} action="Forecast charts">
+      <Tile label={snap.mode==='live'&&!historical?'Weather now':'Weather at evaluation'} onClick={() => onOpen("charts")} action="Forecast charts">
         {temp ? (
           <>
             <p className="text-2xl font-semibold tabnum">{Math.round(temp.v)}°F
@@ -56,14 +61,14 @@ export function GlanceRow({ snap, onOpen }: { snap: Snapshot; onOpen: (section: 
           </>
         ) : (
           <>
-            <p className="text-2xl font-semibold">None</p>
-            <p className="text-sm text-ink2">No National Weather Service alerts here.</p>
+            <p className="text-2xl font-semibold">{snap.historical_context ? "Not supplied" : "None"}</p>
+            <p className="text-sm text-ink2">{snap.historical_context ? "No alert inputs; historical alert coverage may be unavailable." : "No National Weather Service alerts here."}</p>
           </>
         )}
       </Tile>
 
       <Tile label="Commute roads" onClick={() => onOpen("roads")} action="Map & cameras">
-        <RoadsSummary snap={snap} roads={roads} />
+        <RoadsSummary snap={historical?{...snap,mode:'replay'}:snap} roads={roads} />
       </Tile>
     </div>
   );
@@ -74,7 +79,7 @@ function RoadsSummary({ snap, roads }: { snap: Snapshot; roads: { data: any; err
   if (roads.err) return <p className="text-sm text-ink2">Road reports unavailable right now.</p>;
   if (!roads.data) return <div className="skeleton h-10" aria-hidden />;
   const reported = (roads.data.corridors ?? []).filter((c: any) => c.worst_rank !== null);
-  if (!reported.length) return <><p className="text-2xl font-semibold">No reports</p><p className="text-sm text-ink2">Iowa DOT has no current reports for the commute routes.</p></>;
+  if (!reported.length) return <><p className="text-2xl font-semibold">No reports</p><p className="text-sm text-ink2">{snap.mode!=='live' ? 'Historical corridor reports unavailable for this context.' : 'Iowa DOT has no current reports for the commute routes.'}</p></>;
   const bad = reported.filter((c: any) => c.worst_rank > 0).sort((a: any, b: any) => b.worst_rank - a.worst_rank);
   if (!bad.length) return <><p className="text-2xl font-semibold">Normal</p><p className="text-sm text-ink2">All {reported.length} commute routes report normal conditions.</p></>;
   return (

@@ -138,3 +138,26 @@ class DecisionReview(SQLModel, table=True):
     reviewer: str
     created_at: datetime
     evidence_json: str = "{}"
+
+
+class HistoricalArtifact(SQLModel, table=True):
+    """Content-addressed, compressed inputs/results; no duplicate raw payloads."""
+    sha256: str = Field(primary_key=True)
+    payload: bytes
+
+
+class HistoricalEvaluation(SQLModel, table=True):
+    id: str = Field(primary_key=True)
+    day: str = Field(index=True)
+    as_of: str = Field(index=True)
+    rules_sha: str = Field(index=True)
+    config_sha: str
+    reconstruction: str = Field(index=True)
+    status: str
+    summary_json: str
+    artifact_sha: str | None = Field(default=None, foreign_key="historicalartifact.sha256")
+
+
+class HistoricalBuild(SQLModel, table=True):
+    id: str = Field(primary_key=True)
+    state_json: str

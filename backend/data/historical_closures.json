@@ -1,0 +1,85 @@
+{
+  "scope": "Weather-related local proxy decisions; not the synthetic facility's ground truth",
+  "research_notes": [
+    "No dated Ames USDA closure record for the seven curated events was verified in the public search.",
+    "The USDA Ames ARS/APHIS operational-status page is a discovery lead, not a verified historical label: https://www.ars.usda.gov/midwest-area/ames/nadc/docs/location-support/ames-ars-and-aphis-operational-status/",
+    "Initial evidence includes official Iowa State cold-weather notices corroborated by IEM\u2019s dated 2019 feature, and a local newspaper report for 2024. Closure-only evidence cannot establish specificity or balanced accuracy.",
+    "Calendar holidays, planned early releases, unrelated Ames-named schools, and closures elsewhere in Iowa were excluded."
+  ],
+  "records": [
+    {
+      "institution": "Ames Community School District",
+      "institution_type": "school",
+      "location": "Ames, Story County, Iowa",
+      "day": "2024-01-12",
+      "status": "CLOSED",
+      "cause": "weather",
+      "announced_at": null,
+      "announced_by": "2024-01-11T23:29:00+00:00",
+      "verification": "reported",
+      "source_url": "https://www.aol.com/news/iowa-state-university-closes-campus-232924371.html",
+      "source_title": "Ames Tribune report by Celia Brocker, syndicated by AOL, January 11, 2024",
+      "evidence": "Ames district canceled Friday classes ahead of the approaching winter storm."
+    },
+    {
+      "institution": "Nevada Community School District",
+      "institution_type": "school",
+      "location": "Nevada, Story County, Iowa",
+      "day": "2024-01-12",
+      "status": "CLOSED",
+      "cause": "weather",
+      "announced_at": null,
+      "announced_by": "2024-01-11T23:29:00+00:00",
+      "verification": "reported",
+      "source_url": "https://www.aol.com/news/iowa-state-university-closes-campus-232924371.html",
+      "source_title": "Ames Tribune report by Celia Brocker, syndicated by AOL, January 11, 2024",
+      "evidence": "Nevada district also canceled Friday classes before the storm."
+    },
+    {
+      "institution": "Iowa State University",
+      "institution_type": "university",
+      "location": "Ames, Story County, Iowa",
+      "day": "2024-01-12",
+      "status": "PARTIAL_CLOSURE",
+      "cause": "weather",
+      "announced_at": null,
+      "announced_by": "2024-01-11T23:29:00+00:00",
+      "verification": "reported",
+      "source_url": "https://www.aol.com/news/iowa-state-university-closes-campus-232924371.html",
+      "source_title": "Ames Tribune report by Celia Brocker, syndicated by AOL, January 11, 2024",
+      "evidence": "Campus partially closed for winter weather, with remote work flexibility and essential services continuing."
+    },
+    {
+      "institution": "Iowa State University",
+      "institution_type": "university",
+      "location": "Ames, Story County, Iowa",
+      "day": "2019-01-30",
+      "status": "CLOSED",
+      "cause": "weather",
+      "announced_at": null,
+      "announced_by": null,
+      "verification": "official",
+      "source_url": "https://www.econ.iastate.edu/classes-canceled-offices-closed",
+      "source_title": "Iowa State University Department of Economics: Classes canceled, offices closed",
+      "corroborating_source_url": "https://mesonet3.agron.iastate.edu/onsite/features/cat.php?day=2019-01-29",
+      "evidence": "Classes and nonessential university offices were closed during the record-cold episode; essential staff still reported.",
+      "note": "Official notice has no publication timestamp or explicit year; 2019 episode corroborated by IEM\u2019s January 29, 2019 University Closure feature. Do not infer announcement time. Tuesday scope was revised, so January 29 is not graded."
+    },
+    {
+      "institution": "Iowa State University",
+      "institution_type": "university",
+      "location": "Ames, Story County, Iowa",
+      "day": "2019-01-31",
+      "status": "DELAYED_ARRIVAL",
+      "cause": "weather",
+      "announced_at": null,
+      "announced_by": null,
+      "verification": "official",
+      "source_url": "https://www.econ.iastate.edu/classes-canceled-offices-closed",
+      "source_title": "Iowa State University Department of Economics: Classes canceled, offices closed",
+      "corroborating_source_url": "https://mesonet3.agron.iastate.edu/onsite/features/cat.php?day=2019-01-29",
+      "evidence": "University offices reopened at noon and classes resumed at 12:10 p.m.; the day is mapped to delayed arrival rather than a full closure.",
+      "note": "Official notice has no publication timestamp or explicit year; 2019 episode corroborated by IEM\u2019s January 29, 2019 University Closure feature. Do not infer announcement time. Tuesday scope was revised, so January 29 is not graded."
+    }
+  ]
+}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BacktestingPanel } from "./BacktestingPanel";
 import { api } from "../api";
 import { Badge, Card, PostureBadge, READINESS, Skeleton, fmtTime } from "../util";
 
@@ -11,8 +12,10 @@ export function ThresholdsView() {
   const hazards = ["winter", "wind", "cold"];
   return (
     <div className="space-y-4">
+      <BacktestingPanel />
       <Card title="Backtest: recommendation at 04:00 local on the impact day vs. what happened"
         right={<span className="text-xs text-muted">simulated by rules (backtest), not real USDA decisions</span>}>
+        <p className="mb-3 text-sm text-muted">These seven curated examples retain their original simulation grading. The multi-year scores above use separate independent station-outcome labels; the two grading methods are not interchangeable.</p>
         {th.backtest.length === 0 ? <p className="text-sm">No history built yet (python -m scripts.build_history).</p> : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import asyncio
 import gzip
+from contextvars import ContextVar
 import hashlib
 import json
 import time
@@ -40,6 +41,8 @@ class CachedResponse:
     data: Any
     from_cache: bool
 
+
+historical_online = ContextVar("historical_online", default=None)
 
 _locks: dict[str, asyncio.Lock] = {}
 _client: httpx.AsyncClient | None = None
@@ -95,7 +98,8 @@ async def get_json(
     lock = _locks.setdefault(key, asyncio.Lock())
     async with lock:
         cached = _read(path) if path.exists() else None
-        demo = settings.demo_mode and not allow_demo_bypass
+        demo = ((settings.demo_mode and not allow_demo_bypass and not (historical and historical_online.get()))
+                or historical_online.get() is False)
         if cached is not None and "error" in cached and (historical or demo):
             raise SourceUnavailable(cached["error"])
         if cached is not None and "error" in cached:

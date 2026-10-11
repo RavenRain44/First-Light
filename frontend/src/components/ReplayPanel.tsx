@@ -1,151 +1,52 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import type { Snapshot } from "../types";
-import { Badge, Card, POSTURE_STYLE, PostureBadge, fmtTime, readinessColor } from "../util";
+import { Card, fmtTime } from "../util";
+import { BacktestingPanel } from "./BacktestingPanel";
 
-const TZ = "America/Chicago";
-
-export function ReplayPanel({ onSnapshot, busy, setBusy, current }: {
-  onSnapshot: (s: Snapshot) => void; busy: boolean; setBusy: (b: boolean) => void; current?: Snapshot | null;
+export function ReplayPanel({ onSnapshot, busy, setBusy }: {
+  onSnapshot: (s: Snapshot | null) => void; busy: boolean; setBusy: (b: boolean) => void; current?: Snapshot | null;
 }) {
-  const [events, setEvents] = useState<any[] | null>(null);
-  const [eventId, setEventId] = useState<string>("");
-  const [ev, setEv] = useState<any>(null);
-  const [idx, setIdx] = useState(0);
-  const [playing, setPlaying] = useState(false);
-  const [custom, setCustom] = useState("2023-02-22T05:00");
-  const [err, setErr] = useState<string | null>(null);
-  const timer = useRef<number | null>(null);
-
-  useEffect(() => {
-    api.events().then((e) => {
-      setEvents(e);
-      if (e.length) setEventId((cur) => cur || (e.find((x) => x.id === "ice-2023-02-22") ?? e[0]).id);
-    }).catch((e) => setErr(e.message));
-  }, []);
-
-  useEffect(() => {
-    if (!eventId) return;
-    api.event(eventId).then((d) => {
-      setEv(d);
-      const four = d.timeline.findIndex((t: any) => t.as_of === d.backtest?.at_0400_local?.as_of);
-      setIdx(four >= 0 ? four : 0);
-    }).catch((e) => setErr(e.message));
-  }, [eventId]);
-
-  useEffect(() => {
-    if (!ev || !ev.timeline[idx]) return;
-    let cancelled = false;
-    setBusy(true); setErr(null);
-    api.replay(ev.id, ev.timeline[idx].as_of)
-      .then((s) => { if (!cancelled) onSnapshot(s); })
-      .catch((e) => !cancelled && setErr(e.message))
-      .finally(() => !cancelled && setBusy(false));
-    return () => { cancelled = true; };
-  }, [ev, idx]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!playing || !ev) return;
-    timer.current = window.setTimeout(() => setIdx((i) => (i + 1 < ev.timeline.length ? i + 1 : (setPlaying(false), i))), 1400);
-    return () => { if (timer.current) clearTimeout(timer.current); };
-  }, [playing, idx, ev]);
-
-  const runCustom = async () => {
-    setBusy(true); setErr(null);
-    try { onSnapshot(await api.evaluateReplay(zonedToUtc(custom, TZ).toISOString())); }
-    catch (e: any) { setErr(e.message); } finally { setBusy(false); }
+  const [events,setEvents]=useState<any[]>([]);
+  const [coverage,setCoverage]=useState<any>(null);
+  const [day,setDay]=useState('2023-02-22');
+  const [clock,setClock]=useState('04:00');
+  const [eventId,setEventId]=useState('');
+  const [mode,setMode]=useState('archive');
+  const [online,setOnline]=useState(false);
+  const [result,setResult]=useState<any>(null);
+  const [err,setErr]=useState('');
+  const generation=useRef(0);
+  const active=useRef(true);
+  useEffect(()=>{active.current=true;onSnapshot(null);api.events().then(e=>active.current&&setEvents(e)).catch(e=>active.current&&setErr(e.message));api.backtesting().then(d=>active.current&&setCoverage(d)).catch(e=>active.current&&setErr(e.message));return()=>{active.current=false;generation.current++;};},[]);
+  const invalidate=()=>{generation.current++;setResult(null);setErr('');onSnapshot(null);setBusy(false);};
+  const search=async(selectedDay=day, selectedTime=clock, retry=false)=>{
+    const version=++generation.current;setBusy(true);setErr('');setResult(null);onSnapshot(null);
+    try{
+      const data=await api.searchHistory({day:selectedDay,time:selectedTime,mode,online,retry});
+      if(!active.current||version!==generation.current)return;
+      setResult(data);onSnapshot(data.snapshot ?? null);
+    }catch(e:any){if(active.current&&version===generation.current)setErr(e.message);}
+    finally{if(active.current&&version===generation.current)setBusy(false);}
   };
-
-  if (events && events.length === 0) {
-    return <Card title="Replay"><p className="text-sm">No historical events in the database. Run <code>python -m scripts.build_history</code> in backend/ (works offline with DEMO_MODE=true once the cache exists).</p></Card>;
-  }
-  const t = ev?.timeline[idx];
-  return (
-    <Card title="Replay a past event (only data available at that moment)" right={busy ? <span className="text-xs text-muted">loading…</span> : null}>
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="grid gap-1 text-sm">Event
-          <select value={eventId} onChange={(e) => { setPlaying(false); setEventId(e.target.value); }} className="rounded-md border border-edge bg-surface px-2 py-1">
-            {events?.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
-          </select>
-        </label>
-        <button onClick={() => setPlaying(!playing)} disabled={!ev} className="btn">{playing ? "❚❚ Pause" : "▶ Play"}</button>
-        <button onClick={() => setIdx((i) => Math.max(0, i - 1))} disabled={!ev} className="btn" aria-label="Previous hour">◀ 1h</button>
-        <button onClick={() => setIdx((i) => Math.min((ev?.timeline.length ?? 1) - 1, i + 1))} disabled={!ev} className="btn" aria-label="Next hour">1h ▶</button>
-        {ev?.backtest?.at_0400_local && (
-          <button onClick={() => setIdx(Math.max(0, ev.timeline.findIndex((x: any) => x.as_of === ev.backtest.at_0400_local.as_of)))}
-            className="btn">Jump to 04:00 on impact day</button>
-        )}
-        <span className="ml-auto flex items-end gap-2 text-sm">
-          <label className="grid gap-1">Any moment (Central time)
-            <input type="datetime-local" value={custom} onChange={(e) => setCustom(e.target.value)} className="rounded-md border border-edge bg-surface px-2 py-1" />
-          </label>
-          <button onClick={runCustom} disabled={busy} className="btn">Evaluate</button>
-        </span>
-      </div>
-      <p className="mt-2 text-xs text-muted">Playback uses recorded evidence. A brief is generated automatically when each selected report loads.</p>
-
-      {ev && (
-        <>
-          <input type="range" min={0} max={ev.timeline.length - 1} value={idx} onChange={(e) => { setPlaying(false); setIdx(+e.target.value); }}
-            className="mt-4 w-full" aria-label="Replay time" />
-          {/* posture ribbon: one cell per replayed hour */}
-          <div className="mt-1 flex h-5 w-full gap-px" role="img" aria-label="Recommended posture by hour">
-            {ev.timeline.map((x: any, i: number) => (
-              <button key={x.as_of} title={`${fmtTime(x.as_of, TZ)}: ${POSTURE_STYLE[x.posture as keyof typeof POSTURE_STYLE].label}`}
-                onClick={() => { setPlaying(false); setIdx(i); }}
-                className={`h-full flex-1 origin-bottom transition-transform duration-150 hover:scale-y-125 ${i === idx ? "outline outline-2 outline-[var(--text-primary)]" : ""}`}
-                style={{ background: POSTURE_STYLE[x.posture as keyof typeof POSTURE_STYLE].color }} />
-            ))}
-          </div>
-          <div className="mt-px flex h-2 w-full gap-px" role="img" aria-label="Readiness (Cooper color) by hour">
-            {ev.timeline.map((x: any, i: number) => (
-              <span key={x.as_of} title={`${fmtTime(x.as_of, TZ)}: Condition ${x.readiness ?? "n/a"}`}
-                className={`h-full flex-1 ${i === idx ? "outline outline-1 outline-[var(--text-primary)]" : ""}`}
-                style={{ background: readinessColor(x.readiness), boxShadow: x.readiness === "WHITE" ? "inset 0 0 0 1px var(--border)" : undefined }} />
-            ))}
-          </div>
-          <div className="mt-0.5 flex gap-3 text-[10px] text-muted"><span>top row: recommended posture</span><span>bottom row: readiness (Cooper color)</span></div>
-          <div className="mt-1 flex justify-between text-xs text-muted tabnum">
-            <span>{fmtTime(ev.timeline[0].as_of, TZ)}</span>
-            <span className="font-semibold text-ink">{t ? fmtTime(t.as_of, TZ) : ""}</span>
-            <span>{fmtTime(ev.timeline.at(-1).as_of, TZ)}</span>
-          </div>
-          <div className="mt-3 grid gap-3 text-sm md:grid-cols-3">
-            <div>
-              <p className="text-ink2">{ev.summary}</p>
-              <p className="mt-1 text-xs">
-                Verified in archive: {ev.verification.checks.map((c: any) => (
-                  <a key={c.product + c.ugc} href={c.events[0]?.link} target="_blank" rel="noreferrer" className="mr-2 underline">{c.product} {c.ugc} {c.verified ? "✓" : "✗"}</a>
-                ))}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase text-ink2">What actually happened</p>
-              <p>{ev.outcome.summary}</p>
-              {ev.outcome.amw_obs_note && <p className="text-xs italic text-muted">{ev.outcome.amw_obs_note}</p>}
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase text-ink2">Backtest at 04:00 on impact day</p>
-              <div className="mt-1 flex flex-wrap items-center gap-2"><PostureBadge p={ev.backtest.at_0400_local.posture} size="sm" /><Badge>{ev.backtest.verdict}</Badge></div>
-              <p className="mt-1 text-xs text-muted">{ev.backtest.label}</p>
-            </div>
-          </div>
-        </>
-      )}
-      {current && current.mode !== "live" && current.event_id === null && <p className="mt-2 text-xs text-muted">Showing a free-form replay at {fmtTime(current.as_of, TZ)}.</p>}
-      {err && <p className="mt-2 text-sm text-[var(--danger)]">{err}</p>}
-    </Card>
-  );
-}
-
-/** "2023-02-22T05:00" as wall-clock time in `tz` -> the UTC instant. */
-function zonedToUtc(wall: string, tz: string): Date {
-  const [d, t] = wall.split("T");
-  const [y, m, day] = d.split("-").map(Number);
-  const [hh, mm] = t.split(":").map(Number);
-  const guess = Date.UTC(y, m - 1, day, hh, mm);
-  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })
-    .formatToParts(new Date(guess)).map((p) => [p.type, p.value]));
-  const seen = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute);
-  return new Date(guess - (seen - guess));
+  return <div className="space-y-4"><Card title="Historical weather · Ames">
+    <p className="text-sm text-muted">Choose an event or search any day. All weather displays below follow the selected evaluation time. No decisions are recorded and no notifications are sent.</p>
+    <div className="mt-4 flex flex-wrap items-end gap-3">
+      <label className="grid gap-1 text-sm">Listed event<select value={eventId} onChange={e=>{invalidate();setEventId(e.target.value);const chosen=events.find(v=>v.id===e.target.value);if(chosen){setDay(chosen.impact_day);setClock('04:00');}else if(e.target.value.startsWith('day:')){setDay(e.target.value.slice(4));setClock('04:00');}}} className="rounded-lg border border-edge bg-surface p-2"><option value="">Choose an event</option>{events.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}{coverage?.latest_disruptive_days.filter((d:any,i:number,all:any[])=>!events.some(e=>e.impact_day===d.day)&&all.findIndex(x=>x.day===d.day)===i).map((d:any)=><option key={d.id} value={`day:${d.day}`}>AMW observed disruption · {d.day}</option>)}</select></label>
+      <label className="grid gap-1 text-sm">Date<input type="date" value={day} onInput={e=>{const value=e.currentTarget.value;invalidate();setDay(value);setEventId('');}} className="rounded-lg border border-edge bg-surface p-2" /></label>
+      <label className="grid gap-1 text-sm">Time · America/Chicago<input type="time" value={clock} onInput={e=>{const value=e.currentTarget.value;invalidate();setClock(value);}} className="rounded-lg border border-edge bg-surface p-2" /></label>
+      <button className="btn btn-primary" disabled={busy||!day||!clock} onClick={()=>search()}>{busy?'Loading historical evidence…':'View historical weather'}</button>
+    </div>
+    <div className="mt-3 flex flex-wrap gap-3 text-sm"><label>Reconstruction <select className="rounded border border-edge bg-surface p-1" value={mode} onChange={e=>{invalidate();setMode(e.target.value);}}><option value="archive">Archived forecasts where available</option><option value="observation">Observation-only baseline</option></select></label><label><input type="checkbox" checked={online} onChange={e=>setOnline(e.target.checked)} /> Download missing public archives</label></div>
+    <p className="mt-2 text-xs text-muted">Supported search: {coverage?.supported_start ?? '1996-09-30'} through {coverage?.supported_end ?? 'latest complete day'}. Coverage varies; absent records are not normal weather.</p>
+    {err&&<p role="alert" className="mt-3 rounded-lg border border-edge p-3">{err}</p>}
+    {result&&<div role="status" className="mt-4 rounded-lg border border-edge p-3 text-sm">
+      <strong>{result.status==='unavailable'?'Historical data unavailable':result.reconstruction} · {day} {clock} America/Chicago</strong><p>{result.detail}</p>
+      {result.as_of&&<p>Exact evaluation: {fmtTime(result.as_of,'America/Chicago')}</p>}
+      {result.snapshot&&<p>Recommendation applies to: {result.snapshot.posture.decision_day}{result.snapshot.posture.decision_day!==day?' (next scheduled facility day; excluded from same-day scores)':''}.</p>}
+      {result.outcome&&<p>Independent daily outcome: {result.outcome.gradable?(result.outcome.disruptive?'Local disruptive conditions observed':'No defined local disruption observed'):'Ungradable — '+result.outcome.reason}.</p>}
+      <button className="btn mt-2" disabled={busy} onClick={()=>search(day,clock,true)}>Rebuild this result</button>
+      <details className="mt-2"><summary className="cursor-pointer">Coverage, sources & local closure evidence</summary><ul>{[...(result.missing??[]),...(result.assumptions??[])].map((s:string)=><li key={s}>{s}</li>)}</ul>{result.source_coverage?.map((s:any)=><p key={s.adapter}>{s.adapter}: {s.status} {s.detail}</p>)}{result.provenance&&<a href={result.provenance.url} className="underline" target="_blank" rel="noreferrer">AMW source archive</a>}<ul>{result.proxy_records?.map((r:any,i:number)=><li key={i}>{r.institution}: {r.status} · <a className="underline" href={r.source_url} target="_blank" rel="noreferrer">Evidence</a></li>)}</ul>{!result.proxy_records?.length&&<p>No documented local operating decision for this date; operating status is unknown.</p>}</details>
+    </div>}
+  </Card><details><summary className="cursor-pointer text-sm font-semibold">Multi-year scores & build progress</summary><div className="mt-3"><BacktestingPanel key={result?.id??clock} evaluationTime={clock} /></div></details></div>;
 }

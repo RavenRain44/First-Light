@@ -2,11 +2,13 @@
 from __future__ import annotations
 
 from typing import Literal
+from datetime import datetime
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
 from app import past_decisions as past
+from app import snapshots
 
 router = APIRouter(prefix="/api")
 
@@ -14,6 +16,10 @@ router = APIRouter(prefix="/api")
 @router.get("/past-decisions")
 def past_decisions(background_tasks: BackgroundTasks, snapshot_id: str | None = None, facility_id: str | None = None):
     rows, due = past.list_past(snapshot_id, facility_id)
+    reference = snapshots.get(snapshot_id) if snapshot_id else None
+    if reference and (reference['mode']=='backtest' or reference.get('historical_context')):
+        due = []  # Historical browsing must not launch paid AI reviews.
+        rows = [row for row in rows if datetime.fromisoformat(row['decided_at']) <= datetime.fromisoformat(reference['as_of'])]
     if due:
         background_tasks.add_task(past.review_due, due[:3])
     return {"decisions": rows, "reviewing": due[:3]}

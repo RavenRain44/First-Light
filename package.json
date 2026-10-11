@@ -8,6 +8,7 @@
     "setup": "node scripts/setup.mjs",
     "test": "node scripts/run-api.mjs --test",
     "build:history": "node scripts/run-api.mjs --history",
+    "build:daily-history": "node scripts/run-api.mjs --daily-history",
     "cache:cameras": "node scripts/run-api.mjs --cameras",
     "seed:examples": "node scripts/run-api.mjs --examples"
   },

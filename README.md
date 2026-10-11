@@ -433,6 +433,15 @@ before approval. Groups with no selected employees or test contacts are skipped.
 If unchanged reporting instructions produced an empty package, **Create groups for
 another update** lets a manager deliberately draft an informational follow-up.
 
+### Multi-year historical replay and backtesting
+
+Use **More tools → Replay a past storm** to select a curated event or search an
+exact Ames date/time (default 04:00 Central). Expand **Multi-year scores & build
+progress** to view separately graded weather-impact and local proxy closure
+comparisons, source evidence, or start/resume a historical build. No notifications
+are sent from historical browsing. See [coverage, scoring and setup](docs/historical-backtesting.md)
+for completed local build measurements and remaining archive limitations.
+
 ### Simple alert workflow and real test delivery
 
 The default UI now follows **Decision → Review alerts → Send & done**. Recording a

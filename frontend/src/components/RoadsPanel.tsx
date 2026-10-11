@@ -27,7 +27,7 @@ const camIcon = (selected: boolean, video: boolean) => L.divIcon({
 const CAMERA_REFRESH_MS = 5 * 60 * 1000;
 
 export function RoadsPanel({ snap, savedDecisionId, historical = false }: { snap: Snapshot; savedDecisionId?: number | null; historical?: boolean }) {
-  const { data, err } = useRoads(historical ? {...snap, mode:"replay"} : snap);
+  const { data, err } = useRoads(historical ? {...snap, mode:"replay"} : snap,historical);
   const [layers, setLayers] = useState({ roads: true, corridors: true, cameras: false });
   const [cams, setCams] = useState<{ status: string; detail: string | null; cameras: Camera[] } | null>(null);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
@@ -36,14 +36,16 @@ export function RoadsPanel({ snap, savedDecisionId, historical = false }: { snap
 
   // Cameras load only when the layer is on; they follow the replay clock and refresh while live.
   useEffect(() => {
+    setCams(null);
     if (!layers.cameras || snap.facility.hypothetical) return;
+    if (snap.historical_context) {setCams({status:"unavailable",detail:"Historical camera imagery unavailable for this date/time. Saved decision images and live feeds are not substituted.",cameras:[]});return;}
     let alive = true;
     const load = () => (historical ? (savedDecisionId ? api.decisionCameras(savedDecisionId) : Promise.resolve({status:"unavailable", detail:"No decision camera archive selected.", cameras:[]})) : api.cameras(live ? undefined : snap.as_of)).then((c) => { if (alive) setCams(c); })
       .catch((e) => alive && setCams({ status: "unavailable", detail: String(e.message ?? e), cameras: [] }));
     load();
     const t = live ? setInterval(load, CAMERA_REFRESH_MS) : undefined;
     return () => { alive = false; if (t) clearInterval(t); };
-  }, [layers.cameras, live, snap.as_of, snap.facility.hypothetical, historical, savedDecisionId]);
+  }, [layers.cameras, live, snap.as_of, snap.facility.hypothetical, historical, savedDecisionId, snap.snapshot_id]);
 
   const visibleCams = useMemo(() => (cams?.cameras ?? []).filter((c) => !hidden.has(c.id)), [cams, hidden]);
   // Frame the traffic cameras and webcams around Ames; the far-off RWIS sites (~50+ km) stay on the map but would zoom it out too far.

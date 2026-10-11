@@ -144,6 +144,8 @@ export interface Facility {
 }
 
 export interface Snapshot {
+  historical_context?: any;
+  analogs_addon?: Snapshot['analogs'];
   snapshot_id: string;
   facility_id: string;
   as_of: string;

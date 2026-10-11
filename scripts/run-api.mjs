@@ -30,6 +30,7 @@ const getApiPort = () => {
 const arg = process.argv[2];
 const args = arg === "--test" ? ["-m", "pytest", "-q"]
   : arg === "--history" ? ["-m", "scripts.build_history"]
+  : arg === "--daily-history" ? ["-m", "scripts.build_daily_history", ...process.argv.slice(3)]
   : arg === "--cameras" ? ["-m", "scripts.cache_cameras"]
   : arg === "--examples" ? ["-m", "scripts.seed_example_decisions"]
   : ["-m", "uvicorn", "app.main:app", "--reload", "--port", getApiPort(), "--timeout-graceful-shutdown", "5"];

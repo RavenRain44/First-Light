@@ -19,6 +19,11 @@ export type StorageLinks = { enabled: boolean; error?: string; expires_in?: numb
   camera_sets?: { decision_id: number; captured_at?: string; images: { key: string; url: string; camera: string; view?: string; time?: string }[] }[] };
 
 export const api = {
+  backtesting: () => req<any>("/api/backtesting"),
+  searchHistory: (body: any) => req<any>("/api/backtesting/search", {method:"POST",body:JSON.stringify(body)}),
+  startHistoryBuild: (body: any) => req<any>("/api/backtesting/build", {method:"POST",body:JSON.stringify(body)}),
+  resumeHistoryBuild: (id: string) => req<any>(`/api/backtesting/jobs/${id}/resume`, {method:"POST"}),
+  cancelHistoryBuild: (id: string) => req<any>(`/api/backtesting/jobs/${id}/cancel`, {method:"POST"}),
   health: () => req<{ demo_mode: boolean; model_provider: string; inference: { enabled: boolean } }>("/api/health"),
   facility: () => req<any>("/api/facility"),
   latest: (maxAge?: number) => req<Snapshot>(`/api/snapshot/latest${maxAge !== undefined ? `?max_age_seconds=${maxAge}` : ""}`),

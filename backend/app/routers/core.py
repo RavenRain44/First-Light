@@ -276,6 +276,8 @@ def record_decision(d: DecisionIn, background_tasks: BackgroundTasks):
         raise HTTPException(404, "snapshot not found")
     if d.decision_posture not in ORDER:
         raise HTTPException(422, f"decision_posture must be one of {ORDER}")
+    if snap["mode"] == "backtest":
+        raise HTTPException(422, "Historical backtesting cannot record a human operating decision")
     agreed = d.decision_posture == snap["posture"]["posture"]
     if not agreed and not (d.override_reason and d.override_reason.strip()):
         raise HTTPException(422, "override_reason is required when the decision differs from the recommendation")

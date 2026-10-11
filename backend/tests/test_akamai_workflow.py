@@ -135,7 +135,7 @@ def test_regenerate_brief_appends_a_new_addon(tmp_path, monkeypatch):
         engine.dispose()
 
 
-def test_loading_stored_backtest_starts_default_brief(tmp_path, monkeypatch):
+def test_loading_stored_backtest_requires_explicit_ai_request(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "demo_mode", True)
     monkeypatch.setattr(settings, "model_provider", "akamai")
     monkeypatch.setattr(settings, "akamai_api_key", "test-team-key")
@@ -157,7 +157,9 @@ def test_loading_stored_backtest_starts_default_brief(tmp_path, monkeypatch):
         assert stored["ai_addon"]["status"] == "none"
         with TestClient(app) as client:
             loaded = client.get(f"/api/snapshot/{stored['snapshot_id']}").json()
-            assert loaded["ai_addon"]["status"] in ("pending", "ok")
+            assert loaded["ai_addon"]["status"] == "none"
+            assert not calls
+            assert client.post(f"/api/snapshot/{stored['snapshot_id']}/interpretation").status_code == 202
             for _ in range(100):
                 addon = client.get(f"/api/snapshot/{stored['snapshot_id']}/interpretation").json()
                 if addon["status"] != "pending":

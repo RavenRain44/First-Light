@@ -13,6 +13,7 @@ export function AlertsPanel({ snap }: { snap: Snapshot }) {
       {status && status.status === "unavailable" && (
         <p className="rounded-md bg-[var(--surface-2)] p-2 text-sm">Alert source unavailable: {status.detail}. Confidence is reduced.</p>
       )}
+      {inputs.length === 0 && snap.historical_context && <p className="text-sm text-muted">No alert inputs were supplied for this historical reconstruction. This does not establish that no alerts existed.</p>}
       {inputs.length === 0 && none && (
         <p className="text-sm text-ink2">
           <Prov tz={tz} source={none.source} url={none.source_url} fetched={none.fetched_at} note={none.note}>No active alerts</Prov> for this location.

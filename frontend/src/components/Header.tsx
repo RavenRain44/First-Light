@@ -80,10 +80,10 @@ export function Header({ snap, mode, setMode, view, setView, demo, theme, toggle
         <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[var(--accent)] px-4 py-3 text-[var(--on-accent)]">
           <p className="font-semibold">
             {mode === "replay"
-              ? `Viewing a past storm${snap?.mode === "replay" ? `: ${fmtTime(snap.as_of, tz)}` : ""}. This is not today's recommendation.`
+              ? `Historical weather${snap ? `: ${fmtTime(snap.as_of, tz)}` : ""}. This is not today's recommendation.`
               : `What-if check${snap?.mode === "livecheck" ? ` for ${snap.facility.name}` : ""}. This is not your facility's recommendation.`}
           </p>
-          <button onClick={goToday} className="rounded-lg bg-[var(--surface-1)] px-3 py-1.5 text-sm font-semibold text-[var(--accent)]">Back to today</button>
+          <button onClick={goToday} className="rounded-lg bg-[var(--surface-1)] px-3 py-1.5 text-sm font-semibold text-[var(--accent)]">Return to live</button>
         </div>
       )}
     </header>
