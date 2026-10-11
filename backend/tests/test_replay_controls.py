@@ -10,7 +10,7 @@ import pytest
 from fastapi import FastAPI, HTTPException
 from sqlmodel import select
 
-from app import db, historical, replay_controls as control, snapshots
+from app import db, historical, iowa_replay, replay_controls as control, snapshots
 from app.config import settings
 from app.models import Decision, HistoricalEvaluation, HistoryEvent, NotificationPackage, Snapshot
 from app.routers import core, history
@@ -99,7 +99,7 @@ async def test_control_available_on_empty_install_reuses_snapshot_and_charts_are
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
         catalog = await client.get("/api/history/events")
         assert catalog.status_code == 200
-        assert [e["id"] for e in catalog.json()] == [control.CONTROL_ID]
+        assert {e["id"] for e in catalog.json()} == {*iowa_replay.EVENT_IDS, control.CONTROL_ID}
         detail = await client.get(f"/api/history/events/{control.CONTROL_ID}")
         assert detail.status_code == 200 and len(detail.json()["timeline"]) == 24
         params = {"as_of": "2024-07-18T09:17:00Z"}

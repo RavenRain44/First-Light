@@ -50,6 +50,14 @@ Set `NWS_USER_AGENT` in `.env` to your app name and a contact (NWS asks every cl
 
 ### Build the historical library (replay, analogs, backtest)
 
+The Ames replay catalog includes seven storm events and the normal-weather control,
+even with an empty or partially populated database. Select Ames in the facility
+switcher, then open **More tools → Replay a past storm → Curated Storm Timeline**.
+When stored hourly reports are absent, the timeline uses current rules and the
+committed historical source cache, with missing evidence marked explicitly. Only
+the selected report is saved and eligible for an AI brief. Building the library
+below additionally populates stored backtests and live-weather analogs.
+
 ```bash
 npm run build:history                 # or: cd backend && .venv/Scripts/python -m scripts.build_history
 ```
