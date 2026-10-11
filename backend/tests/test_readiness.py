@@ -1,7 +1,7 @@
 """Readiness (adapted Cooper Color Code): WHITE / YELLOW / ORANGE / RED."""
 from datetime import datetime, timedelta, timezone
 
-from adapters.base import SourceStatus
+from adapters.base import NormalizedInput, SourceStatus
 from engine import confidence as conf
 from engine.readiness import assess_readiness
 from tests.test_engine import FAC, TH, alert_input, local, run, series_input
@@ -42,6 +42,22 @@ def test_announcement_deadline_close_is_red():
     r, p = ready([alert_input("Winter Storm Warning", local(2026, 1, 13, 5), local(2026, 1, 13, 9))], as_of)
     assert p.posture in ("DELAYED_ARRIVAL", "TELEWORK")
     assert r.level == "RED" and r.decide_by == local(2026, 1, 13, 4, 30) and r.recheck_minutes == 10
+
+
+def test_one_pavement_ice_sensor_is_minor_but_its_morning_decision_deadline_is_red():
+    as_of = local(2025, 2, 5, 4)
+    sensor = NormalizedInput(id="rwis.ice_condition_sensors", kind="scalar", role="observation",
+                             metric="rwis_ice_sensor_count", unit="count", value=1,
+                             source="test", source_url="test://", fetched_at=as_of, source_time=as_of)
+    zero_ice = series_input("fcst.ice_in", "ice_in", "in", [(as_of + timedelta(hours=i), 0.0) for i in range(24)])
+    _, rules, hazards, posture = run([sensor, zero_ice], as_of)
+    readiness, _ = ready([sensor, zero_ice], as_of)
+    assert hazards["winter"].level == 1  # count is minor; no accumulation threshold is crossed
+    assert posture.posture == "DELAYED_ARRIVAL"
+    assert not any(r.triggered and r.metric == "fcst_ice_24h_in" for r in rules)
+    assert readiness.level == "RED"
+    assert readiness.decide_by == local(2025, 2, 5, 4, 30)
+    assert readiness.reasons == ["Delayed Arrival must be announced by Wed 04:30 CST"]
 
 
 def test_early_dismissal_deadline_is_release_lead_before_arrival():

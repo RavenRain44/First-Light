@@ -49,6 +49,7 @@ export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotif
         style={{ background: condition?.color ?? "var(--surface-2)", color: presentation.level === "RED" ? "#fff" : condition ? "#1f2937" : "var(--text-primary)" }}>
         <p className="text-xs font-semibold uppercase tracking-wider">{condition ? `Condition ${condition.label}` : "Condition unavailable"} · Colonel Cooper readiness</p>
         <h2 id={`${id}-action`} className="mt-2 text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">{presentation.title}</h2>
+        {presentation.urgencyExplanation && <p className="mt-2 text-sm" data-testid="readiness-urgency">{presentation.urgencyExplanation}</p>}
         {presentation.level === "WHITE" && <p className="mt-2 text-sm">Keep routine monitoring; review again when the forecast changes.</p>}
         {snap.historical_context && <p className="mt-2 text-sm">Historical rating uses supplied inputs only; missing forecasts and alerts remain unknown.</p>}
       </header>

@@ -71,15 +71,24 @@ export function cooperPresentation(snap: Snapshot) {
   const urgent = level === "ORANGE" || level === "RED";
   // A quiet forecast heading would read as an all-clear, so insufficient evidence names itself instead.
   const quiet = level !== "RED" && level !== "ORANGE";
-  const title = level === "RED" ? `Send communication immediately${event ? `: ${event}` : ""}`
+  const reasons = snap.readiness?.reasons ?? [];
+  const deadlineOnly = level === "RED" && !snap.posture.guidance.length && reasons.length > 0
+    && reasons.every((r) => /announced by|deadline/i.test(r));
+  const posture = snap.posture.posture.toLowerCase().replaceAll("_", " ");
+  const title = deadlineOnly ? `${snap.readiness?.deadline_passed ? "Decision overdue" : "Decision due soon"}: ${posture}`
+    : level === "RED" ? `Send communication immediately${event ? `: ${event}` : ""}`
     : level === "ORANGE" ? "Start taking precautions"
     : quiet && evidenceWarning(evidenceState(snap)) && snap.sufficiency ? "Insufficient current data"
     : level ? weatherHeading(snap) : "Readiness not recorded";
   const action = level === "RED" ? "Draft urgent decision" : level === "ORANGE" ? "Draft decision"
     : level === "YELLOW" ? "Review decision" : level === null ? "Review decision" : null;
-  const reasons = snap.readiness?.reasons ?? [];
+  const contributing = Object.values(snap.hazards).filter((h) => snap.posture.contributing_hazards.includes(h.hazard));
+  const severity = contributing.length ? Math.max(...contributing.map((h) => h.level)) : null;
+  const urgencyExplanation = deadlineOnly
+    ? `Red reflects the announcement deadline${severity === null ? "." : `; the contributing weather hazard is rated ${["none", "minor", "significant", "extreme"][severity] ?? "unknown"}.`} Review the evidence before choosing an operating status.`
+    : null;
   const watch = level === "YELLOW" ? watchMessage(snap, event, title) : null;
-  return { level, title, event, urgent, action, watch, reasons: reasons.slice(0, 3) };
+  return { level, title, event, urgent, action, watch, deadlineOnly, urgencyExplanation, reasons: reasons.slice(0, 3) };
 }
 
 function watchMessage(snap: Snapshot, event: string | null, title: string): string {

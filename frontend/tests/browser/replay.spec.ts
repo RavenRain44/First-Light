@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import type { ReplayEvent, ReplayPoint, Snapshot } from "../../src/types";
+import type { NormalizedInput, ReplayEvent, ReplayPoint, Snapshot } from "../../src/types";
 
 const dist = fileURLToPath(new URL("../../dist/", import.meta.url));
 const history = fileURLToPath(new URL("../../../backend/fixtures/history/", import.meta.url));
@@ -12,7 +12,7 @@ const events: ReplayEvent[] = await Promise.all(["ice-2023-02-22", "derecho-2020
 
 function snapshot(asOf: string, point: ReplayPoint, eventId: string | null): Snapshot {
   return {
-    snapshot_id: `test-${eventId ?? "custom"}-${asOf}`, as_of: asOf, created_at: asOf,
+    snapshot_id: `test-${eventId ?? "custom"}-${Date.parse(asOf)}`, as_of: asOf, created_at: asOf,
     mode: "replay", event_id: eventId, facility_id: "IA-AMES-SC", thresholds_version: "test", thresholds_sha256: "test",
     model_id: "deterministic-fallback", prompt_version: "test", content_sha256: "test", integrity_ok: true,
     facility: { id: "IA-AMES-SC", name: "Test facility", synthetic: true, state: "IA", timezone: "America/Chicago",
@@ -28,7 +28,45 @@ function snapshot(asOf: string, point: ReplayPoint, eventId: string | null): Sna
   };
 }
 
-async function mockApp(page: Page, options: { pendingAi?: boolean; failFirstEvent?: boolean; holdReplay?: boolean } = {}) {
+type Weather = "pavement" | "snow" | "ice" | "freezing";
+
+function withWeather(report: Snapshot, weather: Weather): Snapshot {
+  const asOf = report.as_of, end = new Date(Date.parse(asOf) + 3 * 3600000).toISOString();
+  const sourceTime = new Date(Date.parse(asOf) - 30 * 60000).toISOString();
+  const pavement = weather === "pavement", freezing = weather === "freezing";
+  const metric = pavement ? "rwis_ice_sensors" : freezing ? "obs_freezing_precip_hours_3h" : "alert_present";
+  const label = pavement ? "RWIS sensors reporting ice" : freezing ? "Observed freezing precipitation"
+    : weather === "snow" ? "Winter Storm Warning" : "Ice Storm Warning";
+  const observed = pavement ? 1 : freezing ? 2 : label;
+  const rule = { rule_id: `winter.${weather}`, hazard: "winter", metric, label, operator: ">=", threshold: 1,
+    unit: pavement ? "sensors" : freezing ? "hours" : "alert", observed_value: observed, triggered: true, available: true,
+    margin_abs: 0, margin_pct: 0, time_of_peak: sourceTime, window_start: sourceTime, window_end: end, input_ids: [],
+    level: pavement ? 1 : 2, posture_effect: pavement ? "minor" : "significant", score: pavement ? 30 : 60,
+    verified: false, basis: "policy", anchor: "Test evidence", source_url: "https://example.test/weather", time_window: "Test window", detail: null };
+  const input = (metric: string, value: number, observation = false): NormalizedInput => ({
+    id: `${observation ? "obs" : "fcst"}.${metric}`, kind: observation ? "scalar" : "series",
+    metric, role: observation ? "observation" : "forecast", unit: metric.includes("temp") ? "degF" : "in", value: observation ? value : null,
+    series: observation ? null : [{ t: asOf, v: value }], data: null, source: "Recorded test weather",
+    source_url: "https://example.test/weather", source_time: sourceTime, fetched_at: asOf, note: null,
+  });
+  report.rules = [rule];
+  report.inputs = [input("temp_f", 28), input("snow_in", weather === "snow" ? 6 : 0), input("ice_in", weather === "ice" ? 0.3 : 0)];
+  if (pavement) report.inputs.push(input("pavement_temp_f", 28, true));
+  if (pavement || freezing) report.signals = { [metric]: { value: observed, available: true, role: "observation", peak_time: sourceTime } };
+  report.hazards = { winter: { hazard: "winter", label: "Winter / ice", score: rule.score, level: rule.level,
+    level_name: rule.posture_effect, triggered_rule_ids: [rule.rule_id], controlling_rule_ids: [rule.rule_id],
+    window_start: sourceTime, window_end: end, time_of_peak: sourceTime, posture: "DELAYED_ARRIVAL", posture_reason: "AM commute" } };
+  report.posture = { ...report.posture, posture: "DELAYED_ARRIVAL", contributing_hazards: ["winter"] };
+  report.readiness = { ...report.readiness!, level: "RED", decide_by: new Date(Date.parse(asOf) + 30 * 60000).toISOString(),
+    reasons: [pavement ? "Delayed Arrival must be announced by Wed 04:30 CST" : `${label} is happening now`] };
+  report.ai.suggested_reasons = [{ rule_id: rule.rule_id, text: pavement ? "RWIS sensors reporting ice of 1 sensors" : `${label} in effect` }];
+  if (weather === "snow") report.alerts = [{ id: "test", event: label, headline: "Heavy snow expected, 6 to 8 inches.",
+    description: null, instruction: null, severity: "Severe", certainty: "Likely", urgency: "Expected",
+    onset: sourceTime, ends: end, expires: end, sent: sourceTime, areaDesc: "Test county" }];
+  return report;
+}
+
+async function mockApp(page: Page, options: { pendingAi?: boolean; failFirstEvent?: boolean; holdReplay?: boolean; weather?: Weather } = {}) {
   const loads: { event: string[]; replay: string[]; custom: string[]; ai: number } = { event: [], replay: [], custom: [], ai: 0 };
   const errors: string[] = [], unexpected: string[] = [];
   let failed = false;
@@ -49,7 +87,18 @@ async function mockApp(page: Page, options: { pendingAi?: boolean; failFirstEven
       if (url.pathname === "/api/risk-tradeoffs") return await route.fulfill({ json: { errors: {} } });
       if (url.pathname === "/api/past-decisions") return await route.fulfill({ json: { decisions: [], reviewing: [] } });
       if (url.pathname === "/api/roads") return await route.fulfill({ json: { status: "not_applicable", corridors: [] } });
-      if (url.pathname === "/api/timeseries") return await route.fulfill({ json: { rows: [], meta: {}, timezone: "America/Chicago" } });
+      if (url.pathname === "/api/timeseries") {
+        const report = saved.get(url.searchParams.get("snapshot_id")!);
+        const rows = new Map<string, Record<string, string | number | null>>();
+        for (const input of report?.inputs ?? []) for (const point of input.series ?? []) {
+          const row = rows.get(point.t) ?? { t: point.t };
+          const key = `${input.role === "observation" ? "obs" : "fcst"}_${input.metric}`;
+          row[key] = point.v;
+          if (key === "fcst_snow_in" || key === "fcst_ice_in") row[key.replace("_in", "_cum")] = point.v;
+          rows.set(point.t, row);
+        }
+        return await route.fulfill({ json: { rows: [...rows.values()], meta: {}, timezone: "America/Chicago" } });
+      }
       if (url.pathname === "/api/backtesting") return await route.fulfill({ json: {
         jobs: [], proxy_records: [], latest_disruptive_days: [], supported_start: "1996-01-01", supported_end: "2026-10-10",
         storage: { source_years: [], compressed_source_bytes: 0, compressed_evaluation_bytes: 0, mean_evaluation_bytes: 0, db_bytes: 0 },
@@ -67,6 +116,7 @@ async function mockApp(page: Page, options: { pendingAi?: boolean; failFirstEven
         loads.replay.push(asOf);
         const point = replayEvent.timeline.find((item) => Date.parse(item.as_of) === Date.parse(asOf))!;
         const report = snapshot(asOf, point, replayEvent.id);
+        if (options.weather) withWeather(report, options.weather);
         if (options.pendingAi) report.ai_addon = { status: "pending" };
         saved.set(report.snapshot_id, report);
         if (options.holdReplay) await replayGate;
@@ -118,6 +168,33 @@ test("an untouched curated timeline settles once and stays stable across parent 
   expect(app.loads.replay).toEqual([events[0].backtest.at_0400_local.as_of]);
   expect(app.loads.ai).toBe(1);
   await expect(loading(page)).toHaveCount(0);
+  expect(app.errors).toEqual([]); expect(app.unexpected).toEqual([]);
+});
+
+for (const [weather, primary, title] of [
+  ["pavement", "rwis", "Decision due soon: delayed arrival"],
+  ["snow", "snow", "Send communication immediately: Winter Storm Warning"],
+  ["ice", "ice", "Send communication immediately: Ice Storm Warning"],
+  ["freezing", "freezing", "Send communication immediately: Observed freezing precipitation"],
+] as const) test(`${weather} events show the correct evidence graph and readiness explanation`, async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const app = await mockApp(page, { weather });
+  const dashboard = page.getByTestId("cooper-dashboard");
+  await expect(dashboard).toHaveAttribute("data-condition", "RED");
+  await expect(dashboard.getByRole("heading", { name: title, exact: true })).toBeVisible();
+  const metrics = page.getByRole("region", { name: "Concerning weather data" });
+  await expect(metrics.locator("figure").first()).toHaveAttribute("data-metric", primary);
+  await expect(metrics.locator("figure").nth(1)).toHaveAttribute("data-metric", "temp");
+  if (weather === "pavement") {
+    await expect(dashboard.getByTestId("readiness-urgency")).toContainText("weather hazard is rated minor");
+    await expect(dashboard.getByTestId("suggested-action")).toContainText("1 nearby pavement sensor reporting an ice watch/warning condition");
+    await expect(metrics).toContainText("not inches of ice or affected roads");
+    await expect(metrics.locator('[data-metric="rwis"]')).toContainText("1 sensor");
+  }
+  if (weather !== "ice") await expect(metrics.locator('[data-metric="ice"]')).toHaveCount(0);
+  if (weather !== "snow") await expect(metrics.locator('[data-metric="snow"]')).toHaveCount(0);
+  await expect(metrics.locator(".recharts-reference-area").first()).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect(app.errors).toEqual([]); expect(app.unexpected).toEqual([]);
 });
 
