@@ -25,3 +25,10 @@ test("a supported NORMAL is an all-clear", () => {
   assert.equal(normalIsFallback({ ...base, sufficiency: ok }), false);
   assert.equal(evidenceWarning(ok), false);
 });
+
+test("a usable backup supports a provisional NORMAL while an incomplete backup remains insufficient", () => {
+  const backup = { ...insufficient, provisional: true, status: "limited", forecast_sources: ["Archived GFS MOS"], reason_required: true };
+  assert.equal(normalIsFallback({ ...base, sufficiency: backup }), false);
+  assert.equal(evidenceState({ ...base, sufficiency: backup }).supports_all_clear, false);
+  assert.equal(normalIsFallback({ ...base, sufficiency: { ...backup, status: "insufficient" } }), true);
+});

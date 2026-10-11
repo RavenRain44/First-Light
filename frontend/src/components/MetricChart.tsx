@@ -1,6 +1,6 @@
 import { useId, useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceArea, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { metricEvidence, type MetricDefinition } from "../dashboard";
+import { metricDomain, metricEvidence, type MetricDefinition } from "../dashboard";
 import type { Snapshot, Timeseries } from "../types";
 import { fmtTime, fmtVal } from "../util";
 
@@ -9,14 +9,13 @@ export function MetricChart({ snap, metric, data, compact = false }: {
 }) {
   const id = useId();
   const [full, setFull] = useState(false);
-  const { rows, rule, context, window, highlighted, keys } = metricEvidence(snap, metric, data);
+  const evidence = metricEvidence(snap, metric, data);
+  const { rows, rule, context, window, highlighted, keys } = evidence;
   const tz = snap.facility.timezone;
   const asOf = new Date(snap.as_of).getTime();
   const available = metric.series.filter((s) => rows.some((row) => typeof row[s.key] === "number"));
-  const start = asOf - 12 * 3600e3, end = asOf + 48 * 3600e3;
-  const focused: [number, number] = window ? [Math.max(start, Math.min(window.start - 3 * 3600e3, asOf - 2 * 3600e3)),
-    Math.min(end, Math.max(window.end + 3 * 3600e3, asOf + 4 * 3600e3))] : [asOf - 3 * 3600e3, asOf + 24 * 3600e3];
-  const domain: [number, number] = full ? [start, end] : focused;
+  const seriesName = (s: MetricDefinition["series"][number]) => `${s.name}${data.meta[s.key]?.derived ? " (calculated)" : ""}${data.meta[s.key.replace("_cum", "_in")]?.provenance?.weather_fallback ? " (backup forecast)" : ""}`;
+  const domain = metricDomain(snap, metric, evidence, full);
   const ticks = Array.from({ length: 5 }, (_, i) => domain[0] + (domain[1] - domain[0]) * i / 4);
   const visible = rows.filter((row) => row.ts >= domain[0] && row.ts <= domain[1]);
   const candidates = visible.flatMap((row) => keys.flatMap((key) => typeof row[key] === "number"
@@ -60,7 +59,7 @@ export function MetricChart({ snap, metric, data, compact = false }: {
               <ReferenceLine x={asOf} stroke="var(--text-muted)" strokeDasharray="3 3"
                 label={{ value: "As of", position: "insideTopLeft", fill: "var(--text-muted)", fontSize: 10 }} />
               <Tooltip content={<MetricTooltip tz={tz} snap={snap} data={data} format={format} />} />
-              {available.map((s) => <Line key={s.key} data={visible.filter((row) => row[s.key] !== undefined)} dataKey={s.key} name={s.name} stroke={s.color} strokeWidth={2}
+              {available.map((s) => <Line key={s.key} data={visible.filter((row) => row[s.key] !== undefined)} dataKey={s.key} name={seriesName(s)} stroke={s.color} strokeWidth={2}
                 strokeDasharray={s.forecast ? "5 3" : undefined} dot={false} connectNulls={false} isAnimationActive={false} activeDot={{ r: 4 }} />)}
               {available.map((s) => <Line key={`${s.key}-focus`} data={visible.filter((row) => row[s.key] !== undefined)} dataKey={`${s.key}_focus`} stroke="var(--data-focus)" strokeWidth={3}
                 dot={{ r: 2, fill: "var(--data-focus)", strokeWidth: 0 }} connectNulls={false} isAnimationActive={false} activeDot={false} tooltipType="none" />)}
@@ -69,7 +68,7 @@ export function MetricChart({ snap, metric, data, compact = false }: {
           </ResponsiveContainer>
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-ink2">
-          {available.map((s) => <span key={s.key} className="inline-flex items-center gap-1.5"><span aria-hidden className="inline-block w-5 border-t-2" style={{ borderColor: s.color, borderStyle: s.forecast ? "dashed" : "solid" }} />{s.name}</span>)}
+          {available.map((s) => <span key={s.key} className="inline-flex items-center gap-1.5"><span aria-hidden className="inline-block w-5 border-t-2" style={{ borderColor: s.color, borderStyle: s.forecast ? "dashed" : "solid" }} />{seriesName(s)}</span>)}
           {(window || highlighted > 0) && <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2.5 w-2.5 rounded-sm" style={{ background: "var(--data-focus)" }} />{label}</span>}
           {peak && <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--data-focus)" }} />{metric.signal ? "Recorded observation" : metric.id === "temp" ? "Lowest point" : "Peak point"}</span>}
           <button className="ml-auto min-h-9 rounded-md px-2 text-xs font-medium text-[var(--accent)] underline underline-offset-2" onClick={() => setFull(!full)}>
@@ -86,7 +85,7 @@ export function MetricChart({ snap, metric, data, compact = false }: {
           </> : context ? <><strong className="text-ink">Why highlighted: </strong>{context.label}. The shaded period comes from the recorded hazard window; this chart does not establish that a numeric threshold was crossed.</>
             : <>These measurements provide context. No operating-status threshold is crossed for this metric.</>}
           {window && <span className="mt-1 block">Highlighted window: {fmtTime(new Date(window.start).toISOString(), tz)} – {fmtTime(new Date(window.end).toISOString(), tz)}.</span>}
-          {metric.signal && <span className="mt-1 block">This is a recorded observation at this evaluation, not a forecast of future conditions.</span>}
+          {metric.signal && <span className="mt-1 block">This is a recorded observation{peak ? ` reported at ${fmtTime(new Date(peak.ts).toISOString(), tz)}` : ""}, available by this evaluation, not a forecast of future conditions.</span>}
           {metric.id === "rwis" && <span className="mt-1 block">This counts nearby pavement sensor alerts, not inches of ice or affected roads. Verify conditions on staff commute routes before deciding.</span>}
           {metric.id === "roads" && <span className="mt-1 block">Road scale: 0 normal, 1 wet/frost, 2 partially covered, 3 completely covered, 4 travel advisory, 5 travel not advised/closed.</span>}
           {(rule ?? context)?.source_url.startsWith("https://") && <div className="mt-1"><a href={(rule ?? context)!.source_url} target="_blank" rel="noreferrer" className="inline-block underline underline-offset-2">View recorded evidence source</a></div>}
@@ -106,10 +105,17 @@ function MetricTooltip({ active, payload, label, tz, snap, data, format }: {
     {payload.filter((p) => !String(p.dataKey).endsWith("_focus") && typeof p.value === "number").map((p) => {
       const key = String(p.dataKey).replace("_cum", "_in");
       const signal = key.startsWith("obs_") ? snap.signals[key.slice(4)] : undefined;
-      const meta = data.meta[key] ?? snap.inputs.find((input) => signal?.input_ids?.includes(input.id)
-        || `${input.role === "observation" ? "obs" : "fcst"}_${input.metric}` === key);
+      const input = snap.inputs.find((input) => !input.id.startsWith("unused.") && (signal?.input_ids?.includes(input.id)
+        || `${input.role === "observation" ? "obs" : "fcst"}_${input.metric}` === key));
+      const meta = data.meta[key] ?? input;
+      const provenance = data.meta[key]?.provenance ?? input?.data;
+      const timeKey = new Date(Number(label)).toISOString().replace(".000Z", "Z");
+      const pointSource = provenance?.secondary_point_sources?.[timeKey] ?? provenance?.point_sources?.[timeKey];
+      const secondary = provenance?.secondary_times?.includes(timeKey) ? provenance.secondary_source : null;
+      const origin = secondary ? { ...secondary, ...pointSource } : pointSource ? { ...meta, ...pointSource } : meta;
       return <div key={p.dataKey} className="mt-1"><p>{p.name}: <strong>{format(p.value!)}</strong></p>
-        {meta && <p className="text-muted">{meta.source} · {key.startsWith("obs_") ? "observed" : "issued"} {fmtTime(meta.source_time, tz)}</p>}</div>;
+        {origin && <><p className="text-muted">{origin.source} · {origin.source_time ? <>{key.startsWith("obs_") ? "observed" : "issued"} {fmtTime(origin.source_time, tz)}</>
+          : <>issue time unavailable; retrieved {fmtTime(origin.fetched_at, tz)}</>}</p>{meta?.note && <p className="mt-1 text-muted">{meta.note}</p>}</>}</div>;
     })}
   </div>;
 }

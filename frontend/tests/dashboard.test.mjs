@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { METRICS, crossesThreshold, metricEvidence, relevantMetrics, suggestionReasons } from "../src/dashboard.ts";
+import { METRICS, crossesThreshold, metricDomain, metricEvidence, relevantMetrics, suggestionReasons } from "../src/dashboard.ts";
+import { readFileSync } from "node:fs";
 
 const asOf = "2026-01-13T06:00:00Z";
 const at = (hour) => `2026-01-13T${String(hour).padStart(2, "0")}:00:00Z`;
@@ -111,11 +112,43 @@ test("freezing precipitation, measured ice and covered roads retain their observ
   }
 });
 
-test("missing snow forecasts stay missing and unrelated wind does not fill a snow event", () => {
+test("missing snow forecasts stay missing while blizzards use their available wind context", () => {
   const s = snap([rule("blizzard", "alert_present", { hazard: "winter", observed_value: "Blizzard Warning" })]);
   const d = data([{ t: at(8), fcst_ice_cum: 0, fcst_wind_gust_mph: 10 }]);
-  assert.deepEqual(relevantMetrics(s, d).map((m) => m.id), ["snow"]);
+  assert.deepEqual(relevantMetrics(s, d).map((m) => m.id), ["wind"]);
   assert.equal(metricEvidence(s, METRICS.find((m) => m.id === "snow"), d).peak, null);
+});
+
+test("the pre-Christmas blizzard shows wind, dangerous cold and a timestamped travel advisory after new snow ends", () => {
+  const { snapshot: s, timeseries: d } = JSON.parse(readFileSync(new URL("../../backend/fixtures/blizzard_2022-12-22T18Z_chart.json", import.meta.url)));
+  assert.equal(s.signals.fcst_snow_24h_in.value, 0);
+  assert.deepEqual(relevantMetrics(s, d).map((m) => m.id), ["wind", "temp", "roads"]);
+  const cold = metricEvidence(s, METRICS.find((m) => m.id === "temp"), d);
+  assert.equal(cold.rule.rule_id, "cold.fcst_wind_chill_extreme");
+  assert.equal(cold.peak.value, s.signals.fcst_min_apparent_24h_f.value);
+  assert.ok(cold.highlighted > 0);
+  assert.ok(cold.rows.some((r) => r.obs_apparent_temp_f < -35));
+  const roadMetric = METRICS.find((m) => m.id === "roads");
+  const roads = metricEvidence(s, roadMetric, d);
+  assert.equal(roads.peak.value, 4);
+  assert.equal(roads.peak.ts, Date.parse("2022-12-22T13:37:00Z"));
+  assert.equal(roads.highlighted, 1);
+  const domain = metricDomain(s, roadMetric, roads);
+  assert.ok(domain[0] < roads.peak.ts && roads.peak.ts < domain[1]);
+  assert.equal(roads.rows.length, 1); // one report, never a fabricated road trend
+});
+
+test("a road report before the commute window stays visible without being moved to evaluation time", () => {
+  const s = snap([rule("roads", "road_worst_rank", { hazard: "winter", observed_value: 4, threshold: 4,
+    time_of_peak: at(1), window_start: at(5), window_end: at(9) })], {
+    signals: { road_worst_rank: { available: true, value: 4, peak_time: at(1) } },
+  });
+  const metric = METRICS.find((m) => m.id === "roads"), d = data([]);
+  const evidence = metricEvidence(s, metric, d);
+  assert.equal(evidence.peak.ts, Date.parse(at(1)));
+  assert.equal(evidence.highlighted, 1);
+  assert.ok(metricDomain(s, metric, evidence)[0] < evidence.peak.ts);
+  assert.deepEqual(metricDomain(s, metric, evidence, true), [Date.parse(asOf) - 12 * 3600e3, Date.parse(asOf) + 48 * 3600e3]);
 });
 
 test("only the recorded threshold, series and hazard window are highlighted", () => {

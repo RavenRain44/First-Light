@@ -188,6 +188,8 @@ export interface Sufficiency {
   mode_note?: string;
   evaluated_as_of?: string;
   policy_version?: string | null;
+  provisional?: boolean;
+  forecast_sources?: string[];
 }
 
 export interface Snapshot {
@@ -275,7 +277,7 @@ export interface Decision {
   label: string;
   /** Evidence sufficiency when decided ("" = before this was tracked). */
   evidence_status?: string;
-  /** "recommendation" | "override" | "manual_insufficient_evidence" ("" = before this was tracked). */
+  /** "recommendation" | "override" | "manual_insufficient_evidence" | "manual_provisional_forecast". */
   decision_basis?: string;
 }
 
@@ -307,7 +309,7 @@ export interface Timeseries {
   as_of: string;
   timezone: string;
   rows: ({ t: string } & Record<string, number | string | null>)[];
-  meta: Record<string, { source: string; source_time: string | null; fetched_at: string | null; source_url: string; note?: string }>;
+  meta: Record<string, { source: string; source_time: string | null; fetched_at: string | null; source_url: string; note?: string; derived?: boolean; input_ids?: string[]; provenance?: Record<string, any> }>;
   threshold_lines: { chart: string; value: number; label: string; rule_id: string; verified: boolean; level: string }[];
   windows: { kind: string; label: string; start: string; end: string }[];
 }

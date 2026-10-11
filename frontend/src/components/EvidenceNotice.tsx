@@ -19,6 +19,7 @@ export function EvidenceNotice({ snap, onRefresh, busy = false, compact = false 
     <section role={s.status === "insufficient" ? "alert" : "status"} data-testid="evidence-notice" data-status={s.status}
       className={`rounded-xl border-l-4 px-4 py-3 ${warn ? "border-[var(--danger)] bg-[var(--surface-2)]" : "border-[var(--outcome-mixed)] bg-[var(--surface-2)]"}`}>
       <p className={`${compact ? "text-base" : "text-lg"} font-semibold`}>{warn ? "⚠ " : ""}{title}</p>
+      {s.provisional && <p className="mt-1 text-sm" data-testid="backup-source">Backup source: {s.forecast_sources?.join("; ") || "secondary forecast"}. This recommendation needs your review.</p>}
       {warn && s.status === "insufficient" && (
         <p className="mt-1 text-sm">The weather data needed to confirm conditions is missing or out of date. A "Normal" suggestion here is only the
           rules' fallback, not an all-clear. Missing data is not evidence that conditions are safe.</p>
@@ -38,7 +39,7 @@ export function EvidenceNotice({ snap, onRefresh, busy = false, compact = false 
       <div className="mt-2 flex flex-wrap items-center gap-3">
         {recheck}
         {s.mode_note && <span className="text-xs text-ink2">{s.mode_note}</span>}
-        {warn && <span className="text-xs text-ink2">You can still record a decision; it will be recorded as a manual decision and needs a reason.</span>}
+        {(warn || s.reason_required) && <span className="text-xs text-ink2">{snap.mode === "backtest" ? "Review only; no decision is recorded." : "The manager makes the final decision. Recording a decision requires a reason."}</span>}
       </div>
     </section>
   );

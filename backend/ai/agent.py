@@ -145,7 +145,10 @@ def sufficiency_problems(interp: Interpretation, snap: dict) -> list[str]:
         return []
     lead = f"{interp.headline} {interp.summary}"
     problems = []
-    if not INSUFFICIENT_WORDS.search(lead):
+    if ev.get("provisional") and ev.get("status") != "insufficient":
+        if not re.search(r"\bprovisional\b", lead, re.I) or not re.search(r"\b(?:backup|secondary)\b", lead, re.I):
+            problems.append("backup forecast: headline or summary must identify the recommendation as provisional and based on a backup or secondary forecast")
+    elif not INSUFFICIENT_WORDS.search(lead):
         problems.append("evidence is insufficient: headline or summary must say current data is insufficient or missing")
     text = " ".join([interp.headline, interp.summary, interp.uncertainty, *(r.text for r in interp.suggested_reasons)])
     text = NEGATED.sub(" ", text)  # "not evidence of safe conditions" is the required caveat, not a claim

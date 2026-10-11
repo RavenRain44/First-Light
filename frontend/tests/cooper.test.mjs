@@ -12,6 +12,14 @@ const snap = (level, extra = {}) => ({ as_of: asOf, inputs: [input("temp_f", 65)
   readiness: { level, reasons: [] }, posture: { posture: "NORMAL", contributing_hazards: [], guidance: [] },
   confidence: { level: "high" }, hazards: {}, rules: [], ...extra });
 
+test("backup forecasts identify provisional advice and missing evidence instead of promising clear skies", () => {
+  const s = snap("YELLOW", { sufficiency: { status: "limited", provisional: true, supports_all_clear: false } });
+  const p = cooperPresentation(s);
+  assert.equal(p.title, "Provisional forecast · verify before deciding");
+  assert.match(p.watch, /backup forecast.*Verify local warnings/i);
+  assert.equal(p.action, "Review decision");
+});
+
 test("each Cooper condition has the requested next step, independently of the suggested posture", () => {
   for (const [level, action] of [["WHITE", null], ["YELLOW", "Review decision"], ["ORANGE", "Draft decision"], ["RED", "Draft urgent decision"]]) {
     const s = snap(level);

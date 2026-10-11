@@ -15,7 +15,7 @@
 # is stored on every snapshot (thresholds_version) so past decisions stay
 # reconstructable after edits.
 
-version: "2026-10-10.1"
+version: "2026-10-11.2"
 
 sources:
   nwsi_10_511: &nwsi_10_511 https://www.weather.gov/media/directives/010_pdfs/pd01005011curr.pdf
@@ -245,14 +245,14 @@ rules:
     hazard: winter
     metric: fcst_snow_24h_in
     operator: ">="
-    value: 3.0
+    value: 1.5
     unit: in
-    posture_effect: minor
+    posture_effect: significant
     score: 35
     time_window: "forecast snowfall summed through the decision day (at least the next 24 h)"
-    anchor: "Commonly reported Central Region winter weather advisory snow amount (3 in). NWSI 10-513 Appendix E shows the regional criteria as an image."
+    anchor: "Lowered from the commonly reported Central Region advisory amount (3 in) to 1.5 in and raised from minor to significant so the engine acts on smaller snow events that still disrupted travel, including snow arriving after the morning commute (early dismissal). Recall-first policy (2026-10-11.2): chosen after reviewing the 2023-2026 misses, so not independently validated; no change on 2019-2022 (scripts/recall_backtest.py --forecasts --checks hourly, docs/historical-backtesting.md)."
     source_url: *nwsi_10_513
-    basis: official
+    basis: policy
     verified: false
 
   - id: winter.obs_freezing_precip
@@ -506,12 +506,12 @@ rules:
     operator: ">="
     value: 45
     unit: mph
-    posture_effect: minor
+    posture_effect: significant
     score: 25
     time_window: "max forecast gust through the decision day (at least 24 h)"
-    anchor: "Gusts of 45 mph are a common local wind advisory criterion in the central US; not stated in NWSI 10-515 (which says 'or locally defined')."
+    anchor: "Gusts of 45 mph are a common local wind advisory criterion in the central US; not stated in NWSI 10-515 (which says 'or locally defined'). Raised from minor to significant so a forecast arriving midday or in the afternoon triggers early dismissal. Recall-first policy (2026-10-11): tuned on the 2019-2022 AMW forecast backtest, then checked on held-out 2023-2026 (scripts/recall_backtest.py, docs/historical-backtesting.md)."
     source_url: *nwsi_10_515
-    basis: official
+    basis: policy
     verified: false
 
   - id: wind.obs_severe_gust
@@ -607,10 +607,10 @@ rules:
     operator: "<="
     value: -20
     unit: degF
-    posture_effect: minor
+    posture_effect: significant
     score: 30
     time_window: "lowest forecast apparent temperature through the decision day (at least 24 h)"
-    anchor: "Approximate central-Iowa cold weather advisory wind chill. Not machine-verified."
+    anchor: "Approximate central-Iowa cold weather advisory wind chill. Not machine-verified. Raised from minor to significant so a dangerous wind chill outside the morning commute still changes the operating status. Recall-first policy (2026-10-11): tuned on the 2019-2022 AMW forecast backtest, then checked on held-out 2023-2026 (scripts/recall_backtest.py, docs/historical-backtesting.md)."
     source_url: *nwsi_10_515
-    basis: official
+    basis: policy
     verified: false

@@ -83,9 +83,12 @@ def build(snap: dict, analogs: list[dict] | None = None) -> Interpretation:
 
     evidence = sufficiency.for_snapshot(snap)
     no_all_clear = not evidence.get("supports_all_clear")
+    provisional = evidence.get("provisional") and evidence.get("status") != "insufficient"
     name = posture.replace('_', ' ').title()
     parts = [f"Recommendation for {snap['facility']['name']} for {day}: {name} (OPM: {p['opm_label']})."]
-    if no_all_clear:
+    if provisional:
+        parts.append("Provisional recommendation based on a backup forecast. " + "; ".join(evidence.get("reasons") or []))
+    elif no_all_clear:
         gap = "; ".join(evidence.get("reasons") or []) or evidence.get("headline", "")
         parts.append(f"{evidence.get('headline', 'Insufficient current data')}: {gap.rstrip('.')}. "
                      + ("Known hazard evidence is reported below." if rules else
@@ -133,10 +136,14 @@ def build(snap: dict, analogs: list[dict] | None = None) -> Interpretation:
         lead = key[0]
         what = lead["observed_value"] if lead["metric"] == "alert_present" else lead["label"]
         headline = f"{posture.replace('_', ' ').title()}: {what}"
-    if no_all_clear and not key:
+    if provisional:
+        headline = f"Provisional backup forecast: {name} suggested for {day}"
+    elif no_all_clear and not key:
         headline = f"Insufficient current data: {name} is only the fallback for {day}"
     headline = " ".join(headline.split()[:15])
-    if no_all_clear and not key:
+    if provisional:
+        summary = f"Provisional recommendation: {name}, using a backup forecast with incomplete evidence. Verify missing warnings and measurements before the manager decides."
+    elif no_all_clear and not key:
         summary = (f"Insufficient current data to confirm conditions for {day}; {name} is only the rules' fallback. "
                    f"Recheck for current data before deciding; missing data is not evidence of safe conditions.")
     else:

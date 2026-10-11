@@ -298,6 +298,23 @@ def test_manual_decision_keeps_reason_and_evidence_status(tmpdb):
         assert s.get(DecisionContext, d["id"]).evidence_status == "insufficient"
 
 
+def test_provisional_backup_requires_manager_verification_reason(tmpdb):
+    from app.main import app
+    client = TestClient(app)
+    records = [i.model_copy(update={"source_time": None, "data": {"weather_fallback": True, "live_retrieval_only": True}})
+               for i in benign_forecast() if i.metric != "ice_in"]
+    st = [status(a) for a in LIVE]
+    snap = stored(run(records, st), records, st)
+    body = {"snapshot_id": snap["snapshot_id"], "decided_by": "Pat Lee", "decision_posture": "NORMAL"}
+    rejected = client.post("/api/decisions", json=body)
+    assert rejected.status_code == 422 and "provisional" in rejected.text
+    accepted = client.post("/api/decisions", json={**body, "override_reason": "Verified local warnings and road conditions with county staff."})
+    assert accepted.status_code == 201, accepted.text
+    decision = accepted.json()
+    assert decision["decision_basis"] == "manual_provisional_forecast" and decision["evidence_status"] == "limited"
+    assert decision["agreed_with_recommendation"] is False
+
+
 def test_supported_decision_is_ordinary_agreement(tmpdb):
     from app.main import app
     inputs, st = full_benign()

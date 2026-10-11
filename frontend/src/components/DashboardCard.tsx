@@ -2,7 +2,7 @@ import { EvidenceNotice } from "./EvidenceNotice";
 import { evidenceState, normalIsFallback } from "../evidence";
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { api } from "../api";
-import { ACTIONS, METRICS, joinReasons, relevantMetrics, suggestionReasons, supportingRules } from "../dashboard";
+import { ACTIONS, METRICS, hasBlizzardWarning, joinReasons, relevantMetrics, suggestionReasons, supportingRules } from "../dashboard";
 import { cooperPresentation, forecastOverview, type ForecastValue } from "../cooper";
 import type { Snapshot, Timeseries } from "../types";
 import { Badge, PostureBadge, READINESS, Skeleton, ago, fmtDayLong, fmtTime } from "../util";
@@ -87,11 +87,12 @@ export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotif
           <p className="font-semibold text-ink">Why this condition</p>
           <ul className="mt-1 list-disc space-y-1 pl-5">{presentation.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
         </div>}
-        {!presentation.urgent && normalIsFallback(snap) && (
+        {!presentation.urgent && (normalIsFallback(snap) || evidence.provisional) && (
           <p className="mb-2 text-lg font-medium leading-relaxed" data-testid="suggested-action">{suggestionSentence(snap)}</p>
         )}
         <div className="mt-4 flex flex-wrap items-center gap-2 text-sm"><span className="text-ink2">Suggested operating status:</span><PostureBadge p={snap.posture.posture} />
           {normalIsFallback(snap) && <span className="font-semibold text-[var(--danger)]" data-testid="fallback-label">Fallback only, not confirmed by current data</span>}</div>
+        {evidence.provisional && <p className="mt-1 text-sm font-semibold" data-testid="provisional-label">Provisional · backup forecast · manager verification required</p>}
         <p className="mt-1 text-xs text-muted">OPM status: {snap.posture.opm_label}</p>
 
         {presentation.action && canDecide && (
@@ -147,7 +148,8 @@ function ForecastSummary({ snap }: { snap: Snapshot }) {
     {sources.length > 0 && <details className="mt-2 text-xs text-ink2">
       <summary className="min-h-9 cursor-pointer py-2 underline underline-offset-2">Forecast sources and issue times</summary>
       <ul className="space-y-2 py-2">{sources.map(({ input }) => <li key={input!.id} className="break-words">
-        {input!.metric.replace(/_/g, " ")}: {input!.source} · issued {fmtTime(input!.source_time, tz, { date: true, year: true })}
+        {input!.metric.replace(/_/g, " ")}: {input!.source} · {input!.source_time ? <>issued {fmtTime(input!.source_time, tz, { date: true, year: true })}</>
+          : <>model issue time unavailable; retrieved {fmtTime(input!.fetched_at, tz, { date: true, year: true })}</>}
         {input!.source_url.startsWith("https://") && <> · <a href={input!.source_url} target="_blank" rel="noreferrer" className="underline">View source</a></>}
       </li>)}</ul>
     </details>}
@@ -188,6 +190,8 @@ export function RelevantMetrics({ snap }: { snap: Snapshot }) {
     <section className="card p-5 sm:p-8" aria-labelledby={`${id}-metrics`}>
       <h2 id={`${id}-metrics`} className="text-lg font-semibold">{control ? "Observed weather for this control" : "Concerning weather data"}</h2>
       <p className="mt-1 text-sm text-ink2">{control ? "Archived temperature and wind available by the selected evaluation time. The full-day outcome is shown separately from the recommendation inputs." : "Highlighted periods and points show the evidence behind the suggestion."}</p>
+      {hasBlizzardWarning(snap) && snap.signals.fcst_snow_24h_in?.available && snap.signals.fcst_snow_24h_in.value === 0 &&
+        <p className="mt-3 rounded-lg bg-[var(--surface-2)] p-3 text-sm text-ink2">The recorded forecast shows 0.00 in of additional snow in its evaluated window. It does not measure snow already on the ground. Blizzard warnings also cover strong winds and low visibility; review the wind, cold and road evidence below.</p>}
       {error ? <p role="status" className="mt-4 rounded-lg bg-[var(--surface-2)] p-4 text-sm">Chart data could not be loaded. The suggestion and the decision steps are still available.</p>
         : !data ? <div className="mt-4 space-y-4" aria-label="Loading relevant metrics"><Skeleton className="h-60" /><Skeleton className="h-40" /></div>
         : <div className="mt-4 space-y-4">{metrics.map((metric, index) =>
@@ -202,6 +206,9 @@ export function RelevantMetrics({ snap }: { snap: Snapshot }) {
 export function suggestionSentence(snap: Snapshot) {
   if (normalIsFallback(snap)) {
     return <>Current data is insufficient to confirm conditions. <strong className="font-semibold">Normal is only the fallback</strong>: recheck for current data, or record a manual decision with your reason.</>;
+  }
+  if (evidenceState(snap).provisional) {
+    return <>Based on a backup forecast, <strong className="font-semibold">{ACTIONS[snap.posture.posture]}</strong>. Verify the missing evidence before making the final decision.</>;
   }
   return <>Due to {joinReasons(suggestionReasons(snap))}, <strong className="font-semibold">{ACTIONS[snap.posture.posture]}</strong>.</>;
 }

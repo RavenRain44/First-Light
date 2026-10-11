@@ -82,6 +82,9 @@ class S3Bucket:
     def link(self, key, seconds):
         return self.client.generate_presigned_url("get_object", Params={"Bucket": self.bucket, "Key": self.prefix + key}, ExpiresIn=seconds)
 
+    def delete(self, key):
+        self.client.delete_object(Bucket=self.bucket, Key=self.prefix + key)
+
 
 _bucket: Bucket | None = None
 _state: dict[str, Any] = {"last_sync": None, "last_error": None, "uploaded": 0, "backup": None}

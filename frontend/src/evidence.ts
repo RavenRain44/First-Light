@@ -12,7 +12,8 @@ export function evidenceState(snap: Pick<Snapshot, "sufficiency" | "mode" | "as_
 
 /** True when a NORMAL suggestion must not be read as a supported all-clear. */
 export const normalIsFallback = (snap: Pick<Snapshot, "sufficiency" | "mode" | "as_of" | "posture">) =>
-  snap.posture.posture === "NORMAL" && !evidenceState(snap).supports_all_clear;
+  snap.posture.posture === "NORMAL" && !evidenceState(snap).supports_all_clear
+  && !(evidenceState(snap).provisional && evidenceState(snap).status === "limited");
 
 /** Prominent warning needed: the assessment cannot be relied on as it stands. */
 export const evidenceWarning = (s: Sufficiency) => s.status === "insufficient" || s.status === "not_recorded";

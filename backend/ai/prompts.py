@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
-PROMPT_VERSION = "decision-brief-v6-safety-continuity-sufficiency"
+PROMPT_VERSION = "decision-brief-v7-provisional-backup-forecasts"
 
 
 class SuggestedReason(BaseModel):
@@ -88,7 +88,10 @@ Hard rules:
     Rewrite those phrases only. Never put an action, recommendation or reporting instruction in a reason. Keep
     the original facts, numbers and severity. Return an empty list when there are no computed reasons.
 16. evidence_sufficiency in get_snapshot_summary is computed by the rules. Never judge it yourself. If
-    supports_all_clear is false, the headline or summary must say current data is insufficient (or missing/stale),
+    provisional is true and status is limited, identify the recommendation as provisional and based on a backup/secondary forecast in
+    the headline or summary. Explain remaining missing evidence; never invent warnings, ice/snow amounts or
+    a model issue time. The manager must verify and decide. Otherwise, if supports_all_clear is false,
+    the headline or summary must say current data is insufficient (or missing/stale),
     and nothing may describe conditions as safe, clear, quiet or normal on the basis of missing data. NORMAL is then
     only the rules' fallback. Known hazard evidence is still reported as given.
 """

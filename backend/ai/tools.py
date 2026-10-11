@@ -62,7 +62,7 @@ def snapshot_summary(snap: dict) -> dict:
                    ("assigned", "expected_in_building", "essential_in_building", "accessibility_needs_in_building")},
         "sources": [{"source": s["label"], "status": s["status"]} for s in snap["sources"]],
         # Computed by deterministic rules; the model reports it and never judges evidence adequacy itself.
-        "evidence_sufficiency": {k: ev.get(k) for k in ("status", "headline", "reasons", "missing_sources",
+        "evidence_sufficiency": {k: ev.get(k) for k in ("status", "headline", "reasons", "missing_sources", "provisional", "forecast_sources",
                                                         "stale_sources", "supports_all_clear", "mode_note")},
     }
 

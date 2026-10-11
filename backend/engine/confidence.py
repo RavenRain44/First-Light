@@ -62,6 +62,9 @@ def _freshness(inputs: list[NormalizedInput], as_of: datetime) -> Factor:
         s = 1.0 if age <= 6 else 0.6 if age <= 12 else 0.3
         parts.append(s)
         notes.append(f"forecast issued {age:.1f} h before as-of")
+    elif any(i.role == "forecast" and (i.data or {}).get("live_retrieval_only") for i in inputs):
+        parts.append(0.5)
+        notes.append("live backup forecast retrieved; exact model issue time unavailable")
     else:
         parts.append(0.0)
         notes.append("no forecast")
@@ -151,5 +154,9 @@ def compute(statuses, inputs, ctx, rules, hazards, mode) -> Confidence:
         _certainty(ctx, rules, hazards),
     ]
     total = sum(f.score * f.weight for f in factors) / sum(f.weight for f in factors)
+    if any(i.role == "forecast" and (i.data or {}).get("weather_fallback") for i in inputs):
+        total = min(total, 0.65)
+        factors.append(Factor(name="secondary_forecast", score=0.65, weight=0,
+                              explanation="Backup model in use: confidence is capped at medium; source limitations remain explicit. This score is not a calibrated accuracy probability."))
     level = "high" if total >= 0.75 else "medium" if total >= 0.5 else "low"
     return Confidence(level=level, score=round(total, 2), factors=factors)

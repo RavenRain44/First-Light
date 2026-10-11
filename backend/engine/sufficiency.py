@@ -28,6 +28,10 @@ Policy (deterministic; POLICY_VERSION is stored with every result):
      fallback; a manager may still record a decision, with an explicit reason.
 5. Evidence is judged against ``as_of``. In replay or backtest that is the replayed moment, never the
    current time, and the result is labelled as historical. In demo mode it is the cached live moment.
+6. A backup forecast supports provisional advice, never an all-clear or high confidence. Original
+   archived GFS runs use the same two-hour availability estimate as NBS; current Open-Meteo forecasts
+   are live-only and use retrieval freshness because the model issue timestamp is unavailable.
+   Missing measurements stay unknown; recording a provisional decision requires a manager reason.
 """
 from __future__ import annotations
 
@@ -41,7 +45,7 @@ from adapters.base import NormalizedInput, SourceStatus, utc
 from engine.posture import PostureResult, _at
 from engine.scoring import HazardResult, RuleResult
 
-POLICY_VERSION = "evidence-sufficiency-v1"
+POLICY_VERSION = "evidence-sufficiency-v2-secondary-forecasts"
 FORECAST_MAX_AGE_H = 12
 RETRIEVAL_MAX_AGE_H = 3
 OBS_MAX_AGE_H = 2
@@ -79,6 +83,8 @@ class Sufficiency(BaseModel):
     mode: str
     mode_note: str
     policy_version: str = POLICY_VERSION
+    provisional: bool = False
+    forecast_sources: list[str] = []
 
 
 def _family(mode: str) -> str:
@@ -107,12 +113,16 @@ def _forecast_check(inputs, statuses, as_of, start, end, live, tz) -> tuple[Evid
     st = statuses.get(adapter)
     label = st.label if st else ("NWS gridded forecast" if live else "Archived NBS forecast")
     fc = [i for i in inputs if i.role == "forecast" and i.kind == "series" and i.metric in CORE_FORECAST and i.series]
+    secondary = [i for i in fc if (i.data or {}).get("weather_fallback")]
+    if secondary:
+        label = "; ".join(dict.fromkeys(i.source for i in fc))
     if not fc:
         why = f"{st.status}: {st.detail}" if st and st.detail else (st.status if st else "not requested")
         return EvidenceCheck(name="forecast", label=label, status="missing", required=True,
                              detail=f"No usable forecast ({why})."), None
     issued = max((utc(i.source_time) for i in fc if i.source_time), default=None)
-    if issued is None or issued > utc(as_of) or _hours(as_of, issued) > FORECAST_MAX_AGE_H:
+    live_backup = live and secondary and all(i.source_time is not None or (i.data or {}).get("live_retrieval_only") for i in fc)
+    if (issued is None and not live_backup) or (issued is not None and (issued > utc(as_of) or _hours(as_of, issued) > FORECAST_MAX_AGE_H)):
         when = "unknown" if issued is None else ("after the evaluation time" if issued > utc(as_of)
                                                  else f"{_hours(as_of, issued):.0f} h before the evaluation time")
         return EvidenceCheck(name="forecast", label=label, status="stale", required=True,
@@ -133,8 +143,9 @@ def _forecast_check(inputs, statuses, as_of, start, end, live, tz) -> tuple[Evid
         return EvidenceCheck(name="forecast", label=label, status="partial", required=True,
                              detail=f"Forecast covers {coverage:.0%} of the decision window "
                                     f"({_fmt(start, tz)} to {_fmt(end, tz)}); at least {COVERAGE_MIN:.0%} is needed."), coverage
+    issue_note = f"Issued {_hours(as_of, issued):.1f} h before the evaluation time" if issued else "Retrieved live; exact model issue time unavailable"
     return EvidenceCheck(name="forecast", label=label, status="ok", required=True,
-                         detail=f"Issued {_hours(as_of, issued):.1f} h before the evaluation time; covers {coverage:.0%} "
+                         detail=f"{issue_note}; covers {coverage:.0%} "
                                 f"of the decision window."), coverage
 
 
@@ -232,10 +243,12 @@ def assess_sufficiency(inputs: list[NormalizedInput], statuses: list[SourceStatu
     obs = _obs_check(inputs, by, as_of, live)
     optional = _optional_checks(by)
     hazard_evidence = credible_hazards(hazards, rules, inputs, as_of, live)
+    backup_inputs = [i for i in inputs if i.role == "forecast" and (i.data or {}).get("weather_fallback")]
+    provisional = bool(backup_inputs)
 
     core_ok = forecast.status == "ok"
     support_gaps = [c for c in (alerts, obs) if c.status in ("missing", "stale")]
-    if core_ok and not support_gaps:
+    if core_ok and not support_gaps and not provisional:
         status: Status = "sufficient"
     elif core_ok or hazard_evidence:
         status = "limited"
@@ -243,6 +256,9 @@ def assess_sufficiency(inputs: list[NormalizedInput], statuses: list[SourceStatu
         status = "insufficient"
 
     reasons = []
+    if provisional:
+        reasons.append("A secondary forecast supplies some or all measurements. This recommendation is provisional; the manager must verify the remaining gaps before deciding.")
+        reasons.extend(dict.fromkeys(note for i in backup_inputs for note in (i.data or {}).get("limitations", [])))
     if not core_ok:
         reasons.append(f"Forecast for the decision window: {forecast.detail}")
     for c in support_gaps:
@@ -266,14 +282,17 @@ def assess_sufficiency(inputs: list[NormalizedInput], statuses: list[SourceStatu
     headline = {"sufficient": "Current data is sufficient for this assessment",
                 "limited": "Assessment supported, with data limitations",
                 "insufficient": "Insufficient current data"}[status]
+    if provisional and status != "insufficient":
+        headline = "Provisional recommendation · backup forecast"
     return Sufficiency(
         status=status, headline=headline, reasons=reasons,
         missing_sources=[c.label for c in (forecast, alerts, obs) if c.status in ("missing", "partial")],
         stale_sources=[c.label for c in (forecast, alerts, obs) if c.status == "stale"],
-        checks=[forecast, alerts, obs, *optional], supports_all_clear=core_ok,
-        reason_required=status == "insufficient", hazard_evidence=hazard_evidence,
+        checks=[forecast, alerts, obs, *optional], supports_all_clear=core_ok and not provisional,
+        reason_required=status == "insufficient" or provisional, hazard_evidence=hazard_evidence,
         window_start=start, window_end=end, forecast_coverage=None if coverage is None else round(coverage, 2),
         evaluated_as_of=utc(as_of), mode=mode, mode_note=mode_note,
+        provisional=provisional, forecast_sources=list(dict.fromkeys(i.source for i in backup_inputs)),
     )
 
 

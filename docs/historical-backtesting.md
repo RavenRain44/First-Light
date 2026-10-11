@@ -76,13 +76,26 @@ inputs come only from the preceding twelve hours, with a **15-minute assumed
 observation availability lag**. Actual ingestion times and original pre-correction
 observation versions are not archived; this is an observation-based reconstruction.
 
-Optional archive enrichment uses the existing NBS, SPC, road and RWIS adapters.
+Optional archive enrichment uses the NBS, SPC, road and RWIS adapters. When NBS
+is missing, stale or incomplete, original GFS MOS runs from IEM can fill forecast
+gaps. GFS contributes temperature, sustained wind and precipitation probability;
+its categorical snow/QPF fields are never treated as measured inches, and ice
+amounts and gusts remain unknown. Fresh primary values retain priority.
 Source issue/report times after the selected instant are rejected. Observation
 points beyond the cutoff are rejected as well. Forecast availability is conservatively
 estimated as nominal run/product issue plus two hours; exact publication timestamps
 are unavailable. Results are labeled **archived forecast reconstruction (estimated
 availability)**, rather than verified forecast backtests. Missing forecasts do not
 cause live NWS forecasts to be substituted.
+
+GFS-backed results are separately labelled **archived secondary forecast
+reconstruction (estimated availability)** and **provisional**. Confidence cannot
+exceed Medium. No Open-Meteo current forecast or after-event reanalysis is used in
+replay. The forecast archive can still support provisional advice when the yearly
+observation download is unavailable, but such cases cannot be independently graded
+without an observed outcome. Archive evaluation identity is now version 4, preserving
+earlier immutable results; the observation-only baseline and retained control keep
+their existing identity and inputs.
 
 Final VTEC event records can contain later changes to expiration or cancellation.
 They are **excluded from recommendation inputs** until original alert/update
@@ -245,6 +258,57 @@ Unfinished data coverage: the full multi-year archived forecast build, original
 alert issue/update timelines, historical facility operations/outages and camera
 frames, comprehensive school/USDA operating history, and explicitly normal proxy
 days. Only the observation baseline is built across the full supported range.
+
+## Correction and recall-first thresholds (2026-10-11)
+
+**The 7,470-day labels and observation-only results above overstate performance.** The yearly AMW download
+stored each report's whole METAR (remarks included) as its weather codes, and weather flags were substring
+matches. Remarks such as `LTG DSNT` (lightning distant) read as snow and `FZRANO` (freezing-rain sensor out) as
+freezing rain. Re-deriving every day from the raw reports with only the present-weather group
+(`adapters/historical_asos.py: present_weather`):
+
+- **117** disruptive days in 30 years, not 449 (332 labels were remark artifacts; summer "snow" days fell from 53 to 7).
+- The old 44% recall / 0 false alarms was largely circular: the same remark text triggered both the overnight
+  freezing-precipitation rule and the label. Corrected, 04:00 observations alone catch **7.7%** (9/117).
+- The live app is unaffected (IEM obhistory returns the present-weather codes only).
+
+Because forecasts are the only way to see weather that starts after 04:00, the evaluation adds the archived
+NBM/NBS forecast that was already published at each check time (IEM, available from 2019). The live app
+re-checks every few minutes, so the backtest also re-runs the engine **hourly from 04:00 to 14:00**. A disruptive
+day counts as caught only if a check flags *today* while the disruption is still happening or still ahead; a
+quiet day flagged by any check is a false alarm.
+
+Held-out 2023-2026 (12 disruptive days, 941 days):
+
+| Thresholds and checks | Disruptive days caught (recall) | False alarms | 2019-2022 recall |
+|---|---|---|---|
+| 2026-10-10.1, 04:00 only | 25.0% (3/12) | 13 | 65.2% |
+| 2026-10-11.1, 04:00 only | 41.7% (5/12) | 15 | 78.3% |
+| 2026-10-11.1, hourly 04:00-14:00 | 58.3% (7/12) | 15 | 78.3% |
+| **2026-10-11.2 (current), hourly** | **75.0% (9/12)** | **20** | 78.3% |
+| Not adopted: also forecast gust advisory 40 mph | 83.3% (10/12) | 40 | 78.3% |
+
+Changes in `config/thresholds.yaml` (all `basis: policy`):
+
+- **2026-10-11.1** (tuned on 2019-2022): forecast 45 mph gust and forecast -20 F wind chill raised from minor to
+  significant, so arrivals outside the morning commute trigger early dismissal or telework.
+- **2026-10-11.2**: forecast snow advisory lowered to 1.5 in and raised to significant. This was chosen after
+  reviewing the 2023-2026 misses and does not change 2019-2022 recall, so the 75% is **not independently
+  validated**. Held-out precision is 31% (about two false alarms per disruption caught), and 12 disruptive days
+  give a wide interval.
+
+Remaining held-out misses: a 59 mph gust at 16:00 that the 46 mph forecast did not support, and two events the
+hourly checks only flagged after they ended. NWS warnings would help with these but stay excluded: the VTEC
+archive keeps only final event records, not what had been issued by a given hour.
+
+Reproduce (needs the restored dataset; forecasts are cached in `var/backtest_http_cache`):
+
+```sh
+cd backend && .venv/Scripts/python -m scripts.recall_backtest --forecasts --checks hourly   # .venv/bin/python on Linux/macOS
+```
+
+The frozen cohort and its published releases still carry the old labels. Rebuilding a corrected cohort
+(new version) and re-publishing it is a follow-up; existing frozen artifacts are not edited.
 
 ## Confirmed office-decision dataset (2026-10-11)
 

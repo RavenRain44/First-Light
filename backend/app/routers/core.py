@@ -20,6 +20,7 @@ from app.db import session
 from app.facility import get_facility, load_employees, roster_summary
 from app.models import Decision, DecisionContext, HistoryEvent
 from engine import sufficiency
+from engine.features import wind_chill_f
 from engine.posture import ORDER
 from engine.scoring import load_thresholds
 
@@ -157,11 +158,13 @@ def build_timeseries(snap: dict) -> dict:
     rows: dict[str, dict] = {}
     meta = {}
     for inp in snap["inputs"]:
-        if inp["kind"] != "series":
+        if inp["kind"] != "series" or inp["id"].startswith("unused."):
             continue
         prefix = "obs" if inp["role"] == "observation" else "fcst"
         key = f"{prefix}_{inp['metric']}"
         meta[key] = {k: inp.get(k) for k in ("id", "source", "source_url", "fetched_at", "source_time", "unit", "note")}
+        if (inp.get("data") or {}).get("weather_fallback"):
+            meta[key]["provenance"] = inp["data"]
         for p in inp["series"]:
             t = datetime.fromisoformat(p["t"])
             if not (start <= t <= end) or p["v"] is None:
@@ -170,20 +173,26 @@ def build_timeseries(snap: dict) -> dict:
                 continue
             if prefix == "obs" and t > as_of:
                 continue
-            rows.setdefault(p["t"], {"t": utc(t).isoformat()})[key] = p["v"]
-    # Older archives retain the temperature/wind inputs used to calculate
-    # feels-like, rather than a separate apparent-temperature input. Reproduce
-    # the recorded calculation for plotting; do not fetch or alter the snapshot.
-    apparent = snap.get("signals", {}).get("fcst_min_apparent_24h_f", {})
-    if apparent.get("available") and "fcst.temp_f" in apparent.get("input_ids", []):
-        from engine.features import wind_chill_f
-        for row in rows.values():
-            if "fcst_temp_f" in row and "fcst_apparent_temp_f" not in row:
-                row["fcst_apparent_temp_f"] = round(wind_chill_f(row["fcst_temp_f"], row.get("fcst_wind_speed_mph", 0.0)), 1)
-        meta.setdefault("fcst_apparent_temp_f", {**meta.get("fcst_temp_f", {}),
-            "source": "Calculated from recorded forecast temperature and wind",
-            "note": apparent.get("detail")})
+            rows.setdefault(utc(t).isoformat(), {"t": utc(t).isoformat()})[key] = p["v"]
     ordered = sorted(rows.values(), key=lambda r: r["t"])
+    # Archived NBS has temperature and wind but no separate feels-like series.
+    # Render the same derived quantity the recorded cold signal used, from saved
+    # inputs only. This enriches the chart response without rewriting a snapshot.
+    apparent = snap.get("signals", {}).get("fcst_min_apparent_24h_f", {})
+    derived = apparent.get("available") and "fcst.temp_f" in apparent.get("input_ids", [])
+    if derived and "fcst_apparent_temp_f" not in meta:
+        for r in ordered:
+            if datetime.fromisoformat(r["t"]) < as_of.replace(minute=0, second=0, microsecond=0):
+                continue
+            if isinstance(r.get("fcst_temp_f"), (int, float)):
+                # The engine uses zero wind when the saved forecast has no wind at
+                # this hour; the formula then returns temperature unchanged.
+                r["fcst_apparent_temp_f"] = round(wind_chill_f(r["fcst_temp_f"], r.get("fcst_wind_speed_mph", 0.0)), 1)
+        if any("fcst_apparent_temp_f" in r for r in ordered):
+            meta["fcst_apparent_temp_f"] = {**meta["fcst_temp_f"], "unit": "degF",
+                "source": "Calculated from recorded forecast temperature and wind",
+                "note": "Calculated from the saved forecast temperature and wind with the NWS wind chill formula; missing wind uses temperature unchanged.",
+                "derived": True, "input_ids": apparent["input_ids"]}
     ice = snow = 0.0
     for r in ordered:  # running forecast totals from as_of forward, for threshold comparison
         if datetime.fromisoformat(r["t"]) >= as_of.replace(minute=0, second=0, microsecond=0):
@@ -294,10 +303,10 @@ def record_decision(d: DecisionIn, background_tasks: BackgroundTasks):
     evidence = sufficiency.for_snapshot(snap)
     reason = (d.override_reason or "").strip() or None
     manual = bool(evidence.get("reason_required"))
-    # Under insufficient (or unrecorded) evidence every decision is manual, even one matching the fallback posture.
+    # Insufficient, unrecorded or provisional evidence needs an explicit manager reason.
     agreed = d.decision_posture == snap["posture"]["posture"] and not manual
     if manual and not reason:
-        raise HTTPException(422, "override_reason is required: evidence is insufficient "
+        raise HTTPException(422, "override_reason is required: evidence is provisional or insufficient "
                                  f"({evidence['status']}), so this is a manual decision; explain the basis for it")
     if d.decision_posture != snap["posture"]["posture"] and not reason:
         raise HTTPException(422, "override_reason is required when the decision differs from the recommendation")
@@ -305,7 +314,8 @@ def record_decision(d: DecisionIn, background_tasks: BackgroundTasks):
                    decision_posture=d.decision_posture, recommended_posture=snap["posture"]["posture"],
                    agreed_with_recommendation=agreed, override_reason=reason,
                    notes=d.notes, decided_at=datetime.now(timezone.utc))
-    basis = "manual_insufficient_evidence" if manual else "recommendation" if agreed else "override"
+    basis = ("manual_provisional_forecast" if manual and evidence.get("provisional") and evidence["status"] == "limited"
+             else "manual_insufficient_evidence" if manual else "recommendation" if agreed else "override")
     with session() as s:
         s.add(row)
         s.commit()

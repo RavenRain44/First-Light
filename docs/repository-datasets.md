@@ -34,3 +34,20 @@ cd backend && .venv/Scripts/python -m scripts.dataset_repo upload   # Windows; u
 
 `.gitattributes` marks `backend/data/backtesting/**` as binary so Windows checkouts never convert line endings in
 the checksummed files.
+
+## Forecast dataset (default since 2026-10-11)
+
+`ames-forecast-v1` replaces the observation-only cohort in the bucket: 1,884 graded days from 2019 to 2026, each
+evaluated at 04:00 with the archived NBM/NBS forecast that was already published (1,777 days; 107 days had no
+archived run), the station observations, the current thresholds and the corrected labels
+(`AMW-local-disruption-v2`). Roads, RWIS and SPC archives are not included. The app loads `DATASET_VERSION`
+(default `ames-forecast-v1`) on startup.
+
+```sh
+cd backend
+.venv/Scripts/python -m scripts.dataset_cloud publish-forecast            # from a database holding the archive evaluations
+.venv/Scripts/python -m scripts.dataset_cloud retire --version ames-7470-v1           # dry run: lists what would go
+.venv/Scripts/python -m scripts.dataset_cloud retire --version ames-7470-v1 --delete  # permanent
+```
+
+`retire` keeps every content object the configured dataset still uses. The Git copy of `ames-7470-v1` is unaffected.

@@ -33,11 +33,16 @@ def bucket():
         _shared=storage.S3Bucket(settings.obj_endpoint,settings.obj_bucket,settings.obj_access_key,settings.obj_secret_key,settings.obj_region)
     return _shared
 
-def ensure_local(version=VERSION):
-    """Load the frozen dataset from the bucket when this machine doesn't have it yet (fresh server or laptop).
-    Returns the restore summary, or None when it is already present or storage is off."""
-    from app.risk_experiment import manifest_path
-    if not storage.enabled() or manifest_path().exists():return None
+FORECAST_VERSION='ames-forecast-v1'
+FORECAST_SOURCES_FROM=2018  # AMW yearly archives kept with the forecast dataset (2019+ plus the Jan 1 boundary year)
+
+def cohort_path(version):return local_dir()/'cohorts'/f'{valid_version(version)}.json'
+
+def ensure_local(version=None):
+    """Load the configured dataset (DATASET_VERSION) from the bucket when this machine doesn't have it yet
+    (fresh server or laptop). Returns the restore summary, or None when it is present or storage is off."""
+    version=version or settings.dataset_version
+    if not storage.enabled() or cohort_path(version).exists():return None
     try:catalog(version)
     except FileNotFoundError:return None  # nothing published to this bucket yet
     return restore(version,full=True)
@@ -48,8 +53,36 @@ def valid_version(version):
 
 def local_dir():return settings.db_path.parent
 
-def publish(progress=lambda message:None):
-    b=bucket();m=freeze();version=valid_version(m['version']);items={};existing=set(b.list(PREFIX+'objects/'))
+def forecast_cohort(version=FORECAST_VERSION):
+    """Manifest of the forecast-enabled (archive) 04:00 evaluations under the current rules: every gradable
+    day from 2019 whose decision day is that same day. Written once to cohorts/<version>.json."""
+    from zoneinfo import ZoneInfo
+    from app import historical as h
+    path=cohort_path(version)
+    if path.exists():return json.loads(path.read_text())
+    _,rules,config=h.identity(h.local_instant('2020-01-02'),'archive')
+    tz=ZoneInfo(h.load_facility().timezone)
+    entries=[]
+    with session() as s:
+        rows=s.exec(select(HistoricalEvaluation).where(HistoricalEvaluation.rules_sha==rules.sha256,HistoricalEvaluation.config_sha==config)).all()
+    for r in sorted(rows,key=lambda r:r.day):
+        v=json.loads(r.summary_json)
+        if (v.get('requested_mode')=='archive' and r.day>='2019-01-01' and r.artifact_sha and v.get('recommendation') and v['outcome'].get('gradable')
+                and str(v.get('decision_day'))==r.day and datetime.fromisoformat(v['as_of']).astimezone(tz).strftime('%H:%M')=='04:00'):
+            entries.append({'id':r.id,'day':r.day,'artifact_sha':r.artifact_sha,'summary_sha':sha(r.summary_json.encode())})
+    if not entries:raise ValueError('No forecast-enabled evaluations under the current rules; build them first.')
+    m={'version':version,'created_at':datetime.now(timezone.utc).isoformat(),'n':len(entries),'evaluation_time':'04:00 America/Chicago',
+       'reconstruction':'archive (archived NBM/NBS forecast, observations, roads, RWIS, SPC; VTEC excluded)',
+       'outcome_version':h.OUTCOME_VERSION,'rules_sha':rules.sha256,'rules_version':rules.version,'config_sha':config,
+       'entries':entries,'cohort_sha':hashlib.sha256(json.dumps(entries,sort_keys=True,separators=(',',':')).encode()).hexdigest()}
+    path.parent.mkdir(parents=True,exist_ok=True)
+    with path.open('x') as f:json.dump(m,f,indent=2)
+    return m
+
+def publish(progress=lambda message:None,manifest=None,sources_from=None,extras=True):
+    """Publish a dataset release. Default: the frozen observation cohort (risk_experiment.freeze).
+    Pass manifest=forecast_cohort(), sources_from=FORECAST_SOURCES_FROM, extras=False for the forecast dataset."""
+    b=bucket();m=manifest or freeze();version=valid_version(m['version']);items={};existing=set(b.list(PREFIX+'objects/'))
     def put(logical,data,kind):
         digest=sha(data);key=PREFIX+'objects/'+digest
         if key not in existing:
@@ -67,9 +100,11 @@ def publish(progress=lambda message:None):
             years.setdefault(entry['day'][:4],[]).append({'evaluation':ev.model_dump(),'artifact':{'sha256':a.sha256,'payload_base64':base64.b64encode(a.payload).decode()}})
         for year,rows in sorted(years.items()):put('evaluations/'+year+'.json.gz',gzip.compress(encoded(rows),mtime=0),'year')
     put('cohorts/'+version+'.json',encoded(m),'file')
-    for folder,patterns in [('historical_sources',['AMW-*.json.gz']),('analysis',['*.json']),('models',['*.json','*.npz','*.onnx'])]:
+    folders=[('historical_sources',['AMW-*.json.gz'])]+([('analysis',['*.json']),('models',['*.json','*.npz','*.onnx'])] if extras else [])
+    for folder,patterns in folders:
         for pattern in patterns:
             for p in sorted((local_dir()/folder).glob(pattern)):
+                if sources_from and folder=='historical_sources' and int(p.name[4:8])<sources_from:continue
                 if p.is_file() and not p.is_symlink():put(folder+'/'+p.name,p.read_bytes(),'file')
     catalog={'format_version':1,'dataset_version':version,'cohort_sha':m['cohort_sha'],'n':m['n'],'items':items}
     data=encoded(catalog);release=PREFIX+version+'/releases/'+sha(data)+'.json'
@@ -154,3 +189,18 @@ def restore(version=VERSION,year=None,full=False,release_sha=None):
 def available():
     b=bucket()
     return {'datasets':[key[len(PREFIX):-len('/latest.json')] for key in b.list(PREFIX) if key.endswith('/latest.json')]}
+
+def retire(version,keep=None,dry_run=True):
+    """Remove one dataset version from the bucket: its pointer, release catalogs and every content object that no
+    kept version still references. Dry run by default (lists what would go); deletion is permanent."""
+    b=bucket();version=valid_version(version);keep=[valid_version(k) for k in (keep or [settings.dataset_version]) if k!=version]
+    needed=set()
+    for k in keep:
+        needed|={i['key'] for i in catalog(k)['items'].values()}
+    old=catalog(version)
+    keys=sorted({i['key'] for i in old['items'].values()}-needed)+sorted(b.list(PREFIX+version+'/'))
+    sizes={i['key']:i['bytes'] for i in old['items'].values()}
+    if not dry_run:
+        for key in keys:b.delete(key)
+    return {'version':version,'kept_versions':keep,'dry_run':dry_run,'objects':len(keys),
+            'bytes':sum(sizes.get(k,0) for k in keys),'shared_objects_kept':len({i['key'] for i in old['items'].values()}&needed),'keys':keys}
