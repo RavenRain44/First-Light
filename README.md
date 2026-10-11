@@ -57,6 +57,14 @@ fully offline in about 20 seconds:
 DEMO_MODE=true npm run build:history
 ```
 
+Replay also accepts a custom date without a catalog event. It builds an hourly timeline
+12 hours before and after the exact selected minute, and updates the report, posture ribbon
+and Cooper-color ribbon together. Playback and stepping follow that timeline. Striped cells
+mark missing historical evidence; each hour's tooltip identifies incomplete coverage.
+Timeline cells use the rules engine without model calls or snapshot writes; the selected
+report is saved and receives its usual AI brief. Central-time spring-forward gaps are rejected,
+and a repeated fall-back hour starts at its first occurrence with an explicit note.
+
 ### Run the demo offline
 
 ```bash
@@ -150,7 +158,7 @@ day: details, scheduled telework, leave and days off all apply.
 npm test           # Backend tests: interval expansion, units, thresholds and margins, posture timing,
                    # confidence, counterfactuals, analogs, snapshot immutability, AI validation/fallback,
                    # and an end-to-end evaluation of the 2020 derecho from fixtures (offline)
-npm --prefix frontend test       # Chart selection, evidence highlights, missing data and reason citations
+npm --prefix frontend test       # Chart evidence, missing data, reason citations and replay/DST dates
 npm --prefix frontend run build  # TypeScript and production bundle
 ```
 
@@ -343,6 +351,7 @@ ENH/MDT outlooks; forecast gust >= 45 mph; wind chill <= -20 F and <= -35 F (DMX
 | `GET /api/timeseries?snapshot_id=` | observed + forecast series, threshold lines, commute/hours windows |
 | `GET /api/roads?as_of=` | Iowa DOT segments GeoJSON with corridor matches + corridor table |
 | `GET /api/history/events`, `GET /api/history/events/{id}`, `GET /api/history/events/{id}/replay?as_of=` | backtest library and replay |
+| `GET /api/replay/timeline?as_of=` | 25 hourly rules-based summaries centered on the exact UTC instant; coverage flags, no model calls or stored snapshots |
 | `GET /api/analogs?snapshot_id=` | top 3 similar past events |
 | `POST /api/decisions`, `GET /api/decisions` | record / list human decisions |
 | `GET /api/live-check/alerts`, `POST /api/live-check/evaluate` | national alerts and what-if evaluation |

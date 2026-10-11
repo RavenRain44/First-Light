@@ -113,10 +113,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    let active = true;
     if (mode === "live" && !savedWeather) {
-      api.latest().then(s=>{if (!savedWeatherRef.current) setSnap(s);}).catch(e=>setErr(e.message));
+      api.latest().then(s=>{if (active && !savedWeatherRef.current) setSnap(s);}).catch(e=>{if (active) setErr(e.message);});
     }
-    else setSnap((s) => (s && s.mode === "live" ? s : s));
+    return () => { active = false; };
   }, [mode, run, savedWeather]);
 
   // Keep the live view fresh. Cadence follows readiness (Red 10 min ... White 6 h), capped at 30 min
@@ -125,8 +126,9 @@ export default function App() {
   // Paused on Notify staff so the snapshot can't change under a decision being confirmed or alerts being reviewed.
   useEffect(() => {
     if (mode !== "live" || view === "notifications" || savedWeather) return;
-    const t = setInterval(() => api.latest().then(s=>{if (!savedWeatherRef.current) setSnap(s);}).catch(() => {}), recheck * 60 * 1000);
-    return () => clearInterval(t);
+    let active = true;
+    const t = setInterval(() => api.latest().then(s=>{if (active && !savedWeatherRef.current) setSnap(s);}).catch(() => {}), recheck * 60 * 1000);
+    return () => { active = false; clearInterval(t); };
   }, [mode, recheck, view, savedWeather]);
 
   const alertCount = shown?.inputs.filter((i) => i.kind === "alert").length ?? 0;
