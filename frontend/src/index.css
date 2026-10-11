@@ -229,3 +229,10 @@ input[type="range"] { accent-color: var(--accent); }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .app-logo { filter: none; }
 }
+
+/* Context stays visible across panels without replacing hazard severity colors. */
+.historical-workspace {
+  background: color-mix(in srgb, #d97706 8%, var(--surface-1));
+  border-inline: 3px solid color-mix(in srgb, #d97706 45%, transparent);
+  border-radius: 1rem;
+}

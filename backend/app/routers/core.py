@@ -171,6 +171,18 @@ def build_timeseries(snap: dict) -> dict:
             if prefix == "obs" and t > as_of:
                 continue
             rows.setdefault(p["t"], {"t": utc(t).isoformat()})[key] = p["v"]
+    # Older archives retain the temperature/wind inputs used to calculate
+    # feels-like, rather than a separate apparent-temperature input. Reproduce
+    # the recorded calculation for plotting; do not fetch or alter the snapshot.
+    apparent = snap.get("signals", {}).get("fcst_min_apparent_24h_f", {})
+    if apparent.get("available") and "fcst.temp_f" in apparent.get("input_ids", []):
+        from engine.features import wind_chill_f
+        for row in rows.values():
+            if "fcst_temp_f" in row and "fcst_apparent_temp_f" not in row:
+                row["fcst_apparent_temp_f"] = round(wind_chill_f(row["fcst_temp_f"], row.get("fcst_wind_speed_mph", 0.0)), 1)
+        meta.setdefault("fcst_apparent_temp_f", {**meta.get("fcst_temp_f", {}),
+            "source": "Calculated from recorded forecast temperature and wind",
+            "note": apparent.get("detail")})
     ordered = sorted(rows.values(), key=lambda r: r["t"])
     ice = snow = 0.0
     for r in ordered:  # running forecast totals from as_of forward, for threshold comparison
@@ -181,10 +193,10 @@ def build_timeseries(snap: dict) -> dict:
             if "fcst_snow_in" in r:
                 snow += r["fcst_snow_in"]
                 r["fcst_snow_cum"] = round(snow, 2)
-    th = load_thresholds()
-    lines = [{"chart": CHART_RULES[r.id], "value": r.value, "label": f"{r.id.split('.', 1)[1].replace('_', ' ')} ({r.value:g} {r.unit})",
-              "rule_id": r.id, "verified": r.verified, "level": r.posture_effect}
-             for r in th.rules if r.id in CHART_RULES]
+    lines = [{"chart": CHART_RULES[r["rule_id"]], "value": r["threshold"],
+              "label": f"{r['label']} ({r['threshold']:g} {r['unit']})",
+              "rule_id": r["rule_id"], "verified": r["verified"], "level": r["posture_effect"]}
+             for r in snap.get("rules", []) if r["rule_id"] in CHART_RULES]
     return {"snapshot_id": snap["snapshot_id"], "as_of": snap["as_of"], "timezone": snap["facility"]["timezone"],
             "rows": ordered, "meta": meta, "threshold_lines": lines, "windows": windows_for(start, end, fac)}
 
@@ -277,7 +289,7 @@ def record_decision(d: DecisionIn, background_tasks: BackgroundTasks):
         raise HTTPException(404, "snapshot not found")
     if d.decision_posture not in ORDER:
         raise HTTPException(422, f"decision_posture must be one of {ORDER}")
-    if snap["mode"] == "backtest":
+    if snap["mode"] == "backtest" or (snap["mode"] != "live" and not settings.demo_mode):
         raise HTTPException(422, "Historical backtesting cannot record a human operating decision")
     evidence = sufficiency.for_snapshot(snap)
     reason = (d.override_reason or "").strip() or None

@@ -86,7 +86,7 @@ export const METRICS: MetricDefinition[] = [
 ];
 
 export function metricForRule(rule: RuleResult): string | undefined {
-  if (rule.metric.includes("gust")) return "wind";
+  if (rule.metric.includes("gust") || rule.metric === "fcst_max_sustained_24h_mph") return "wind";
   if (rule.metric.startsWith("fcst_ice")) return "ice";
   if (rule.metric.startsWith("fcst_snow")) return "snow";
   if (rule.metric === "rwis_ice_sensors") return "rwis";
@@ -189,6 +189,7 @@ function seriesForRule(r: RuleResult, snap: Snapshot, metric: MetricDefinition):
   const observedGust = r.input_ids?.includes("obs.peak_gust_mph") || snap.inputs.some((i) => i.id === "obs.peak_gust_mph")
     ? "obs_peak_gust_mph" : "obs_wind_gust_mph";
   if (r.metric === "max_gust_mph") return [snap.signals[r.metric]?.role === "observation" ? observedGust : "fcst_wind_gust_mph"];
+  if (r.metric === "fcst_max_sustained_24h_mph") return ["fcst_wind_speed_mph"];
   if (metric.signal) return metric.series.map((s) => s.key);
   if (metric.id === "wind") return [r.metric.startsWith("obs_") ? observedGust : "fcst_wind_gust_mph"];
   if (metric.id === "temp") return ["fcst_apparent_temp_f"];

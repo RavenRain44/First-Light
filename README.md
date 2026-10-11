@@ -499,3 +499,5 @@ while developing this feature; provider integration tests use mocks.
 For publishing the frozen historical dataset and restoring yearly caches, see [Cloud datasets](docs/cloud-datasets.md).
 
 The frozen testing data is also included directly in Git: run `npm run dataset:repo -- restore` after setup. See [Repository datasets](docs/repository-datasets.md) and [preserved metrics](backend/data/backtesting/metrics/README.md).
+
+Release verification, remaining staging checks, UI recommendations and rollback instructions: [Release readiness](docs/release-readiness.md).

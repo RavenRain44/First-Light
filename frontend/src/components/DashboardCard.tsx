@@ -40,7 +40,7 @@ export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotif
     : snap.model_id.startsWith("strands:") ? "Strands fallback" : snap.model_id === "deterministic-fallback" ? "Template suggestion" : "Archived AI brief";
   const unavailable = snap.sources.filter((s) => s.status === "unavailable");
   const people = snap.roster && !snap.roster.hypothetical ? snap.roster.expected_in_building : undefined;
-  const canDecide = !readOnly && snap.mode !== "backtest" && !snap.facility.hypothetical;
+  const canDecide = !readOnly && snap.mode === "live" && !snap.facility.hypothetical;
   const evidence = evidenceState(snap);
 
   return (
@@ -60,9 +60,9 @@ export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotif
           <div><dt className="text-xs text-muted">Confidence</dt><dd className="mt-1 font-semibold capitalize">{snap.confidence.level}</dd></div>
           <div><dt className="text-xs text-muted">People expected</dt><dd className="mt-1 font-semibold">{people ?? "Unavailable"}</dd></div>
           <div><dt className="text-xs text-muted">Decision date</dt><dd className="mt-1 font-medium">{fmtDayLong(snap.posture.decision_day)}, {snap.posture.decision_day.slice(0, 4)}</dd></div>
-          <div><dt className="text-xs text-muted">{snap.mode === "live" ? "Last updated" : "Weather as of"}</dt>
+          <div><dt className="text-xs text-muted">{snap.mode === "live" && !readOnly ? "Last updated" : "Weather as of"}</dt>
             <dd className="mt-1 font-medium"><time dateTime={snap.as_of}>{fmtTime(snap.as_of, tz, { date: true, year: true })}</time>
-              {snap.mode === "live" && <span className="block text-xs font-normal text-ink2">{ago(snap.as_of)}</span>}
+              {snap.mode === "live" && !readOnly && <span className="block text-xs font-normal text-ink2">{ago(snap.as_of)}</span>}
               {onRefresh && <button onClick={onRefresh} disabled={busy} className="mt-1 block min-h-9 text-[var(--accent)] underline underline-offset-2 disabled:opacity-50">{busy ? "Checking…" : "Check again"}</button>}
             </dd>
           </div>

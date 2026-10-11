@@ -221,3 +221,11 @@ test("strict versus inclusive threshold comparisons are preserved", () => {
   assert.equal(crossesThreshold(-20, { operator: "<", threshold: -20 }), false);
   assert.equal(crossesThreshold(-20, { operator: "<=", threshold: -20 }), true);
 });
+
+test('sustained wind rules highlight sustained wind rather than gusts', () => {
+  const s=snap([rule('sustained','fcst_max_sustained_24h_mph',{threshold:40,observed_value:45})]);
+  const result=metricEvidence(s,METRICS[0],data([{t:at(8),fcst_wind_speed_mph:45,fcst_wind_gust_mph:70}]));
+  assert.deepEqual(result.keys,['fcst_wind_speed_mph']);
+  assert.equal(result.rows[0].fcst_wind_speed_mph_focus,45);
+  assert.equal(result.rows[0].fcst_wind_gust_mph_focus,null);
+});

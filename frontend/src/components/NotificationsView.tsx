@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { newRequestId } from "../requestId";
 import { api } from "../api";
 import { Card, Skeleton } from "../util";
 
@@ -66,8 +67,8 @@ function MessageComposer({ groups, p, update }: { groups: any[]; p: any; update:
       <summary className="cursor-pointer font-semibold">Message preview · edit directly</summary>
       <p className="mt-2 text-xs text-muted">{p.draft_source}. Location and decision are shared by everyone. Only personal instructions vary by group.</p>
       <div className="mt-4 space-y-4">
-        <label className="grid gap-2 text-sm font-semibold">1 · Location<textarea className={`${input} font-normal`} rows={2} maxLength={300} value={first.location_text} onChange={e=>update(first.id,{location_text:e.target.value})} /></label>
-        <label className="grid gap-2 text-sm font-semibold">2 · Decision<textarea className={`${input} font-normal`} rows={2} maxLength={1000} value={first.decision_text} onChange={e=>update(first.id,{decision_text:e.target.value})} /></label>
+        <label className="grid gap-2 text-sm font-semibold">1 · Location<textarea aria-label="Shared location" className={`${input} font-normal`} rows={2} maxLength={300} value={first.location_text} onChange={e=>update(first.id,{location_text:e.target.value})} /></label>
+        <label className="grid gap-2 text-sm font-semibold">2 · Decision<textarea aria-label="Shared decision" className={`${input} font-normal`} rows={2} maxLength={1000} value={first.decision_text} onChange={e=>update(first.id,{decision_text:e.target.value})} /></label>
         <section className="rounded-xl border border-edge p-4">
           <h3 className="text-sm font-semibold">3 · Personal instructions</h3>
           <div className="mt-3 flex flex-wrap gap-3">{groups.map(g => <label key={g.id} className="flex items-center gap-2 text-sm"><input type="checkbox" aria-label={`Select group ${g.title}`} disabled={!g.recipients.length} checked={g.recipients.length > 0 && g.recipient_ids.length === g.recipients.length} onChange={e => update(g.id, {recipient_ids: e.target.checked ? g.recipients.map((r:any) => r.id) : []})} />{g.title} · {g.recipient_ids.length}/{g.recipients.length}</label>)}</div>
@@ -110,7 +111,7 @@ export function NotificationsView({ decisionId, onBack }: { decisionId?: number 
   const [testIds, setTestIds] = useState<string[]>([]);
   const [testResult, setTestResult] = useState<any>(null);
   const [smtpCheck, setSmtpCheck] = useState<any>(null);
-  const requestId = useRef<string>(crypto.randomUUID());
+  const requestId = useRef<string>(newRequestId());
   const install = (pack: any) => {
     setP(pack); setGroups(pack.groups.map((g: any) => ({ ...g,
       location_text: g.location_text ?? `${pack.facility_name} · ${pack.decision_day} (${pack.timezone})`,
@@ -231,7 +232,7 @@ export function NotificationsView({ decisionId, onBack }: { decisionId?: number 
           if (pack.status === "draft") pack=await request(`/packages/${p.id}/groups/${testGroup}/approve`,'POST',{version:pack.version,actor});
           setP(pack);
           const result=await request(`/packages/${p.id}/real-test`,'POST',{version:pack.version,actor,group_id:testGroup,contact_ids:testIds,request_id:requestId.current});
-          setTestResult(result); requestId.current=crypto.randomUUID();
+          setTestResult(result); requestId.current=newRequestId();
           const accepted = result.messages.filter((m:any)=>m.status === "provider_accepted").length;
           const failed = result.messages.filter((m:any)=>m.status === "provider_rejected").length;
           const unknown = result.messages.length - accepted - failed;

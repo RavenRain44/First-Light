@@ -72,8 +72,8 @@ ask OBJ_SECRET_KEY "Object Storage secret key" secret
 say "Manager login"
 # deploy/manager-auth holds Caddy config: a login on manager actions, or only a comment (open site).
 if [ ! -s deploy/manager-auth ]; then
-  read -rp "Require a manager login to record decisions and send notifications? [y/N]: " WANT
-  if [[ "$WANT" =~ ^[Yy] ]]; then
+  read -rp "Require a manager login to record decisions and send notifications? [Y/n]: " WANT
+  if [[ ! "$WANT" =~ ^[Nn] ]]; then
     read -rp "Manager username [manager]: " U; U="${U:-manager}"
     while :; do
       read -rsp "Manager password (12+ characters): " P; echo
@@ -83,8 +83,7 @@ if [ ! -s deploy/manager-auth ]; then
     unset P
     cat > deploy/manager-auth <<AUTH
 @manager_actions {
-	method POST PUT PATCH DELETE
-	path /api/decisions /api/decisions/* /api/notifications/* /api/storage/*
+	path /api/*
 }
 basic_auth @manager_actions {
 	$U $HASH

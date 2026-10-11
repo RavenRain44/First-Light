@@ -17,7 +17,7 @@ export function DecisionStep({ snap, onDecided }: { snap: Snapshot; onDecided: (
   const tz = snap.facility.timezone;
   const r = snap.readiness;
   const rec = snap.posture.posture;
-  const canDecide = snap.mode !== "backtest" && !snap.facility.hypothetical;
+  const canDecide = snap.mode === "live" && !snap.facility.hypothetical;
   const [done, setDone] = useState<Recorded | null>(null);
   const [checked, setChecked] = useState(false);
   const [editing, setEditing] = useState(false);

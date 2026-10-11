@@ -81,6 +81,7 @@ export function MetricChart({ snap, metric, data, compact = false }: {
             {rule.label}: recorded {fmtVal(rule.observed_value, rule.unit)} against {rule.operator} {fmtVal(rule.threshold, rule.unit)}.
             {!rule.verified && " * This is a policy threshold; source verification is pending."}
             {!rule.triggered && " This threshold has not been crossed."}
+            <span className="mt-1 block">The chart can include context outside this rule's evaluation period. Its displayed peak or low may differ from the recorded rule value.</span>
             {!rule.triggered && context && <span className="mt-1 block">The suggestion is supported by {context.label}; this measurement is supporting context.</span>}
           </> : context ? <><strong className="text-ink">Why highlighted: </strong>{context.label}. The shaded period comes from the recorded hazard window; this chart does not establish that a numeric threshold was crossed.</>
             : <>These measurements provide context. No operating-status threshold is crossed for this metric.</>}

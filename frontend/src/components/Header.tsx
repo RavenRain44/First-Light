@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Snapshot } from "../types";
-import { Badge, fmtTime, readinessColor } from "../util";
+import { Badge, readinessColor } from "../util";
 
 export type Mode = "live" | "replay" | "livecheck";
 export type View = "today" | "notifications" | "decisions" | "thresholds";
@@ -32,13 +32,12 @@ export function Header({ snap, mode, setMode, view, setView, demo, theme, toggle
     else { setView("today"); setMode(id); }
   };
   const goToday = () => { setMode("live"); setView("today"); };
-  const tz = snap?.facility.timezone ?? "America/Chicago";
 
   return (
     <header className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button onClick={goToday} className="flex items-center gap-3 text-left" aria-label="Closure Call: go to today">
-          <img src="/logo.png" alt="" className="app-logo h-10 w-auto shrink-0" />
+          <img src="/closure-call-mark.svg" alt="" width="40" height="40" className="h-10 w-10 shrink-0" />
           <span className="leading-tight">
             <span className="block text-base font-semibold">Closure Call</span>
             <span className="block text-xs text-muted">USDA Service Center, Ames, IA</span>
@@ -75,16 +74,7 @@ export function Header({ snap, mode, setMode, view, setView, demo, theme, toggle
       {demo && (
         <p className="text-xs text-muted"><Badge tone="warn" title="DEMO_MODE=true: sources served from cached fixtures">Demo mode</Badge> Weather and roads come from saved data, not live feeds.</p>
       )}
-      {view === "today" && mode !== "live" && (
-        <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[var(--accent)] px-4 py-3 text-[var(--on-accent)]">
-          <p className="font-semibold">
-            {mode === "replay"
-              ? `Historical weather${snap ? `: ${fmtTime(snap.as_of, tz)}` : ""}. This is not today's recommendation.`
-              : `What-if check${snap?.mode === "livecheck" ? ` for ${snap.facility.name}` : ""}. This is not your facility's recommendation.`}
-          </p>
-          <button onClick={goToday} className="rounded-lg bg-[var(--surface-1)] px-3 py-1.5 text-sm font-semibold text-[var(--accent)]">Return to live</button>
-        </div>
-      )}
+
     </header>
   );
 }
