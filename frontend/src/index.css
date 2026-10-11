@@ -201,3 +201,15 @@ input[type="range"] { accent-color: var(--accent); }
 }
 .cc-cam:hover { transform: scale(1.15); }
 .cc-cam-on { background: #1d4ed8; color: #ffffff; transform: scale(1.2); }
+
+/* App logo: thin outline around the white cloud + soft drop shadow, light mode only */
+.app-logo {
+  filter:
+    drop-shadow(1px 0 0 #9db7d6) drop-shadow(-1px 0 0 #9db7d6)
+    drop-shadow(0 1px 0 #9db7d6) drop-shadow(0 -1px 0 #9db7d6)
+    drop-shadow(0 2px 3px rgb(15 40 80 / 0.22));
+}
+:root[data-theme="dark"] .app-logo { filter: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .app-logo { filter: none; }
+}
