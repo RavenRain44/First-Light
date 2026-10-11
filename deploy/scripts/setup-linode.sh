@@ -69,17 +69,33 @@ ask OBJ_BUCKET "Object Storage bucket name (e.g. weather-data-storage)"
 ask OBJ_ACCESS_KEY "Object Storage access key"
 ask OBJ_SECRET_KEY "Object Storage secret key" secret
 
-say "Manager login (needed to record decisions and send notifications)"
+say "Manager login"
+# deploy/manager-auth holds Caddy config: a login on manager actions, or only a comment (open site).
 if [ ! -s deploy/manager-auth ]; then
-  read -rp "Manager username [manager]: " U; U="${U:-manager}"
-  while :; do
-    read -rsp "Manager password (12+ characters): " P; echo
-    [ "${#P}" -ge 12 ] && break; echo "Too short."
-  done
-  HASH="$(docker run --rm caddy:2.8.4 caddy hash-password --plaintext "$P")"
-  printf '%s %s\n' "$U" "$HASH" > deploy/manager-auth
-  chmod 644 deploy/manager-auth  # a bcrypt hash only; Caddy's container reads it
-  unset P
+  read -rp "Require a manager login to record decisions and send notifications? [y/N]: " WANT
+  if [[ "$WANT" =~ ^[Yy] ]]; then
+    read -rp "Manager username [manager]: " U; U="${U:-manager}"
+    while :; do
+      read -rsp "Manager password (12+ characters): " P; echo
+      [ "${#P}" -ge 12 ] && break; echo "Too short."
+    done
+    HASH="$(docker run --rm caddy:2.8.4 caddy hash-password --plaintext "$P")"
+    unset P
+    cat > deploy/manager-auth <<AUTH
+@manager_actions {
+	method POST PUT PATCH DELETE
+	path /api/decisions /api/decisions/* /api/notifications/* /api/storage/*
+}
+basic_auth @manager_actions {
+	$U $HASH
+}
+AUTH
+  else
+    # A comment plus a harmless directive (an empty import file only draws a warning, but this is unambiguous).
+    printf '%s
+' "# No manager login: anyone with the address can record decisions and send notifications."       "header -X-Powered-By" > deploy/manager-auth
+  fi
+  chmod 644 deploy/manager-auth  # a bcrypt hash at most; Caddy's container reads it
 fi
 
 if command -v ufw >/dev/null && ufw status | grep -q active; then

@@ -116,8 +116,9 @@ For builds behind an HTTPS inspection proxy, supply the trusted CA bundle with
 The optional build secret preserves TLS verification and is not retained in the image.
 
 The deployment runs **live** weather (re-evaluated every 10 minutes) behind a **Caddy front door** with automatic
-HTTPS. Anyone with the address can view the dashboard; recording decisions, notifications and storage actions ask
-for a manager login (HTTP basic auth at Caddy).
+HTTPS. Anyone with the address can view the dashboard. Setup asks whether recording decisions, notifications and
+storage actions should require a manager login (HTTP basic auth at Caddy); without it, anyone with the address can
+use them. To change it later, delete `deploy/manager-auth` and rerun the setup script.
 
 1. In Akamai Cloud Manager, check the promotional credit and current pricing, then **Create → Linode**:
    Ubuntu 24.04 LTS, region **Chicago (us-ord)** (same as the bucket), a shared-CPU plan with 2-4 GB RAM, a root
@@ -132,7 +133,7 @@ for a manager login (HTTP basic auth at Caddy).
    ```
 
    The script installs Docker (and a swap file on small plans), writes `.env` (live weather, Akamai key, Object
-   Storage keys with no `OBJ_PREFIX`), asks for a manager username and password (stored only as a bcrypt hash in
+   Storage keys with no `OBJ_PREFIX`), asks whether to require a manager login (a bcrypt hash in
    `deploy/manager-auth`), builds, starts and prints the address.
 3. **Address.** With no argument the site uses the Linode's free reverse-DNS hostname (shown on the Linode's
    **Network** tab, like `203-0-113-5.ip.linodeusercontent.com`), or `203-0-113-5.sslip.io` as a fallback. For a
@@ -140,8 +141,8 @@ for a manager login (HTTP basic auth at Caddy).
    **A record** pointing to the Linode's IPv4 address, set the registrar's nameservers to `ns1.linode.com` …
    `ns5.linode.com`, wait for DNS, then run `sudo bash deploy/scripts/setup-linode.sh your-domain.org`.
    Caddy obtains the HTTPS certificate on the first visit.
-4. Verify from a phone: the dashboard loads, the Akamai brief appears, recording a decision asks for the manager
-   login, and **Technical details → Cloud copy** shows the log and camera frames. In Cloud Manager, the Linode's
+4. Verify from a phone: the dashboard loads, the Akamai brief appears, recording a decision works (and asks for the
+   manager login if you set one), and **Technical details → Cloud copy** shows the log and camera frames. In Cloud Manager, the Linode's
    **Analytics** tab shows CPU and traffic, and **Object Storage → Buckets** lists the mirrored files (top level,
    not `dev/`).
 5. Update to the latest code: `git pull && sudo docker compose -f deploy/compose.prod.yaml up -d --build`.
