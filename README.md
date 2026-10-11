@@ -175,6 +175,24 @@ alerts, all weather charts, roads and cameras, analogs, history and raw evidence
 opens that section and focuses the manager form. Detailed panels load on first expansion; collapsing preserves
 unfinished manager input and reuses the chart data.
 
+## Cloud storage
+
+With the `OBJ_*` settings filled in, the app mirrors its record to a private **Akamai Object Storage** bucket so it
+survives server rebuilds and can be opened from any device. The SQLite database stays the source of truth; its
+record tables are append-only, so a background sync copies each new row once, within seconds of the write:
+
+| Bucket path | Contents | Written |
+|---|---|---|
+| `logs/snapshots/`, `logs/briefs/`, `logs/decisions/`, `logs/notifications/` | one JSON file per snapshot, Akamai brief, manager decision and notification audit event | on every write |
+| `graphs/<snapshot>.json` | the chart data behind each snapshot (redrawn identically on any device) | on every evaluation |
+| `cameras/<snapshot>/decision-<id>/` | stills from the 10 nearest cameras at the snapshot's moment, plus `index.json` | when a decision is recorded |
+| `backups/closurecall-latest.db`, `backups/closurecall-YYYY-MM-DD.db` | SQLite backups | daily and on shutdown |
+
+A fresh server with an empty volume restores `closurecall-latest.db` on first start. If the bucket is unreachable
+the app keeps working and the next pass resumes from `logs/_sync.json`. **Technical details → Cloud copy** shows the
+sync status and signed links (one hour) to the snapshot's log, chart data and saved camera stills. Setup steps are in
+[docs/akamai-usage.md](docs/akamai-usage.md#object-storage).
+
 ## Environment variables (`.env`)
 
 | Variable | Default | Purpose |
@@ -189,6 +207,10 @@ unfinished manager input and reuses the chart data.
 | `AKAMAI_API_KEY` | | Backend-only workshop team key for `hackathon-chat` |
 | `STRANDS_FALLBACK_ENABLED` | `true` | Try a Strands agent through Amazon Bedrock if Akamai fails |
 | `STRANDS_MODEL_ID` / `AWS_REGION` | `global.anthropic.claude-sonnet-4-6` / `us-east-1` | Strands Bedrock model and region; uses the AWS credential chain |
+| `OBJ_BUCKET` / `OBJ_ACCESS_KEY` / `OBJ_SECRET_KEY` | | Akamai Object Storage mirror (off when empty); see [Cloud storage](#cloud-storage) |
+| `OBJ_ENDPOINT` / `OBJ_REGION` | `https://us-ord-1.linodeobjects.com` / `us-ord-1` | Bucket region (Chicago) |
+| `OBJ_PREFIX` | | Folder inside the bucket; set `dev` on laptops so local test data stays apart from the server's |
+| `OBJ_BACKUP_HOURS` | `24` | How often the SQLite database is backed up to the bucket |
 
 The dashboard works fully with **no API key**: the deterministic template rationale is used and labelled as such.
 With a workshop key, Akamai produces the manager decision brief, alert summaries, watch items and historical
@@ -326,7 +348,8 @@ ENH/MDT outlooks; forecast gust >= 45 mph; wind chill <= -20 F and <= -35 F (DMX
 | `GET /api/live-check/alerts`, `POST /api/live-check/evaluate` | national alerts and what-if evaluation |
 | `GET /api/thresholds` | registry with anchors, verified flags, backtest summary |
 | `GET /api/cameras?as_of=`, `GET /api/cameras/image?u=` | Live: Iowa DOT traffic cameras spread around the facility (`stream_url` HLS), ISU/KCCI webcams and RWIS stills; Replay: ISU/KCCI webcams and 20 nearest RWIS cameras. Image proxy (IEM archive and Iowa DOT snapshot URLs only) |
-| `POST /api/notifications/preview` | **501** stub: the notification package is the next phase |
+| `GET /api/storage/status`, `POST /api/storage/sync` | object storage mirror status; sync now |
+| `GET /api/storage/record/{id}` | signed links to a snapshot's stored log, chart data and decision camera stills |
 
 ## Repository layout
 

@@ -16,6 +16,7 @@ import { RoadsPanel } from "./components/RoadsPanel";
 import { PastDecisions, pastSummary, usePastDecisions } from "./components/PastDecisions";
 import { RawDataDrawer } from "./components/RawDataDrawer";
 import { TechnicalSummary } from "./components/TechnicalDetails";
+import { CloudCopyPanel } from "./components/CloudCopyPanel";
 import { ThreatPanel } from "./components/ThreatPanel";
 import { ThresholdsView } from "./components/ThresholdsView";
 import { TimelinePanel } from "./components/TimelinePanel";
@@ -195,10 +196,11 @@ export default function App() {
                 </Section>
               )}
               <Section id="technical" title="Technical details & decision record" innerTitles open={open.has("technical")} onToggle={() => toggle("technical")}
-                summary="Hazard scores, confidence factors, past decisions and raw data sources">
+                summary="Hazard scores, confidence factors, past decisions, cloud copy and raw data sources">
                 <PanelBoundary name="Technical summary"><TechnicalSummary snap={shown} /></PanelBoundary>
                 <PanelBoundary name="Threat breakdown"><ThreatPanel snap={shown} /></PanelBoundary>
                 <PanelBoundary name="Decision record"><RecordTimeline snap={shown} refreshKey={recordKey} onOpen={(id) => {savedWeatherRef.current=true;setSavedWeather(true);setSavedDecisionId(null);run(() => api.snapshot(id));}} /></PanelBoundary>
+                <PanelBoundary name="Cloud copy"><CloudCopyPanel snap={shown} refreshKey={recordKey} /></PanelBoundary>
                 <PanelBoundary name="Raw data"><RawDataDrawer snap={shown} /></PanelBoundary>
               </Section>
             </div>

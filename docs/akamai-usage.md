@@ -135,6 +135,37 @@ The optional build secret preserves TLS verification and is not retained in the 
 6. Export the SQLite volume before deleting resources. Remove the Linode and any extra resources after judging;
    powering off the VM does not stop all billing. Review the workshop's costs/cleanup guide before deletion.
 
+## Object storage
+
+Optional. Mirrors the decision log, chart data, decision camera stills and daily database backups to a private
+Akamai Object Storage bucket (S3-compatible, through `boto3`). See the README's "Cloud storage" section for the
+bucket layout.
+
+1. In Akamai Cloud Manager, open **Object Storage → Create Bucket**. Choose the **Chicago (us-ord)** region (closest
+   to Iowa), name it (for example `closurecall-<team>`), and keep it private. Check current pricing first.
+2. Open **Object Storage → Access Keys → Create Access Key**. Turn on **Limited access** and give it **Read/Write**
+   on this bucket only. Copy the secret now; it is shown once.
+3. Add to the server's `.env` (and your local `.env` to test):
+
+   ```bash
+   OBJ_ENDPOINT=https://us-ord-1.linodeobjects.com
+   OBJ_REGION=us-ord-1
+   OBJ_BUCKET=closurecall-<team>
+   OBJ_ACCESS_KEY=...
+   OBJ_SECRET_KEY=...
+   ```
+
+   If Cloud Manager shows a different endpoint hostname for the bucket, use that one. On laptops also set
+   `OBJ_PREFIX=dev` so local test data lands in `dev/` and never mixes with (or restores onto) the server's.
+4. Restart the app. `GET /api/storage/status` should report `enabled: true`; `POST /api/storage/sync` copies
+   everything immediately (normally it runs within seconds of each write). Open **Technical details → Cloud copy**
+   on the dashboard to see links to the snapshot log, chart data and camera stills.
+5. Before deleting the Linode, confirm a recent `backups/closurecall-latest.db`. A new server with an empty volume
+   restores it automatically. Delete the bucket's objects and the bucket after the event to stop billing, and
+   revoke the access key.
+
+The bucket never becomes public: the dashboard receives signed links that expire after one hour.
+
 ## Verification
 
 ```bash

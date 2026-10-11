@@ -40,6 +40,15 @@ class Settings:
     )
     aws_region: str = os.environ.get("AWS_REGION", "us-east-1")
 
+    # Akamai Object Storage (S3-compatible). Leave the bucket or keys empty to keep everything local.
+    obj_endpoint: str = os.environ.get("OBJ_ENDPOINT", "https://us-ord-1.linodeobjects.com")
+    obj_region: str = os.environ.get("OBJ_REGION", "us-ord-1")
+    obj_bucket: str = os.environ.get("OBJ_BUCKET", "")
+    obj_access_key: str = os.environ.get("OBJ_ACCESS_KEY", "")
+    obj_secret_key: str = os.environ.get("OBJ_SECRET_KEY", "")
+    obj_prefix: str = os.environ.get("OBJ_PREFIX", "")  # folder inside the bucket; e.g. "dev" for local runs
+    obj_backup_hours: float = float(os.environ.get("OBJ_BACKUP_HOURS", "24"))
+
     demo_reference_now = None  # set at runtime in DEMO_MODE (see app.snapshots.demo_live_as_of)
 
     data_dir: Path = BACKEND_DIR / "data"

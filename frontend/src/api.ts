@@ -13,6 +13,11 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
   return r.json() as Promise<T>;
 }
 
+export type StorageStatus = { enabled: boolean; bucket: string | null; endpoint: string | null; last_sync: string | null;
+  last_error: string | null; uploaded: number; backup: string | null };
+export type StorageLinks = { enabled: boolean; error?: string; expires_in?: number; log_url?: string | null; graph_url?: string | null;
+  camera_sets?: { decision_id: number; captured_at?: string; images: { key: string; url: string; camera: string; view?: string; time?: string }[] }[] };
+
 export const api = {
   health: () => req<{ demo_mode: boolean; model_provider: string; inference: { enabled: boolean } }>("/api/health"),
   facility: () => req<any>("/api/facility"),
@@ -43,6 +48,8 @@ export const api = {
   events: () => req<any[]>("/api/history/events"),
   event: (id: string) => req<any>(`/api/history/events/${id}`),
   replay: (id: string, as_of: string) => req<Snapshot>(`/api/history/events/${id}/replay?as_of=${encodeURIComponent(as_of)}`),
+  storageStatus: () => req<StorageStatus>("/api/storage/status"),
+  storageRecord: (id: string) => req<StorageLinks>(`/api/storage/record/${id}`),
   liveAlerts: () => req<any>("/api/live-check/alerts"),
   liveEvaluate: (alert_id: string, assume_workday: boolean) =>
     req<Snapshot>("/api/live-check/evaluate", { method: "POST", body: JSON.stringify({ alert_id, assume_workday }) }),
