@@ -185,7 +185,7 @@ record tables are append-only, so a background sync copies each new row once, wi
 |---|---|---|
 | `logs/snapshots/`, `logs/briefs/`, `logs/decisions/`, `logs/notifications/` | one JSON file per snapshot, Akamai brief, manager decision and notification audit event | on every write |
 | `graphs/<snapshot>.json` | the chart data behind each snapshot (redrawn identically on any device) | on every evaluation |
-| `cameras/<snapshot>/decision-<id>/` | stills from the 10 nearest cameras at the snapshot's moment, plus `index.json` | when a decision is recorded |
+| `cameras/<snapshot>/decision-<id>/` | the camera frames saved with the decision (one per angle at each nearby camera), plus `index.json` | when a decision is recorded |
 | `backups/closurecall-latest.db`, `backups/closurecall-YYYY-MM-DD.db` | SQLite backups | daily and on shutdown |
 
 A fresh server with an empty volume restores `closurecall-latest.db` on first start. If the bucket is unreachable
