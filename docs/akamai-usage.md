@@ -16,11 +16,12 @@ The service is OpenAI-compatible, hosted on Akamai Cloud, and uses these exact w
 - Authentication: backend-only `Authorization: Bearer <team key>`
 - Structured output: `response_format.type=json_schema`, validated with Pydantic
 
-The OpenAI SDK here is a protocol client to Akamai, not an OpenAI inference provider. The old Anthropic,
-OpenAI-provider and direct Bedrock-provider switches have been removed.
+The backend calls Akamai's OpenAI-compatible JSON protocol directly; OpenAI is not an inference provider here.
+Strands Agents provides the secondary path through Amazon Bedrock; the application does not call Bedrock directly.
 
-Copy `.env.example` to ignored `.env` if needed, and enter `AKAMAI_API_KEY` securely. Keep `MODEL_PROVIDER=akamai`
-and `AWS_FALLBACK_ENABLED=false` for judging. No key is shipped in the repository or browser bundle.
+Copy `.env.example` to ignored `.env` if needed, and enter `AKAMAI_API_KEY` securely. Keep `MODEL_PROVIDER=akamai`.
+`STRANDS_FALLBACK_ENABLED=true` enables the default secondary path and uses the normal AWS credential chain.
+Set it to `false` for an Akamai-only demo. No key is shipped in the repository or browser bundle.
 Allow HTTPS egress to `ws.akamai-workshops.com`. Live weather additionally requires `api.weather.gov` and
 `mesonet.agron.iastate.edu`.
 
@@ -33,8 +34,8 @@ DEMO_MODE=true npm run dev
 
 `DEMO_MODE=true` uses cached weather, but AI still calls Akamai. To run entirely offline, also set
 `MODEL_PROVIDER=none`. Live Check always calls NWS, including in weather demo mode.
-Use **Re-evaluate now** for a new live decision brief. Replay playback reuses recorded backtest data without
-model calls; pause at an hour and click **Generate Akamai brief** for a fresh, recorded Akamai interpretation.
+Use **Re-evaluate now** for a new live decision brief. Replay playback reuses recorded backtest data and starts
+a brief automatically when the selected report loads.
 Existing immutable snapshots keep their original provider and are never relabeled as Akamai output.
 
 After recording a decision, **Send notifications** creates an editable draft. Akamai supplies only a short
@@ -70,23 +71,24 @@ they do not prove every natural-language claim is correct. Managers can inspect 
 Deterministic counterfactuals and safety watch items are preserved. Historical analogs are simulated by rules,
 not actual historical USDA decisions.
 
-Failures use a clearly labeled template grounded in the same snapshot. An optional AWS Bedrock fallback is available
-only when `AWS_FALLBACK_ENABLED=true`, `AWS_BEDROCK_MODEL_ID` is set, the normal AWS credential chain is configured,
-and model access is enabled in `AWS_REGION`. The model must support Bedrock Converse. AWS output is explicitly labeled
-**AWS fallback** and audited in the snapshot; it is never presented as Akamai inference. For competition use, leave
-this off. Missing both providers does not prevent the manager from reviewing evidence or recording a decision.
+Failures use a clearly labeled template grounded in the same snapshot. When Akamai is unavailable or rejected,
+`STRANDS_FALLBACK_ENABLED=true` runs a Strands agent with `STRANDS_MODEL_ID` through Amazon Bedrock. The normal AWS
+credential chain, regional model access, and `AWS_REGION` apply. Strands output is explicitly labeled and audited;
+it is never presented as Akamai inference. Missing both providers does not prevent the manager from reviewing
+evidence or recording a decision.
 
 ## Usage bounds
 
-Each evaluation immediately returns a template snapshot and starts a background Akamai brief when configured.
+Each new or previously stored report immediately returns its template and starts a background brief when configured.
 The brief sends one chat request, with at most one repair for rejected or malformed output.
 SDK retries are disabled. Each attempt allows 700 output tokens, at most 48,000 input-context characters,
-and a 60-second deadline. Optional Bedrock gets at most one additional request. Per-request token counts,
+and a 60-second deadline. Strands gets at most one additional attempt after Akamai. Per-request token counts,
 provider identity, validation outcomes and fallback reasons are stored in a separate append-only interpretation
 record. The original snapshot and its hash stay unchanged. Expanding dashboard details or changing chart focus
 makes no inference request.
-Network/auth failures stop that provider immediately. History builds, replay playback and existing snapshot reads
-make no inference requests. Avoid leaving repeated evaluation or background refresh running during a demo.
+Network/auth failures stop that provider immediately. Offline history builds use `use_ai=false`; loading any report
+in the application requests a brief once and stores the append-only result. Avoid leaving replay playback or
+background refresh running during a demo if you do not want those one-time requests.
 
 Creating a new notification package makes at most one additional Akamai request with 200 output tokens,
 4,000 input-context characters and a 30-second deadline, with no repair or SDK retry. Truncated responses,
@@ -113,25 +115,70 @@ For builds behind an HTTPS inspection proxy, supply the trusted CA bundle with
 `docker build --secret id=build_ca,src=/path/to/trusted-ca-bundle.pem -f deploy/Dockerfile .`.
 The optional build secret preserves TLS verification and is not retained in the image.
 
-1. In Akamai Cloud Manager, verify the promotional credit and select a small Linux Linode with enough memory for
-   Docker builds (2 GB RAM is a reasonable starting point; check current pricing).
-2. Install Docker Engine and Compose using the official instructions for that OS. Clone this branch and create
-   an owner-readable `.env` containing the team key. Keep it out of Git and screenshots.
-3. From the checkout root, run:
+The deployment runs **live** weather (re-evaluated every 10 minutes) behind a **Caddy front door** with automatic
+HTTPS. Anyone with the address can view the dashboard; recording decisions, notifications and storage actions ask
+for a manager login (HTTP basic auth at Caddy).
+
+1. In Akamai Cloud Manager, check the promotional credit and current pricing, then **Create → Linode**:
+   Ubuntu 24.04 LTS, region **Chicago (us-ord)** (same as the bucket), a shared-CPU plan with 2-4 GB RAM, a root
+   password and your SSH key. Under **Firewall**, create one that allows inbound TCP 80 and 443 from anywhere and
+   TCP 22 from your own IP only.
+2. SSH in and run:
 
    ```bash
-   docker compose -f deploy/compose.prod.yaml up -d --build
-   curl --fail http://127.0.0.1:8000/api/health
+   git clone -b integration https://github.com/RavenRain44/hack-midwest-2026.git
+   cd hack-midwest-2026
+   sudo bash deploy/scripts/setup-linode.sh
    ```
 
-4. The app binds to loopback on port 8000. Configure a TLS reverse proxy such as Caddy or nginx for your domain,
-   forwarding to that port. Allow only HTTPS/HTTP and restricted SSH through the Linode Cloud Firewall. Do not
-   expose an unauthenticated decision-recording app broadly; use demo access controls at the reverse proxy.
-5. Verify the dashboard, generate one brief and record a synthetic manager decision. Show the Linode in Cloud
-   Manager and the successful Akamai provider badge to judges. `/api/health` only reports configuration; it does
-   not establish live inference access.
-6. Export the SQLite volume before deleting resources. Remove the Linode and any extra resources after judging;
-   powering off the VM does not stop all billing. Review the workshop's costs/cleanup guide before deletion.
+   The script installs Docker (and a swap file on small plans), writes `.env` (live weather, Akamai key, Object
+   Storage keys with no `OBJ_PREFIX`), asks for a manager username and password (stored only as a bcrypt hash in
+   `deploy/manager-auth`), builds, starts and prints the address.
+3. **Address.** With no argument the site uses the Linode's free reverse-DNS hostname (shown on the Linode's
+   **Network** tab, like `203-0-113-5.ip.linodeusercontent.com`), or `203-0-113-5.sslip.io` as a fallback. For a
+   friendlier name, buy a domain from any registrar, add it in **Cloud Manager → Domains** (free DNS) with an
+   **A record** pointing to the Linode's IPv4 address, set the registrar's nameservers to `ns1.linode.com` …
+   `ns5.linode.com`, wait for DNS, then run `sudo bash deploy/scripts/setup-linode.sh your-domain.org`.
+   Caddy obtains the HTTPS certificate on the first visit.
+4. Verify from a phone: the dashboard loads, the Akamai brief appears, recording a decision asks for the manager
+   login, and **Technical details → Cloud copy** shows the log and camera frames. In Cloud Manager, the Linode's
+   **Analytics** tab shows CPU and traffic, and **Object Storage → Buckets** lists the mirrored files (top level,
+   not `dev/`).
+5. Update to the latest code: `git pull && sudo docker compose -f deploy/compose.prod.yaml up -d --build`.
+   Logs: `sudo docker compose -f deploy/compose.prod.yaml logs -f app`.
+6. After the event: confirm `backups/closurecall-latest.db` in the bucket, then delete the Linode (powering it off
+   does not stop billing), the domain record and the bucket's objects, and revoke the Object Storage key.
+
+## Object storage
+
+Optional. Mirrors the decision log, chart data, decision camera stills and daily database backups to a private
+Akamai Object Storage bucket (S3-compatible, through `boto3`). See the README's "Cloud storage" section for the
+bucket layout.
+
+1. In Akamai Cloud Manager, open **Object Storage → Create Bucket**. Choose the **Chicago (us-ord)** region (closest
+   to Iowa), name it (for example `closurecall-<team>`), and keep it private. Check current pricing first.
+2. Open **Object Storage → Access Keys → Create Access Key**. Turn on **Limited access** and give it **Read/Write**
+   on this bucket only. Copy the secret now; it is shown once.
+3. Add to the server's `.env` (and your local `.env` to test):
+
+   ```bash
+   OBJ_ENDPOINT=https://us-ord-1.linodeobjects.com
+   OBJ_REGION=us-ord-1
+   OBJ_BUCKET=closurecall-<team>
+   OBJ_ACCESS_KEY=...
+   OBJ_SECRET_KEY=...
+   ```
+
+   If Cloud Manager shows a different endpoint hostname for the bucket, use that one. On laptops also set
+   `OBJ_PREFIX=dev` so local test data lands in `dev/` and never mixes with (or restores onto) the server's.
+4. Restart the app. `GET /api/storage/status` should report `enabled: true`; `POST /api/storage/sync` copies
+   everything immediately (normally it runs within seconds of each write). Open **Technical details → Cloud copy**
+   on the dashboard to see links to the snapshot log, chart data and camera stills.
+5. Before deleting the Linode, confirm a recent `backups/closurecall-latest.db`. A new server with an empty volume
+   restores it automatically. Delete the bucket's objects and the bucket after the event to stop billing, and
+   revoke the access key.
+
+The bucket never becomes public: the dashboard receives signed links that expire after one hour.
 
 ## Verification
 
@@ -142,7 +189,7 @@ npm --prefix frontend run build
 ```
 
 Tests cover workshop URL/auth/alias/JSON-schema wiring for briefs and notification wording, evidence validation,
-bounded repair, missing keys, rate limiting, network failure, opt-in AWS fallback, preserved safety watch items,
+bounded repair, missing keys, rate limiting, network failure, Strands fallback, preserved safety watch items,
 immutable records, manager overrides and approval-only notification drafting.
 Mock transport tests do not establish live endpoint availability. A real successful brief must have
 `model_id=akamai:hackathon-chat`, `ai.validation.ok=true` and Akamai token usage in `ai.inference.requests`.
@@ -150,8 +197,8 @@ Mock transport tests do not establish live endpoint availability. A real success
 The derecho replay at `2020-08-10T16:00:00Z` was validated against the live workshop service: one accepted request,
 3,167 input tokens and 823 output tokens, preserving `EARLY_DISMISSAL` and a valid immutable snapshot hash.
 Initial live tests exercised headline/citation rejection and timeouts before the schema and grounding corrections.
-The local production container also passed dashboard/API, seven-event history and replay checks. AWS fallback was
-tested with SDK stubs; it was not activated against a paid AWS endpoint. No Linode or other billable cloud resource
+The local production container also passed dashboard/API, seven-event history and replay checks. The previous direct
+AWS fallback was tested only with SDK stubs; the current Strands path still requires configured AWS access. No Linode or other billable cloud resource
 was provisioned. These results establish the tested operations, not future shared-service availability or a billing balance.
 
 After the branch integration, the same replay with the 270-person roster passed again on the live service:

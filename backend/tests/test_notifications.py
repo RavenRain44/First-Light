@@ -53,10 +53,10 @@ async def template(snap):
         "provider": "template", "fallback_used": True, "requests": [], "failures": []}
 
 
-def decision(posture="CLOSED"):
+def decision(posture="CLOSED", **extra):
     with db.session() as s:
         d = Decision(snapshot_id="snapshot", facility_id="F", decided_by="Manager", decision_posture=posture,
-                     recommended_posture="CLOSED", agreed_with_recommendation=posture == "CLOSED", decided_at=NOW)
+                     recommended_posture="CLOSED", agreed_with_recommendation=posture == "CLOSED", decided_at=NOW, **extra)
         s.add(d); s.commit(); s.refresh(d)
         return d.id
 
@@ -241,8 +241,9 @@ def test_unchanged_instructions_not_resent_and_dated_assignment(env):
     p = approve_all(package())
     n.dispatch(p["id"], action(p))
     fresh = asyncio.run(n.create(decision()))
-    assert not fresh["groups"]
-    assert all("unchanged" in r["reason"] for r in fresh["excluded"])
+    assert len(fresh["groups"]) == 4
+    assert not any(g["recipient_ids"] for g in fresh["groups"])
+    assert all("unchanged" in r["selection_note"] for g in fresh["groups"] for r in g["recipients"])
     e = employee("dated", assignments=[{"start": "2026-10-12", "end": "2026-10-13", "this_week_location": "detail:OTHER"}])
     groups, _ = n.resolve([e], FAC, "2026-10-12", "CLOSED", "07:30", NOW)
     assert groups[0]["kind"] == "awareness"
@@ -262,7 +263,7 @@ def test_followup_select_multiple_recipients_and_preserve_sent_history(env):
     p = n.followup(p["id"], action(p))
     assert p["status"] == "draft" and not any(g["approved"] for g in p["groups"])
     for g in list(p["groups"]):
-        p = edit(p, g, recipient_ids=["onsite", "second"] if g["kind"] == "onsite" else [])
+        p = edit(p, g, recipient_ids=["onsite", "second"] if g["id"] == "onsite-telework" else [])
     p = approve_all(p)
     p = n.dispatch(p["id"], action(p))
     new = [m for m in p["messages"] if ':v2:' in m["id"]]
@@ -277,14 +278,13 @@ def test_explicit_manual_update_can_create_groups_for_unchanged_decision(env):
     n.dispatch(p["id"], action(p))
     did = decision()
     empty = asyncio.run(n.create(did))
-    assert not empty["groups"]
-    manual = asyncio.run(n.create(did, include_unchanged=True))
-    assert manual["id"] == empty["id"] and manual["groups"]
-    assert not manual["messages"] and not any(g["approved"] for g in manual["groups"])
-    with db.session() as s:
-        row = s.exec(select(NotificationAudit).where(NotificationAudit.package_id == manual["id"],
-                     NotificationAudit.action == "manual_update_groups_created")).one()
-        assert json.loads(row.detail_json)["draft_inference"] == manual["draft_inference"]
+    assert len(empty["groups"]) == 4
+    assert not any(g['recipient_ids'] for g in empty['groups'])
+    group = next(g for g in empty['groups'] if g['id'] == 'onsite-telework')
+    manual = edit(empty, group, recipient_ids=[r['id'] for r in group['recipients']])
+    assert manual['groups'][0]['recipient_ids']
+    assert not manual['messages'] and not any(g['approved'] for g in manual['groups'])
+
 
 
 def test_one_action_reviews_all_groups_then_sends(env):
@@ -540,3 +540,92 @@ def test_cancelled_capture_cleans_up_image_tasks(env, monkeypatch):
         with pytest.raises(asyncio.CancelledError):await task
         assert stopped.is_set()
     asyncio.run(verify())
+
+
+def test_refresh_ai_reason_preserves_routing_and_instructions_clears_approval(env, monkeypatch):
+    p = package()
+    p = n.approve(p['id'], p['groups'][0]['id'], action(p))
+    original = [(g['instruction_text'], g['recipients'], g['location_text']) for g in p['groups']]
+    async def wording(snap):
+        assert snap['manager_decision'] == 'CLOSED'
+        return 'Extreme winter hazards are present.', 'Powered by Akamai', {'provider': 'akamai'}
+    monkeypatch.setattr(n, 'weather_wording', wording)
+    updated = asyncio.run(n.regenerate(p['id'], action(p)))
+    assert updated['version'] == p['version'] + 1
+    assert all(not g['approved'] for g in updated['groups'])
+    assert [(g['instruction_text'], g['recipients'], g['location_text']) for g in updated['groups']] == original
+    assert all('Extreme winter hazards' in g['decision_text'] for g in updated['groups'])
+    assert updated['messages'] == []
+    with db.session() as s:
+        assert any(a.action == 'ai_wording_refreshed' for a in s.exec(select(NotificationAudit)).all())
+    with pytest.raises(HTTPException) as error:
+        asyncio.run(n.regenerate(p['id'], action(p)))
+    assert error.value.status_code == 409
+
+
+@pytest.mark.parametrize('posture', list(n.LABELS))
+def test_each_manager_scenario_has_its_own_prompt_and_group_instructions(env, monkeypatch, posture):
+    from importlib import util
+    spec = util.spec_from_file_location('scenario_notify', n.__file__)
+    copy = util.module_from_spec(spec); spec.loader.exec_module(copy)
+    async def model(system, user):
+        data = json.loads(user)
+        assert data['manager_decision'] == posture
+        assert data['recommended_decision'] == 'CLOSED'
+        assert copy.SCENARIO_FOCUS[posture] in system
+        assert 'employees' not in data and 'contacts' not in data
+        return 'Extreme winter hazards are present.', 'akamai:hackathon-chat', {'provider':'akamai', 'failures':[]}
+    monkeypatch.setattr(copy, 'hazard_sentence', model)
+    wording, source, _ = asyncio.run(copy.weather_wording({**env.snap, 'manager_decision':posture, 'posture':{'posture':'CLOSED'}}))
+    assert 'Powered by Akamai' in source
+    assert wording == 'Extreme winter hazards are present.'
+    p = asyncio.run(n.create(decision(posture), include_unchanged=True))
+    assert p['posture'] == posture
+    for g in p['groups']:
+        assert n.LABELS[posture].lower() in g['decision_text']
+        assert g['instruction_text'] == n.instruction(g['kind'], posture, g['id'] != 'onsite-leave')
+
+
+def test_legacy_draft_restores_missing_groups_without_selecting_them(env):
+    p = package()
+    missing = next(g for g in p['groups'] if g['id'] == 'onsite-telework')
+    p['groups'] = [g for g in p['groups'] if g['id'] != missing['id']]
+    p.pop('group_visibility_version')
+    p['excluded'].extend({'id':r['id'], 'name':r['name'], 'reason':'Already notified for this date; reporting instructions unchanged'} for r in missing['recipients'])
+    with db.session() as s:
+        row = s.get(NotificationPackage, p['id'])
+        n.store(s, row, p); s.commit()
+    restored = asyncio.run(n.create(p['decision_id']))
+    assert len(restored['groups']) == 4
+    recovered = next(g for g in restored['groups'] if g['id'] == missing['id'])
+    assert recovered['recipients'] and recovered['recipient_ids'] == []
+    assert not any(g['approved'] for g in restored['groups'])
+    assert not restored['messages']
+    selected = edit(restored, recovered, recipient_ids=['onsite'])
+    assert next(g for g in selected['groups'] if g['id'] == missing['id'])['recipient_ids'] == ['onsite']
+
+
+@pytest.mark.parametrize('posture,field', [('CLOSED','notes'), ('TELEWORK','override_reason')])
+def test_manager_reason_is_used_in_prompt_and_outgoing_decision(env, monkeypatch, posture, field):
+    from importlib import util
+    spec = util.spec_from_file_location('reason_notify', n.__file__)
+    copy = util.module_from_spec(spec); spec.loader.exec_module(copy)
+    reason = 'County roads remain untreated; contact lead@example.com or +19132206510.'
+    async def model(system, user):
+        data = json.loads(user)
+        assert 'County roads remain untreated' in data['manager_reason']
+        assert 'lead@example.com' not in user and '19132206510' not in user
+        assert data['agreed_with_recommendation'] == (posture == 'CLOSED')
+        assert 'primary emphasis' in system
+        return 'Winter hazards remain significant.', 'akamai:hackathon-chat', {'provider':'akamai', 'failures':[]}
+    monkeypatch.setattr(copy, 'hazard_sentence', model)
+    asyncio.run(copy.weather_wording({**env.snap, 'manager_decision':posture, 'manager_reason':reason, 'manager_agreed':posture == 'CLOSED'}))
+    did = decision(posture, **{field:reason})
+    p = asyncio.run(n.create(did))
+    for g in p['groups']:
+        assert 'County roads remain untreated' in g['decision_text']
+        assert 'lead@example.com' not in g['decision_text'] and '19132206510' not in g['decision_text']
+        assert 'County roads remain untreated' in g['template']['decision_text']
+    refreshed = asyncio.run(n.regenerate(p['id'], action(p)))
+    assert all('County roads remain untreated' in g['decision_text'] for g in refreshed['groups'])
+    assert not refreshed['messages']

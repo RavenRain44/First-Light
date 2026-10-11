@@ -13,15 +13,17 @@ import { AnalogsPanel, RecordTimeline } from "./components/HistoryPanel";
 import { LiveCheckPanel } from "./components/LiveCheckPanel";
 import { ReplayPanel } from "./components/ReplayPanel";
 import { RoadsPanel } from "./components/RoadsPanel";
+import { PastDecisions, pastSummary, usePastDecisions } from "./components/PastDecisions";
 import { RawDataDrawer } from "./components/RawDataDrawer";
 import { TechnicalSummary } from "./components/TechnicalDetails";
+import { CloudCopyPanel } from "./components/CloudCopyPanel";
 import { ThreatPanel } from "./components/ThreatPanel";
 import { ThresholdsView } from "./components/ThresholdsView";
 import { TimelinePanel } from "./components/TimelinePanel";
 import type { Snapshot } from "./types";
 import { Section, Skeleton } from "./util";
 
-type SectionId = "why" | "alerts" | "charts" | "roads" | "analogs" | "technical";
+type SectionId = "why" | "past" | "alerts" | "charts" | "roads" | "analogs" | "technical";
 
 function initialTheme(): string {
   try {
@@ -99,7 +101,7 @@ export default function App() {
   useEffect(() => {
     api.health().then((h: any) => {
       setDemo(h.demo_mode);
-      setAiEnabled(h.model_provider !== "none" && !!h.inference?.key_configured);
+      setAiEnabled(!!h.inference?.enabled);
     }).catch(() => {});
   }, []);
 
@@ -111,10 +113,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    let active = true;
     if (mode === "live" && !savedWeather) {
-      api.latest().then(s=>{if (!savedWeatherRef.current) setSnap(s);}).catch(e=>setErr(e.message));
+      api.latest().then(s=>{if (active && !savedWeatherRef.current) setSnap(s);}).catch(e=>{if (active) setErr(e.message);});
     }
-    else setSnap((s) => (s && s.mode === "live" ? s : s));
+    return () => { active = false; };
   }, [mode, run, savedWeather]);
 
   // Keep the live view fresh. Cadence follows readiness (Red 10 min ... White 6 h), capped at 30 min
@@ -123,11 +126,18 @@ export default function App() {
   // Paused on Notify staff so the snapshot can't change under a decision being confirmed or alerts being reviewed.
   useEffect(() => {
     if (mode !== "live" || view === "notifications" || savedWeather) return;
-    const t = setInterval(() => api.latest().then(s=>{if (!savedWeatherRef.current) setSnap(s);}).catch(() => {}), recheck * 60 * 1000);
-    return () => clearInterval(t);
+    let active = true;
+    const t = setInterval(() => api.latest().then(s=>{if (active && !savedWeatherRef.current) setSnap(s);}).catch(() => {}), recheck * 60 * 1000);
+    return () => { active = false; clearInterval(t); };
   }, [mode, recheck, view, savedWeather]);
 
   const alertCount = shown?.inputs.filter((i) => i.kind === "alert").length ?? 0;
+  // Past decisions compare against the weather being viewed (live, replay or a saved snapshot).
+  const past = usePastDecisions(shown && shown.mode !== "livecheck" && !shown.facility.hypothetical ? shown : null);
+  const viewDecisionWeather = (snapshotId: string, decisionId: number) => {
+    setSavedDecisionId(decisionId); savedWeatherRef.current = true; setSavedWeather(true); setView("today");
+    run(() => api.snapshot(snapshotId)); window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   // Active alerts are the one detail section worth opening without being asked.
   useEffect(() => { if (alertCount) setOpen((o) => new Set(o).add("alerts")); }, [shown?.snapshot_id, alertCount]);
   const ready = snap && (mode !== "livecheck" || snap.mode === "livecheck") && (mode !== "replay" || snap.mode !== "live");
@@ -154,7 +164,7 @@ export default function App() {
             <div className="cc-stagger space-y-4">
               <PanelBoundary name="Suggested action"><SuggestedAction snap={shown} busy={busy}
                 onRefresh={mode === "live" ? () => {savedWeatherRef.current=false;setSavedWeather(false);run(() => api.evaluateLive());} : undefined}
-                onRegenerate={aiEnabled && shown.mode !== "backtest" ? regenerate : undefined}
+                onRegenerate={aiEnabled ? regenerate : undefined}
                 onGoNotify={() => { setView("notifications"); window.scrollTo({ top: 0, behavior: "smooth" }); }} /></PanelBoundary>
               <PanelBoundary name="Relevant metrics"><RelevantMetrics snap={shown} /></PanelBoundary>
               <PanelBoundary name="At a glance"><GlanceRow snap={shown} onOpen={openSection} /></PanelBoundary>
@@ -162,8 +172,13 @@ export default function App() {
               <h2 className="px-1 pt-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted">More detail, if you want it</h2>
               <Section id="why" title="Why this recommendation" open={open.has("why")} onToggle={() => toggle("why")}
                 summary="The weather behind it, what would change it, and what to watch">
-                <PanelBoundary name="Interpretation"><AIPanel snap={shown} onRegenerate={aiEnabled && shown.mode !== "backtest" ? regenerate : undefined} /></PanelBoundary>
+                <PanelBoundary name="Interpretation"><AIPanel snap={shown} onRegenerate={aiEnabled ? regenerate : undefined} /></PanelBoundary>
               </Section>
+              {!shown.facility.hypothetical && (
+                <Section id="past" title="Past decisions" open={open.has("past")} onToggle={() => toggle("past")} summary={pastSummary(past.rows)}>
+                  <PanelBoundary name="Past decisions"><PastDecisions past={past} onViewWeather={viewDecisionWeather} /></PanelBoundary>
+                </Section>
+              )}
               <Section id="alerts" title="Weather alerts" open={open.has("alerts")} onToggle={() => toggle("alerts")}
                 summary={alertCount ? `${alertCount} active: ${[...new Set(shown.inputs.filter((i) => i.kind === "alert").map((i) => (i.data as any)?.event))].join(", ")}` : "No active National Weather Service alerts"}>
                 <PanelBoundary name="Alerts"><AlertsPanel snap={shown} /></PanelBoundary>
@@ -183,10 +198,11 @@ export default function App() {
                 </Section>
               )}
               <Section id="technical" title="Technical details & decision record" innerTitles open={open.has("technical")} onToggle={() => toggle("technical")}
-                summary="Hazard scores, confidence factors, past decisions and raw data sources">
+                summary="Hazard scores, confidence factors, past decisions, cloud copy and raw data sources">
                 <PanelBoundary name="Technical summary"><TechnicalSummary snap={shown} /></PanelBoundary>
                 <PanelBoundary name="Threat breakdown"><ThreatPanel snap={shown} /></PanelBoundary>
                 <PanelBoundary name="Decision record"><RecordTimeline snap={shown} refreshKey={recordKey} onOpen={(id) => {savedWeatherRef.current=true;setSavedWeather(true);setSavedDecisionId(null);run(() => api.snapshot(id));}} /></PanelBoundary>
+                <PanelBoundary name="Cloud copy"><CloudCopyPanel snap={shown} refreshKey={recordKey} /></PanelBoundary>
                 <PanelBoundary name="Raw data"><RawDataDrawer snap={shown} /></PanelBoundary>
               </Section>
             </div>

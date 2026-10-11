@@ -1,5 +1,31 @@
 export type Posture = "NORMAL" | "DELAYED_ARRIVAL" | "EARLY_DISMISSAL" | "TELEWORK" | "CLOSED";
 
+export interface ReplayPoint {
+  as_of: string;
+  posture: Posture | null;
+  readiness: ReadinessLevel | null;
+  confidence?: string;
+  coverage?: "complete" | "partial" | "unavailable";
+  unavailable_sources?: string[];
+}
+
+export interface ReplayTimeline {
+  as_of: string;
+  timezone: string;
+  selected_index: number;
+  timeline: ReplayPoint[];
+}
+
+export interface ReplayEvent {
+  id: string;
+  name: string;
+  summary: string;
+  timeline: ReplayPoint[];
+  verification: { checks: { product: string; ugc: string; verified: boolean; events: { link?: string }[] }[] };
+  outcome: { summary: string; amw_obs_note?: string };
+  backtest: { at_0400_local: { as_of: string; posture: Posture }; verdict: string; label: string };
+}
+
 export interface Point { t: string; v: number | null }
 
 export interface NormalizedInput {
@@ -109,7 +135,7 @@ export interface Interpretation {
   analog_comparison: string;
   validation?: { ok: boolean; attempts: number; problems: string[] };
   inference?: {
-    provider: "akamai" | "bedrock" | "template";
+    provider: "akamai" | "strands" | "template";
     fallback_used: boolean;
     requests: { provider: string; model: string; usage: { input_tokens: number; output_tokens: number; total_tokens: number } | null }[];
     failures: { provider: string; problems: string[] }[];
@@ -255,4 +281,40 @@ export interface Timeseries {
   meta: Record<string, { source: string; source_time: string | null; fetched_at: string | null; source_url: string; note?: string }>;
   threshold_lines: { chart: string; value: number; label: string; rule_id: string; verified: boolean; level: string }[];
   windows: { kind: string; label: string; start: string; end: string }[];
+}
+
+export type Verdict = "good_call" | "too_lenient" | "too_strict" | "mixed";
+
+export interface DecisionReview {
+  source: "manager" | "ai" | "template";
+  verdict: Verdict;
+  confidence: number | null;
+  note: string | null;
+  reviewer: string;
+  created_at: string;
+  /** What actually happened that day (storm reports, gusts, roads), for AI and weather-check reviews. */
+  observed?: string | null;
+  impact?: string | null;
+}
+
+export interface PastDecision {
+  decision_id: number;
+  snapshot_id: string;
+  decided_by: string;
+  decided_at: string;
+  decision_day: string;
+  decision_posture: Posture;
+  recommended_posture: Posture;
+  followed_suggestion: boolean;
+  override_reason: string | null;
+  notes: string | null;
+  readiness_level: ReadinessLevel | null;
+  headline: string;
+  similarity_pct: number;
+  score: number;
+  /** Seeded demonstration decision on a historical storm. */
+  example: boolean;
+  review: DecisionReview | null;
+  review_due_at: string;
+  day_over: boolean;
 }

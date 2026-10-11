@@ -18,7 +18,7 @@ from app import snapshots
 from app.config import settings
 from app.db import session
 from app.facility import get_facility, load_employees, roster_summary
-from app.models import Decision, HistoryEvent
+from app.models import Decision, DecisionContext, HistoryEvent
 from engine.posture import ORDER
 from engine.scoring import load_thresholds
 
@@ -37,8 +37,11 @@ def _facility(facility_id: str | None):
 def health():
     return {"ok": True, "demo_mode": settings.demo_mode, "model_provider": settings.model_provider,
             "inference": {"provider": "akamai", "model": settings.akamai_model_id,
+                          "enabled": settings.model_provider != "none" and (
+                              bool(settings.akamai_api_key) or settings.strands_fallback_enabled),
                           "key_configured": bool(settings.akamai_api_key),
-                          "aws_fallback_enabled": settings.aws_fallback_enabled},
+                          "strands_fallback_enabled": settings.strands_fallback_enabled,
+                          "strands_model": settings.strands_model_id},
             "time": datetime.now(timezone.utc).isoformat()}
 
 
@@ -60,7 +63,7 @@ async def snapshot_latest(facility_id: str | None = None, max_age_seconds: int |
         stale = snap is None or (datetime.now(timezone.utc) - datetime.fromisoformat(snap["created_at"])).total_seconds() > max_age
         if snap is None or (stale and not settings.demo_mode):  # demo data never changes; reuse it
             snap = await snapshots.evaluate(f, None, "live")
-    return snap
+    return snapshots.ensure_interpretation(snap)
 
 
 class EvaluateRequest(BaseModel):
@@ -83,11 +86,11 @@ async def evaluate(req: EvaluateRequest):
 
 
 @router.get("/snapshot/{snapshot_id}")
-def snapshot(snapshot_id: str):
+async def snapshot(snapshot_id: str):
     s = snapshots.get(snapshot_id)
     if not s:
         raise HTTPException(404, "snapshot not found")
-    return s
+    return snapshots.ensure_interpretation(s)
 
 
 @router.get("/snapshot/{snapshot_id}/interpretation")
@@ -103,7 +106,7 @@ async def regenerate_snapshot_interpretation(snapshot_id: str):
     if result is None:
         raise HTTPException(404, "snapshot not found")
     if result["status"] == "unavailable":
-        raise HTTPException(409, "AI brief unavailable: no model configured, or this is a simulated backtest snapshot")
+        raise HTTPException(409, "AI brief unavailable: no inference provider is configured")
     return result
 
 
@@ -284,6 +287,8 @@ def record_decision(d: DecisionIn, background_tasks: BackgroundTasks):
         s.add(row)
         s.commit()
         s.refresh(row)
+        # Demo-mode decisions use cached weather; Past decisions leaves them out.
+        s.add(DecisionContext(decision_id=row.id, demo_mode=settings.demo_mode)); s.commit()
         from app.camera_archive import pending, capture
         s.add(pending(row)); s.commit()
         camera_time = datetime.fromisoformat(snap["as_of"]) if snap["mode"] == "replay" else row.decided_at.replace(tzinfo=timezone.utc)
@@ -300,13 +305,13 @@ def list_decisions(facility_id: str | None = None):
 
 
 @router.get("/record/{snapshot_id}")
-def decision_record(snapshot_id: str):
+async def decision_record(snapshot_id: str):
     """Everything needed to reconstruct one decision: the snapshot plus the human decisions against it."""
     snap = snapshots.get(snapshot_id)
     if not snap:
         raise HTTPException(404, "snapshot not found")
     with session() as s:
         ds = s.exec(select(Decision).where(Decision.snapshot_id == snapshot_id).order_by(Decision.decided_at)).all()
-    return {"snapshot": snap, "decisions": [d.model_dump(mode="json") for d in ds],
+    return {"snapshot": snapshots.ensure_interpretation(snap), "decisions": [d.model_dump(mode="json") for d in ds],
             "thresholds_current_sha256": load_thresholds().sha256,
             "thresholds_changed_since": load_thresholds().sha256 != snap["thresholds_sha256"]}

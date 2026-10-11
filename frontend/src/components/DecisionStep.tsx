@@ -86,7 +86,7 @@ function DecideForm({ snap, onRecorded, onCancel }: { snap: Snapshot; onRecorded
     setBusy(true); setErr(null);
     try {
       const d = await api.decide({ snapshot_id: snap.snapshot_id, decided_by: by.trim(), decision_posture: posture,
-        override_reason: override ? reason.trim() : undefined });
+        override_reason: override ? reason.trim() : undefined, notes: !override && reason.trim() ? reason.trim() : undefined });
       try { localStorage.setItem(NAME_KEY, by.trim()); } catch { /* storage blocked */ }
       onRecorded({ id: d.id, decided_by: by.trim(), decision_posture: posture, decided_at: new Date().toISOString(), agreed_with_recommendation: !override });
     } catch (e: any) {
@@ -110,13 +110,12 @@ function DecideForm({ snap, onRecorded, onCancel }: { snap: Snapshot; onRecorded
           ))}
         </div>
       </fieldset>
-      {override && (
-        <label className="flex max-w-2xl flex-col gap-1 text-sm">
-          <span className="font-medium">Why are you choosing differently? (required)</span>
+      <label className="flex max-w-2xl flex-col gap-1 text-sm">
+          <span className="font-medium">{override ? "Why are you choosing differently? (required)" : "Why do you agree? (optional)"}</span>
           <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} className="rounded-lg border border-edge bg-surface px-3 py-2"
             placeholder="e.g. County roads north of town are untreated; staff on US 69 can't get in" />
         </label>
-      )}
+      <p className="text-xs text-muted">Your reasoning helps draft the notification explanation. Keep personal contact details out of this field.</p>
       <label className="flex max-w-sm flex-col gap-1 text-sm">
         <span className="font-medium">Your name and title</span>
         <input value={by} onChange={(e) => setBy(e.target.value)} placeholder="e.g. Pat Lee, Facility Manager" autoComplete="name"

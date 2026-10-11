@@ -36,6 +36,8 @@ npm run dev        # API on http://localhost:8000, dashboard on http://localhost
 
 `make setup` / `make dev` do the same where GNU make exists. Windows has no make; use the npm scripts.
 
+If port 8000 is already occupied, set `API_PORT=8001` in `.env`; the API launcher and dashboard proxy use it together.
+
 Setup also builds the historical library from the committed cache, so Replay, analogs and backtests
 are ready on first launch. This build runs offline and does not change `DEMO_MODE` in your `.env`.
 
@@ -54,6 +56,14 @@ fully offline in about 20 seconds:
 ```bash
 DEMO_MODE=true npm run build:history
 ```
+
+Replay also accepts a custom date without a catalog event. It builds an hourly timeline
+12 hours before and after the exact selected minute, and updates the report, posture ribbon
+and Cooper-color ribbon together. Playback and stepping follow that timeline. Striped cells
+mark missing historical evidence; each hour's tooltip identifies incomplete coverage.
+Timeline cells use the rules engine without model calls or snapshot writes; the selected
+report is saved and receives its usual AI brief. Central-time spring-forward gaps are rejected,
+and a repeated fall-back hour starts at its first occurrence with an explicit note.
 
 ### Run the demo offline
 
@@ -101,6 +111,33 @@ That pins the current camera list with every RWIS view and one snapshot per traf
 event's impact day (main view, every 3 hours). In `DEMO_MODE` there is no live video: traffic cameras show their
 cached snapshot, only cached images are offered, and a camera with no cached image is simply not shown.
 
+### Past decisions
+
+On Today, **Past decisions** lists the facility's earlier decisions, most similar weather first, with a
+slight preference for recent ones. Similarity uses the same weighted feature distance as Similar past storms.
+Each row shows:
+
+* the Cooper urgency at the time
+* what was decided (and whether it followed the suggestion)
+* how it went
+
+Only real decisions count: live-weather decisions made outside demo mode, plus seeded examples, which are
+always tagged "example". Each decision now records whether the app was in demo mode. Replay practice is left out.
+
+**How it went** comes from reviews, which are append-only:
+
+* a manager can review any past decision
+* if no one has after `REVIEW_AFTER_DAYS` (default 7) past the decision day, an AI review compares the
+  decision with what the weather actually did: storm reports within 25 mi, AMW gusts and freezing hours, and
+  commute roads
+* without a model, the deterministic weather check is shown instead, with its confidence
+
+For the demo, seed example decisions on the historical storms (offline, after `build:history`):
+
+```bash
+npm run seed:examples
+```
+
 ### Synthetic roster
 
 `backend/data/employees.json` is generated from `data/NADC_synthetic_assignments.csv` (270 fictitious people):
@@ -121,7 +158,7 @@ day: details, scheduled telework, leave and days off all apply.
 npm test           # Backend tests: interval expansion, units, thresholds and margins, posture timing,
                    # confidence, counterfactuals, analogs, snapshot immutability, AI validation/fallback,
                    # and an end-to-end evaluation of the 2020 derecho from fixtures (offline)
-npm --prefix frontend test       # Chart selection, evidence highlights, missing data and reason citations
+npm --prefix frontend test       # Chart evidence, missing data, reason citations and replay/DST dates
 npm --prefix frontend run build  # TypeScript and production bundle
 ```
 
@@ -146,6 +183,24 @@ alerts, all weather charts, roads and cameras, analogs, history and raw evidence
 opens that section and focuses the manager form. Detailed panels load on first expansion; collapsing preserves
 unfinished manager input and reuses the chart data.
 
+## Cloud storage
+
+With the `OBJ_*` settings filled in, the app mirrors its record to a private **Akamai Object Storage** bucket so it
+survives server rebuilds and can be opened from any device. The SQLite database stays the source of truth; its
+record tables are append-only, so a background sync copies each new row once, within seconds of the write:
+
+| Bucket path | Contents | Written |
+|---|---|---|
+| `logs/snapshots/`, `logs/briefs/`, `logs/decisions/`, `logs/notifications/` | one JSON file per snapshot, Akamai brief, manager decision and notification audit event | on every write |
+| `graphs/<snapshot>.json` | the chart data behind each snapshot (redrawn identically on any device) | on every evaluation |
+| `cameras/<snapshot>/decision-<id>/` | the camera frames saved with the decision (one per angle at each nearby camera), plus `index.json` | when a decision is recorded |
+| `backups/closurecall-latest.db`, `backups/closurecall-YYYY-MM-DD.db` | SQLite backups | daily and on shutdown |
+
+A fresh server with an empty volume restores `closurecall-latest.db` on first start. If the bucket is unreachable
+the app keeps working and the next pass resumes from `logs/_sync.json`. **Technical details → Cloud copy** shows the
+sync status and signed links (one hour) to the snapshot's log, chart data and saved camera stills. Setup steps are in
+[docs/akamai-usage.md](docs/akamai-usage.md#object-storage).
+
 ## Environment variables (`.env`)
 
 | Variable | Default | Purpose |
@@ -158,12 +213,18 @@ unfinished manager input and reuses the chart data.
 | `DATABASE_PATH` | `backend/var/closurecall.db` | SQLite file |
 | `MODEL_PROVIDER` | `akamai` | Akamai workshop inference; `none` disables inference |
 | `AKAMAI_API_KEY` | | Backend-only workshop team key for `hackathon-chat` |
-| `AWS_FALLBACK_ENABLED` | `false` | Explicit opt-in to AWS Bedrock if Akamai fails |
-| `AWS_BEDROCK_MODEL_ID` / `AWS_REGION` | / `us-east-1` | Optional Bedrock Converse model and region; uses the AWS credential chain |
+| `STRANDS_FALLBACK_ENABLED` | `true` | Try a Strands agent through Amazon Bedrock if Akamai fails |
+| `STRANDS_MODEL_ID` / `AWS_REGION` | `global.anthropic.claude-sonnet-4-6` / `us-east-1` | Strands Bedrock model and region; uses the AWS credential chain |
+| `OBJ_BUCKET` / `OBJ_ACCESS_KEY` / `OBJ_SECRET_KEY` | | Akamai Object Storage mirror (off when empty); see [Cloud storage](#cloud-storage) |
+| `OBJ_ENDPOINT` / `OBJ_REGION` | `https://us-ord-1.linodeobjects.com` / `us-ord-1` | Bucket region (Chicago) |
+| `OBJ_PREFIX` | | Folder inside the bucket; set `dev` on laptops so local test data stays apart from the server's |
+| `OBJ_BACKUP_HOURS` | `24` | How often the SQLite database is backed up to the bucket |
 
 The dashboard works fully with **no API key**: the deterministic template rationale is used and labelled as such.
 With a workshop key, Akamai produces the manager decision brief, alert summaries, watch items and historical
-comparisons. Akamai also drafts weather-only notification wording after a manager records a decision; each
+comparisons. Reports generate a brief when loaded, including previously stored and historical reports. If Akamai
+cannot produce a valid brief, the app tries Strands through Bedrock and then uses the deterministic template.
+Akamai also drafts weather-only notification wording after a manager records a decision; each
 notification group still requires manager approval. Provider identity and token usage are recorded with the
 draft. See [Akamai setup, usage bounds and optional cloud deployment](docs/akamai-usage.md).
 
@@ -191,7 +252,7 @@ adapters (NWS, IEM)  ->  normalized inputs (value, unit, source, URL, fetched_at
   decision brief with a concise summary, evidence citations, uncertainty and a paste-ready rationale. Every text
   field is checked for unsupported numbers, citations are checked against the snapshot, and the manager's final
   authority is explicit. One failed validation can trigger one repair; otherwise a labeled template is used.
-  AWS Bedrock is an optional fallback, disabled for judging. Provider, token usage, prompt version and validation
+  A Strands agent through Bedrock is the secondary path. Provider, token usage, prompt version and validation
   outcomes are stored with the immutable snapshot.
 
 ## Readiness (adapted from Cooper's color code)
@@ -290,12 +351,14 @@ ENH/MDT outlooks; forecast gust >= 45 mph; wind chill <= -20 F and <= -35 F (DMX
 | `GET /api/timeseries?snapshot_id=` | observed + forecast series, threshold lines, commute/hours windows |
 | `GET /api/roads?as_of=` | Iowa DOT segments GeoJSON with corridor matches + corridor table |
 | `GET /api/history/events`, `GET /api/history/events/{id}`, `GET /api/history/events/{id}/replay?as_of=` | backtest library and replay |
+| `GET /api/replay/timeline?as_of=` | 25 hourly rules-based summaries centered on the exact UTC instant; coverage flags, no model calls or stored snapshots |
 | `GET /api/analogs?snapshot_id=` | top 3 similar past events |
 | `POST /api/decisions`, `GET /api/decisions` | record / list human decisions |
 | `GET /api/live-check/alerts`, `POST /api/live-check/evaluate` | national alerts and what-if evaluation |
 | `GET /api/thresholds` | registry with anchors, verified flags, backtest summary |
 | `GET /api/cameras?as_of=`, `GET /api/cameras/image?u=` | Live: Iowa DOT traffic cameras spread around the facility (`stream_url` HLS), ISU/KCCI webcams and RWIS stills; Replay: ISU/KCCI webcams and 20 nearest RWIS cameras. Image proxy (IEM archive and Iowa DOT snapshot URLs only) |
-| `POST /api/notifications/preview` | **501** stub: the notification package is the next phase |
+| `GET /api/storage/status`, `POST /api/storage/sync` | object storage mirror status; sync now |
+| `GET /api/storage/record/{id}` | signed links to a snapshot's stored log, chart data and decision camera stills |
 
 ## Repository layout
 
@@ -304,7 +367,7 @@ backend/
   app/        FastAPI app, routers, SQLModel tables, snapshot service, facility/roster
   adapters/   base interface + nws, iem_obs, iem_roads (roads + RWIS), iem_vtec (archive + SPC), iem_mos, iem_lsr, cache
   engine/     normalize, features, scoring, posture, confidence, counterfactual, analogs, evaluate
-  ai/         Akamai briefs, grounded snapshot views, prompts/schema, optional AWS fallback
+  ai/         Akamai-first briefs, grounded views, prompts/schema, Strands fallback
   config/     thresholds.yaml
   data/       facility.json, employees.json (synthetic)
   fixtures/   probe/ (real samples), http_cache/ (gzip cache, demo mode), history/ (event exports)

@@ -280,3 +280,16 @@ export function CooperBanner({ r, className = "" }: { r: Readiness | null | unde
     </div>
   );
 }
+
+/** Small Cooper color swatch with its words, for lists (urgency at the time of a past decision). */
+export function CooperChip({ level }: { level: ReadinessLevel | null | undefined }) {
+  const x = READINESS.find((c) => c.level === level);
+  if (!x) return <span className="text-xs text-muted">Urgency not recorded</span>;
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-edge px-2 py-0.5 text-xs font-semibold"
+      title={`Urgency then: Condition ${x.label} (${COOPER_RISK[x.level]})`}>
+      <span aria-hidden className="h-3 w-3 rounded-sm border border-black/20" style={{ background: x.color }} />
+      {x.label}
+    </span>
+  );
+}

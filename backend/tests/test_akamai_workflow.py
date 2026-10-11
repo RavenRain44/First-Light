@@ -1,6 +1,8 @@
 """API verification of Akamai briefs, manager decisions and approval-only notifications."""
+import asyncio
 import json
 import time
+from datetime import datetime, timezone
 
 import pytest
 from fastapi.testclient import TestClient
@@ -8,8 +10,9 @@ from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
 from ai import agent, fallback
-from app import db
+from app import db, snapshots
 from app.config import settings
+from app.facility import load_facility
 from app.main import app
 
 
@@ -17,7 +20,7 @@ def test_brief_does_not_decide_and_manager_override_is_audited(tmp_path, monkeyp
     monkeypatch.setattr(settings, "demo_mode", True)
     monkeypatch.setattr(settings, "model_provider", "akamai")
     monkeypatch.setattr(settings, "akamai_api_key", "test-team-key")
-    monkeypatch.setattr(settings, "aws_fallback_enabled", False)
+    monkeypatch.setattr(settings, "strands_fallback_enabled", False)
     old = db._engine
     engine = db.make_engine(f"sqlite:///{tmp_path / 'workflow.db'}")
     db.set_engine(engine)
@@ -127,6 +130,43 @@ def test_regenerate_brief_appends_a_new_addon(tmp_path, monkeypatch):
             assert client.post("/api/snapshot/nope/interpretation").status_code == 404
             monkeypatch.setattr(settings, "model_provider", "none")
             assert client.post(f"/api/snapshot/{sid}/interpretation").status_code == 409
+    finally:
+        db.set_engine(old)
+        engine.dispose()
+
+
+def test_loading_stored_backtest_starts_default_brief(tmp_path, monkeypatch):
+    monkeypatch.setattr(settings, "demo_mode", True)
+    monkeypatch.setattr(settings, "model_provider", "akamai")
+    monkeypatch.setattr(settings, "akamai_api_key", "test-team-key")
+    monkeypatch.setattr(settings, "strands_fallback_enabled", False)
+    old = db._engine
+    engine = db.make_engine(f"sqlite:///{tmp_path / 'load.db'}")
+    db.set_engine(engine)
+    calls = []
+
+    async def inference(provider, snap, feedback):
+        calls.append((provider, snap["mode"]))
+        return fallback.build(snap), {"provider": "akamai", "model": "hackathon-chat", "usage": None}
+
+    monkeypatch.setattr(agent, "_run_agent", inference)
+    try:
+        stored = asyncio.run(snapshots.evaluate(
+            load_facility(), datetime(2020, 8, 10, 16, tzinfo=timezone.utc), "backtest", use_ai=False,
+        ))
+        assert stored["ai_addon"]["status"] == "none"
+        with TestClient(app) as client:
+            loaded = client.get(f"/api/snapshot/{stored['snapshot_id']}").json()
+            assert loaded["ai_addon"]["status"] in ("pending", "ok")
+            for _ in range(100):
+                addon = client.get(f"/api/snapshot/{stored['snapshot_id']}/interpretation").json()
+                if addon["status"] != "pending":
+                    break
+                time.sleep(0.05)
+            assert addon["status"] == "ok"
+            assert addon["model_id"] == "akamai:hackathon-chat"
+            assert calls == [("akamai", "backtest")]
+            assert client.post(f"/api/snapshot/{stored['snapshot_id']}/interpretation").status_code == 202
     finally:
         db.set_engine(old)
         engine.dispose()
