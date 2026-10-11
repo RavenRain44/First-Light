@@ -9,7 +9,7 @@ export function ThreatPanel({ snap }: { snap: Snapshot }) {
   const tz = snap.facility.timezone;
   const inputsById = Object.fromEntries(snap.inputs.map((i) => [i.id, i]));
   return (
-    <Card title="Threat breakdown" right={<span className="text-xs text-muted">thresholds v{snap.thresholds_version} · {snap.thresholds_sha256.slice(0, 10)}</span>}>
+    <Card title="Hazard scores" right={<span className="text-xs text-muted">thresholds v{snap.thresholds_version} · {snap.thresholds_sha256.slice(0, 10)}</span>}>
       <div className="grid gap-6 lg:grid-cols-3 lg:gap-0 lg:divide-x lg:divide-[var(--border)]">
         {Object.values(snap.hazards).sort((a, b) => b.score - a.score).map((h) => {
           const rules = snap.rules.filter((r) => r.hazard === h.hazard);

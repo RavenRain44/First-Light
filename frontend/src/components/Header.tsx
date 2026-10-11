@@ -1,29 +1,44 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Snapshot } from "../types";
-import { Badge, PostureBadge, ReadinessMeter, ago, fmtTime } from "../util";
+import { Badge, fmtTime, readinessColor } from "../util";
 
 export type Mode = "live" | "replay" | "livecheck";
+export type View = "today" | "notifications" | "thresholds";
 
-const MODES: { id: Mode; label: string }[] = [
-  { id: "live", label: "Live" }, { id: "replay", label: "Replay" }, { id: "livecheck", label: "Live Check" },
+const TOOLS: { id: "replay" | "livecheck" | "thresholds"; label: string; hint: string }[] = [
+  { id: "replay", label: "Replay a past storm", hint: "See what the system would have said during a real past event" },
+  { id: "livecheck", label: "Try another location", hint: "Run a what-if check for an active alert anywhere in the US" },
+  { id: "thresholds", label: "Thresholds & backtest", hint: "The weather limits behind each recommendation, and how they scored on past storms" },
 ];
 
-export function Header({ snap, mode, setMode, onRefresh, busy, demo, theme, toggleTheme }: {
-  snap: Snapshot | null; mode: Mode; setMode: (m: Mode) => void; onRefresh: () => void; busy: boolean;
+export function Header({ snap, mode, setMode, view, setView, demo, theme, toggleTheme }: {
+  snap: Snapshot | null; mode: Mode; setMode: (m: Mode) => void; view: View; setView: (v: View) => void;
   demo: boolean; theme: string; toggleTheme: () => void;
 }) {
+  const [menu, setMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!menu) return;
+    const close = (e: MouseEvent | KeyboardEvent) => {
+      if (e instanceof KeyboardEvent ? e.key === "Escape" : !menuRef.current?.contains(e.target as Node)) setMenu(false);
+    };
+    window.addEventListener("mousedown", close);
+    window.addEventListener("keydown", close);
+    return () => { window.removeEventListener("mousedown", close); window.removeEventListener("keydown", close); };
+  }, [menu]);
+
+  const openTool = (id: (typeof TOOLS)[number]["id"]) => {
+    setMenu(false);
+    if (id === "thresholds") setView("thresholds");
+    else { setView("today"); setMode(id); }
+  };
+  const goToday = () => { setMode("live"); setView("today"); };
   const tz = snap?.facility.timezone ?? "America/Chicago";
-  const ok = snap?.sources.filter((s) => s.status === "ok" || s.status === "empty").length ?? 0;
-  const total = snap?.sources.length ?? 0;
-  const na = snap?.sources.filter((s) => s.status === "not_applicable").length ?? 0;
-  const newest = snap?.sources.map((s) => s.fetched_at).filter(Boolean).sort().at(-1) ?? null;
-  const roster = snap?.roster;
 
   return (
     <header className="space-y-3">
-      {/* top bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+        <button onClick={goToday} className="flex items-center gap-3 text-left" aria-label="Closure Call: go to today">
           {/* Logo by Casey (main), recolored to the blue/white theme */}
           <svg viewBox="0 0 40 40" className="h-9 w-9 shrink-0" aria-hidden="true" focusable="false">
             <circle cx="27" cy="12" r="6" fill="#93c5fd" />
@@ -31,89 +46,61 @@ export function Header({ snap, mode, setMode, onRefresh, busy, demo, theme, togg
             <path d="M11 29a7 7 0 0 1-1-14 10 10 0 0 1 19-1 7.5 7.5 0 0 1 1 15Z" fill="#ffffff" stroke="#1d4ed8" strokeWidth="2" strokeLinejoin="round" />
             <path d="m14 33-1 3m8-3-1 3m8-3-1 3" stroke="#1d4ed8" strokeWidth="2" strokeLinecap="round" />
           </svg>
-          <div className="leading-tight">
-            <h1 className="text-base font-semibold">Closure Call</h1>
-            <p className="text-xs text-muted">USDA Service Center (synthetic), Ames, IA · real weather</p>
+          <span className="leading-tight">
+            <span className="block text-base font-semibold">Closure Call</span>
+            <span className="block text-xs text-muted">USDA Service Center, Ames, IA</span>
+          </span>
+        </button>
+
+        <nav className="flex items-center gap-1 text-sm" aria-label="Main">
+          <NavTab on={view === "today" && mode === "live"} onClick={goToday}>Today</NavTab>
+          <NavTab on={view === "notifications"} onClick={() => setView("notifications")}
+            dot={snap?.readiness ? readinessColor(snap.readiness.level) : undefined}
+            title={snap?.readiness ? `Risk: Condition ${snap.readiness.level.toLowerCase()}` : undefined}>Notify staff</NavTab>
+          <div ref={menuRef} className="relative">
+            <button onClick={() => setMenu((m) => !m)} aria-haspopup="menu" aria-expanded={menu}
+              className={`rounded-lg px-3 py-2 ${mode !== "live" || view === "thresholds" ? "font-semibold text-[var(--accent)]" : "text-ink2 hover:text-ink"}`}>
+              More tools <span aria-hidden className="text-xs">▾</span>
+            </button>
+            {menu && (
+              <div role="menu" className="cc-rise absolute right-0 z-[1000] mt-1 w-72 rounded-xl border border-edge bg-surface p-1 shadow-lg">
+                {TOOLS.map((t) => (
+                  <button key={t.id} role="menuitem" onClick={() => openTool(t.id)}
+                    className="block w-full rounded-lg px-3 py-2 text-left hover:bg-[var(--surface-2)]">
+                    <span className="block font-medium">{t.label}</span>
+                    <span className="block text-xs text-muted">{t.hint}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-          {demo && <Badge tone="warn" title="DEMO_MODE=true: sources served from cached fixtures">Demo mode · cached data</Badge>}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div role="tablist" aria-label="Mode" className="flex rounded-xl bg-[var(--surface-2)] p-1 text-sm">
-            {MODES.map((m) => (
-              <button key={m.id} role="tab" aria-selected={mode === m.id} onClick={() => setMode(m.id)}
-                className={`rounded-lg px-3 py-1 transition-colors ${mode === m.id ? "bg-[var(--surface-1)] font-semibold text-[var(--accent)] shadow-sm" : "text-ink2 hover:text-ink"}`}>
-                {m.label}
-              </button>
-            ))}
-          </div>
-          {mode === "live" && <button onClick={onRefresh} disabled={busy} className="btn">{busy ? "Evaluating…" : "Re-evaluate"}</button>}
-          <button onClick={toggleTheme} className="btn" aria-label="Toggle dark mode">{theme === "dark" ? "☀" : "☾"}</button>
-        </div>
+          <button onClick={toggleTheme} className="btn ml-1" aria-label="Toggle dark mode">{theme === "dark" ? "☀" : "☾"}</button>
+        </nav>
       </div>
 
-      {/* decision strip */}
-      <section className="card p-5" aria-label="Current recommendation">
-        {!snap ? <div className="h-24 animate-pulse rounded-xl bg-[var(--surface-2)]" /> : (
-          <>
-            {snap.facility.hypothetical && (
-              <p className="mb-3 text-sm font-medium text-[var(--accent)]">{snap.facility.name} (what-if)</p>
-            )}
-            <div className="grid gap-5 md:grid-cols-[1.4fr_1fr_1.2fr] md:items-center">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Recommended for {fmtDay(snap.posture.decision_day)}</p>
-                <div className="mt-2"><PostureBadge p={snap.posture.posture} size="lg" /></div>
-                <p className="mt-2 text-sm text-ink2">OPM: {snap.posture.opm_label}</p>
-              </div>
-              <div className="md:border-l md:border-edge md:pl-5">
-                {snap.readiness ? <ReadinessMeter r={snap.readiness} tz={tz} /> : <span className="text-sm text-muted">Readiness not recorded for this snapshot</span>}
-              </div>
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm md:border-l md:border-edge md:pl-5">
-                <Fact label="As of"><span className="tabnum">{fmtTime(snap.as_of, tz)}</span></Fact>
-                <Fact label="Confidence">
-                  <span title={snap.confidence.factors.map((f) => `${f.name}: ${f.score} - ${f.explanation}`).join("\n")} className="cursor-help">
-                    <span className="capitalize">{snap.confidence.level}</span> <span className="tabnum text-muted">{snap.confidence.score.toFixed(2)}</span>
-                  </span>
-                </Fact>
-                <Fact label="Sources">
-                  <span title={snap.sources.map((s) => `${s.label}: ${s.status}${s.detail ? ` (${s.detail})` : ""}`).join("\n")} className="cursor-help tabnum">
-                    {ok}/{total}{na ? ` · ${na} n/a` : ""} <span className="text-muted">· {ago(newest)}</span>
-                  </span>
-                </Fact>
-                {roster && !roster.hypothetical ? (
-                  <Fact label={roster.day ? `In building ${fmtDay(roster.day)}` : "In building today"}>
-                    <span className="tabnum" title={`Assigned ${roster.assigned}; detailed in ${roster.detailed_in}; detailed out ${roster.detailed_out}; on travel ${roster.on_travel}; teleworking ${roster.teleworking_today}; on leave ${roster.on_leave ?? 0}; not scheduled ${roster.not_scheduled ?? 0}. Synthetic roster.`}>
-                      {roster.expected_in_building} of {roster.assigned}
-                    </span>
-                    <span className="block text-xs font-normal text-muted">
-                      {[roster.detailed_in && `+${roster.detailed_in} in`, roster.detailed_out && `${roster.detailed_out} detailed out`,
-                        roster.on_travel && `${roster.on_travel} travel`, roster.teleworking_today && `${roster.teleworking_today} telework`,
-                        roster.on_leave && `${roster.on_leave} leave`, roster.not_scheduled && `${roster.not_scheduled} off`]
-                        .filter(Boolean).join(" · ") || "everyone on site"}
-                    </span>
-                  </Fact>
-                ) : <Fact label="Mode">{snap.mode}</Fact>}
-              </dl>
-            </div>
-            {(snap.mode === "replay" || snap.mode === "backtest") && (
-              <p className="mt-4 rounded-lg bg-[var(--tint)] px-3 py-1.5 text-xs text-[var(--accent)]">Replay: only data that was available at this moment is used.</p>
-            )}
-          </>
-        )}
-      </section>
+      {demo && (
+        <p className="text-xs text-muted"><Badge tone="warn" title="DEMO_MODE=true: sources served from cached fixtures">Demo mode</Badge> Weather and roads come from saved data, not live feeds.</p>
+      )}
+      {view === "today" && mode !== "live" && (
+        <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-[var(--accent)] px-4 py-3 text-[var(--on-accent)]">
+          <p className="font-semibold">
+            {mode === "replay"
+              ? `Viewing a past storm${snap?.mode === "replay" ? `: ${fmtTime(snap.as_of, tz)}` : ""}. This is not today's recommendation.`
+              : `What-if check${snap?.mode === "livecheck" ? ` for ${snap.facility.name}` : ""}. This is not your facility's recommendation.`}
+          </p>
+          <button onClick={goToday} className="rounded-lg bg-[var(--surface-1)] px-3 py-1.5 text-sm font-semibold text-[var(--accent)]">Back to today</button>
+        </div>
+      )}
     </header>
   );
 }
 
-function Fact({ label, children }: { label: string; children: ReactNode }) {
+function NavTab({ on, onClick, children, dot, title }: { on: boolean; onClick: () => void; children: string; dot?: string; title?: string }) {
   return (
-    <div className="min-w-0">
-      <dt className="text-xs text-muted">{label}</dt>
-      <dd className="font-medium">{children}</dd>
-    </div>
+    <button onClick={onClick} aria-current={on ? "page" : undefined} title={title}
+      className={`flex items-center gap-2 rounded-lg px-3 py-2 ${on ? "bg-[var(--tint)] font-semibold text-[var(--accent)]" : "text-ink2 hover:text-ink"}`}>
+      {dot && <span aria-hidden className="h-2.5 w-2.5 rounded-full border border-black/20" style={{ background: dot }} />}
+      {children}
+    </button>
   );
-}
-
-function fmtDay(d: string) {
-  const [y, m, day] = d.split("-").map(Number);
-  return new Date(y, m - 1, day).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 }

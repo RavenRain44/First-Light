@@ -6,6 +6,7 @@ import { api } from "../api";
 import type { Camera, Snapshot } from "../types";
 import { Card, Prov, Skeleton, fmtTime } from "../util";
 import { CameraViewer } from "./CameraViewer";
+import { useRoads } from "./GlanceRow";
 
 // Ordinal road severity: one consistent scale, always shown with its text label.
 export const RANK_COLOR: Record<number, string> = {
@@ -26,19 +27,12 @@ const camIcon = (selected: boolean, video: boolean) => L.divIcon({
 const CAMERA_REFRESH_MS = 5 * 60 * 1000;
 
 export function RoadsPanel({ snap }: { snap: Snapshot }) {
-  const [data, setData] = useState<any>(null);
-  const [err, setErr] = useState<string | null>(null);
+  const { data, err } = useRoads(snap);
   const [layers, setLayers] = useState({ roads: true, corridors: true, cameras: false });
   const [cams, setCams] = useState<{ status: string; detail: string | null; cameras: Camera[] } | null>(null);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<string | null>(null);
   const live = snap.mode === "live";
-
-  useEffect(() => {
-    if (snap.facility.hypothetical) return;
-    setErr(null);
-    api.roads(live ? undefined : snap.as_of).then(setData).catch((e) => setErr(String(e.message ?? e)));
-  }, [snap.snapshot_id, live, snap.as_of, snap.facility.hypothetical]);
 
   // Cameras load only when the layer is on; they follow the replay clock and refresh while live.
   useEffect(() => {

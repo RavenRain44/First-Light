@@ -1,21 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "./api";
-import { AIPanel, WatchPanel } from "./components/AIPanel";
+import { AIPanel } from "./components/AIPanel";
 import { AlertsPanel } from "./components/AlertsPanel";
-import { DecisionPanel } from "./components/DecisionPanel";
 import { NotificationsView } from "./components/NotificationsView";
 import { PanelBoundary } from "./components/ErrorBoundary";
-import { Header, type Mode } from "./components/Header";
+import { GlanceRow } from "./components/GlanceRow";
+import { Header, type Mode, type View } from "./components/Header";
+import { DecisionStep } from "./components/DecisionStep";
 import { AnalogsPanel, RecordTimeline } from "./components/HistoryPanel";
 import { LiveCheckPanel } from "./components/LiveCheckPanel";
 import { RawDataDrawer } from "./components/RawDataDrawer";
 import { ReplayPanel } from "./components/ReplayPanel";
 import { RoadsPanel } from "./components/RoadsPanel";
+import { StatusCard } from "./components/StatusCard";
+import { TechnicalSummary } from "./components/TechnicalDetails";
 import { ThreatPanel } from "./components/ThreatPanel";
 import { ThresholdsView } from "./components/ThresholdsView";
 import { TimelinePanel } from "./components/TimelinePanel";
 import type { Snapshot } from "./types";
-import { Skeleton } from "./util";
+import { Section, Skeleton } from "./util";
+
+type SectionId = "why" | "alerts" | "charts" | "roads" | "analogs" | "technical";
 
 function initialTheme(): string {
   try {
@@ -73,8 +78,14 @@ export default function App() {
   const [demo, setDemo] = useState(false);
   const [theme, setTheme] = useState(initialTheme);
   const [recordKey, setRecordKey] = useState(0);
-  const [view, setView] = useState<"dashboard" | "thresholds" | "notifications">("dashboard");
+  const [view, setView] = useState<View>("today");
   const [notificationDecision, setNotificationDecision] = useState<number | null>(null);
+  const [open, setOpen] = useState<Set<SectionId>>(new Set());
+  const toggle = (id: SectionId) => setOpen((o) => { const n = new Set(o); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const openSection = (id: SectionId) => {
+    setOpen((o) => new Set(o).add(id));
+    requestAnimationFrame(() => document.getElementById(`section-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -103,61 +114,73 @@ export default function App() {
   // Keep the live view fresh. Cadence follows readiness (Red 10 min ... White 6 h), capped at 30 min
   // so a quiet dashboard still notices change; the backend only re-evaluates when its snapshot is stale.
   const recheck = Math.min(snap?.readiness?.recheck_minutes ?? 10, 30);
+  // Paused on Notify staff so the snapshot can't change under a decision being confirmed or alerts being reviewed.
   useEffect(() => {
-    if (mode !== "live") return;
+    if (mode !== "live" || view === "notifications") return;
     const t = setInterval(() => api.latest().then(setSnap).catch(() => {}), recheck * 60 * 1000);
     return () => clearInterval(t);
-  }, [mode, recheck]);
+  }, [mode, recheck, view]);
+
+  const alertCount = shown?.inputs.filter((i) => i.kind === "alert").length ?? 0;
+  // Active alerts are the one detail section worth opening without being asked.
+  useEffect(() => { if (alertCount) setOpen((o) => new Set(o).add("alerts")); }, [shown?.snapshot_id, alertCount]);
+  const ready = snap && (mode !== "livecheck" || snap.mode === "livecheck") && (mode !== "replay" || snap.mode !== "live");
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 p-3 sm:p-5">
-      <Header snap={shown} mode={mode} setMode={setMode} busy={busy} demo={demo} theme={theme}
-        onRefresh={() => run(() => api.evaluateLive())} toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} />
-
-      <nav className="flex gap-5 border-b border-edge text-sm">
-        {(["dashboard", "thresholds", "notifications"] as const).map((v) => (
-          <button key={v} onClick={() => setView(v)}
-            className={`relative px-1 pb-1.5 ${view === v ? "font-semibold text-ink" : "text-ink2 hover:text-ink"}`}>
-            {v === "dashboard" ? "Dashboard" : v === "thresholds" ? "Thresholds & backtest" : "Notifications"}
-            <span className={`absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-[var(--accent)] transition-transform duration-300 ${view === v ? "scale-x-100" : "scale-x-0"}`} />
-          </button>
-        ))}
-      </nav>
+    <div className="mx-auto max-w-5xl space-y-4 p-3 sm:p-5">
+      <Header snap={shown} mode={mode} setMode={setMode} view={view} setView={setView} demo={demo} theme={theme}
+        toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} />
 
       {view === "notifications" ? (
-        <div className="cc-fade"><NotificationsView decisionId={notificationDecision} onBack={() => setView("dashboard")} /></div>
+        <div className="cc-fade space-y-5">
+          {shown ? <PanelBoundary name="Decision"><DecisionStep snap={shown} onDecided={(id) => { setNotificationDecision(id); if (id) setRecordKey((k) => k + 1); }} /></PanelBoundary>
+            : <Skeleton className="h-48" />}
+          {notificationDecision !== null && <NotificationsView key={notificationDecision} decisionId={notificationDecision} onBack={() => setView("today")} />}
+        </div>
       ) : view === "thresholds" ? <div className="cc-fade"><ThresholdsView /></div> : (
         <>
           {mode === "replay" && <ReplayPanel onSnapshot={setSnap} busy={busy} setBusy={setBusy} current={snap} />}
           {mode === "livecheck" && <LiveCheckPanel onSnapshot={setSnap} busy={busy} setBusy={setBusy} />}
           {err && <div role="alert" className="card border-l-4 border-l-[var(--danger)] p-3 text-sm">Could not load: {err}. The last good snapshot (if any) is still shown.</div>}
-          {snap && (mode !== "livecheck" || snap.mode === "livecheck") && (mode !== "replay" || snap.mode !== "live") ? (
+          {ready && shown ? (
             <div className="cc-stagger space-y-4">
-              {/* Both columns stretch to the same height: whichever side is shorter grows its last card,
-                  so there is no blank gap and nothing scrolls inside a column. */}
-              <div className="grid items-stretch gap-4 lg:grid-cols-3">
-                <div className="lg:col-span-2 [&>section]:h-full">
-                  <PanelBoundary name="Interpretation"><AIPanel snap={shown!} onRegenerate={aiEnabled && shown!.mode !== "backtest" ? regenerate : undefined} /></PanelBoundary>
-                </div>
-                <div className="flex flex-col gap-4 [&>section:last-child]:flex-1">
-                  <PanelBoundary name="Alerts"><AlertsPanel snap={shown!} /></PanelBoundary>
-                  <PanelBoundary name="Watch"><WatchPanel snap={shown!} /></PanelBoundary>
-                  <PanelBoundary name="Decision"><DecisionPanel key={snap.snapshot_id} snap={shown!}
-                    onRecorded={(id) => { setRecordKey((k) => k + 1); setNotificationDecision(id); }}
-                    onNotify={(id) => { setNotificationDecision(id); setView("notifications"); window.scrollTo({ top: 0, behavior: "smooth" }); }} /></PanelBoundary>
-                </div>
-              </div>
-              <PanelBoundary name="Threat breakdown"><ThreatPanel snap={shown!} /></PanelBoundary>
-              <PanelBoundary name="Timeline"><TimelinePanel snap={shown!} /></PanelBoundary>
-              <PanelBoundary name="Roads"><RoadsPanel snap={shown!} /></PanelBoundary>
-              <PanelBoundary name="Analogs"><AnalogsPanel snap={shown!} /></PanelBoundary>
-              <div className="grid gap-4 lg:grid-cols-2">
-                <PanelBoundary name="Decision record"><RecordTimeline snap={shown!} refreshKey={recordKey} onOpen={(id) => run(() => api.snapshot(id))} /></PanelBoundary>
-                <PanelBoundary name="Raw data"><RawDataDrawer snap={shown!} /></PanelBoundary>
-              </div>
+              <PanelBoundary name="Status"><StatusCard snap={shown} busy={busy}
+                onRefresh={mode === "live" ? () => run(() => api.evaluateLive()) : undefined} /></PanelBoundary>
+              <PanelBoundary name="At a glance"><GlanceRow snap={shown} onOpen={openSection} /></PanelBoundary>
+
+              <h2 className="px-1 pt-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted">More detail, if you want it</h2>
+              <Section id="why" title="Why this recommendation" open={open.has("why")} onToggle={() => toggle("why")}
+                summary="The weather behind it, what would change it, and what to watch">
+                <PanelBoundary name="Interpretation"><AIPanel snap={shown} onRegenerate={aiEnabled && shown.mode !== "backtest" ? regenerate : undefined} /></PanelBoundary>
+              </Section>
+              <Section id="alerts" title="Weather alerts" open={open.has("alerts")} onToggle={() => toggle("alerts")}
+                summary={alertCount ? `${alertCount} active: ${[...new Set(shown.inputs.filter((i) => i.kind === "alert").map((i) => (i.data as any)?.event))].join(", ")}` : "No active National Weather Service alerts"}>
+                <PanelBoundary name="Alerts"><AlertsPanel snap={shown} /></PanelBoundary>
+              </Section>
+              <Section id="charts" title="Forecast charts" open={open.has("charts")} onToggle={() => toggle("charts")}
+                summary="Temperature, wind, ice, snow and precipitation: past 12 hours and next 48">
+                <PanelBoundary name="Timeline"><TimelinePanel snap={shown} /></PanelBoundary>
+              </Section>
+              <Section id="roads" title="Roads map & cameras" open={open.has("roads")} onToggle={() => toggle("roads")}
+                summary="Iowa DOT road conditions on commute routes, with live traffic cameras">
+                <PanelBoundary name="Roads"><RoadsPanel snap={shown} /></PanelBoundary>
+              </Section>
+              {shown.analogs.length > 0 && (
+                <Section id="analogs" title="Similar past storms" open={open.has("analogs")} onToggle={() => toggle("analogs")}
+                  summary={`Closest: ${shown.analogs[0].name} (${shown.analogs[0].similarity_pct.toFixed(0)}% similar)`}>
+                  <PanelBoundary name="Analogs"><AnalogsPanel snap={shown} /></PanelBoundary>
+                </Section>
+              )}
+              <Section id="technical" title="Technical details & decision record" innerTitles open={open.has("technical")} onToggle={() => toggle("technical")}
+                summary="Hazard scores, confidence factors, past decisions and raw data sources">
+                <PanelBoundary name="Technical summary"><TechnicalSummary snap={shown} /></PanelBoundary>
+                <PanelBoundary name="Threat breakdown"><ThreatPanel snap={shown} /></PanelBoundary>
+                <PanelBoundary name="Decision record"><RecordTimeline snap={shown} refreshKey={recordKey} onOpen={(id) => run(() => api.snapshot(id))} /></PanelBoundary>
+                <PanelBoundary name="Raw data"><RawDataDrawer snap={shown} /></PanelBoundary>
+              </Section>
             </div>
           ) : !err && mode === "live" ? (
-            <div className="space-y-4"><Skeleton className="h-48" /><Skeleton className="h-96" /></div>
+            <div className="space-y-4"><Skeleton className="h-64" /><Skeleton className="h-28" /></div>
           ) : null}
         </>
       )}

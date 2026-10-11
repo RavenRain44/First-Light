@@ -28,20 +28,19 @@ export function AlertsPanel({ snap }: { snap: Snapshot }) {
                 <h3 className="font-semibold">
                   <Prov tz={tz} source={inp.source} url={a.web ?? inp.source_url} fetched={inp.fetched_at} sourceTime={inp.source_time} note={inp.note}>{a.event}</Prov>
                 </h3>
-                <Badge tone={SEV_TONE[a.severity] ?? "neutral"}>Severity: {a.severity ?? "?"}</Badge>
-                <Badge>Certainty: {a.certainty ?? "?"}</Badge>
-                <Badge>Urgency: {a.urgency ?? "?"}</Badge>
+                {a.severity && <Badge tone={SEV_TONE[a.severity] ?? "neutral"}>{a.severity}</Badge>}
                 {a.inferred_fields && <Badge tone="warn" title="The VTEC archive has no CAP fields; these are inferred from the warning/watch/advisory significance code.">inferred</Badge>}
               </div>
               <p className="mt-1 text-sm tabnum text-ink2">
-                {fmtTime(a.onset ?? a.effective, tz)} → {a.ends || a.expires ? fmtTime(a.ends ?? a.expires, tz) : "end unknown"}
+                From {fmtTime(a.onset ?? a.effective, tz)} until {a.ends || a.expires ? fmtTime(a.ends ?? a.expires, tz) : "further notice"}
                 {a.archive_note && <span className="italic"> ({a.archive_note})</span>}
               </p>
-              {summary && <p className="mt-1 text-sm"><span className="text-muted">Summary: </span>{summary}</p>}
+              {summary && <p className="mt-1 text-sm">{summary}</p>}
               {(a.headline || a.description || a.instruction) && (
                 <details className="mt-2 text-sm">
-                  <summary className="text-ink2">Full text</summary>
+                  <summary className="text-ink2">Full alert text</summary>
                   {a.headline && <p className="mt-1 font-medium">{a.headline}</p>}
+                  <p className="mt-1 text-xs text-muted">Severity {a.severity ?? "?"} · certainty {a.certainty ?? "?"} · urgency {a.urgency ?? "?"}</p>
                   {a.description && <pre className="mt-1 whitespace-pre-wrap font-sans text-ink2">{a.description}</pre>}
                   {a.instruction && <pre className="mt-1 whitespace-pre-wrap font-sans">{a.instruction}</pre>}
                 </details>
