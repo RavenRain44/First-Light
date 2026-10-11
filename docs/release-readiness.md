@@ -11,9 +11,9 @@
 
 ## Verified locally
 
-- Backend: 259 tests pass. Isolated databases, mocked inference/providers and disabled cloud credentials were used.
-- Frontend: 46 unit tests pass; production build passes.
-- Browser: 14 isolated workflow tests pass. Notification coverage checks four groups, editable shared text, unselected recipients, review error feedback and simulated dispatch; APIs are mocked, with backend behavior verified separately.
+- Backend: 295 tests pass after merging the latest integration and main branches. Isolated databases, mocked inference/providers and disabled cloud credentials were used.
+- Frontend: 51 unit tests pass; production build passes.
+- Browser: 18 isolated workflow tests pass. Notification coverage checks four groups, editable shared text, unselected recipients, review error feedback and simulated dispatch; APIs are mocked, with backend behavior verified separately.
 - Browser replay checks cover curated events, arbitrary dates/minutes, normal-weather control, missing archive failures/retry, timeline/playback consistency, weather-specific graphs, pending response cancellation, mobile/dark context labeling and saved-decision-to-live transitions.
 - Notification backend tests cover deterministic routing, essential/telework/detail/travel personnel, time-zone schedules and fallback, four-group restoration, draft edits, approval invalidation, one-action dispatch, retries, delays, duplicate prevention, restart persistence, superseded decisions, audit history and separate test contacts.
 - AI tests cover manager agreement/override reasoning, all scenarios, template fallback, immutable snapshots and exclusion of contact details from prompts.
