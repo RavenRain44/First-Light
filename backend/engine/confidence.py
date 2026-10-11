@@ -92,7 +92,9 @@ def _agreement(ctx: Context, inputs: list[NormalizedInput], hazards: dict[str, H
 
     for metric, tol, unit in (("wind_gust_mph", 10, "mph"), ("temp_f", 5, "F")):
         f = at(f"fcst.{metric}", h)
-        o = at(f"obs.{metric}", h) or at(f"obs.{metric}", h - timedelta(hours=1))
+        # A forecast gust is an expected peak, so compare it with the observed peak gust when available.
+        okey = "obs.peak_gust_mph" if metric == "wind_gust_mph" and "obs.peak_gust_mph" in by else f"obs.{metric}"
+        o = at(okey, h) or at(okey, h - timedelta(hours=1))
         if f is None or o is None:
             continue
         d = abs(f - o)
