@@ -72,6 +72,9 @@ async def year_rows(year, online=False, retry=False):
     # Current year is refreshed at most once per UTC day, never silently frozen forever.
     if path.exists():
         data = json.loads(gzip.decompress(path.read_bytes()))
+        # Archives saved before the present-weather fix stored the whole METAR as wxcodes; re-derive on load.
+        for row in data['rows']:
+            row['wxcodes'] = present_weather(row.get('raw', ''))
         fresh = year < datetime.now(timezone.utc).year or data['fetched_at'][:10] == datetime.now(timezone.utc).date().isoformat()
         if fresh and not retry:
             return data
