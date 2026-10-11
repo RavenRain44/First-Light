@@ -13,7 +13,7 @@ export const POSTURE_STYLE: Record<Posture, { label: string; color: string; icon
   CLOSED: { label: "Closed", color: "var(--b6)", icon: "✕", ink: "var(--surface-1)" },
 };
 
-export function fmtTime(iso: string | null | undefined, tz: string, opts: { date?: boolean } = { date: true }): string {
+export function fmtTime(iso: string | null | undefined, tz: string, opts: { date?: boolean; year?: boolean } = { date: true }): string {
   if (!iso) return "—";
   const d = new Date(iso);
   const s = d.toLocaleString("en-US", {
@@ -21,6 +21,7 @@ export function fmtTime(iso: string | null | undefined, tz: string, opts: { date
     weekday: opts.date ? "short" : undefined,
     month: opts.date ? "short" : undefined,
     day: opts.date ? "numeric" : undefined,
+    year: opts.year ? "numeric" : undefined,
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,

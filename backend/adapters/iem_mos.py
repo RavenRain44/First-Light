@@ -3,7 +3,7 @@
 Replay uses the newest NBS run that was already published at ``as_of`` so the
 forecast panel shows what was predicted then, not hindsight. Element units per
 the NBM text bulletin key (vlab.noaa.gov/web/mdl/nbm-textcard-v4.2):
-GST/WSP knots, TMP degF, Q06 1/100 in, S06 1/10 in, I06 1/100 in, P06 percent.
+GST/WSP knots, TMP degF, Q06 1/100 in, S06 1/10 in, I06 1/100 in, P06/SKY percent.
 """
 from __future__ import annotations
 
@@ -39,11 +39,12 @@ def _ft(s: str) -> datetime:
 
 def mos_to_hourly(rows: list[dict]) -> dict[str, list[tuple[datetime, float | None]]]:
     """3-hourly states held for the 3 hours they represent; 6-h amounts spread over the 6 hours ending at ftime."""
-    out: dict[str, dict[datetime, float]] = {k: {} for k in
-                                             ("wind_gust_mph", "wind_speed_mph", "temp_f", "ice_in", "snow_in", "qpf_in", "pop_pct")}
+    out: dict[str, dict[datetime, float]] = {k: {} for k in (
+        "wind_gust_mph", "wind_speed_mph", "temp_f", "ice_in", "snow_in", "qpf_in", "pop_pct", "sky_cover_pct")}
     for x in rows:
         ft = _ft(x["ftime_utc"])
-        for key, metric, f in (("gst", "wind_gust_mph", KT_TO_MPH), ("wsp", "wind_speed_mph", KT_TO_MPH), ("tmp", "temp_f", 1.0)):
+        for key, metric, f in (("gst", "wind_gust_mph", KT_TO_MPH), ("wsp", "wind_speed_mph", KT_TO_MPH),
+                               ("tmp", "temp_f", 1.0), ("sky", "sky_cover_pct", 1.0)):
             if x.get(key) is not None:
                 for h in (-1, 0, 1):
                     out[metric][ft + timedelta(hours=h)] = round(x[key] * f, 1)
@@ -95,13 +96,14 @@ class IEMMOSAdapter(Adapter):
         end = start + timedelta(hours=74)
         out = []
         units = {"wind_gust_mph": "mph", "wind_speed_mph": "mph", "temp_f": "degF", "ice_in": "in",
-                 "snow_in": "in", "qpf_in": "in", "pop_pct": "%"}
+                 "snow_in": "in", "qpf_in": "in", "pop_pct": "%", "sky_cover_pct": "%"}
         for metric, pts in mos_to_hourly(rows).items():
             pts = [(t, v) for t, v in pts if start <= t < end]
             if not pts:
                 continue
             out.append(NormalizedInput(
-                id=f"fcst.{metric}", kind="series", role="forecast", metric=metric, unit=units[metric],
+                id=f"fcst.{metric}", kind="series", metric=metric, unit=units[metric],
+                role="context" if metric == "sky_cover_pct" else "forecast",
                 series=[Point(t=t, v=v) for t, v in pts],
                 source=f"NBM NBS {facility.mos_station} run {iso_z(runtime)}" + (f" + {iso_z(runs[1][0])}" if len(runs) > 1 else "") + " (IEM archive)", source_url=url,
                 fetched_at=r.fetched_at, source_time=runtime,

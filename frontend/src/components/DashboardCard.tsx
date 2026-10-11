@@ -1,8 +1,9 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import { api } from "../api";
-import { ACTIONS, joinReasons, relevantMetrics, suggestionReasons, supportingRules } from "../dashboard";
+import { ACTIONS, METRICS, joinReasons, relevantMetrics, suggestionReasons, supportingRules } from "../dashboard";
+import { cooperPresentation, forecastOverview, type ForecastValue } from "../cooper";
 import type { Snapshot, Timeseries } from "../types";
-import { Badge, CooperBanner, PostureBadge, Skeleton, ago, fmtClock, fmtDayLong, fmtTime } from "../util";
+import { Badge, PostureBadge, READINESS, Skeleton, ago, fmtDayLong, fmtTime } from "../util";
 import { PanelBoundary } from "./ErrorBoundary";
 import { MetricChart } from "./MetricChart";
 
@@ -22,7 +23,7 @@ export function useTimeseries(snap: Snapshot, enabled: boolean): { data: Timeser
   return state?.id === id ? { data: state.data, error: state.error } : { data: null, error: null };
 }
 
-/** The top of Today: Cooper risk, the suggested action in one sentence, and the way to act on it.
+/** The top of Today: Cooper condition, grounded weather, and the manager's next step.
  *  Nothing is recorded or sent from here; the button only opens Notify staff. */
 export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotify, readOnly = false }: {
   snap: Snapshot; busy: boolean; onRefresh?: () => void; onRegenerate?: () => void; onGoNotify: () => void; readOnly?: boolean;
@@ -30,6 +31,8 @@ export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotif
   const id = useId();
   const tz = snap.facility.timezone;
   const r = snap.readiness;
+  const presentation = cooperPresentation(snap);
+  const condition = READINESS.find((c) => c.level === presentation.level);
   const pending = snap.ai_addon?.status === "pending";
   const provider = pending ? "AI brief in progress" : snap.model_id.startsWith("akamai:") ? "Powered by Akamai"
     : snap.model_id.startsWith("strands:") ? "Strands fallback" : snap.model_id === "deterministic-fallback" ? "Template suggestion" : "Archived AI brief";
@@ -38,78 +41,141 @@ export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotif
   const canDecide = !readOnly && snap.mode !== "backtest" && !snap.facility.hypothetical;
 
   return (
-    <article className="card overflow-hidden" aria-labelledby={`${id}-action`}>
-      <CooperBanner r={snap.historical_context && r ? {...r,meaning:`${r.meaning} Historical rating uses supplied inputs only; missing forecasts and alerts remain unknown.`} : r} />
+    <article className="card min-w-0 overflow-hidden" aria-labelledby={`${id}-action`} data-testid="cooper-dashboard" data-condition={presentation.level ?? "UNKNOWN"}>
+      <header className="px-5 py-5 sm:px-8 sm:py-6" aria-live="polite" aria-atomic="true"
+        style={{ background: condition?.color ?? "var(--surface-2)", color: presentation.level === "RED" ? "#fff" : condition ? "#1f2937" : "var(--text-primary)" }}>
+        <p className="text-xs font-semibold uppercase tracking-wider">{condition ? `Condition ${condition.label}` : "Condition unavailable"} · Colonel Cooper readiness</p>
+        <h2 id={`${id}-action`} className="mt-2 text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">{presentation.title}</h2>
+        {presentation.level === "WHITE" && <p className="mt-2 text-sm">Keep routine monitoring; review again when the forecast changes.</p>}
+        {snap.historical_context && <p className="mt-2 text-sm">Historical rating uses supplied inputs only; missing forecasts and alerts remain unknown.</p>}
+      </header>
       <section className="p-5 sm:p-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 id={`${id}-action`} className="text-2xl font-semibold tracking-tight">Suggested Action</h2>
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge tone={snap.model_id.startsWith("strands:") ? "warn" : pending ? "neutral" : "info"}>{provider}</Badge>
-            {onRegenerate && <button onClick={onRegenerate} disabled={pending} className="btn min-h-11 !px-2 !text-xs"
-              title="Rewrite the suggestion from the same recorded evidence using the configured inference pipeline. Use Check again for fresh weather.">
-              <span aria-hidden className={pending ? "inline-block animate-spin" : ""}>↻</span> {pending ? "Updating…" : "Regenerate"}
-            </button>}
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm sm:grid-cols-4" data-testid="dashboard-metadata">
+          <div><dt className="text-xs text-muted">Confidence</dt><dd className="mt-1 font-semibold capitalize">{snap.confidence.level}</dd></div>
+          <div><dt className="text-xs text-muted">People expected</dt><dd className="mt-1 font-semibold">{people ?? "Unavailable"}</dd></div>
+          <div><dt className="text-xs text-muted">Decision date</dt><dd className="mt-1 font-medium">{fmtDayLong(snap.posture.decision_day)}, {snap.posture.decision_day.slice(0, 4)}</dd></div>
+          <div><dt className="text-xs text-muted">{snap.mode === "live" ? "Last updated" : "Weather as of"}</dt>
+            <dd className="mt-1 font-medium"><time dateTime={snap.as_of}>{fmtTime(snap.as_of, tz, { date: true, year: true })}</time>
+              {snap.mode === "live" && <span className="block text-xs font-normal text-ink2">{ago(snap.as_of)}</span>}
+              {onRefresh && <button onClick={onRefresh} disabled={busy} className="mt-1 block min-h-9 text-[var(--accent)] underline underline-offset-2 disabled:opacity-50">{busy ? "Checking…" : "Check again"}</button>}
+            </dd>
           </div>
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <span className="text-sm font-medium text-ink2">{fmtDayLong(snap.posture.decision_day)}</span>
-          <PostureBadge p={snap.posture.posture} size="lg" />
-          {r?.decide_by && (
-            <span className={`text-lg font-semibold ${r.deadline_passed ? "text-[var(--danger)]" : ""}`}>
-              {r.deadline_passed ? "Deadline passed: decide now" : `Decide by ${fmtClock(r.decide_by, tz)}`}
-            </span>
-          )}
-        </div>
-        <p className="mt-1 text-xs text-muted">OPM status: {snap.posture.opm_label}</p>
-
-        <p key={`${snap.snapshot_id}-${snap.model_id}`} className="cc-fade mt-5 text-xl leading-relaxed sm:text-2xl" data-testid="suggested-action">
-          {suggestionSentence(snap)}
-        </p>
-
+        </dl>
+        <hr className="my-5 border-edge" />
+        {/* Immediate safety instructions precede operating-status advice. */}
         {snap.posture.guidance.length > 0 && (
-          <div role="alert" className="mt-4 rounded-xl border-l-4 border-[var(--danger)] bg-[var(--surface-2)] px-4 py-2.5 font-medium">
+          <div role="alert" className="mb-5 rounded-xl border-l-4 border-[var(--danger)] bg-[var(--surface-2)] px-4 py-3 font-medium">
             {snap.posture.guidance.map((g) => <p key={g}>⚠ {g}</p>)}
           </div>
         )}
+        {r?.decide_by && <p className={`mb-4 rounded-lg bg-[var(--surface-2)] px-4 py-3 text-base font-semibold ${r.deadline_passed ? "text-[var(--danger)]" : ""}`}>
+          {r.deadline_passed ? "Deadline passed — decide now. Announce-by time: " : "Decide and announce by "}{fmtTime(r.decide_by, tz, { date: true, year: true })}
+        </p>}
+        {presentation.watch && <p className="mb-4 text-lg font-medium leading-relaxed" data-testid="weather-watch">{presentation.watch}</p>}
+        {presentation.level === null && <p className="mb-4 text-sm text-ink2">This saved snapshot has no Cooper condition. Review the recorded weather and recommendation before deciding.</p>}
+        {presentation.urgent && <>
+          <h3 className="text-sm font-semibold underline underline-offset-4">Suggested Action</h3>
+          <p key={`${snap.snapshot_id}-${snap.model_id}`} className="cc-fade mt-2 text-xl leading-relaxed sm:text-2xl" data-testid="suggested-action">{suggestionSentence(snap)}</p>
+        </>}
+        {presentation.reasons.length > 0 && presentation.level !== "WHITE" && <div className="mt-4 text-sm text-ink2">
+          <p className="font-semibold text-ink">Why this condition</p>
+          <ul className="mt-1 list-disc space-y-1 pl-5">{presentation.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
+        </div>}
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-sm"><span className="text-ink2">Suggested operating status:</span><PostureBadge p={snap.posture.posture} /></div>
+        <p className="mt-1 text-xs text-muted">OPM status: {snap.posture.opm_label}</p>
 
-        <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm text-ink2">
-          <li><span className="font-semibold capitalize text-ink">{snap.confidence.level}</span> confidence</li>
-          {people !== undefined && <li><span className="font-semibold text-ink">{people}</span> people expected in the building</li>}
-          <li>
-            {snap.mode === "live" ? <>Updated {ago(snap.as_of)}</> : <>As of {fmtTime(snap.as_of, tz)}</>}
-            {onRefresh && <> · <button onClick={onRefresh} disabled={busy} className="text-[var(--accent)] underline-offset-2 hover:underline disabled:opacity-50">{busy ? "Checking…" : "Check again"}</button></>}
-          </li>
-        </ul>
+        {presentation.action && canDecide && (
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <button onClick={onGoNotify} className="btn btn-primary min-h-11 px-5 text-base">{presentation.action} <span aria-hidden>→</span></button>
+            <p className="text-xs text-ink2">{snap.mode === "replay" ? "Practice decision for this replay. " : ""}You make the final decision. Nothing is sent until you approve the alerts.</p>
+          </div>
+        )}
+        {!canDecide && <p className="mt-5 text-sm text-ink2">{snap.facility.hypothetical ? "This is a what-if check" : readOnly ? "This is a saved weather review" : "This is a replay of past weather"}, so no decision is recorded and no one is alerted.</p>}
+        {(presentation.level === "WHITE" || presentation.level === "YELLOW" || presentation.level === null) && <ForecastSummary key={snap.snapshot_id} snap={snap} />}
+
         {(snap.ai_addon?.status === "failed" || (snap.ai.validation && !snap.ai.validation.ok)) &&
           <p role="status" className="mt-3 text-xs text-ink2">AI wording could not be verified. The suggestion uses the recorded rules and evidence.</p>}
         {snap.ai_addon?.regen_failed && <p role="status" className="mt-3 text-xs text-ink2">The new AI brief could not be verified. The previous brief is still shown.</p>}
         {unavailable.length > 0 && <p className="mt-3 text-sm text-ink2">Some data could not be loaded ({unavailable.map((s) => s.label).join(", ")}). Missing data does not mean conditions are safe.</p>}
 
-        {canDecide ? (
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <button onClick={onGoNotify} className="btn btn-primary min-h-11 px-5 text-base">Confirm decision &amp; notify staff <span aria-hidden>→</span></button>
-            <span className="text-xs text-muted">You make the final decision. Nothing is sent until you approve the alerts.</span>
-          </div>
-        ) : (
-          <p className="mt-6 text-sm text-ink2">{snap.facility.hypothetical ? "This is a what-if check" : readOnly ? "This is a saved weather review" : "This is a replay of past weather"}, so no decision is recorded and no one is alerted.</p>
-        )}
+        <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-edge pt-4">
+          <Badge tone={snap.model_id.startsWith("strands:") ? "warn" : pending ? "neutral" : "info"}>{provider}</Badge>
+          {onRegenerate && <button onClick={onRegenerate} disabled={pending} className="btn min-h-11 !px-2 !text-xs"
+            title="Rewrite the brief using the same recorded evidence. Use Check again for fresh weather.">
+            <span aria-hidden className={pending ? "inline-block animate-spin" : ""}>↻</span> {pending ? "Updating…" : "Regenerate brief"}
+          </button>}
+        </div>
       </section>
     </article>
   );
 }
 
-/** Charts of the evidence behind the suggestion. Only shown when a weather rule is triggered;
- *  on a calm day the charts stay in the collapsible Forecast charts section. */
+function ForecastSummary({ snap }: { snap: Snapshot }) {
+  const [open, setOpen] = useState(false);
+  const { data, error } = useTimeseries(snap, open);
+  const f = forecastOverview(snap);
+  const tz = snap.facility.timezone;
+  const range = (value: ForecastValue, unit: string) => value.min === null || value.max === null ? "Unavailable"
+    : value.min === value.max ? `${Math.round(value.min)}${unit}` : `${Math.round(value.min)}–${Math.round(value.max)}${unit}`;
+  const metrics = data ? METRICS.filter((m) => m.series.some((s) => data.rows.some((row) => typeof row[s.key] === "number"))
+    && (!["ice", "snow"].includes(m.id) || data.rows.some((row) => new Date(row.t).getTime() >= new Date(f.start).getTime()
+      && new Date(row.t).getTime() < new Date(f.end).getTime() && Number(row[`fcst_${m.id}_in`]) > 0))) : [];
+  const sources = [f.temperature, f.feelsLike, f.wind, f.gust, f.precipitation, f.sky].filter((v) => v.input && v.hours > 0);
+  return <section className="mt-5 border-t border-edge pt-5" aria-label="24-hour forecast">
+    <h3 className="text-base font-semibold">24-hour forecast</h3>
+    <p className="mt-1 text-xs text-ink2">{fmtTime(f.start, tz)} – {fmtTime(f.end, tz)}. Forecast values for this recorded weather time.</p>
+    <dl className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <ForecastStat label="Temperature" value={f.temperature} text={range(f.temperature, "°F")}>
+        {f.feelsLike.min !== null && <p>Feels-like low {Math.round(f.feelsLike.min)}°F{f.feelsLike.hours < 24 ? ` (${f.feelsLike.hours}/24 hours available)` : ""}</p>}
+      </ForecastStat>
+      <ForecastStat label="Wind" value={f.wind} text={f.wind.max === null ? "Unavailable" : `Up to ${Math.round(f.wind.max)} mph`}>
+        <p>{f.gust.max === null ? "Gust forecast unavailable" : `Gusts up to ${Math.round(f.gust.max)} mph${f.gust.hours < 24 ? ` (${f.gust.hours}/24 hours available)` : ""}`}</p>
+      </ForecastStat>
+      <ForecastStat label="Precipitation chance" value={f.precipitation} text={f.precipitation.max === null ? "Unavailable" : `Up to ${Math.round(f.precipitation.max)}%`} />
+    </dl>
+    {f.sky.max !== null && <p className="mt-3 text-xs text-ink2">Sky cover: {range(f.sky, "%")}{f.sky.hours < 24 ? ` (${f.sky.hours}/24 hours available)` : ""}.</p>}
+    {sources.length > 0 && <details className="mt-2 text-xs text-ink2">
+      <summary className="min-h-9 cursor-pointer py-2 underline underline-offset-2">Forecast sources and issue times</summary>
+      <ul className="space-y-2 py-2">{sources.map(({ input }) => <li key={input!.id} className="break-words">
+        {input!.metric.replace(/_/g, " ")}: {input!.source} · issued {fmtTime(input!.source_time, tz, { date: true, year: true })}
+        {input!.source_url.startsWith("https://") && <> · <a href={input!.source_url} target="_blank" rel="noreferrer" className="underline">View source</a></>}
+      </li>)}</ul>
+    </details>}
+    <details className="group mt-3 rounded-xl border border-edge" onToggle={(e) => setOpen(e.currentTarget.open)} data-testid="forecast-charts">
+      <summary className="flex min-h-12 cursor-pointer list-none items-center gap-3 px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+        <svg aria-hidden="true" className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6" /></svg>
+        View forecast charts
+      </summary>
+      {open && <div className="space-y-3 border-t border-edge p-3">
+        {error ? <p role="status" className="p-3 text-sm text-ink2">Forecast charts could not be loaded. The recorded forecast summary is still available.</p>
+          : !data ? <Skeleton className="h-40" />
+          : !metrics.length ? <p className="p-3 text-sm text-ink2">No chart measurements are available for this snapshot.</p>
+          : metrics.map((metric) => <PanelBoundary key={metric.id} name={metric.title}><MetricChart snap={snap} metric={metric} data={data} compact /></PanelBoundary>)}
+      </div>}
+    </details>
+  </section>;
+}
+
+function ForecastStat({ label, value, text, children }: {
+  label: string; value: ForecastValue; text: string; children?: ReactNode;
+}) {
+  return <div className="min-w-0 rounded-lg bg-[var(--surface-2)] p-3">
+    <dt className="text-xs text-ink2">{label}</dt><dd className="mt-1 text-lg font-semibold tabnum">{text}</dd>
+    <dd className="mt-1 text-xs text-ink2">{children}{value.hours > 0 && value.hours < 24 && <p>{value.hours}/24 forecast hours available</p>}</dd>
+  </div>;
+}
+
+/** Elevated conditions put their evidence up front, even when the suggested posture is NORMAL. */
 export function RelevantMetrics({ snap }: { snap: Snapshot }) {
   const id = useId();
-  const active = supportingRules(snap).length > 0;
+  const presentation = cooperPresentation(snap);
+  const active = presentation.urgent || (presentation.level === null && supportingRules(snap).length > 0);
   const { data, error } = useTimeseries(snap, active);
   if (!active) return null;
   const metrics = data ? relevantMetrics(snap, data) : [];
   return (
     <section className="card p-5 sm:p-8" aria-labelledby={`${id}-metrics`}>
-      <h2 id={`${id}-metrics`} className="text-lg font-semibold">Relevant Metrics</h2>
+      <h2 id={`${id}-metrics`} className="text-lg font-semibold">Concerning weather data</h2>
       <p className="mt-1 text-sm text-ink2">Highlighted periods and points show the evidence behind the suggestion.</p>
       {error ? <p role="status" className="mt-4 rounded-lg bg-[var(--surface-2)] p-4 text-sm">Chart data could not be loaded. The suggestion and the decision steps are still available.</p>
         : !data ? <div className="mt-4 space-y-4" aria-label="Loading relevant metrics"><Skeleton className="h-60" /><Skeleton className="h-40" /></div>

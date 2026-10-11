@@ -5,11 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from adapters.iem_mos import mos_to_hourly, runtime_candidates
+from adapters import cache
+from adapters.iem_mos import IEMMOSAdapter, mos_to_hourly, runtime_candidates
 from adapters.iem_obs import obs_series
 from adapters.iem_roads import match_corridors, road_rank
 from adapters.iem_vtec import vtec_row_to_alert
-from adapters.nws import alert_from_feature
+from adapters.nws import NWSGridAdapter, alert_from_feature
 from app.facility import load_facility, roster_summary
 from engine.normalize import convert, expand_grid_element, parse_duration, parse_valid_time
 
@@ -111,6 +112,60 @@ def test_mos_hourly_units():
     assert gust[t0] == pytest.approx(first["gst"] * 1.150779, abs=0.1)
     # total ice over the run equals sum of I06 (hundredths of inch)
     assert sum(v for _, v in h["ice_in"]) == pytest.approx(sum((r["i06"] or 0) for r in rows) / 100, abs=0.01)
+
+
+def test_mos_sky_cover_preserves_percent_and_missing_data():
+    rows = load("iem_mos_nbs_2023-02-22T01.json")["data"]
+    first = rows[0]
+    t0 = datetime.fromisoformat(first["ftime_utc"]).replace(tzinfo=timezone.utc)
+    sky = dict(mos_to_hourly(rows)["sky_cover_pct"])
+    assert sky[t0] == first["sky"]
+    assert sky[t0 - timedelta(hours=1)] == first["sky"]
+    assert sky[t0 + timedelta(hours=1)] == first["sky"]
+    assert mos_to_hourly([{"ftime_utc": first["ftime_utc"], "sky": None}])["sky_cover_pct"] == []
+    assert dict(mos_to_hourly([{"ftime_utc": first["ftime_utc"], "sky": 0}])["sky_cover_pct"])[t0] == 0
+
+
+@pytest.mark.asyncio
+async def test_live_grid_sky_is_context_from_the_existing_response(monkeypatch):
+    grid = load("nws_gridpoints.json")
+    at = datetime.fromisoformat(grid["properties"]["skyCover"]["values"][0]["validTime"].split("/")[0])
+    calls = []
+
+    async def fake_get(url, **kwargs):
+        calls.append(url)
+        data = {"properties": {"gridId": "DMX", "gridX": 73, "gridY": 56, "forecastGridData": "https://example.test/grid",
+                               "forecastZone": "https://example.test/IAZ048", "county": "https://example.test/IAC169"}} if "/points/" in url else grid
+        return cache.CachedResponse(url=url, fetched_at=at, data=data, from_cache=True)
+
+    monkeypatch.setattr(cache, "get_json", fake_get)
+    inputs, status = await NWSGridAdapter().run(load_facility(), at, "live")
+    assert status.status == "ok"
+    sky = next(i for i in inputs if i.id == "fcst.sky_cover_pct")
+    assert sky.role == "context" and sky.unit == "%"
+    assert sky.series and sky.series[0].v == grid["properties"]["skyCover"]["values"][0]["value"]
+    assert len(calls) == 2  # point metadata and the forecast already used by the engine
+    assert next(i for i in inputs if i.id == "fcst.wind_gust_mph").role == "forecast"
+
+
+@pytest.mark.asyncio
+async def test_archived_sky_uses_available_nbs_runs_as_context(monkeypatch):
+    payload = load("iem_mos_nbs_2023-02-22T01.json")
+    at = datetime(2023, 2, 22, 8, 30, tzinfo=timezone.utc)
+    calls = []
+
+    async def fake_get(url, **kwargs):
+        calls.append(url)
+        return cache.CachedResponse(url=url, fetched_at=at, data=payload, from_cache=True)
+
+    monkeypatch.setattr(cache, "get_json", fake_get)
+    inputs, status = await IEMMOSAdapter().run(load_facility(), at, "replay")
+    assert status.status == "ok"
+    sky = next(i for i in inputs if i.id == "fcst.sky_cover_pct")
+    assert sky.role == "context" and sky.unit == "%" and sky.series
+    assert sky.source_time == runtime_candidates(at)[0]
+    assert all(0 <= p.v <= 100 for p in sky.series)
+    assert len(calls) == 2  # the existing newest/previous-run merge; no extra sky request
 
 
 def test_runtime_candidates_respect_availability_lag():
