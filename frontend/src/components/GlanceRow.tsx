@@ -37,7 +37,7 @@ export function GlanceRow({ snap, onOpen, historical = false }: { snap: Snapshot
   const roads = useRoads(snap,historical);
 
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-3">
       <Tile label={snap.mode==='live'&&!historical?'Weather now':'Weather at evaluation'} onClick={() => onOpen("charts")} action="Forecast charts">
         {temp ? (
           <>
@@ -97,7 +97,7 @@ function Tile({ label, action, onClick, warn = false, children }: {
 }) {
   return (
     <button onClick={onClick}
-      className={`card flex min-h-[44px] flex-col gap-1 p-4 text-left hover:border-[var(--accent)] ${warn ? "border-l-4 border-l-[var(--danger)]" : ""}`}>
+      className={`card flex min-h-[44px] min-w-0 flex-col gap-1 p-4 text-left hover:border-[var(--accent)] ${warn ? "border-l-4 border-l-[var(--danger)]" : ""}`}>
       <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">{label}</span>
       <span className="min-w-0">{children}</span>
       <span className="mt-auto pt-1 text-sm text-[var(--accent)]">{action} →</span>

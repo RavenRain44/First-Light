@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import type { Posture, Snapshot } from "../types";
-import { CooperBanner, POSTURES, POSTURE_STYLE, PostureBadge, fmtClock, fmtDayLong, fmtTime } from "../util";
+import { CooperBanner, POSTURES, POSTURE_STYLE, PostureBadge, fmtDayLong, fmtTime } from "../util";
 import { suggestionSentence } from "./DashboardCard";
 
 const NAME_KEY = "cc-decided-by";
@@ -38,12 +38,15 @@ export function DecisionStep({ snap, onDecided }: { snap: Snapshot; onDecided: (
       <CooperBanner r={r} />
       <div className="p-5 sm:p-7">
         <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Step 1 · Confirm the decision</p>
+        {snap.posture.guidance.length > 0 && <div role="alert" className="mt-3 rounded-lg border-l-4 border-[var(--danger)] bg-[var(--surface-2)] px-4 py-3 font-medium">
+          {snap.posture.guidance.map((g) => <p key={g}>⚠ {g}</p>)}
+        </div>}
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
           <span className="text-sm text-ink2">Suggested for {fmtDayLong(snap.posture.decision_day)}:</span>
           <PostureBadge p={rec} />
           {r?.decide_by && (
             <span className={`font-semibold ${r.deadline_passed ? "text-[var(--danger)]" : ""}`}>
-              {r.deadline_passed ? "Deadline passed: decide now" : `Decide by ${fmtClock(r.decide_by, tz)}`}
+              {r.deadline_passed ? "Deadline passed: decide now. Announce-by time: " : "Decide by "}{fmtTime(r.decide_by, tz, { date: true, year: true })}
             </span>
           )}
         </div>

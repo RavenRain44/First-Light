@@ -164,24 +164,40 @@ npm --prefix frontend run build  # TypeScript and production bundle
 
 ## Dashboard
 
-The dashboard uses one card with three sections. **Suggested Action** leads with “Due to [reasons], [action],”
-the provider, confidence, decision deadline and urgent safety guidance. The action always comes from the
-recorded rules; the manager accepts or overrides it before any operating instructions are sent.
+The dashboard leads with the recorded **Colonel Cooper condition**. The color rules remain separate from the
+operating-status recommendation: an Orange or Red condition can still recommend normal operations for the
+decision day when hazard timing warrants it.
 
-**Relevant Metrics** shows two charts chosen from the evidence and active hazard. Amber points and line segments
+* **White:** an accurate weather heading and compact 24-hour forecast, with charts collapsed. “Clear skies”
+  requires a full 24 hours of recorded sky-cover data; older snapshots use the measurements they contain.
+* **Yellow:** the forecast plus a weather-specific watch prompt and **Review decision** button. Incomplete or
+  stale evidence prompts a closer check instead of implying safe weather.
+* **Orange:** “Start taking precautions,” a grounded “Due to [reasons], [action]” sentence, a **Draft decision**
+  button and concerning weather charts.
+* **Red:** “Send communication immediately,” naming the event behind urgency when available, plus the action,
+  **Draft urgent decision** button and concerning weather charts. Safety instructions precede operating advice.
+
+All conditions retain confidence, people expected, decision date and weather timestamp. Historical timestamps
+are labelled **Weather as of**; missing measurements stay unavailable, and partial forecast coverage is shown.
+Live NWS grids and archived NBM/NBS forecasts supply sky cover from their existing responses. Sky cover is
+presentation context and does not affect hazard scoring, confidence, readiness or operating status.
+Decision buttons open the existing manager form with the suggestion selected. The manager accepts or overrides
+it, records a decision, reviews the draft messages and explicitly approves delivery.
+
+**Concerning weather data** shows two charts chosen from the evidence and active hazard. Amber points and line segments
 mark measurements crossing the snapshot's threshold; shading marks the recorded hazard window. Legends and
 captions distinguish threshold evidence from alert context. Observations use solid lines and forecasts dashed
 lines, with source timestamps in tooltips. Missing measurements remain gaps. Each chart initially focuses on
 the relevant period and offers **Show full timeline**.
 Observed wind and temperature match the routine hourly weather.gov report. The separate observed peak-gust
 series supplies the wind threshold evidence; archived snapshots retain their original gust series.
-**Regenerate** asks Akamai to rewrite the same recorded evidence and keeps the previous brief visible while
-the new one is pending. Use **Re-evaluate** to fetch fresh weather first.
+**Regenerate brief** asks Akamai to rewrite the same recorded evidence and keeps the previous brief visible while
+the new one is pending. Use **Check again** to fetch fresh weather. The dashboard adds no inference requests
+when rendering conditions or opening charts.
 
-**More information** starts collapsed and expands with mouse or keyboard to show the manager form, explanation,
-alerts, all weather charts, roads and cameras, analogs, history and raw evidence. **Review and record decision**
-opens that section and focuses the manager form. Detailed panels load on first expansion; collapsing preserves
-unfinished manager input and reuses the chart data.
+Expandable details show the explanation, alerts, all weather charts, roads and cameras, analogs, history and raw
+evidence. White and Yellow also offer forecast charts directly in their summary card. Chart data loads on first
+expansion and is reused across chart panels for the same snapshot.
 
 ## Cloud storage
 
