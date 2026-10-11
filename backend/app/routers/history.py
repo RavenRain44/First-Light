@@ -66,7 +66,7 @@ async def replay(event_id: str, as_of: datetime):
             # (not stored, so the snapshot itself stays untouched).
             snap["analogs"] = analogs.find_analogs(snap["features"], exclude_event=event_id)
             snap["ai"]["analog_comparison"] = fallback.build(snap, snap["analogs"]).analog_comparison
-        return snap
+        return snapshots.ensure_interpretation(snap)
     return await snapshots.evaluate(load_facility(), as_of, "replay", event_id=event_id)
 
 

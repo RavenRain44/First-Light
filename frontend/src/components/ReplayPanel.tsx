@@ -56,14 +56,6 @@ export function ReplayPanel({ onSnapshot, busy, setBusy, current }: {
     catch (e: any) { setErr(e.message); } finally { setBusy(false); }
   };
 
-  const generateBrief = async () => {
-    const moment = ev?.timeline[idx];
-    if (!moment) return;
-    setPlaying(false); setBusy(true); setErr(null);
-    try { onSnapshot(await api.evaluateReplay(moment.as_of, ev.id)); }
-    catch (e: any) { setErr(e.message); } finally { setBusy(false); }
-  };
-
   if (events && events.length === 0) {
     return <Card title="Replay"><p className="text-sm">No historical events in the database. Run <code>python -m scripts.build_history</code> in backend/ (works offline with DEMO_MODE=true once the cache exists).</p></Card>;
   }
@@ -79,7 +71,6 @@ export function ReplayPanel({ onSnapshot, busy, setBusy, current }: {
         <button onClick={() => setPlaying(!playing)} disabled={!ev} className="btn">{playing ? "❚❚ Pause" : "▶ Play"}</button>
         <button onClick={() => setIdx((i) => Math.max(0, i - 1))} disabled={!ev} className="btn" aria-label="Previous hour">◀ 1h</button>
         <button onClick={() => setIdx((i) => Math.min((ev?.timeline.length ?? 1) - 1, i + 1))} disabled={!ev} className="btn" aria-label="Next hour">1h ▶</button>
-        <button onClick={generateBrief} disabled={busy || !ev || playing} className="btn">Generate Akamai brief</button>
         {ev?.backtest?.at_0400_local && (
           <button onClick={() => setIdx(Math.max(0, ev.timeline.findIndex((x: any) => x.as_of === ev.backtest.at_0400_local.as_of)))}
             className="btn">Jump to 04:00 on impact day</button>
@@ -91,7 +82,7 @@ export function ReplayPanel({ onSnapshot, busy, setBusy, current }: {
           <button onClick={runCustom} disabled={busy} className="btn">Evaluate</button>
         </span>
       </div>
-      <p className="mt-2 text-xs text-muted">Playback uses recorded evidence. Generate a fresh brief for the selected moment when you are ready to review it.</p>
+      <p className="mt-2 text-xs text-muted">Playback uses recorded evidence. A brief is generated automatically when each selected report loads.</p>
 
       {ev && (
         <>

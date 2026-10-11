@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
-PROMPT_VERSION = "akamai-brief-v3.1-reasons"
+PROMPT_VERSION = "decision-brief-v4-akamai-strands"
 
 
 class SuggestedReason(BaseModel):

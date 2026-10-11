@@ -9,7 +9,9 @@ services:
       MODEL_PROVIDER: akamai
       # Cached weather makes the judging demo repeatable; AI still calls Akamai.
       DEMO_MODE: "true"
-      AWS_FALLBACK_ENABLED: "false"
+      STRANDS_FALLBACK_ENABLED: "${STRANDS_FALLBACK_ENABLED:-true}"
+      STRANDS_MODEL_ID: "${STRANDS_MODEL_ID:-global.anthropic.claude-sonnet-4-6}"
+      AWS_REGION: "${AWS_REGION:-us-east-1}"
       DATABASE_PATH: /app/backend/var/closurecall.db
       HTTP_CACHE_DIR: /app/backend/var/http_cache
     command:
