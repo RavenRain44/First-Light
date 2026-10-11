@@ -259,26 +259,39 @@ freezing rain. Re-deriving every day from the raw reports with only the present-
   freezing-precipitation rule and the label. Corrected, 04:00 observations alone catch **7.7%** (9/117).
 - The live app is unaffected (IEM obhistory returns the present-weather codes only).
 
-Because forecasts are the only way to see weather that starts after 04:00, the evaluation now adds the
-archived NBM/NBS forecast that was already published at 04:00 (IEM, available from 2019). Thresholds were
-tuned for **recall** on 2019-2022 and checked once on held-out 2023-2026:
+Because forecasts are the only way to see weather that starts after 04:00, the evaluation adds the archived
+NBM/NBS forecast that was already published at each check time (IEM, available from 2019). The live app
+re-checks every few minutes, so the backtest also re-runs the engine **hourly from 04:00 to 14:00**. A disruptive
+day counts as caught only if a check flags *today* while the disruption is still happening or still ahead; a
+quiet day flagged by any check is a false alarm.
 
-| Thresholds | 2019-2022 recall | 2023-2026 recall (held out) | 2023-2026 false alarms |
+Held-out 2023-2026 (12 disruptive days, 941 days):
+
+| Thresholds and checks | Disruptive days caught (recall) | False alarms | 2019-2022 recall |
 |---|---|---|---|
-| Before (2026-10-10.1) + forecasts | 65.2% (15/23) | 25.0% (3/12) | 13 |
-| **Recall-first (2026-10-11.1)** + forecasts | **78.3% (18/23)** | **41.7% (5/12)** | 15 |
+| 2026-10-10.1, 04:00 only | 25.0% (3/12) | 13 | 65.2% |
+| 2026-10-11.1, 04:00 only | 41.7% (5/12) | 15 | 78.3% |
+| 2026-10-11.1, hourly 04:00-14:00 | 58.3% (7/12) | 15 | 78.3% |
+| **2026-10-11.2 (current), hourly** | **75.0% (9/12)** | **20** | 78.3% |
+| Not adopted: also forecast gust advisory 40 mph | 83.3% (10/12) | 40 | 78.3% |
 
-Changes in `config/thresholds.yaml` (marked `basis: policy`): forecast snow advisory 3 in -> 2 in; forecast
-45 mph gust and forecast -20 F wind chill raised from minor to significant, so arrivals outside the morning
-commute trigger early dismissal or telework instead of staying Normal. Held-out precision is 25% (about three
-false alarms per disruption caught) on 12 disruptive days, so the interval is wide. Remaining misses are mostly
-events the archived forecast did not show at 04:00 (for example freezing rain with low forecast precipitation
-chances, or afternoon gusts forecast in the 40s).
+Changes in `config/thresholds.yaml` (all `basis: policy`):
+
+- **2026-10-11.1** (tuned on 2019-2022): forecast 45 mph gust and forecast -20 F wind chill raised from minor to
+  significant, so arrivals outside the morning commute trigger early dismissal or telework.
+- **2026-10-11.2**: forecast snow advisory lowered to 1.5 in and raised to significant. This was chosen after
+  reviewing the 2023-2026 misses and does not change 2019-2022 recall, so the 75% is **not independently
+  validated**. Held-out precision is 31% (about two false alarms per disruption caught), and 12 disruptive days
+  give a wide interval.
+
+Remaining held-out misses: a 59 mph gust at 16:00 that the 46 mph forecast did not support, and two events the
+hourly checks only flagged after they ended. NWS warnings would help with these but stay excluded: the VTEC
+archive keeps only final event records, not what had been issued by a given hour.
 
 Reproduce (needs the restored dataset; forecasts are cached in `var/backtest_http_cache`):
 
 ```sh
-cd backend && .venv/Scripts/python -m scripts.recall_backtest --forecasts   # .venv/bin/python on Linux/macOS
+cd backend && .venv/Scripts/python -m scripts.recall_backtest --forecasts --checks hourly   # .venv/bin/python on Linux/macOS
 ```
 
 The frozen cohort and its published releases still carry the old labels. Rebuilding a corrected cohort
