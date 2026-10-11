@@ -27,7 +27,8 @@ from zoneinfo import ZoneInfo
 
 from app.config import settings
 
-PERIODS = (("1996-2018", "1996", "2019"), ("2019-2022 (tune)", "2019", "2023"), ("2023-2026 (held out)", "2023", "2027"))
+PERIODS = (("1996-2018", "1996", "2019"), ("2019-2022 (tune)", "2019", "2023"), ("2023-2026 (held out)", "2023", "2027"),
+           ("2019-2026 (with forecasts)", "2019", "2027"))
 
 
 def metrics(pairs):
@@ -124,7 +125,8 @@ async def run(forecasts: bool, checks: tuple[str, ...] = ("04:00",)) -> dict:
         if (i + 1) % 500 == 0:
             print(f"{i + 1}/{len(manifest['entries'])}", flush=True)
 
-    report = {"thresholds_version": th.version, "thresholds_sha256": th.sha256, "forecasts": forecasts, "checks": list(checks),
+    report = {"generated_at": datetime.now(timezone.utc).isoformat(), "thresholds_version": th.version, "thresholds_sha256": th.sha256,
+              "forecasts": forecasts, "checks": list(checks),
               "label": "AMW-local-disruption-v2 (present-weather group only; remarks excluded)", "periods": {}}
     for name, lo, hi in PERIODS:
         part = [r for r in rows_out if lo <= r["day"] < hi]

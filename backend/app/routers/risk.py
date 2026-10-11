@@ -1,14 +1,31 @@
 """Errors & risk trade-offs: weather error types from the backtest, plus an experimental action-risk view."""
 from __future__ import annotations
 
+import json
+
 from fastapi import APIRouter, HTTPException
 
 from app import historical, snapshots
+from app.config import settings
 from app.facility import load_employees
 from engine.action_risk import assess_actions
 from engine.scoring import load_thresholds
 
 router = APIRouter(prefix="/api")
+
+VALIDATION = settings.data_dir / "backtesting" / "metrics" / "recall-hourly.json"
+
+
+def validation() -> dict | None:
+    """Hourly-check validation (scripts/recall_backtest.py --forecasts --checks hourly), labelled stale if the
+    thresholds changed since it was generated."""
+    if not VALIDATION.exists():
+        return None
+    r = json.loads(VALIDATION.read_text(encoding="utf-8"))
+    keep = ("2019-2026 (with forecasts)", "2023-2026 (held out)", "2019-2022 (tune)", "1996-2018")
+    return {"generated_at": r.get("generated_at"), "thresholds_version": r["thresholds_version"],
+            "current": r["thresholds_sha256"] == load_thresholds().sha256, "checks": r["checks"], "label": r["label"],
+            "periods": {k: r["periods"][k] for k in keep if k in r["periods"]}, "all_years": r["all"]}
 
 
 @router.get("/risk-tradeoffs")
@@ -19,5 +36,5 @@ def risk_tradeoffs(snapshot_id: str | None = None, time: str = "04:00"):
         raise HTTPException(404, "snapshot not found")
     scores = historical.overview()["metrics_by_time"].get(time) or {}
     from app.risk_experiment import saved_report
-    return {"experiment":saved_report() if time=="04:00" else None,"errors": scores.get("error_analysis", {}), "range": scores.get("range"), "evaluation_time": time,
+    return {"validation": validation(), "experiment":saved_report() if time=="04:00" else None,"errors": scores.get("error_analysis", {}), "range": scores.get("range"), "evaluation_time": time,
             "actions": assess_actions(snap, load_employees(), load_thresholds().timing) if snap else None}

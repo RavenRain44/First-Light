@@ -242,3 +242,14 @@ def test_forecast_dataset_publish_and_fresh_machine_restore(tmp_path, monkeypatc
     finally:
         storage.set_bucket(None)
         db.set_engine(old)
+
+
+def test_error_analysis_reports_hourly_validation():
+    """The committed hourly-check validation is served with the error analysis and matches the current thresholds."""
+    from app.routers.risk import validation
+    from engine.scoring import load_thresholds
+    v = validation()
+    f = v["periods"]["2019-2026 (with forecasts)"]
+    assert v["current"] and v["thresholds_version"] == load_thresholds().version
+    assert f["caught"] + f["missed"] == f["disruptive"] and 0 < f["recall"] <= 1 and 0 < f["accuracy"] <= 1
+    assert v["checks"][0] == "04:00" and v["checks"][-1] == "14:00"

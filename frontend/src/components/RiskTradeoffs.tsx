@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
-import { bestSetting, pct, RATIOS, rateText, scenarioLoss, settingLabel, type ActionScenario, type ErrorAnalysis, type Exposure, type RiskTradeoffs as Data } from "../tradeoffs";
+import { bestSetting, FORECAST_PERIOD, HELD_OUT_PERIOD, pct, RATIOS, rateText, scenarioLoss, settingLabel, type ActionScenario, type ErrorAnalysis, type Exposure, type PeriodScore, type RiskTradeoffs as Data, type Validation } from "../tradeoffs";
 
 const EXPOSURE: Record<Exposure, { label: string; color: string }> = {
   lower: { label: "Lower", color: "var(--outcome-good)" },
@@ -27,6 +27,9 @@ export const mainAnalysis = (d: Data | null): [string, ErrorAnalysis] | null =>
   Object.entries(d?.errors ?? {}).sort((a, b) => b[1].weather.n - a[1].weather.n)[0] ?? null;
 
 export function riskSummary(d: Data | null) {
+  const f = d?.validation?.periods[FORECAST_PERIOD];
+  if (f?.recall != null && f.accuracy != null)
+    return `2019–2026: caught ${f.caught} of ${f.disruptive} disruptive days (${pct(f.recall)}) · ${pct(f.accuracy)} of all days called right · ${f.false_alarms} false alarms`;
   const main = mainAnalysis(d);
   if (!main) return d ? "Not enough data yet: build the multi-year history under More tools" : "Loading…";
   const k = main[1].weather.confusion;
@@ -39,11 +42,56 @@ export function RiskTradeoffs({ data, error }: { data: Data | null; error: strin
   const main = mainAnalysis(data);
   return (
     <div className="space-y-6 text-sm">
+      {data.validation && <ModelPerformance v={data.validation} />}
       {main ? <WeatherErrors kind={main[0]} a={main[1]} data={data} /> :
         <p>Not enough data yet. Build the multi-year history (More tools → Thresholds & backtest) to see how often the weather warnings were wrong.</p>}
       {data.experiment && <ChronologicalExperiment report={data.experiment} />}
       {data.actions && <ActionRisks a={data.actions} />}
     </div>
+  );
+}
+
+const share = (n: number | null) => (n == null ? "–" : pct(n));
+
+function Tile({ label, value, sub }: { label: string; value: string; sub: string }) {
+  return (
+    <div className="rounded-lg border border-edge p-3">
+      <div className="text-xs text-muted">{label}</div>
+      <div className="mt-0.5 text-2xl font-semibold tabnum">{value}</div>
+      <div className="text-xs text-muted">{sub}</div>
+    </div>
+  );
+}
+
+/** Headline: how often the engine catches disruptive days, re-checking hourly as the live app does. */
+function ModelPerformance({ v }: { v: Validation }) {
+  const f: PeriodScore | undefined = v.periods[FORECAST_PERIOD];
+  const h: PeriodScore | undefined = v.periods[HELD_OUT_PERIOD];
+  if (!f) return null;
+  const quiet = f.n - f.disruptive;
+  return (
+    <section>
+      <h3 className="font-semibold">How well the model catches disruptive days</h3>
+      <p className="mt-1 text-xs text-muted">
+        {f.n.toLocaleString()} weekdays, 2019–2026, with the archived forecast published before each check. The engine re-runs
+        hourly from {v.checks[0]} to {v.checks[v.checks.length - 1]}, as the live app re-checks; a day counts as caught only if a check
+        warned while the disruption was still happening or ahead. Thresholds {v.thresholds_version}.
+      </p>
+      {!v.current && <p role="status" className="mt-2 text-xs">⚠ Thresholds changed since this validation ran; rerun scripts/recall_backtest.py.</p>}
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <Tile label="Disruptive days caught" value={share(f.recall)} sub={`${f.caught} of ${f.disruptive} disruptive days`} />
+        <Tile label="All days called right" value={share(f.accuracy)} sub={`${(f.n - f.missed - f.false_alarms).toLocaleString()} of ${f.n.toLocaleString()} days`} />
+        <Tile label="False alarms" value={f.false_alarms.toLocaleString()} sub={`in ${quiet.toLocaleString()} quiet days (${share(f.false_alarms / quiet)})`} />
+      </div>
+      {h && (
+        <p className="mt-2 text-xs text-muted">
+          Held-out check: 2023–2026, never used to choose the original thresholds, caught {h.caught} of {h.disruptive} ({share(h.recall)}).
+          The 1.5 in snow setting was chosen after reviewing those misses, so this is not fully independent. Disruptive days are rare
+          (about {share(f.disruptive / f.n)} of weekdays), so “days called right” is high even for a model that never warns; the caught rate
+          is the number to watch. Before 2019 no forecasts are archived, so older years are not comparable.
+        </p>
+      )}
+    </section>
   );
 }
 

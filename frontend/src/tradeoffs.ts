@@ -16,7 +16,15 @@ export type ActionRisk = {
   staff: { expected_in_building: number; essential: number; telework_eligible: number; no_remote_option: number };
   missing_inputs: string[]; scenarios: ActionScenario[];
 };
-export type RiskTradeoffs = { experiment?: any; errors: Record<string, ErrorAnalysis>; range: { start: string | null; end: string | null } | null; evaluation_time: string; actions: ActionRisk | null };
+export type PeriodScore = { n: number; disruptive: number; caught: number; missed: number; false_alarms: number;
+  recall: number | null; precision: number | null; balanced_accuracy: number | null; accuracy: number | null };
+/** Hourly-check validation from scripts/recall_backtest.py (forecast years 2019+, corrected labels). */
+export type Validation = { generated_at: string; thresholds_version: string; current: boolean; checks: string[]; label: string;
+  periods: Record<string, PeriodScore>; all_years: PeriodScore };
+export const FORECAST_PERIOD = "2019-2026 (with forecasts)";
+export const HELD_OUT_PERIOD = "2023-2026 (held out)";
+
+export type RiskTradeoffs = { validation?: Validation | null; experiment?: any; errors: Record<string, ErrorAnalysis>; range: { start: string | null; end: string | null } | null; evaluation_time: string; actions: ActionRisk | null };
 
 export const RATIOS = [1, 2, 5, 10, 20, 50];
 
