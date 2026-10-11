@@ -178,3 +178,8 @@ def check_smtp_connection():
 def real_test(pid: str, req: RealTest):
     from app.real_delivery import send_tests
     return send_tests(pid, req)
+
+
+@router.post("/packages/{pid}/regenerate")
+async def regenerate(pid: str, req: Action):
+    return await n.regenerate(pid, req)

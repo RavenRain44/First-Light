@@ -70,6 +70,8 @@ function MessageComposer({ groups, p, update }: { groups: any[]; p: any; update:
         <label className="grid gap-2 text-sm font-semibold">2 · Decision<textarea className={`${input} font-normal`} rows={2} maxLength={1000} value={first.decision_text} onChange={e=>update(first.id,{decision_text:e.target.value})} /></label>
         <section className="rounded-xl border border-edge p-4">
           <h3 className="text-sm font-semibold">3 · Personal instructions</h3>
+          <div className="mt-3 flex flex-wrap gap-3">{groups.map(g => <label key={g.id} className="flex items-center gap-2 text-sm"><input type="checkbox" aria-label={`Select group ${g.title}`} disabled={!g.recipients.length} checked={g.recipients.length > 0 && g.recipient_ids.length === g.recipients.length} onChange={e => update(g.id, {recipient_ids: e.target.checked ? g.recipients.map((r:any) => r.id) : []})} />{g.title} · {g.recipient_ids.length}/{g.recipients.length}</label>)}</div>
+          <p className="mt-2 text-xs text-muted">All four groups stay visible. Previously notified people are unselected by default; select their group to send another update.</p>
           <div className="mt-3 space-y-4">{groups.map(g=><label className="grid gap-2 text-sm" key={g.id}>
             <span className="flex flex-wrap justify-between gap-2"><strong>{g.title}</strong><span className="text-xs text-muted">{g.recipient_ids.length} people · {g.kind === 'awareness' ? 'at work start' : 'now'}</span></span>
             <textarea aria-label={`Instructions for ${g.title}`} className={input} rows={2} maxLength={1000} value={g.instruction_text} onChange={e=>update(g.id,{instruction_text:e.target.value})} />
@@ -88,7 +90,7 @@ function MessageComposer({ groups, p, update }: { groups: any[]; p: any; update:
       </div>
       <div className="mt-3 max-h-80 overflow-auto rounded-xl border border-edge">
         <table className="w-full text-left text-xs"><thead className="sticky top-0 bg-[var(--surface-2)]"><tr><th className="p-2">Include</th><th className="p-2">Name</th><th className="p-2">Group</th><th className="p-2">Channels</th><th className="p-2">Sends</th></tr></thead>
-          <tbody>{rows.map(r=><tr key={`${r.group.id}:${r.id}`} className="border-t border-edge"><td className="p-2"><input aria-label={`Include ${r.name}`} type="checkbox" checked={r.group.recipient_ids.includes(r.id)} onChange={e=>update(r.group.id,{recipient_ids:e.target.checked ? [...r.group.recipient_ids,r.id] : r.group.recipient_ids.filter((id:string)=>id!==r.id)})} /></td><td className="p-2">{r.name}<span className="block text-muted">{r.job_role ?? ''}</span>{r.accessibility_followup && <span>Accessibility follow-up</span>}</td><td className="p-2">{r.group.title}</td><td className="p-2"><ChannelPills channels={r.channels} /></td><td className="p-2">{time(r.due_at,p.timezone)}</td></tr>)}{!rows.length && <tr><td colSpan={5} className="p-3">No matching recipients.</td></tr>}</tbody>
+          <tbody>{rows.map(r=><tr key={`${r.group.id}:${r.id}`} className="border-t border-edge"><td className="p-2"><input aria-label={`Include ${r.name}`} type="checkbox" checked={r.group.recipient_ids.includes(r.id)} onChange={e=>update(r.group.id,{recipient_ids:e.target.checked ? [...r.group.recipient_ids,r.id] : r.group.recipient_ids.filter((id:string)=>id!==r.id)})} /></td><td className="p-2">{r.name}<span className="block text-muted">{r.job_role ?? ''}</span>{r.selection_note && <span className="block text-muted">{r.selection_note}</span>}{r.accessibility_followup && <span>Accessibility follow-up</span>}</td><td className="p-2">{r.group.title}</td><td className="p-2"><ChannelPills channels={r.channels} /></td><td className="p-2">{time(r.due_at,p.timezone)}</td></tr>)}{!rows.length && <tr><td colSpan={5} className="p-3">No matching recipients.</td></tr>}</tbody>
         </table>
       </div>
     </details>
@@ -159,6 +161,14 @@ export function NotificationsView({ decisionId, onBack }: { decisionId?: number 
     {busy && p && <p role="status" className="cc-fade rounded-lg bg-[var(--tint)] px-3 py-2 text-sm text-[var(--accent)]">Working… Please wait before trying again.</p>}
     {!p && !busy && <Card title="Make a decision first"><p>Record the facility decision, then your alerts will appear here automatically.</p>{onBack && <button className={`${button} mt-3`} onClick={onBack}>Go to decision →</button>}</Card>}
     {p && <>
+      {!sent && <div className="card p-3 text-sm">
+        <button className="btn" disabled={busy || actor.trim().length < 2} onClick={() => perform(async () => {
+          const saved = await request(`/packages/${p.id}/review`, "POST", {version:p.version, actor, groups:edits(), approve_and_send:false});
+          install(saved);
+          install(await request(`/packages/${p.id}/regenerate`, "POST", {version:saved.version, actor}));
+        }, "Draft wording refreshed. Review the decision explanation before approving; nothing was sent.")}>Refresh AI decision reason</button>
+        <p className="mt-2 text-muted">Replaces the shared decision explanation using saved weather evidence. Your location and group instructions stay editable. Approvals are cleared; no messages are sent.</p>
+      </div>}
       <fieldset disabled={busy || sent}><MessageComposer groups={groups} p={p} update={update} /></fieldset>
       <Card title={sent ? "Alerts sent · you're done" : "2 · Review your alerts"}>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
