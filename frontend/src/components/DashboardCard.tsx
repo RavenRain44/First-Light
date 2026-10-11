@@ -1,3 +1,5 @@
+import { EvidenceNotice } from "./EvidenceNotice";
+import { evidenceState, normalIsFallback } from "../evidence";
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { api } from "../api";
 import { ACTIONS, METRICS, joinReasons, relevantMetrics, suggestionReasons, supportingRules } from "../dashboard";
@@ -39,6 +41,7 @@ export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotif
   const unavailable = snap.sources.filter((s) => s.status === "unavailable");
   const people = snap.roster && !snap.roster.hypothetical ? snap.roster.expected_in_building : undefined;
   const canDecide = !readOnly && snap.mode !== "backtest" && !snap.facility.hypothetical;
+  const evidence = evidenceState(snap);
 
   return (
     <article className="card min-w-0 overflow-hidden" aria-labelledby={`${id}-action`} data-testid="cooper-dashboard" data-condition={presentation.level ?? "UNKNOWN"}>
@@ -50,6 +53,8 @@ export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotif
         {snap.historical_context && <p className="mt-2 text-sm">Historical rating uses supplied inputs only; missing forecasts and alerts remain unknown.</p>}
       </header>
       <section className="p-5 sm:p-8">
+        {!evidence.supports_all_clear || evidence.status !== "sufficient" || snap.mode !== "live"
+          ? <div className="mb-5"><EvidenceNotice snap={snap} onRefresh={onRefresh} busy={busy} /></div> : null}
         <dl className="grid grid-cols-2 gap-x-4 gap-y-4 text-sm sm:grid-cols-4" data-testid="dashboard-metadata">
           <div><dt className="text-xs text-muted">Confidence</dt><dd className="mt-1 font-semibold capitalize">{snap.confidence.level}</dd></div>
           <div><dt className="text-xs text-muted">People expected</dt><dd className="mt-1 font-semibold">{people ?? "Unavailable"}</dd></div>
@@ -81,7 +86,11 @@ export function SuggestedAction({ snap, busy, onRefresh, onRegenerate, onGoNotif
           <p className="font-semibold text-ink">Why this condition</p>
           <ul className="mt-1 list-disc space-y-1 pl-5">{presentation.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
         </div>}
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-sm"><span className="text-ink2">Suggested operating status:</span><PostureBadge p={snap.posture.posture} /></div>
+        {!presentation.urgent && normalIsFallback(snap) && (
+          <p className="mb-2 text-lg font-medium leading-relaxed" data-testid="suggested-action">{suggestionSentence(snap)}</p>
+        )}
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-sm"><span className="text-ink2">Suggested operating status:</span><PostureBadge p={snap.posture.posture} />
+          {normalIsFallback(snap) && <span className="font-semibold text-[var(--danger)]" data-testid="fallback-label">Fallback only, not confirmed by current data</span>}</div>
         <p className="mt-1 text-xs text-muted">OPM status: {snap.posture.opm_label}</p>
 
         {presentation.action && canDecide && (
@@ -186,7 +195,11 @@ export function RelevantMetrics({ snap }: { snap: Snapshot }) {
   );
 }
 
-/** "Due to <reasons>, <action>." The same sentence on Today and on Notify staff. */
+/** "Due to <reasons>, <action>." The same sentence on Today and on Notify staff. Never an all-clear
+ *  when the evidence is insufficient: NORMAL is then only the rules' fallback. */
 export function suggestionSentence(snap: Snapshot) {
+  if (normalIsFallback(snap)) {
+    return <>Current data is insufficient to confirm conditions. <strong className="font-semibold">Normal is only the fallback</strong>: recheck for current data, or record a manual decision with your reason.</>;
+  }
   return <>Due to {joinReasons(suggestionReasons(snap))}, <strong className="font-semibold">{ACTIONS[snap.posture.posture]}</strong>.</>;
 }

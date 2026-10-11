@@ -3,11 +3,13 @@ import { api } from "../api";
 import type { Posture, Snapshot } from "../types";
 import { CooperBanner, POSTURES, POSTURE_STYLE, PostureBadge, fmtDayLong, fmtTime } from "../util";
 import { suggestionSentence } from "./DashboardCard";
+import { EvidenceNotice } from "./EvidenceNotice";
+import { evidenceState, normalIsFallback } from "../evidence";
 
 const NAME_KEY = "cc-decided-by";
 const savedName = () => { try { return localStorage.getItem(NAME_KEY) ?? ""; } catch { return ""; } };
 
-interface Recorded { id: number; decided_by: string; decision_posture: Posture; decided_at: string; agreed_with_recommendation: boolean }
+interface Recorded { id: number; decided_by: string; decision_posture: Posture; decided_at: string; agreed_with_recommendation: boolean; decision_basis?: string }
 
 /** Step 1 on the Notify staff page: see the risk and suggestion, then confirm (or change) the decision.
  *  Confirming records it; nothing is sent until the alerts below are reviewed and approved. */
@@ -38,12 +40,14 @@ export function DecisionStep({ snap, onDecided }: { snap: Snapshot; onDecided: (
       <CooperBanner r={r} />
       <div className="p-5 sm:p-7">
         <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">Step 1 · Confirm the decision</p>
+        <div className="mt-3"><EvidenceNotice snap={snap} compact /></div>
         {snap.posture.guidance.length > 0 && <div role="alert" className="mt-3 rounded-lg border-l-4 border-[var(--danger)] bg-[var(--surface-2)] px-4 py-3 font-medium">
           {snap.posture.guidance.map((g) => <p key={g}>⚠ {g}</p>)}
         </div>}
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
           <span className="text-sm text-ink2">Suggested for {fmtDayLong(snap.posture.decision_day)}:</span>
           <PostureBadge p={rec} />
+          {normalIsFallback(snap) && <span className="text-sm font-semibold text-[var(--danger)]">Fallback only, not confirmed by current data</span>}
           {r?.decide_by && (
             <span className={`font-semibold ${r.deadline_passed ? "text-[var(--danger)]" : ""}`}>
               {r.deadline_passed ? "Deadline passed: decide now. Announce-by time: " : "Decide by "}{fmtTime(r.decide_by, tz, { date: true, year: true })}
@@ -63,7 +67,9 @@ export function DecisionStep({ snap, onDecided }: { snap: Snapshot; onDecided: (
           <div className="cc-rise mt-5 flex flex-wrap items-center gap-3 rounded-xl bg-[var(--tint)] px-4 py-3">
             <span className="font-semibold">✓ Decided:</span>
             <PostureBadge p={done.decision_posture} size="sm" />
-            <span className="text-sm text-ink2">by {done.decided_by} at {fmtTime(done.decided_at, tz)}{done.agreed_with_recommendation ? "" : " (changed from the suggestion)"}</span>
+            <span className="text-sm text-ink2">by {done.decided_by} at {fmtTime(done.decided_at, tz)}{
+              done.decision_basis === "manual_insufficient_evidence" ? " (manual decision: current data was insufficient)"
+                : done.agreed_with_recommendation ? "" : " (changed from the suggestion)"}</span>
             <button onClick={() => setEditing(true)} className="ml-auto text-sm text-[var(--accent)] hover:underline">Record a different decision</button>
           </div>
         ) : (
@@ -83,15 +89,19 @@ function DecideForm({ snap, onRecorded, onCancel }: { snap: Snapshot; onRecorded
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const override = posture !== rec;
-  const ok = by.trim().length >= 2 && (!override || reason.trim().length > 0);
+  // Insufficient (or unrecorded) evidence makes every decision manual, even one matching the fallback.
+  const manual = evidenceState(snap).reason_required;
+  const needReason = override || manual;
+  const ok = by.trim().length >= 2 && (!needReason || reason.trim().length > 0);
 
   const submit = async () => {
     setBusy(true); setErr(null);
     try {
       const d = await api.decide({ snapshot_id: snap.snapshot_id, decided_by: by.trim(), decision_posture: posture,
-        override_reason: override ? reason.trim() : undefined, notes: !override && reason.trim() ? reason.trim() : undefined });
+        override_reason: needReason ? reason.trim() : undefined, notes: !needReason && reason.trim() ? reason.trim() : undefined });
       try { localStorage.setItem(NAME_KEY, by.trim()); } catch { /* storage blocked */ }
-      onRecorded({ id: d.id, decided_by: by.trim(), decision_posture: posture, decided_at: new Date().toISOString(), agreed_with_recommendation: !override });
+      onRecorded({ id: d.id, decided_by: by.trim(), decision_posture: posture, decided_at: new Date().toISOString(),
+        agreed_with_recommendation: d.agreed_with_recommendation, decision_basis: d.decision_basis });
     } catch (e: any) {
       setErr(`Not recorded: ${e.message ?? e}`);
     } finally {
@@ -108,13 +118,14 @@ function DecideForm({ snap, onRecorded, onCancel }: { snap: Snapshot; onRecorded
             <label key={p} className={`flex min-h-[44px] cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm ${posture === p ? "border-2" : "border-edge"}`}
               style={posture === p ? { borderColor: POSTURE_STYLE[p].color } : undefined}>
               <input type="radio" name="decision-posture" value={p} checked={posture === p} onChange={() => setPosture(p)} />
-              {POSTURE_STYLE[p].label}{p === rec && <span className="text-xs text-muted">(suggested)</span>}
+              {POSTURE_STYLE[p].label}{p === rec && <span className="text-xs text-muted">{manual && p === "NORMAL" ? "(fallback)" : "(suggested)"}</span>}
             </label>
           ))}
         </div>
       </fieldset>
       <label className="flex max-w-2xl flex-col gap-1 text-sm">
-          <span className="font-medium">{override ? "Why are you choosing differently? (required)" : "Why do you agree? (optional)"}</span>
+          <span className="font-medium">{manual ? "What is this manual decision based on? (required: current data is insufficient)"
+            : override ? "Why are you choosing differently? (required)" : "Why do you agree? (optional)"}</span>
           <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} className="rounded-lg border border-edge bg-surface px-3 py-2"
             placeholder="e.g. County roads north of town are untreated; staff on US 69 can't get in" />
         </label>

@@ -36,6 +36,8 @@ class Snapshot(SQLModel, table=True):
     changes_json: str
     readiness_level: str = Field(default="", index=True)
     readiness_json: str = "{}"
+    sufficiency_status: str = Field(default="", index=True)
+    sufficiency_json: str = "{}"
     watch_json: str
     analogs_json: str
     features_json: str
@@ -125,6 +127,10 @@ class DecisionContext(SQLModel, table=True):
     decision_id: int = Field(primary_key=True, foreign_key="decision.id")
     demo_mode: bool = False
     example: bool = False
+    # Evidence sufficiency of the snapshot when decided ("" = recorded before this was tracked), and whether the
+    # call followed a supported suggestion ("recommendation") or was manual under insufficient evidence.
+    evidence_status: str = ""
+    decision_basis: str = ""
 
 
 class DecisionReview(SQLModel, table=True):

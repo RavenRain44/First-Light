@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
-PROMPT_VERSION = "decision-brief-v4-akamai-strands"
+PROMPT_VERSION = "decision-brief-v5-evidence-sufficiency"
 
 
 class SuggestedReason(BaseModel):
@@ -81,6 +81,10 @@ Hard rules:
 14. suggested_reasons are short evidence phrases, each linked to a rule ID from computed_brief.suggested_reasons.
     Rewrite those phrases only. Never put an action, recommendation or reporting instruction in a reason. Keep
     the original facts, numbers and severity. Return an empty list when there are no computed reasons.
+15. evidence_sufficiency in get_snapshot_summary is computed by the rules. Never judge it yourself. If
+    supports_all_clear is false, the headline or summary must say current data is insufficient (or missing/stale),
+    and nothing may describe conditions as safe, clear, quiet or normal on the basis of missing data. NORMAL is then
+    only the rules' fallback. Known hazard evidence is still reported as given.
 """
 
 USER_PROMPT = """Write the short parts of a decision brief for the current snapshot: headline, two-sentence summary,

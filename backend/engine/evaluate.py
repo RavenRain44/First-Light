@@ -23,6 +23,7 @@ from engine.counterfactual import Change, what_would_change
 from engine.features import Context, Signal, extract
 from engine.posture import PostureResult, decide, horizon_end
 from engine.readiness import Readiness, assess_readiness
+from engine.sufficiency import Sufficiency, assess_sufficiency
 from engine.scoring import HazardResult, RuleResult, Thresholds, evaluate_rules, load_thresholds, score_hazards
 
 
@@ -36,6 +37,7 @@ class Assessment(BaseModel):
     confidence: conf.Confidence
     changes: list[Change]
     readiness: Readiness
+    sufficiency: Sufficiency
     watch_next_6h: list[str]
     features: dict[str, float]
     alerts: list[dict]
@@ -69,7 +71,7 @@ async def gather(facility: Facility, as_of: datetime, mode: str) -> tuple[list[N
     return inputs, [s for _, s in results]
 
 
-def _watch(ctx: Context, rules: list[RuleResult], facility: Facility) -> list[str]:
+def _watch(ctx: Context, rules: list[RuleResult], facility: Facility, sufficiency: Sufficiency | None = None) -> list[str]:
     tz = ZoneInfo(facility.timezone)
     now, end = ctx.as_of, ctx.as_of + timedelta(hours=6)
     fmt = lambda t: utc(t).astimezone(tz).strftime("%H:%M %Z")  # noqa: E731
@@ -104,7 +106,9 @@ def _watch(ctx: Context, rules: list[RuleResult], facility: Facility) -> list[st
     for r in rules:
         if r.triggered and r.metric == "obs_freezing_precip_hours_3h":
             items.append("Freezing precipitation observed at the facility ASOS in the last 3 h")
-    if not items:
+    if not items and sufficiency is not None and not sufficiency.supports_all_clear:
+        items.append("Recheck for current data: the forecast is missing or out of date, so quiet output here is not an all-clear")
+    elif not items:
         items.append("No alerts starting or ending and no forecast thresholds approached in the next 6 hours")
     return items[:8]
 
@@ -151,10 +155,12 @@ def assess(inputs: list[NormalizedInput], statuses: list[SourceStatus], facility
     posture = decide(hazards, rules, ctx.as_of, facility, th)
     confidence = conf.compute(statuses, inputs, ctx, rules, hazards, mode)
     changes = what_would_change(ctx, th, facility, posture.posture, rules)
-    readiness = assess_readiness(hazards, rules, posture, confidence, ctx.alerts, ctx.as_of, facility, th)
+    sufficiency = assess_sufficiency(inputs, statuses, hazards, rules, posture, ctx.as_of, mode, facility.timezone, th.timing)
+    readiness = assess_readiness(hazards, rules, posture, confidence, ctx.alerts, ctx.as_of, facility, th, sufficiency)
     return Assessment(
         as_of=ctx.as_of, mode=mode, signals=ctx.signals, rules=rules, hazards=hazards, posture=posture,
-        confidence=confidence, changes=changes, readiness=readiness, watch_next_6h=_watch(ctx, rules, facility),
+        confidence=confidence, changes=changes, readiness=readiness, sufficiency=sufficiency,
+        watch_next_6h=_watch(ctx, rules, facility, sufficiency),
         features=feature_vector(ctx, rules, hazards, facility), alerts=ctx.alerts,
     )
 

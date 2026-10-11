@@ -8,6 +8,7 @@ from __future__ import annotations
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+from engine import sufficiency
 from ai.prompts import Interpretation
 
 POSTURE_WORDS = {
@@ -80,10 +81,19 @@ def build(snap: dict, analogs: list[dict] | None = None) -> Interpretation:
     key = [r for r in rules if r["rule_id"] in ctrl_ids] or rules
     key.sort(key=lambda r: (-r["level"], -r["score"]))
 
-    parts = [f"Recommendation for {snap['facility']['name']} for {day}: {posture.replace('_', ' ').title()} "
-             f"(OPM: {p['opm_label']})."]
-    if not rules:
+    evidence = sufficiency.for_snapshot(snap)
+    no_all_clear = not evidence.get("supports_all_clear")
+    name = posture.replace('_', ' ').title()
+    parts = [f"Recommendation for {snap['facility']['name']} for {day}: {name} (OPM: {p['opm_label']})."]
+    if no_all_clear:
+        gap = "; ".join(evidence.get("reasons") or []) or evidence.get("headline", "")
+        parts.append(f"{evidence.get('headline', 'Insufficient current data')}: {gap.rstrip('.')}. "
+                     + ("Known hazard evidence is reported below." if rules else
+                        f"{name} is the rules' fallback, not a supported all-clear; missing data is not evidence of safe conditions."))
+    elif not rules:
         parts.append("No NWS alert, forecast, observation or road threshold is crossed for the decision day.")
+    elif evidence.get("status") == "limited":
+        parts.append(f"Data limitations: {'; '.join(evidence.get('reasons') or []).rstrip('.')}.")
     alerts = {a.get("event"): a for a in snap.get("alerts", [])}
     for r in key[:3]:
         if r["metric"] == "alert_present":
@@ -123,7 +133,15 @@ def build(snap: dict, analogs: list[dict] | None = None) -> Interpretation:
         lead = key[0]
         what = lead["observed_value"] if lead["metric"] == "alert_present" else lead["label"]
         headline = f"{posture.replace('_', ' ').title()}: {what}"
+    if no_all_clear and not key:
+        headline = f"Insufficient current data: {name} is only the fallback for {day}"
     headline = " ".join(headline.split()[:15])
+    if no_all_clear and not key:
+        summary = (f"Insufficient current data to confirm conditions for {day}; {name} is only the rules' fallback. "
+                   f"Recheck for current data before deciding; missing data is not evidence of safe conditions.")
+    else:
+        summary = (f"{name} is recommended. "
+                   + (p["reasons"][0] if p["reasons"] else "No operating-status threshold is crossed for the decision day."))
 
     analog_text = ""
     if analogs:
@@ -132,14 +150,14 @@ def build(snap: dict, analogs: list[dict] | None = None) -> Interpretation:
                        f"simulated) recommended {a['recommended_posture']} then; outcome: {a['outcome_summary']}")
     return Interpretation(
         headline=headline,
-        summary=(f"{posture.replace('_', ' ').title()} is recommended. "
-                 + (p["reasons"][0] if p["reasons"] else "No operating-status threshold is crossed for the decision day.")),
+        summary=summary,
         evidence_rule_ids=[r["rule_id"] for r in key[:3]],
         suggested_reasons=[{
             "rule_id": r["rule_id"],
             "text": _reason_phrase(r)[:180],
         } for r in key[:3]],
-        uncertainty=f"Confidence is {conf['level']}; {weakest['explanation']}",
+        uncertainty=(f"Evidence: {evidence.get('headline')}. " if evidence.get("status") != "sufficient" else "")
+                    + f"Confidence is {conf['level']}; {weakest['explanation']}",
         rationale_paragraph=" ".join(parts),
         what_would_change=[c["text"] for c in snap.get("changes", [])],
         watch_next_6h=snap.get("watch_next_6h", []),

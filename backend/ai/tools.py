@@ -10,6 +10,8 @@ from datetime import datetime
 from typing import Any, Callable
 from zoneinfo import ZoneInfo
 
+from engine import sufficiency
+
 
 def _local(ts: str | None, tz: ZoneInfo) -> str | None:
     if not ts:
@@ -32,6 +34,7 @@ def _fmt(v: Any, unit: str | None) -> str:
 def snapshot_summary(snap: dict) -> dict:
     tz = ZoneInfo(snap["facility"]["timezone"])
     p = snap["posture"]
+    ev = sufficiency.for_snapshot(snap)
     return {
         "facility": snap["facility"]["name"],
         "facility_is_synthetic": snap["facility"].get("synthetic", True),
@@ -58,6 +61,9 @@ def snapshot_summary(snap: dict) -> dict:
         "people": {k: v for k, v in (snap.get("roster") or {}).items() if k in
                    ("assigned", "expected_in_building", "essential_in_building", "accessibility_needs_in_building")},
         "sources": [{"source": s["label"], "status": s["status"]} for s in snap["sources"]],
+        # Computed by deterministic rules; the model reports it and never judges evidence adequacy itself.
+        "evidence_sufficiency": {k: ev.get(k) for k in ("status", "headline", "reasons", "missing_sources",
+                                                        "stale_sources", "supports_all_clear", "mode_note")},
     }
 
 

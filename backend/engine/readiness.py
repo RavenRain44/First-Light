@@ -14,6 +14,7 @@ from adapters.base import Facility, utc
 from engine.confidence import Confidence
 from engine.posture import PostureResult, _at
 from engine.scoring import HazardResult, RuleResult, Thresholds
+from engine.sufficiency import Sufficiency
 
 LEVELS = ["WHITE", "YELLOW", "ORANGE", "RED"]
 
@@ -58,7 +59,7 @@ def _near_misses(rules: list[RuleResult], frac: float) -> list[RuleResult]:
 
 def assess_readiness(hazards: dict[str, HazardResult], rules: list[RuleResult], posture: PostureResult,
                      confidence: Confidence, alerts: list[dict], as_of: datetime, facility: Facility,
-                     th: Thresholds) -> Readiness:
+                     th: Thresholds, sufficiency: Sufficiency | None = None) -> Readiness:
     cfg = th.raw["readiness"]
     now = utc(as_of)
     tz = ZoneInfo(facility.timezone)
@@ -104,6 +105,9 @@ def assess_readiness(hazards: dict[str, HazardResult], rules: list[RuleResult], 
             found["YELLOW"].append(f"{ev} in effect or issued")
     for r in _near_misses(rules, float(cfg["near_miss_fraction"])):
         found["YELLOW"].append(f"{r.label} is {r.observed_value:g} {r.unit}, approaching {r.threshold:g}")
+    # Missing evidence raises attention (recheck sooner), never the operating posture.
+    if sufficiency is not None and sufficiency.status == "insufficient":
+        found["YELLOW"].insert(0, "Insufficient current data: recheck before relying on a normal day")
     if confidence.level == "low":
         found["YELLOW"].append("Confidence is low: data is incomplete or stale, so stay alert")
 

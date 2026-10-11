@@ -1,3 +1,4 @@
+import { evidenceState, evidenceWarning } from "./evidence.ts";
 import { supportingRules } from "./dashboard.ts";
 import type { NormalizedInput, ReadinessLevel, Snapshot } from "./types";
 
@@ -68,8 +69,12 @@ export function cooperPresentation(snap: Snapshot) {
   const level = readinessLevel(snap);
   const event = readinessEvent(snap);
   const urgent = level === "ORANGE" || level === "RED";
+  // A quiet forecast heading would read as an all-clear, so insufficient evidence names itself instead.
+  const quiet = level !== "RED" && level !== "ORANGE";
   const title = level === "RED" ? `Send communication immediately${event ? `: ${event}` : ""}`
-    : level === "ORANGE" ? "Start taking precautions" : level ? weatherHeading(snap) : "Readiness not recorded";
+    : level === "ORANGE" ? "Start taking precautions"
+    : quiet && evidenceWarning(evidenceState(snap)) && snap.sufficiency ? "Insufficient current data"
+    : level ? weatherHeading(snap) : "Readiness not recorded";
   const action = level === "RED" ? "Draft urgent decision" : level === "ORANGE" ? "Draft decision"
     : level === "YELLOW" ? "Review decision" : level === null ? "Review decision" : null;
   const reasons = snap.readiness?.reasons ?? [];
@@ -79,7 +84,7 @@ export function cooperPresentation(snap: Snapshot) {
 
 function watchMessage(snap: Snapshot, event: string | null, title: string): string {
   const reasons = snap.readiness?.reasons.join(" ") ?? "";
-  if (/incomplete|stale/i.test(reasons)) return "Verify the latest local warnings and forecast before deciding; some evidence is incomplete or stale.";
+  if (/insufficient|incomplete|stale/i.test(reasons)) return "Verify the latest local warnings and forecast before deciding; some evidence is incomplete or stale.";
   if (snap.confidence.level === "low") return "Confidence is low. Verify the latest local warnings and forecast before deciding.";
   // The hazard responsible for readiness takes priority over background weather.
   const concern = event ?? reasons;

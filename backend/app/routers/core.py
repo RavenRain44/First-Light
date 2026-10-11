@@ -19,6 +19,7 @@ from app.config import settings
 from app.db import session
 from app.facility import get_facility, load_employees, roster_summary
 from app.models import Decision, DecisionContext, HistoryEvent
+from engine import sufficiency
 from engine.posture import ORDER
 from engine.scoring import load_thresholds
 
@@ -278,24 +279,41 @@ def record_decision(d: DecisionIn, background_tasks: BackgroundTasks):
         raise HTTPException(422, f"decision_posture must be one of {ORDER}")
     if snap["mode"] == "backtest":
         raise HTTPException(422, "Historical backtesting cannot record a human operating decision")
-    agreed = d.decision_posture == snap["posture"]["posture"]
-    if not agreed and not (d.override_reason and d.override_reason.strip()):
+    evidence = sufficiency.for_snapshot(snap)
+    reason = (d.override_reason or "").strip() or None
+    manual = bool(evidence.get("reason_required"))
+    # Under insufficient (or unrecorded) evidence every decision is manual, even one matching the fallback posture.
+    agreed = d.decision_posture == snap["posture"]["posture"] and not manual
+    if manual and not reason:
+        raise HTTPException(422, "override_reason is required: evidence is insufficient "
+                                 f"({evidence['status']}), so this is a manual decision; explain the basis for it")
+    if d.decision_posture != snap["posture"]["posture"] and not reason:
         raise HTTPException(422, "override_reason is required when the decision differs from the recommendation")
     row = Decision(snapshot_id=d.snapshot_id, facility_id=snap["facility"]["id"], decided_by=d.decided_by.strip(),
                    decision_posture=d.decision_posture, recommended_posture=snap["posture"]["posture"],
-                   agreed_with_recommendation=agreed, override_reason=(d.override_reason or "").strip() or None,
+                   agreed_with_recommendation=agreed, override_reason=reason,
                    notes=d.notes, decided_at=datetime.now(timezone.utc))
+    basis = "manual_insufficient_evidence" if manual else "recommendation" if agreed else "override"
     with session() as s:
         s.add(row)
         s.commit()
         s.refresh(row)
         # Demo-mode decisions use cached weather; Past decisions leaves them out.
-        s.add(DecisionContext(decision_id=row.id, demo_mode=settings.demo_mode)); s.commit()
+        s.add(DecisionContext(decision_id=row.id, demo_mode=settings.demo_mode, evidence_status=evidence["status"],
+                              decision_basis=basis)); s.commit()
         from app.camera_archive import pending, capture
         s.add(pending(row)); s.commit()
         camera_time = datetime.fromisoformat(snap["as_of"]) if snap["mode"] == "replay" else row.decided_at.replace(tzinfo=timezone.utc)
         background_tasks.add_task(capture, row.id, row.facility_id, camera_time, snap["mode"] == "replay")
-        return {**row.model_dump(mode="json"), "label": "real (recorded in this system)"}
+        return {**row.model_dump(mode="json"), "label": "real (recorded in this system)",
+                "evidence_status": evidence["status"], "decision_basis": basis}
+
+
+def _with_context(rows: list[Decision], s) -> list[dict]:
+    ctx = {c.decision_id: c for c in s.exec(select(DecisionContext).where(DecisionContext.decision_id.in_([r.id for r in rows]))).all()}
+    return [{**r.model_dump(mode="json"), "label": "real (recorded in this system)",
+             "evidence_status": ctx[r.id].evidence_status if r.id in ctx else "",
+             "decision_basis": ctx[r.id].decision_basis if r.id in ctx else ""} for r in rows]
 
 
 @router.get("/decisions")
@@ -303,7 +321,7 @@ def list_decisions(facility_id: str | None = None):
     f = _facility(facility_id)
     with session() as s:
         rows = s.exec(select(Decision).where(Decision.facility_id == f.id).order_by(Decision.decided_at.desc())).all()
-        return [{**r.model_dump(mode="json"), "label": "real (recorded in this system)"} for r in rows]
+        return _with_context(rows, s)
 
 
 @router.get("/record/{snapshot_id}")
@@ -313,7 +331,7 @@ async def decision_record(snapshot_id: str):
     if not snap:
         raise HTTPException(404, "snapshot not found")
     with session() as s:
-        ds = s.exec(select(Decision).where(Decision.snapshot_id == snapshot_id).order_by(Decision.decided_at)).all()
-    return {"snapshot": snapshots.ensure_interpretation(snap), "decisions": [d.model_dump(mode="json") for d in ds],
+        ds = _with_context(s.exec(select(Decision).where(Decision.snapshot_id == snapshot_id).order_by(Decision.decided_at)).all(), s)
+    return {"snapshot": snapshots.ensure_interpretation(snap), "decisions": ds,
             "thresholds_current_sha256": load_thresholds().sha256,
             "thresholds_changed_since": load_thresholds().sha256 != snap["thresholds_sha256"]}
