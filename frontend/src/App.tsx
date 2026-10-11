@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "./api";
 import { AIPanel } from "./components/AIPanel";
 import { AlertsPanel } from "./components/AlertsPanel";
+import { RelevantMetrics, SuggestedAction, useTimeseries } from "./components/DashboardCard";
 import { NotificationsView } from "./components/NotificationsView";
 import { PanelBoundary } from "./components/ErrorBoundary";
 import { GlanceRow } from "./components/GlanceRow";
@@ -9,10 +10,9 @@ import { Header, type Mode, type View } from "./components/Header";
 import { DecisionStep } from "./components/DecisionStep";
 import { AnalogsPanel, RecordTimeline } from "./components/HistoryPanel";
 import { LiveCheckPanel } from "./components/LiveCheckPanel";
-import { RawDataDrawer } from "./components/RawDataDrawer";
 import { ReplayPanel } from "./components/ReplayPanel";
 import { RoadsPanel } from "./components/RoadsPanel";
-import { StatusCard } from "./components/StatusCard";
+import { RawDataDrawer } from "./components/RawDataDrawer";
 import { TechnicalSummary } from "./components/TechnicalDetails";
 import { ThreatPanel } from "./components/ThreatPanel";
 import { ThresholdsView } from "./components/ThresholdsView";
@@ -66,7 +66,7 @@ export default function App() {
             // A failed regeneration keeps the previous good brief on screen.
             const prev = s.ai_addon?.previous;
             const next = addon.status === "pending" ? { status: "failed" as const } : addon;
-            return { ...s, ai_addon: next.status === "failed" && prev?.status === "ok" ? { ...prev, regen_failed: true } as any : next };
+            return { ...s, ai_addon: next.status === "failed" && prev?.status === "ok" ? { ...prev, regen_failed: true } : next };
           });
         }
       } catch { /* keep the template brief */ }
@@ -144,8 +144,11 @@ export default function App() {
           {err && <div role="alert" className="card border-l-4 border-l-[var(--danger)] p-3 text-sm">Could not load: {err}. The last good snapshot (if any) is still shown.</div>}
           {ready && shown ? (
             <div className="cc-stagger space-y-4">
-              <PanelBoundary name="Status"><StatusCard snap={shown} busy={busy}
-                onRefresh={mode === "live" ? () => run(() => api.evaluateLive()) : undefined} /></PanelBoundary>
+              <PanelBoundary name="Suggested action"><SuggestedAction snap={shown} busy={busy}
+                onRefresh={mode === "live" ? () => run(() => api.evaluateLive()) : undefined}
+                onRegenerate={aiEnabled && shown.mode !== "backtest" ? regenerate : undefined}
+                onGoNotify={() => { setView("notifications"); window.scrollTo({ top: 0, behavior: "smooth" }); }} /></PanelBoundary>
+              <PanelBoundary name="Relevant metrics"><RelevantMetrics snap={shown} /></PanelBoundary>
               <PanelBoundary name="At a glance"><GlanceRow snap={shown} onOpen={openSection} /></PanelBoundary>
 
               <h2 className="px-1 pt-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted">More detail, if you want it</h2>
@@ -159,7 +162,7 @@ export default function App() {
               </Section>
               <Section id="charts" title="Forecast charts" open={open.has("charts")} onToggle={() => toggle("charts")}
                 summary="Temperature, wind, ice, snow and precipitation: past 12 hours and next 48">
-                <PanelBoundary name="Timeline"><TimelinePanel snap={shown} /></PanelBoundary>
+                <PanelBoundary name="Timeline"><AllCharts snap={shown} /></PanelBoundary>
               </Section>
               <Section id="roads" title="Roads map & cameras" open={open.has("roads")} onToggle={() => toggle("roads")}
                 summary="Iowa DOT road conditions on commute routes, with live traffic cameras">
@@ -189,4 +192,11 @@ export default function App() {
       </footer>
     </div>
   );
+}
+
+/** All weather charts; the timeseries is fetched only once this section is opened (and shared). */
+function AllCharts({ snap }: { snap: Snapshot }) {
+  const { data, error } = useTimeseries(snap, true);
+  if (error) return <p className="text-sm text-ink2">Chart data could not be loaded: {error}</p>;
+  return data ? <TimelinePanel snap={snap} data={data} /> : <Skeleton className="h-60" />;
 }

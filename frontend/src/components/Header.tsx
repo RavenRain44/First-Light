@@ -39,13 +39,7 @@ export function Header({ snap, mode, setMode, view, setView, demo, theme, toggle
     <header className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button onClick={goToday} className="flex items-center gap-3 text-left" aria-label="Closure Call: go to today">
-          {/* Logo by Casey (main), recolored to the blue/white theme */}
-          <svg viewBox="0 0 40 40" className="h-9 w-9 shrink-0" aria-hidden="true" focusable="false">
-            <circle cx="27" cy="12" r="6" fill="#93c5fd" />
-            <path d="M27 2v2m0 16v2M17 12h2m16 0h2M20 5l1.5 1.5M33 18l1.5 1.5M34 5l-1.5 1.5" stroke="#93c5fd" strokeWidth="2" strokeLinecap="round" />
-            <path d="M11 29a7 7 0 0 1-1-14 10 10 0 0 1 19-1 7.5 7.5 0 0 1 1 15Z" fill="#ffffff" stroke="#1d4ed8" strokeWidth="2" strokeLinejoin="round" />
-            <path d="m14 33-1 3m8-3-1 3m8-3-1 3" stroke="#1d4ed8" strokeWidth="2" strokeLinecap="round" />
-          </svg>
+          <img src="/logo.png" alt="" className="app-logo h-10 w-auto shrink-0" />
           <span className="leading-tight">
             <span className="block text-base font-semibold">Closure Call</span>
             <span className="block text-xs text-muted">USDA Service Center, Ames, IA</span>

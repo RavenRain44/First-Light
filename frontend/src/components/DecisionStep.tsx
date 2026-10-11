@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import type { Posture, Snapshot } from "../types";
 import { CooperBanner, POSTURES, POSTURE_STYLE, PostureBadge, fmtClock, fmtDayLong, fmtTime } from "../util";
-import { plainWhy } from "./StatusCard";
+import { suggestionSentence } from "./DashboardCard";
 
 const NAME_KEY = "cc-decided-by";
 const savedName = () => { try { return localStorage.getItem(NAME_KEY) ?? ""; } catch { return ""; } };
@@ -47,7 +47,7 @@ export function DecisionStep({ snap, onDecided }: { snap: Snapshot; onDecided: (
             </span>
           )}
         </div>
-        <p className="mt-2 max-w-3xl text-ink2">{plainWhy(snap)}</p>
+        <p className="mt-2 max-w-3xl text-ink2">{suggestionSentence(snap)}</p>
 
         {!canDecide ? (
           <p className="mt-5 rounded-lg bg-[var(--surface-2)] px-3 py-2 text-sm">

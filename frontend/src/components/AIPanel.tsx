@@ -26,7 +26,7 @@ export function AIPanel({ snap, onRegenerate }: { snap: Snapshot; onRegenerate?:
     } catch { /* clipboard blocked */ }
   };
   return (
-    <Card title="Decision brief" right={<span className="flex items-center gap-2">{
+    <Card title="Evidence & explanation" right={<span className="flex flex-wrap items-center justify-end gap-2">{
       pending ? (
         <Badge tone="neutral" title="The template brief is shown now; the Akamai brief is being written in the background.">
           <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--accent)]" /> Akamai brief in progress…
@@ -67,7 +67,7 @@ export function AIPanel({ snap, onRegenerate }: { snap: Snapshot; onRegenerate?:
         </ul>
         {!evidence.length && <p className="mt-2 text-sm text-ink2">No weather limit is reached for the work day.</p>}
       </div>
-      {(addon as any)?.regen_failed && (
+      {addon?.regen_failed && (
         <p role="status" className="mt-3 rounded-lg bg-[var(--surface-2)] p-3 text-xs text-ink2">The new Akamai brief could not be produced or verified; the previous brief is still shown.</p>
       )}
       {addon?.status === "failed" && (

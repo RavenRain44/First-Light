@@ -52,6 +52,7 @@ def test_brief_does_not_decide_and_manager_override_is_audited(tmp_path, monkeyp
                 time.sleep(0.05)
             assert addon["status"] == "ok" and addon["model_id"] == "akamai:hackathon-chat"
             assert addon["ai"]["summary"] and addon["ai"]["evidence_rule_ids"]
+            assert addon["ai"]["suggested_reasons"]
             assert addon["ai"]["inference"]["requests"][0]["usage"]["total_tokens"] == 300
             with engine.begin() as c, pytest.raises(DBAPIError, match="append-only"):
                 c.execute(text("UPDATE snapshotinterpretation SET status='failed'"))

@@ -27,6 +27,7 @@ Scope: **Iowa only**, one synthetic facility (USDA Service Center, Ames), two ha
 ## Quick start
 
 Prerequisites: Python 3.11+ (tested on 3.14), Node 18+ (tested on 24).
+The frontend graph tests require Node 22.6+ for built-in TypeScript stripping; Node 24 is recommended.
 
 ```bash
 npm run setup      # dependencies, .env, and historical library for Replay
@@ -120,7 +121,30 @@ day: details, scheduled telework, leave and days off all apply.
 npm test           # Backend tests: interval expansion, units, thresholds and margins, posture timing,
                    # confidence, counterfactuals, analogs, snapshot immutability, AI validation/fallback,
                    # and an end-to-end evaluation of the 2020 derecho from fixtures (offline)
+npm --prefix frontend test       # Chart selection, evidence highlights, missing data and reason citations
+npm --prefix frontend run build  # TypeScript and production bundle
 ```
+
+## Dashboard
+
+The dashboard uses one card with three sections. **Suggested Action** leads with “Due to [reasons], [action],”
+the provider, confidence, decision deadline and urgent safety guidance. The action always comes from the
+recorded rules; the manager accepts or overrides it before any operating instructions are sent.
+
+**Relevant Metrics** shows two charts chosen from the evidence and active hazard. Amber points and line segments
+mark measurements crossing the snapshot's threshold; shading marks the recorded hazard window. Legends and
+captions distinguish threshold evidence from alert context. Observations use solid lines and forecasts dashed
+lines, with source timestamps in tooltips. Missing measurements remain gaps. Each chart initially focuses on
+the relevant period and offers **Show full timeline**.
+Observed wind and temperature match the routine hourly weather.gov report. The separate observed peak-gust
+series supplies the wind threshold evidence; archived snapshots retain their original gust series.
+**Regenerate** asks Akamai to rewrite the same recorded evidence and keeps the previous brief visible while
+the new one is pending. Use **Re-evaluate** to fetch fresh weather first.
+
+**More information** starts collapsed and expands with mouse or keyboard to show the manager form, explanation,
+alerts, all weather charts, roads and cameras, analogs, history and raw evidence. **Review and record decision**
+opens that section and focuses the manager form. Detailed panels load on first expansion; collapsing preserves
+unfinished manager input and reuses the chart data.
 
 ## Environment variables (`.env`)
 
@@ -194,7 +218,7 @@ Evaluations return in under a second with the deterministic template brief. When
 is set, the Akamai brief is generated in the background and saved as a separate, append-only `snapshotinterpretation`
 record; the dashboard shows "Akamai brief in progress…" and swaps it in when ready (typically 4-7 s). The snapshot
 and its integrity hash are never changed. The model writes only the short parts (headline, two-sentence summary,
-uncertainty, up to three evidence rule ids, alert one-liners, about 120 output tokens); the paste-ready rationale,
+uncertainty, up to three cited reason phrases and evidence rule ids, and alert one-liners, capped at 700 output tokens); the paste-ready rationale,
 "what would change" and watch items always come from the rules. `GET /api/snapshot/{id}/interpretation` returns
 `pending | ok | failed | none`.
 

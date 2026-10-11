@@ -100,6 +100,7 @@ export interface Interpretation {
   // Optional so previously recorded immutable snapshots still render.
   summary?: string;
   evidence_rule_ids?: string[];
+  suggested_reasons?: { rule_id: string; text: string }[];
   uncertainty?: string;
   rationale_paragraph: string;
   what_would_change: string[];
@@ -194,6 +195,7 @@ export interface AiAddon {
   ai?: Interpretation & Record<string, any>;
   /** While a regeneration runs, the brief that is still on screen. */
   previous?: AiAddon;
+  regen_failed?: boolean;
 }
 
 export type ReadinessLevel = "WHITE" | "YELLOW" | "ORANGE" | "RED";
@@ -243,4 +245,14 @@ export interface Camera {
   corridor_name: string | null;
   updated: string;
   views: CameraView[];
+}
+
+export interface Timeseries {
+  snapshot_id: string;
+  as_of: string;
+  timezone: string;
+  rows: ({ t: string } & Record<string, number | string | null>)[];
+  meta: Record<string, { source: string; source_time: string | null; fetched_at: string | null; source_url: string; note?: string }>;
+  threshold_lines: { chart: string; value: number; label: string; rule_id: string; verified: boolean; level: string }[];
+  windows: { kind: string; label: string; start: string; end: string }[];
 }

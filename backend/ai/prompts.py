@@ -3,7 +3,15 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
-PROMPT_VERSION = "akamai-brief-v3.0-draft"
+PROMPT_VERSION = "akamai-brief-v3.1-reasons"
+
+
+class SuggestedReason(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    rule_id: str = Field(description="Triggered rule supporting this reason")
+    text: str = Field(min_length=1, max_length=180,
+                      description="Short noun phrase completing 'Due to ...'; evidence only, no action or instructions")
 
 
 class Interpretation(BaseModel):
@@ -12,6 +20,7 @@ class Interpretation(BaseModel):
     headline: str = Field(pattern=r"^\S+(?:\s+\S+){0,14}$", description="Short headline, ideally under 10 words, naming the posture; at most 15 words")
     summary: str = Field(default="", description="Exactly two short sentences: the posture and main reason, then the affected work/commute window. Details are displayed separately.")
     evidence_rule_ids: list[str] = Field(default_factory=list, description="Up to three triggered rule IDs supporting the recommendation, strongest first")
+    suggested_reasons: list[SuggestedReason] = Field(default_factory=list, max_length=3)
     uncertainty: str = Field(default="", description="One plain-language sentence naming the computed confidence and its weakest factor")
     rationale_paragraph: str = Field(
         description="One paste-ready paragraph for a manager's email: names the posture, the key inputs with their "
@@ -31,6 +40,8 @@ class BriefDraft(BaseModel):
     summary: str = Field(description="Exactly two short sentences: the posture and main reason, then the affected work/commute window.")
     uncertainty: str = Field(default="", description="One plain-language sentence naming the computed confidence and its weakest factor")
     evidence_rule_ids: list[str] = Field(default_factory=list, description="Up to three triggered rule IDs supporting the recommendation, strongest first")
+    suggested_reasons: list[SuggestedReason] = Field(default_factory=list, max_length=3,
+        description="Up to three short evidence phrases for 'Due to [reasons], do [action]'; use computed_brief reason IDs")
     alert_summaries: dict[str, str] = Field(default_factory=dict, description="NWS alert id -> one-line plain summary")
 
 class WeatherDraft(BaseModel):
@@ -67,9 +78,12 @@ Hard rules:
 13. The computed_brief is a factual draft from the rules. Rewrite its headline, summary and uncertainty for clarity
     without introducing new facts. Evidence values are displayed separately; do not repeat every number. Use the
     supplied alert IDs as keys exactly, or omit a summary you cannot ground.
+14. suggested_reasons are short evidence phrases, each linked to a rule ID from computed_brief.suggested_reasons.
+    Rewrite those phrases only. Never put an action, recommendation or reporting instruction in a reason. Keep
+    the original facts, numbers and severity. Return an empty list when there are no computed reasons.
 """
 
 USER_PROMPT = """Write the short parts of a decision brief for the current snapshot: headline, two-sentence summary,
-uncertainty, up to three evidence rule IDs, and one-line alert summaries. The rationale paragraph, what-would-change
+uncertainty, up to three evidence rule IDs, suggested_reasons, and one-line alert summaries. The rationale paragraph, what-would-change
 and watch items are produced by the rules. The facility manager makes and records the final decision.
 Return only the fields in the JSON schema."""
