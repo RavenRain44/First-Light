@@ -88,8 +88,9 @@ the recorded decision or weather snapshot.
 
 ## Saved camera evidence
 
-New human decisions start a background capture of the facility's camera set
-(the same nearest 20 cameras used by the dashboard). One newest available frame
+New human decisions start a background capture of the facility's camera set,
+including nearby Iowa DOT traffic-camera stills, ISU/KCCI webcams, and RWIS weather
+cameras, using the same location selection as the live dashboard. One newest available frame
 at or before the decision time is saved per angle at each camera location, including its source timestamp
 and URL. Replay decisions capture against the replay snapshot time. Image bytes
 and camera metadata persist in SQLite independently of the live camera cache.
@@ -99,3 +100,9 @@ Camera stills may be several minutes older than the decision; they are not exact
 instantaneous photos. Unavailable frames are recorded as unavailable. A server
 restart during capture marks the archive interrupted rather than capturing later
 images. Existing decisions have no archive unless one was captured when recorded.
+
+Live traffic feeds are saved using their provider-published JPEG snapshot endpoint,
+not by recording a video. Each saved traffic photo records retrieval time (the
+provider does not supply a reliable source-frame timestamp). Online capture rejects
+stale cached traffic photos if a fresh fetch fails. Replay decisions do not fetch
+current traffic photos. Historical objects omit live stream links entirely.

@@ -139,6 +139,7 @@ export default function App() {
       {savedWeather && <div role="status" className="card p-3 text-sm">Saved weather snapshot · {snap?.snapshot_id}. Live updates are paused while reviewing this record. <button className="btn ml-2" onClick={()=>{savedWeatherRef.current=false;setSavedWeather(false);setMode('live');}}>Return to live weather</button></div>}
       {view === "notifications" ? (
         <div className="cc-fade space-y-5">
+          {err && <div role="alert" className="card p-3 text-sm">Could not load the app: {err}. <button className="btn ml-2" onClick={()=>run(()=>api.latest())}>Retry</button></div>}
           {shown ? <PanelBoundary name="Decision"><DecisionStep snap={shown} onDecided={(id) => { setNotificationDecision(id); if (id) setRecordKey((k) => k + 1); }} /></PanelBoundary>
             : <Skeleton className="h-48" />}
           {notificationDecision !== null && <NotificationsView key={notificationDecision} decisionId={notificationDecision} onBack={() => setView("today")} onSnapshot={(id, decisionId)=>{setSavedDecisionId(decisionId); savedWeatherRef.current=true;setSavedWeather(true);setView("today");run(()=>api.snapshot(id));}} />}

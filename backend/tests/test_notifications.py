@@ -449,13 +449,16 @@ def test_decision_camera_frames_are_saved_once_and_survive_restart(env, monkeypa
         s.add(ca.pending(s.get(Decision, did))); s.commit()
     calls = []
     async def cameras(*args, **kwargs):
-        return ([{'id':'cam1','name':'Camera one','views':[
+        return ([{'id':'cam1','name':'Camera one','km':1,'views':[
             {'url':'older','time':'2026-10-12T08:50:00+00:00','view':0},
             {'url':'superseded-angle','time':'2026-10-12T08:40:00+00:00','view':0},
             {'url':'latest','time':'2026-10-12T08:59:00+00:00','view':1},
             {'url':'future','time':'2026-10-12T09:01:00+00:00','view':2}]},
-            {'id':'cam2','name':'Camera two','views':[{'url':'missing','time':'2026-10-12T08:59:00+00:00','view':0}]}], None)
+            {'id':'cam2','name':'Camera two','km':2,'views':[{'url':'missing','time':'2026-10-12T08:59:00+00:00','view':0}]}], None)
     async def image(url): calls.append(url); return b'saved-image-bytes' if url in {'older','latest'} else None
+    async def empty(*args, **kwargs): return []
+    monkeypatch.setattr(ca, 'fetch_webcams', empty)
+    monkeypatch.setattr(ca, 'fetch_traffic_cameras', empty)
     monkeypatch.setattr(ca,'fetch_cameras',cameras)
     monkeypatch.setattr(ca,'get_image',image)
     monkeypatch.setattr(ca,'get_facility',lambda _:FAC)
@@ -480,3 +483,60 @@ def test_interrupted_camera_capture_never_fetches_new_images(env):
         s.add(ca.pending(s.get(Decision,did)));s.commit()
     ca.abandon_interrupted()
     assert ca.saved(did)['status']=='unavailable'
+
+
+def test_live_traffic_photo_saved_without_live_links_or_stale_fallback(env, monkeypatch):
+    from app import camera_archive as ca
+    did=decision()
+    with db.session() as s:
+        s.add(ca.pending(s.get(Decision,did)));s.commit()
+    async def empty(*args, **kwargs): return []
+    async def traffic(*args, **kwargs):
+        return ([{'id':'traffic1','name':'Near facility','kind':'traffic','km':1,
+                  'stream_url':'live-stream', 'snapshot_url':'mutable-photo',
+                  'views':[{'view':0,'url':'mutable-photo','time':'2026-10-12T09:01:00+00:00','label':'Live'}]}],None)
+    calls=[]
+    async def image(url, allow_stale=True):
+        calls.append((url,allow_stale));return b'current-photo'
+    monkeypatch.setattr(ca,'fetch_cameras',empty)
+    monkeypatch.setattr(ca,'fetch_webcams',empty)
+    monkeypatch.setattr(ca,'fetch_traffic_cameras',traffic)
+    monkeypatch.setattr(ca,'get_image',image)
+    monkeypatch.setattr(ca,'get_facility',lambda _:FAC)
+    monkeypatch.setattr(ca.settings,'demo_mode',False)
+    asyncio.run(ca.capture(did,'F',NOW))
+    cam=ca.saved(did)['cameras'][0]
+    assert calls==[('mutable-photo',False)]
+    assert 'stream_url' not in cam and 'snapshot_url' not in cam
+    assert cam['views'][0]['url'].startswith('/api/cameras/saved-frame/')
+    assert cam['views'][0]['timestamp_kind']=='retrieved_at'
+    assert cam['views'][0]['source_url']=='mutable-photo'
+    asyncio.run(ca.capture(did,'F',NOW))
+    assert len(calls)==1
+
+
+def test_cancelled_capture_cleans_up_image_tasks(env, monkeypatch):
+    from app import camera_archive as ca
+    did=decision()
+    with db.session() as s:
+        s.add(ca.pending(s.get(Decision,did)));s.commit()
+    async def empty(*a,**kw):return []
+    async def cams(*a,**kw):
+        return ([{'id':'cam','name':'cam','km':1,'views':[{'view':0,'url':'image','time':NOW.isoformat()}]}],None)
+    monkeypatch.setattr(ca,'fetch_cameras',cams)
+    monkeypatch.setattr(ca,'fetch_webcams',empty)
+    monkeypatch.setattr(ca,'fetch_traffic_cameras',empty)
+    monkeypatch.setattr(ca,'get_facility',lambda _:FAC)
+    async def verify():
+        started=asyncio.Event(); stopped=asyncio.Event()
+        async def image(*a,**kw):
+            started.set()
+            try: await asyncio.Event().wait()
+            finally: stopped.set()
+        monkeypatch.setattr(ca,'get_image',image)
+        task=asyncio.create_task(ca.capture(did,'F',NOW))
+        await asyncio.wait_for(started.wait(),2)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):await task
+        assert stopped.is_set()
+    asyncio.run(verify())
