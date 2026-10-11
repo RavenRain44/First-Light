@@ -5,9 +5,8 @@ import { Badge, fmtTime, readinessColor } from "../util";
 export type Mode = "live" | "replay" | "livecheck";
 export type View = "today" | "notifications" | "decisions" | "thresholds";
 
-const TOOLS: { id: "replay" | "livecheck" | "thresholds"; label: string; hint: string }[] = [
+const TOOLS: { id: "replay" | "thresholds"; label: string; hint: string }[] = [
   { id: "replay", label: "Replay a past storm", hint: "See what the system would have said during a real past event" },
-  { id: "livecheck", label: "Try another location", hint: "Run a what-if check for an active alert anywhere in the US" },
   { id: "thresholds", label: "Thresholds & backtest", hint: "The weather limits behind each recommendation, and how they scored on past storms" },
 ];
 

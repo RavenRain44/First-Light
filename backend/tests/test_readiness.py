@@ -63,3 +63,19 @@ def test_readiness_never_changes_posture():
     as_of = local(2026, 1, 13, 3)
     inputs = [alert_input("Winter Storm Warning", local(2026, 1, 13, 5), local(2026, 1, 13, 9))]
     assert run(inputs, as_of)[3].posture == ready(inputs, as_of)[1].posture
+
+
+def test_sky_context_never_changes_signals_confidence_posture_or_readiness():
+    as_of = local(2026, 1, 13, 3)
+    inputs = [alert_input("Winter Storm Warning", local(2026, 1, 13, 5), local(2026, 1, 13, 9)),
+              series_input("fcst.wind_gust_mph", "wind_gust_mph", "mph", [(as_of, 20.0)])]
+    sky = series_input("fcst.sky_cover_pct", "sky_cover_pct", "%",
+                       [(as_of + timedelta(hours=i), 95.0) for i in range(24)], role="context")
+    sky.source_time = as_of - timedelta(days=30)  # even stale display context cannot reduce weather confidence
+    baseline = run(inputs, as_of)
+    enriched = run(inputs + [sky], as_of)
+    assert baseline == enriched
+    statuses = [SourceStatus(adapter=n, label=n, status="ok") for n in conf.EXPECTED["live"]]
+    ctx, rr, hz, _ = baseline
+    assert conf.compute(statuses, inputs, ctx, rr, hz, "live") == conf.compute(statuses, inputs + [sky], ctx, rr, hz, "live")
+    assert ready(inputs, as_of) == ready(inputs + [sky], as_of)

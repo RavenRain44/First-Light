@@ -4,9 +4,11 @@ from __future__ import annotations
 import asyncio
 import json
 import hashlib
+import os
 import re
 from contextlib import contextmanager
 from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 from typing import Protocol
 from uuid import uuid4
 from zoneinfo import ZoneInfo
@@ -23,7 +25,8 @@ from app.db import session
 from app.facility import employee_on, load_employees
 from app.models import Decision, NotificationAudit, NotificationClock, NotificationPackage
 
-CONTACT_FILE = settings.data_dir.parent / "notification-contacts.local.json"
+# Real-test contacts (git- and Docker-ignored). The production container reads them from a private host folder.
+CONTACT_FILE = Path(os.environ.get("NOTIFICATION_CONTACTS_FILE") or settings.data_dir.parent / "notification-contacts.local.json")
 LABELS = {"NORMAL": "Normal operations", "CLOSED": "Closed", "TELEWORK": "Unscheduled leave / telework",
           "DELAYED_ARRIVAL": "Delayed arrival", "EARLY_DISMISSAL": "Early dismissal"}
 

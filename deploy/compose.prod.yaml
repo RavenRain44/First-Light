@@ -12,6 +12,7 @@ services:
       MODEL_PROVIDER: akamai
       DATABASE_PATH: /app/backend/var/closurecall.db
       HTTP_CACHE_DIR: /app/backend/var/http_cache
+      NOTIFICATION_CONTACTS_FILE: /app/private/notification-contacts.local.json
     command:
       - sh
       - -c
@@ -20,6 +21,7 @@ services:
       - "127.0.0.1:8000:8000"  # for health checks on the server itself; the public goes through Caddy
     volumes:
       - closurecall-data:/app/backend/var
+      - ./private:/app/private:ro  # real-test email/SMS contacts; contents are git-ignored
     restart: unless-stopped
     init: true
     stop_grace_period: 60s  # time for the final object-storage sync and database backup

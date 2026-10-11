@@ -20,9 +20,10 @@ GRID_ELEMENTS = {
     "snowfallAmount": "snow_in",
     "quantitativePrecipitation": "qpf_in",
     "probabilityOfPrecipitation": "pop_pct",
+    "skyCover": "sky_cover_pct",
 }
 UNITS = {"wind_gust_mph": "mph", "wind_speed_mph": "mph", "temp_f": "degF", "apparent_temp_f": "degF",
-         "ice_in": "in", "snow_in": "in", "qpf_in": "in", "pop_pct": "%"}
+         "ice_in": "in", "snow_in": "in", "qpf_in": "in", "pop_pct": "%", "sky_cover_pct": "%"}
 
 
 def _dt(s: str | None) -> datetime | None:
@@ -138,7 +139,9 @@ class NWSGridAdapter(Adapter):
                    for t, v in expand_grid_element(element, el["values"], el.get("uom"))
                    if start <= t < end]
             out.append(NormalizedInput(
-                id=f"fcst.{metric}", kind="series", role="forecast", metric=metric, unit=UNITS[metric],
+                # Sky cover is presentation context, excluded from scoring and confidence.
+                id=f"fcst.{metric}", kind="series", metric=metric, unit=UNITS[metric],
+                role="context" if metric == "sky_cover_pct" else "forecast",
                 series=pts, source=f"NWS gridpoints {meta['gridId']}/{meta['gridX']},{meta['gridY']}",
                 source_url=url, fetched_at=r.fetched_at, source_time=update_time,
                 note=f"{element} ({el.get('uom')}) expanded from ISO-8601 intervals to hourly",

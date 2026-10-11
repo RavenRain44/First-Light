@@ -26,6 +26,7 @@ export function BacktestingPanel({evaluationTime='04:00'}: {evaluationTime?: str
         <h3 className="font-semibold">Observed-impact alignment · {kind}</h3>
         <p>Balanced accuracy: <strong>{pct(m.balanced_accuracy)}</strong> · Ordinary accuracy: {pct(m.accuracy)} ({m.correct}/{m.n})</p>
         <p>Precision {pct(m.precision)} · Recall {pct(m.recall)} · False alarms {m.confusion.false_alarm} · Missed disruptions {m.confusion.missed_disruption}</p>
+        <p>False-alarm rate {pct(m.specificity == null ? null : 1 - m.specificity)} of {m.confusion.false_alarm + m.confusion.true_negative} non-disruptive days · Missed-disruption rate {pct(m.recall == null ? null : 1 - m.recall)} of {m.confusion.missed_disruption + m.confusion.true_positive} disruptive days. Trade-offs and assumed costs: Today → Errors & risk trade-offs.</p>
         <p className="text-xs text-muted">{m.status}; local station weather labels, not actual closure accuracy. Missing outcome days excluded.</p>
         <details className="mt-2"><summary className="cursor-pointer">Confusion matrix & uncertainty</summary><p>True disruptions detected: {m.confusion.true_positive}; normal days correctly identified: {m.confusion.true_negative}.</p><p>95% Wilson interval for ordinary accuracy: {m.accuracy_95pct_wilson ? m.accuracy_95pct_wilson.map(pct).join('–') : 'Unavailable'}. Storm clustering is not corrected.</p></details>
       </section>)}</div>

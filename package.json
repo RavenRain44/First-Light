@@ -10,7 +10,8 @@
     "build:history": "node scripts/run-api.mjs --history",
     "build:daily-history": "node scripts/run-api.mjs --daily-history",
     "cache:cameras": "node scripts/run-api.mjs --cameras",
-    "seed:examples": "node scripts/run-api.mjs --examples"
+    "seed:examples": "node scripts/run-api.mjs --examples",
+    "backtest:ai": "node scripts/run-api.mjs --backtest-ai"
   },
   "devDependencies": {
     "concurrently": "8.2.2"

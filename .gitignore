@@ -14,6 +14,8 @@ build/
 .next/
 
 coverage/
+playwright-report/
+test-results/
 .DS_Store
 
 # Closure Call
@@ -28,3 +30,7 @@ backend/notification-contacts.local.json
 
 # Production manager login for the Caddy front door (written by deploy/scripts/setup-linode.sh)
 deploy/manager-auth
+
+# Server-only private files mounted into the production container
+deploy/private/*
+!deploy/private/README

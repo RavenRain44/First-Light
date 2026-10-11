@@ -15,7 +15,7 @@ from app.notifications import delivery_loop
 from app.config import REPO_DIR, settings
 from app.db import get_engine
 from app.facility import load_facility
-from app.routers import backtesting, cameras, core, history, livecheck, notifications, past
+from app.routers import backtesting, cameras, core, history, livecheck, notifications, past, risk
 from app.routers import storage as storage_routes
 
 log = logging.getLogger("closurecall")
@@ -72,6 +72,7 @@ app.include_router(livecheck.router)
 app.include_router(cameras.router)
 app.include_router(notifications.router)
 app.include_router(past.router)
+app.include_router(risk.router)
 app.include_router(storage_routes.router)
 
 # Production container serves the built dashboard and API from one origin.

@@ -42,6 +42,8 @@ export const api = {
   thresholds: () => req<any>("/api/thresholds"),
   history: () => req<any[]>("/api/snapshots?limit=40"),
   decisions: () => req<Decision[]>("/api/decisions"),
+  riskTradeoffs: (snapshotId?: string) => req<import("./tradeoffs").RiskTradeoffs>(
+    `/api/risk-tradeoffs${snapshotId ? `?snapshot_id=${encodeURIComponent(snapshotId)}` : ""}`),
   pastDecisions: (snapshotId?: string) => req<{ decisions: import("./types").PastDecision[]; reviewing: number[] }>(
     `/api/past-decisions${snapshotId ? `?snapshot_id=${encodeURIComponent(snapshotId)}` : ""}`),
   reviewDecision: (id: number, body: { reviewer: string; verdict: import("./types").Verdict; note?: string }) =>
