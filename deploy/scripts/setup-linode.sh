@@ -92,8 +92,10 @@ basic_auth @manager_actions {
 AUTH
   else
     # A comment plus a harmless directive (an empty import file only draws a warning, but this is unambiguous).
-    printf '%s
-' "# No manager login: anyone with the address can record decisions and send notifications."       "header -X-Powered-By" > deploy/manager-auth
+    {
+      echo "# No manager login: anyone with the address can record decisions and send notifications."
+      echo "header -X-Powered-By"
+    } > deploy/manager-auth
   fi
   chmod 644 deploy/manager-auth  # a bcrypt hash at most; Caddy's container reads it
 fi
