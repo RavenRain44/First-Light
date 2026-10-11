@@ -1,5 +1,31 @@
 export type Posture = "NORMAL" | "DELAYED_ARRIVAL" | "EARLY_DISMISSAL" | "TELEWORK" | "CLOSED";
 
+export interface ReplayPoint {
+  as_of: string;
+  posture: Posture | null;
+  readiness: ReadinessLevel | null;
+  confidence?: string;
+  coverage?: "complete" | "partial" | "unavailable";
+  unavailable_sources?: string[];
+}
+
+export interface ReplayTimeline {
+  as_of: string;
+  timezone: string;
+  selected_index: number;
+  timeline: ReplayPoint[];
+}
+
+export interface ReplayEvent {
+  id: string;
+  name: string;
+  summary: string;
+  timeline: ReplayPoint[];
+  verification: { checks: { product: string; ugc: string; verified: boolean; events: { link?: string }[] }[] };
+  outcome: { summary: string; amw_obs_note?: string };
+  backtest: { at_0400_local: { as_of: string; posture: Posture }; verdict: string; label: string };
+}
+
 export interface Point { t: string; v: number | null }
 
 export interface NormalizedInput {

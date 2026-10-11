@@ -115,25 +115,39 @@ For builds behind an HTTPS inspection proxy, supply the trusted CA bundle with
 `docker build --secret id=build_ca,src=/path/to/trusted-ca-bundle.pem -f deploy/Dockerfile .`.
 The optional build secret preserves TLS verification and is not retained in the image.
 
-1. In Akamai Cloud Manager, verify the promotional credit and select a small Linux Linode with enough memory for
-   Docker builds (2 GB RAM is a reasonable starting point; check current pricing).
-2. Install Docker Engine and Compose using the official instructions for that OS. Clone this branch and create
-   an owner-readable `.env` containing the team key. Keep it out of Git and screenshots.
-3. From the checkout root, run:
+The deployment runs **live** weather (re-evaluated every 10 minutes) behind a **Caddy front door** with automatic
+HTTPS. Anyone with the address can view the dashboard; recording decisions, notifications and storage actions ask
+for a manager login (HTTP basic auth at Caddy).
+
+1. In Akamai Cloud Manager, check the promotional credit and current pricing, then **Create → Linode**:
+   Ubuntu 24.04 LTS, region **Chicago (us-ord)** (same as the bucket), a shared-CPU plan with 2-4 GB RAM, a root
+   password and your SSH key. Under **Firewall**, create one that allows inbound TCP 80 and 443 from anywhere and
+   TCP 22 from your own IP only.
+2. SSH in and run:
 
    ```bash
-   docker compose -f deploy/compose.prod.yaml up -d --build
-   curl --fail http://127.0.0.1:8000/api/health
+   git clone -b integration https://github.com/RavenRain44/hack-midwest-2026.git
+   cd hack-midwest-2026
+   sudo bash deploy/scripts/setup-linode.sh
    ```
 
-4. The app binds to loopback on port 8000. Configure a TLS reverse proxy such as Caddy or nginx for your domain,
-   forwarding to that port. Allow only HTTPS/HTTP and restricted SSH through the Linode Cloud Firewall. Do not
-   expose an unauthenticated decision-recording app broadly; use demo access controls at the reverse proxy.
-5. Verify the dashboard, generate one brief and record a synthetic manager decision. Show the Linode in Cloud
-   Manager and the successful Akamai provider badge to judges. `/api/health` only reports configuration; it does
-   not establish live inference access.
-6. Export the SQLite volume before deleting resources. Remove the Linode and any extra resources after judging;
-   powering off the VM does not stop all billing. Review the workshop's costs/cleanup guide before deletion.
+   The script installs Docker (and a swap file on small plans), writes `.env` (live weather, Akamai key, Object
+   Storage keys with no `OBJ_PREFIX`), asks for a manager username and password (stored only as a bcrypt hash in
+   `deploy/manager-auth`), builds, starts and prints the address.
+3. **Address.** With no argument the site uses the Linode's free reverse-DNS hostname (shown on the Linode's
+   **Network** tab, like `203-0-113-5.ip.linodeusercontent.com`), or `203-0-113-5.sslip.io` as a fallback. For a
+   friendlier name, buy a domain from any registrar, add it in **Cloud Manager → Domains** (free DNS) with an
+   **A record** pointing to the Linode's IPv4 address, set the registrar's nameservers to `ns1.linode.com` …
+   `ns5.linode.com`, wait for DNS, then run `sudo bash deploy/scripts/setup-linode.sh your-domain.org`.
+   Caddy obtains the HTTPS certificate on the first visit.
+4. Verify from a phone: the dashboard loads, the Akamai brief appears, recording a decision asks for the manager
+   login, and **Technical details → Cloud copy** shows the log and camera frames. In Cloud Manager, the Linode's
+   **Analytics** tab shows CPU and traffic, and **Object Storage → Buckets** lists the mirrored files (top level,
+   not `dev/`).
+5. Update to the latest code: `git pull && sudo docker compose -f deploy/compose.prod.yaml up -d --build`.
+   Logs: `sudo docker compose -f deploy/compose.prod.yaml logs -f app`.
+6. After the event: confirm `backups/closurecall-latest.db` in the bucket, then delete the Linode (powering it off
+   does not stop billing), the domain record and the bucket's objects, and revoke the Object Storage key.
 
 ## Object storage
 

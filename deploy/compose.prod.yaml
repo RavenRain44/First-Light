@@ -1,3 +1,6 @@
+# Production: the app plus a Caddy front door with HTTPS. Settings come from the repo-root .env
+# (deploy/scripts/setup-linode.sh writes it). Run from the repo root:
+#   docker compose -f deploy/compose.prod.yaml up -d --build
 services:
   app:
     build:
@@ -7,22 +10,38 @@ services:
       - ../.env
     environment:
       MODEL_PROVIDER: akamai
-      # Cached weather makes the judging demo repeatable; AI still calls Akamai.
-      DEMO_MODE: "true"
-      STRANDS_FALLBACK_ENABLED: "${STRANDS_FALLBACK_ENABLED:-true}"
-      STRANDS_MODEL_ID: "${STRANDS_MODEL_ID:-global.anthropic.claude-sonnet-4-6}"
-      AWS_REGION: "${AWS_REGION:-us-east-1}"
       DATABASE_PATH: /app/backend/var/closurecall.db
       HTTP_CACHE_DIR: /app/backend/var/http_cache
     command:
       - sh
       - -c
-      - "mkdir -p var/http_cache && cp -n fixtures/http_cache/* var/http_cache/ && exec python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
+      - "mkdir -p var/http_cache && cp -n fixtures/http_cache/* var/http_cache/ && exec python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*'"
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:8000:8000"  # for health checks on the server itself; the public goes through Caddy
     volumes:
       - closurecall-data:/app/backend/var
     restart: unless-stopped
     init: true
+    stop_grace_period: 60s  # time for the final object-storage sync and database backup
+
+  caddy:
+    image: caddy:2.8.4
+    depends_on:
+      - app
+    env_file:
+      - ../.env  # SITE_ADDRESS
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./manager-auth:/etc/caddy/manager-auth:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    restart: unless-stopped
+
 volumes:
   closurecall-data:
+  caddy-data:
+  caddy-config:

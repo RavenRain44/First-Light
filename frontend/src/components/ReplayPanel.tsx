@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
+import { LegacyReplayPanel } from "./LegacyReplayPanel";
 import { api } from "../api";
 import type { Snapshot } from "../types";
 import { Card, fmtTime } from "../util";
 import { BacktestingPanel } from "./BacktestingPanel";
 
-export function ReplayPanel({ onSnapshot, busy, setBusy }: {
+function HistoricalReplayPanel({ onSnapshot, busy, setBusy }: {
   onSnapshot: (s: Snapshot | null) => void; busy: boolean; setBusy: (b: boolean) => void; current?: Snapshot | null;
 }) {
   const [events,setEvents]=useState<any[]>([]);
@@ -49,4 +50,9 @@ export function ReplayPanel({ onSnapshot, busy, setBusy }: {
       <details className="mt-2"><summary className="cursor-pointer">Coverage, sources & local closure evidence</summary><ul>{[...(result.missing??[]),...(result.assumptions??[])].map((s:string)=><li key={s}>{s}</li>)}</ul>{result.source_coverage?.map((s:any)=><p key={s.adapter}>{s.adapter}: {s.status} {s.detail}</p>)}{result.provenance&&<a href={result.provenance.url} className="underline" target="_blank" rel="noreferrer">AMW source archive</a>}<ul>{result.proxy_records?.map((r:any,i:number)=><li key={i}>{r.institution}: {r.status} · <a className="underline" href={r.source_url} target="_blank" rel="noreferrer">Evidence</a></li>)}</ul>{!result.proxy_records?.length&&<p>No documented local operating decision for this date; operating status is unknown.</p>}</details>
     </div>}
   </Card><details><summary className="cursor-pointer text-sm font-semibold">Multi-year scores & build progress</summary><div className="mt-3"><BacktestingPanel key={result?.id??clock} evaluationTime={clock} /></div></details></div>;
+}
+
+export function ReplayPanel(props: {onSnapshot: (s: Snapshot | null) => void; busy: boolean; setBusy: (b: boolean) => void; current?: Snapshot | null}) {
+  const [timeline, setTimeline] = useState(false);
+  return <div><div className="mb-3 flex gap-2"><button className="btn" disabled={!timeline} onClick={() => {props.onSnapshot(null); props.setBusy(false); setTimeline(false);}}>Date search & multi-year scores</button><button className="btn" disabled={timeline} onClick={() => {props.onSnapshot(null); props.setBusy(false); setTimeline(true);}}>Curated storm timeline</button></div>{timeline ? <LegacyReplayPanel {...props} /> : <HistoricalReplayPanel {...props} />}</div>;
 }
