@@ -66,3 +66,20 @@ async def image(u: str = Query(..., description="IEM camera image URL")):
         raise HTTPException(404, "image unavailable")
     # Archived frames never change, so browsers may keep them.
     return Response(content=data, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=86400"})
+
+
+@router.get("/decision/{decision_id}")
+def decision_cameras(decision_id: int):
+    from app.camera_archive import saved
+    return saved(decision_id)
+
+
+@router.get("/saved-frame/{frame_id}")
+def saved_frame(frame_id: str):
+    from app.db import session
+    from app.models import DecisionCameraFrame
+    with session() as s:
+        row = s.get(DecisionCameraFrame, frame_id)
+        if not row:
+            raise HTTPException(404, "Saved camera frame unavailable")
+        return Response(content=row.image, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=31536000, immutable"})

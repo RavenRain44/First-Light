@@ -26,7 +26,8 @@ export const api = {
   roads: (as_of?: string) => req<any>(`/api/roads${as_of ? `?as_of=${encodeURIComponent(as_of)}` : ""}`),
   cameras: (as_of?: string) => req<{ status: string; detail: string | null; as_of: string; cameras: import("./types").Camera[]; note: string; source_url?: string; fetched_at?: string }>(
     `/api/cameras${as_of ? `?as_of=${encodeURIComponent(as_of)}` : ""}`),
-  cameraImage: (url: string) => `/api/cameras/image?u=${encodeURIComponent(url)}`,
+  decisionCameras: (id: number) => req<any>(`/api/cameras/decision/${id}`),
+  cameraImage: (url: string) => url.startsWith("/api/cameras/saved-frame/") ? url : `/api/cameras/image?u=${encodeURIComponent(url)}`,
   thresholds: () => req<any>("/api/thresholds"),
   history: () => req<any[]>("/api/snapshots?limit=40"),
   decisions: () => req<Decision[]>("/api/decisions"),

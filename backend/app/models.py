@@ -107,3 +107,14 @@ class NotificationAudit(SQLModel, table=True):
     actor: str
     action: str
     detail_json: str
+
+
+class DecisionCameraArchive(SQLModel, table=True):
+    decision_id: int = Field(primary_key=True, foreign_key="decision.id")
+    manifest_json: str
+
+
+class DecisionCameraFrame(SQLModel, table=True):
+    id: str = Field(primary_key=True)
+    decision_id: int = Field(index=True, foreign_key="decision.id")
+    image: bytes

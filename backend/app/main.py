@@ -33,6 +33,8 @@ async def _refresh_loop():
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI):
     get_engine()
+    from app.camera_archive import abandon_interrupted
+    abandon_interrupted()
     task = asyncio.create_task(_refresh_loop()) if settings.refresh_interval_seconds > 0 and not settings.demo_mode else None
     delivery_task = asyncio.create_task(delivery_loop())
     yield

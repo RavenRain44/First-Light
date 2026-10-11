@@ -145,67 +145,53 @@ function ChannelPills({ channels }: { channels: string[] }) {
   ))}</span>;
 }
 
-/** One recipient group: counts up front, a searchable/scrollable recipient table on demand. */
-function GroupCard({ g, p, update }: { g: any; p: any; update: (id: string, patch: any) => void }) {
+/** Shared message, group-specific instructions, and one recipient list. */
+function MessageComposer({ groups, p, update }: { groups: any[]; p: any; update: (id: string, patch: any) => void }) {
   const [q, setQ] = useState("");
-  const t = tally([g]);
-  const rows = g.recipients.filter((r: any) => `${r.name} ${r.job_role ?? ""} ${r.division ?? ""}`.toLowerCase().includes(q.toLowerCase()));
-  const all = g.recipient_ids.length === g.recipients.length;
-  return (
-    <section className="card cc-rise p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h3 className="font-semibold">{g.title}</h3>
-          <p className="mt-0.5 text-xs text-muted">{g.kind === "awareness" ? "Email at each person's work start" : "Sent immediately"} · {g.recipient_ids.length} of {g.recipients.length} selected</p>
-        </div>
-        <div className="flex flex-wrap gap-2 text-xs">
-          <span className="rounded-full bg-[var(--surface-2)] px-2 py-1"><strong className="tabnum">{t.sms}</strong> texts</span>
-          <span className="rounded-full bg-[var(--surface-2)] px-2 py-1"><strong className="tabnum">{t.email}</strong> emails</span>
-          {t.access > 0 && <span className="rounded-full bg-[var(--tint)] px-2 py-1 text-[var(--accent)]">{t.access} accessibility follow-up</span>}
-        </div>
+  if (!groups.length) return <p className="text-sm">No recipient groups for this decision.</p>;
+  const first = groups[0];
+  const selected = groups.reduce((n,g)=>n + g.recipient_ids.length,0);
+  const total = groups.reduce((n,g)=>n + g.recipients.length,0);
+  const rows = groups.flatMap(g=>g.recipients.map((r:any)=>({...r, group:g}))).filter(r=>`${r.name} ${r.job_role ?? ''} ${r.division ?? ''} ${r.group.title}`.toLowerCase().includes(q.toLowerCase()));
+  return <section className="card p-5 space-y-4">
+    <details open>
+      <summary className="cursor-pointer font-semibold">Message preview · edit directly</summary>
+      <p className="mt-2 text-xs text-muted">{p.draft_source}. Location and decision are shared by everyone. Only personal instructions vary by group.</p>
+      <div className="mt-4 space-y-4">
+        <label className="grid gap-2 text-sm font-semibold">1 · Location<textarea className={`${input} font-normal`} rows={2} maxLength={300} value={first.location_text} onChange={e=>update(first.id,{location_text:e.target.value})} /></label>
+        <label className="grid gap-2 text-sm font-semibold">2 · Decision<textarea className={`${input} font-normal`} rows={2} maxLength={1000} value={first.decision_text} onChange={e=>update(first.id,{decision_text:e.target.value})} /></label>
+        <section className="rounded-xl border border-edge p-4">
+          <h3 className="text-sm font-semibold">3 · Personal instructions</h3>
+          <div className="mt-3 space-y-4">{groups.map(g=><label className="grid gap-2 text-sm" key={g.id}>
+            <span className="flex flex-wrap justify-between gap-2"><strong>{g.title}</strong><span className="text-xs text-muted">{g.recipient_ids.length} people · {g.kind === 'awareness' ? 'at work start' : 'now'}</span></span>
+            <textarea aria-label={`Instructions for ${g.title}`} className={input} rows={2} maxLength={1000} value={g.instruction_text} onChange={e=>update(g.id,{instruction_text:e.target.value})} />
+            {g.instruction_text !== g.instruction && <span className="text-xs text-muted">Manager override · logged when saved</span>}
+          </label>)}</div>
+        </section>
       </div>
-      <p className="mt-3 text-sm">{g.instruction}</p>
-      <label className="mt-3 grid gap-1 text-sm">Message explanation
-        <textarea className={input} rows={2} value={g.email_intro} onChange={(e) => update(g.id, { email_intro: e.target.value, sms_intro: e.target.value.slice(0, 120) })} />
-      </label>
-      <details className="mt-3 text-sm">
-        <summary className="cursor-pointer text-[var(--accent)]">Recipients and message preview</summary>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-          <label className="flex items-center gap-2"><input type="checkbox" checked={all}
-            onChange={(e) => update(g.id, { recipient_ids: e.target.checked ? g.recipients.map((r: any) => r.id) : [] })} /> Select all {g.recipients.length}</label>
-          <input className={`${input} w-56`} placeholder="Search name, role or division" value={q} onChange={(e) => setQ(e.target.value)} />
-        </div>
-        <div className="mt-2 max-h-72 overflow-auto rounded-xl border border-edge">
-          <table className="w-full text-left text-xs">
-            <thead className="sticky top-0 bg-[var(--surface-2)] text-muted">
-              <tr><th className="w-8 p-2" /><th className="p-2">Name</th><th className="p-2">Role</th><th className="p-2">Channels</th><th className="p-2 text-right">Sends</th></tr>
-            </thead>
-            <tbody>
-              {rows.map((r: any) => (
-                <tr key={r.id} className="border-t border-edge/60">
-                  <td className="p-2"><input type="checkbox" aria-label={`Include ${r.name}`} checked={g.recipient_ids.includes(r.id)}
-                    onChange={(e) => update(g.id, { recipient_ids: e.target.checked ? [...g.recipient_ids, r.id] : g.recipient_ids.filter((id: string) => id !== r.id) })} /></td>
-                  <td className="p-2 font-medium">{r.name}{r.accessibility_followup && <span title="Accessibility follow-up by manager" className="ml-1 text-[var(--accent)]">♿</span>}</td>
-                  <td className="p-2 text-ink2">{r.job_role ?? "—"}{r.division && <span className="block text-[10px] text-muted">{r.division}</span>}</td>
-                  <td className="p-2"><ChannelPills channels={r.channels} /></td>
-                  <td className="tabnum p-2 text-right text-ink2">{time(r.due_at, p.timezone)}</td>
-                </tr>
-              ))}
-              {rows.length === 0 && <tr><td colSpan={5} className="p-3 text-center text-muted">No one matches “{q}”.</td></tr>}
-            </tbody>
-          </table>
-        </div>
-        <p className="mt-3 text-xs font-semibold uppercase tracking-[0.06em] text-muted">Message preview</p>
-        <p className="mt-1 whitespace-pre-wrap rounded-xl bg-[var(--surface-2)] p-3 text-sm">{p.facility_name} · {p.decision_day}: {p.posture.replaceAll("_", " ")}{"\n"}{g.instruction}{"\n"}{g.email_intro}{"\n"}{p.next_update}</p>
-      </details>
-    </section>
-  );
+      <button className={`${button} mt-3`} onClick={()=>groups.forEach(g=>update(g.id,g.template))}>Use template text</button>
+      <p className="mt-2 text-xs text-muted">Each recipient receives the shared location and decision followed by their group’s instructions. Edits require fresh approval.</p>
+    </details>
+    <details>
+      <summary className="cursor-pointer font-semibold">Recipients · {selected} of {total} selected · all groups</summary>
+      <div className="mt-3 flex flex-wrap justify-between gap-2">
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={selected === total} onChange={e=>groups.forEach(g=>update(g.id,{recipient_ids:e.target.checked ? g.recipients.map((r:any)=>r.id) : []}))} /> Select everyone</label>
+        <input aria-label="Search all recipients" className={input} placeholder="Search name, role or group" value={q} onChange={e=>setQ(e.target.value)} />
+      </div>
+      <div className="mt-3 max-h-80 overflow-auto rounded-xl border border-edge">
+        <table className="w-full text-left text-xs"><thead className="sticky top-0 bg-[var(--surface-2)]"><tr><th className="p-2">Include</th><th className="p-2">Name</th><th className="p-2">Group</th><th className="p-2">Channels</th><th className="p-2">Sends</th></tr></thead>
+          <tbody>{rows.map(r=><tr key={`${r.group.id}:${r.id}`} className="border-t border-edge"><td className="p-2"><input aria-label={`Include ${r.name}`} type="checkbox" checked={r.group.recipient_ids.includes(r.id)} onChange={e=>update(r.group.id,{recipient_ids:e.target.checked ? [...r.group.recipient_ids,r.id] : r.group.recipient_ids.filter((id:string)=>id!==r.id)})} /></td><td className="p-2">{r.name}<span className="block text-muted">{r.job_role ?? ''}</span>{r.accessibility_followup && <span>Accessibility follow-up</span>}</td><td className="p-2">{r.group.title}</td><td className="p-2"><ChannelPills channels={r.channels} /></td><td className="p-2">{time(r.due_at,p.timezone)}</td></tr>)}{!rows.length && <tr><td colSpan={5} className="p-3">No matching recipients.</td></tr>}</tbody>
+        </table>
+      </div>
+    </details>
+  </section>;
 }
 
-export function NotificationsView({ decisionId, onBack }: { decisionId?: number | null; onBack?: () => void }) {
+export function NotificationsView({ decisionId, onBack, onSnapshot }: { decisionId?: number | null; onBack?: () => void; onSnapshot?: (id: string, decisionId: number) => void }) {
   const [p, setP] = useState<any>(null);
   const [groups, setGroups] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
+  const [decisionLog, setDecisionLog] = useState<any[]>([]);
   const [ready, setReady] = useState<any>({email: false, sms: false});
   const [actor, setActor] = useState("");
   const [busy, setBusy] = useState(false);
@@ -217,11 +203,17 @@ export function NotificationsView({ decisionId, onBack }: { decisionId?: number 
   const [smtpCheck, setSmtpCheck] = useState<any>(null);
   const requestId = useRef<string>(crypto.randomUUID());
   const install = (pack: any) => {
-    setP(pack); setGroups(pack.groups.map((g: any) => ({ ...g, recipient_ids: g.recipient_ids ?? g.recipients.map((r: any) => r.id) })));
+    setP(pack); setGroups(pack.groups.map((g: any) => ({ ...g,
+      location_text: g.location_text ?? `${pack.facility_name} · ${pack.decision_day} (${pack.timezone})`,
+      decision_text: g.decision_text ?? `The manager recorded ${pack.posture.replaceAll('_',' ').toLowerCase()}: ${g.email_intro}`,
+      instruction_text: g.instruction_text ?? g.instruction,
+      template: g.template ?? {location_text: `${pack.facility_name} · ${pack.decision_day} (${pack.timezone})`, decision_text: `The manager recorded ${pack.posture.replaceAll('_',' ').toLowerCase()} following the weather assessment.`, instruction_text: g.instruction},
+      recipient_ids: g.recipient_ids ?? g.recipients.map((r: any) => r.id) })));
     setActor(pack.decided_by); setTestGroup(pack.groups[0]?.id ?? "");
   };
   const load = async () => {
     const [ds, data, setup] = await Promise.all([api.decisions(), request(""), request("/delivery-setup")]);
+    setDecisionLog(ds);
     const emails = data.contacts.filter((c: any) => c.channel === "email" || (c.channel === "sms" && c.gateway_address));
     setContacts(emails); setTestIds(emails.map((c: any) => c.id)); setReady(setup);
     const id = decisionId ?? ds[0]?.id;
@@ -236,9 +228,9 @@ export function NotificationsView({ decisionId, onBack }: { decisionId?: number 
     setBusy(true); setError(""); setNotice(null);
     try { await fn(); if (confirmation) setNotice({tone:"success", text:confirmation}); } catch (e: any) { setError(e.message); } finally { setBusy(false); }
   };
-  const edits = () => groups.map(g => ({id:g.id, sms_intro:g.sms_intro, email_intro:g.email_intro,
+  const edits = () => groups.map(g => ({id:g.id, location_text:g.location_text, decision_text:g.decision_text, instruction_text:g.instruction_text, sms_intro:g.sms_intro, email_intro:g.email_intro,
     recipient_ids:g.recipient_ids, test_contacts:g.test_contacts, schedule_override:g.schedule_override, scenario:g.scenario}));
-  const update = (id: string, patch: any) => setGroups(cur => cur.map(g => g.id === id ? {...g, ...patch} : g));
+  const update = (id: string, patch: any) => setGroups(cur => cur.map(g => g.id === id ? {...g, ...patch} : {...g, ...(patch.location_text !== undefined ? {location_text:patch.location_text} : {}), ...(patch.decision_text !== undefined ? {decision_text:patch.decision_text} : {})}));
   const t = tally(groups);
   const sent = p?.status === "dispatched";
   const selectedContacts = contacts.filter(c => testIds.includes(c.id));
@@ -261,6 +253,7 @@ export function NotificationsView({ decisionId, onBack }: { decisionId?: number 
     {busy && p && <p role="status" className="cc-fade rounded-lg bg-[var(--tint)] px-3 py-2 text-sm text-[var(--accent)]">Working… Please wait before trying again.</p>}
     {!p && !busy && <Card title="Make a decision first"><p>Record the facility decision, then your alerts will appear here automatically.</p>{onBack && <button className={`${button} mt-3`} onClick={onBack}>Go to decision →</button>}</Card>}
     {p && <>
+      <fieldset disabled={busy || sent}><MessageComposer groups={groups} p={p} update={update} /></fieldset>
       <Card title={sent ? "Alerts sent · you're done" : "2 · Review your alerts"}>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
@@ -301,9 +294,8 @@ export function NotificationsView({ decisionId, onBack }: { decisionId?: number 
           </details>
         )}
       </Card>
+      {!sent && <label className="grid max-w-sm gap-1 text-sm">Your name<input className={input} value={actor} onChange={e => setActor(e.target.value)} /></label>}
       {!sent && <>
-        <label className="grid max-w-sm gap-1 text-sm">Your name<input className={input} value={actor} onChange={e => setActor(e.target.value)} /></label>
-        <div className="space-y-4">{groups.map(g => <GroupCard key={g.id} g={g} p={p} update={update} />)}</div>
         <button className="btn btn-primary w-full !rounded-xl !py-4 !text-lg" disabled={busy || actor.trim().length<2 || !t.people} onClick={()=>perform(async()=>install(await request(`/packages/${p.id}/review`,"POST",{version:p.version,actor,groups:edits(),approve_and_send:true})), "Approved alerts sent in the simulator; later updates are scheduled. No real email or text was sent.")}>
           {busy ? "Working…" : `3 · Approve and alert ${t.people} people · ${t.messages} messages`}
         </button>
@@ -336,5 +328,14 @@ export function NotificationsView({ decisionId, onBack }: { decisionId?: number 
       </details>
       <details className="card p-4"><summary className="cursor-pointer font-semibold">Delivery history & advanced tools</summary><div className="mt-4"><NotificationTools /></div></details>
     </>}
+    <Card title="Decision log · saved weather">
+      <p className="text-sm text-muted">Each entry preserves the manager’s decision and the weather snapshot used at the time.</p>
+      <ul className="mt-3 space-y-2">{decisionLog.map(d=><li key={d.id} className="rounded-lg border border-edge p-3 text-sm">
+        <strong>Decision #{d.id} · {d.decision_posture.replaceAll('_',' ')}</strong> · {d.decided_by} · {p ? time(d.decided_at,p.timezone) : d.decided_at}
+        <p className="mt-1">{d.override_reason || d.notes || "Manager confirmed the assessment."}</p>
+        <button className={`${button} mt-2`} disabled={busy} onClick={()=>perform(async()=>install(await request('/packages','POST',{decision_id:d.id})), 'Saved decision opened.')}>Review decision</button>
+        {onSnapshot && <button className={`${button} ml-2 mt-2`} onClick={()=>onSnapshot(d.snapshot_id, d.id)}>View weather at decision time</button>}
+      </li>)}</ul>
+    </Card>
   </div>;
 }

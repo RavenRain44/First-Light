@@ -410,3 +410,73 @@ def test_login_check_never_sends(monkeypatch):
     monkeypatch.setattr(SMTP, "login", reject)
     result = smtp_service.check_connection()
     assert result["status"] == "authentication_failed" and "secret" not in result["detail"]
+
+
+def test_three_box_override_delivery_and_audit(env):
+    p = package()
+    assert len({g['decision_text'] for g in p['groups']}) == 1
+    assert all(g['template'] for g in p['groups'])
+    g = p['groups'][0]
+    p = n.approve(p['id'], g['id'], action(p))
+    p = edit(p, g, location_text='Ames · Monday', decision_text='The facility is closed.',
+             instruction_text='Contact your supervisor before reporting.')
+    changed = p['groups'][0]
+    assert not changed['approved'] and changed['instruction_override']
+    assert p['snapshot_id'] == 'snapshot' and p['posture'] == 'CLOSED'
+    for channel in ['sms', 'email']:
+        assert n.message_text(p, changed, channel, 'Casey') == 'Ames · Monday\nThe facility is closed.\nCasey: Contact your supervisor before reporting.'
+    p = approve_all(p)
+    p = n.dispatch(p['id'], action(p))
+    assert any('Contact your supervisor before reporting.' in m['body'] for m in p['messages'])
+    with db.session() as s:
+        edits = s.exec(select(NotificationAudit).where(NotificationAudit.action == 'group_edited_approval_invalidated')).all()
+        assert any('instruction_override' in a.detail_json for a in edits)
+
+
+def test_empty_message_box_does_not_change_saved_draft(env):
+    p = package()
+    with pytest.raises(HTTPException):
+        edit(p, p['groups'][0], instruction_text='   ')
+    assert read(p['id'])['version'] == p['version']
+
+
+def test_decision_camera_frames_are_saved_once_and_survive_restart(env, monkeypatch):
+    from app import camera_archive as ca
+    from app.models import DecisionCameraFrame
+    from app.routers.cameras import saved_frame
+    did = decision()
+    with db.session() as s:
+        s.add(ca.pending(s.get(Decision, did))); s.commit()
+    calls = []
+    async def cameras(*args, **kwargs):
+        return ([{'id':'cam1','name':'Camera one','views':[
+            {'url':'older','time':'2026-10-12T08:50:00+00:00','view':0},
+            {'url':'superseded-angle','time':'2026-10-12T08:40:00+00:00','view':0},
+            {'url':'latest','time':'2026-10-12T08:59:00+00:00','view':1},
+            {'url':'future','time':'2026-10-12T09:01:00+00:00','view':2}]},
+            {'id':'cam2','name':'Camera two','views':[{'url':'missing','time':'2026-10-12T08:59:00+00:00','view':0}]}], None)
+    async def image(url): calls.append(url); return b'saved-image-bytes' if url in {'older','latest'} else None
+    monkeypatch.setattr(ca,'fetch_cameras',cameras)
+    monkeypatch.setattr(ca,'get_image',image)
+    monkeypatch.setattr(ca,'get_facility',lambda _:FAC)
+    asyncio.run(ca.capture(did,'F',NOW))
+    archive = ca.saved(did)
+    assert len(archive['cameras']) == 1 and len(archive['cameras'][0]['views']) == 2
+    assert len(archive['unavailable']) == 1 and 'future' not in calls and 'superseded-angle' not in calls
+    ca.abandon_interrupted()
+    asyncio.run(ca.capture(did,'F',NOW))
+    assert len(calls)==3 and ca.saved(did)==archive
+    with db.session() as s:
+        frames=s.exec(select(DecisionCameraFrame)).all()
+        assert len(frames)==2 and all(f.image==b'saved-image-bytes' for f in frames)
+        assert saved_frame(frames[0].id).body==b'saved-image-bytes'
+    assert ca.saved(999)['status']=='unavailable'
+
+
+def test_interrupted_camera_capture_never_fetches_new_images(env):
+    from app import camera_archive as ca
+    did=decision()
+    with db.session() as s:
+        s.add(ca.pending(s.get(Decision,did)));s.commit()
+    ca.abandon_interrupted()
+    assert ca.saved(did)['status']=='unavailable'

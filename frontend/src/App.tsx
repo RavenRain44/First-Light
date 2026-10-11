@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api";
 import { AIPanel, WatchPanel } from "./components/AIPanel";
 import { AlertsPanel } from "./components/AlertsPanel";
@@ -55,6 +55,9 @@ export default function App() {
   const [theme, setTheme] = useState(initialTheme);
   const [recordKey, setRecordKey] = useState(0);
   const [view, setView] = useState<"dashboard" | "thresholds" | "notifications">("dashboard");
+  const [savedDecisionId, setSavedDecisionId] = useState<number | null>(null);
+  const [savedWeather, setSavedWeather] = useState(false);
+  const savedWeatherRef = useRef(false);
   const [notificationDecision, setNotificationDecision] = useState<number | null>(null);
 
   useEffect(() => {
@@ -72,24 +75,27 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (mode === "live") run(() => api.latest());
+    if (mode === "live" && !savedWeather) {
+      api.latest().then(s => { if (!savedWeatherRef.current) setSnap(s); }).catch(e => setErr(e.message));
+    }
     else setSnap((s) => (s && s.mode === "live" ? s : s));
-  }, [mode, run]);
+  }, [mode, run, savedWeather]);
 
   // Keep the live view fresh. Cadence follows readiness (Red 10 min ... White 6 h), capped at 30 min
   // so a quiet dashboard still notices change; the backend only re-evaluates when its snapshot is stale.
   const recheck = Math.min(snap?.readiness?.recheck_minutes ?? 10, 30);
   useEffect(() => {
-    if (mode !== "live") return;
-    const t = setInterval(() => api.latest().then(setSnap).catch(() => {}), recheck * 60 * 1000);
+    if (mode !== "live" || savedWeather) return;
+    const t = setInterval(() => api.latest().then(s => { if (!savedWeatherRef.current) setSnap(s); }).catch(() => {}), recheck * 60 * 1000);
     return () => clearInterval(t);
-  }, [mode, recheck]);
+  }, [mode, recheck, savedWeather]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 p-3 sm:p-5">
       <Header snap={shown} mode={mode} setMode={setMode} busy={busy} demo={demo} theme={theme}
-        onRefresh={() => run(() => api.evaluateLive())} toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} />
+        onRefresh={() => { savedWeatherRef.current = false; setSavedWeather(false); run(() => api.evaluateLive()); }} toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} />
 
+      {savedWeather && <div role="status" className="card p-3 text-sm">Saved weather snapshot · {snap?.snapshot_id}. Live updates are paused while reviewing this record. <button className="btn ml-2" onClick={()=>{savedWeatherRef.current = false; setSavedWeather(false);setMode('live');}}>Return to live weather</button></div>}
       <nav className="flex gap-5 border-b border-edge text-sm">
         {(["dashboard", "thresholds", "notifications"] as const).map((v) => (
           <button key={v} onClick={() => setView(v)}
@@ -101,7 +107,7 @@ export default function App() {
       </nav>
 
       {view === "notifications" ? (
-        <div className="cc-fade"><NotificationsView decisionId={notificationDecision} onBack={() => setView("dashboard")} /></div>
+        <div className="cc-fade"><NotificationsView decisionId={notificationDecision} onBack={() => setView("dashboard")} onSnapshot={(id, decisionId)=>{setSavedDecisionId(decisionId);savedWeatherRef.current = true; setSavedWeather(true); setView("dashboard"); run(()=>api.snapshot(id));}} /></div>
       ) : view === "thresholds" ? <div className="cc-fade"><ThresholdsView /></div> : (
         <>
           {mode === "replay" && <ReplayPanel onSnapshot={setSnap} busy={busy} setBusy={setBusy} current={snap} />}
@@ -125,7 +131,7 @@ export default function App() {
               </div>
               <PanelBoundary name="Threat breakdown"><ThreatPanel snap={shown!} /></PanelBoundary>
               <PanelBoundary name="Timeline"><TimelinePanel snap={shown!} /></PanelBoundary>
-              <PanelBoundary name="Roads"><RoadsPanel snap={shown!} /></PanelBoundary>
+              <PanelBoundary name="Roads"><RoadsPanel snap={shown!} savedDecisionId={savedWeather ? savedDecisionId : null} historical={savedWeather} /></PanelBoundary>
               <PanelBoundary name="Analogs"><AnalogsPanel snap={shown!} /></PanelBoundary>
               <div className="grid gap-4 lg:grid-cols-2">
                 <PanelBoundary name="Decision record"><RecordTimeline snap={shown!} refreshKey={recordKey} onOpen={(id) => run(() => api.snapshot(id))} /></PanelBoundary>

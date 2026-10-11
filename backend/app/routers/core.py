@@ -7,7 +7,7 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Literal
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import BackgroundTasks, APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field, field_validator
 from sqlmodel import select
 
@@ -256,7 +256,7 @@ class DecisionIn(BaseModel):
 
 
 @router.post("/decisions", status_code=201)
-def record_decision(d: DecisionIn):
+def record_decision(d: DecisionIn, background_tasks: BackgroundTasks):
     snap = snapshots.get(d.snapshot_id)
     if not snap:
         raise HTTPException(404, "snapshot not found")
@@ -273,6 +273,10 @@ def record_decision(d: DecisionIn):
         s.add(row)
         s.commit()
         s.refresh(row)
+        from app.camera_archive import pending, capture
+        s.add(pending(row)); s.commit()
+        camera_time = datetime.fromisoformat(snap["as_of"]) if snap["mode"] == "replay" else row.decided_at.replace(tzinfo=timezone.utc)
+        background_tasks.add_task(capture, row.id, row.facility_id, camera_time, snap["mode"] == "replay")
         return {**row.model_dump(mode="json"), "label": "real (recorded in this system)"}
 
 
