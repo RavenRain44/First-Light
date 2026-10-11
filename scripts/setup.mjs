@@ -1,5 +1,5 @@
-// One-time setup: Python venv + backend deps, frontend deps, .env from example.
-import { execSync } from "node:child_process";
+// One-time setup: dependencies, .env, and the historical library for Replay.
+import { execFileSync, execSync } from "node:child_process";
 import { copyFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
@@ -11,4 +11,11 @@ if (!existsSync(venvPy)) sh(`${win ? "python" : "python3"} -m venv .venv`, backe
 sh(`"${venvPy}" -m pip install -q -r requirements.txt`, backend);
 sh("npm install --no-audit --no-fund", join(process.cwd(), "frontend"));
 if (!existsSync(".env")) { copyFileSync(".env.example", ".env"); console.log("created .env from .env.example"); }
+console.log("Building historical library from the committed cache (Replay, analogs, backtest)…");
+execFileSync(venvPy, ["-m", "scripts.build_history"], {
+  cwd: backend,
+  stdio: "inherit",
+  env: { ...process.env, DEMO_MODE: "true" },
+});
 console.log("\nSetup done. Run `npm run dev` -> API on :8000, dashboard on http://localhost:5173");
+console.log("Optional, for offline demos: `npm run cache:cameras` (online, ~1 min) caches Iowa DOT camera images.");

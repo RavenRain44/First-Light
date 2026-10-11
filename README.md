@@ -20,20 +20,26 @@ Scope: **Iowa only**, one synthetic facility (USDA Service Center, Ames), two ha
 | Real (live APIs or archives) | Synthetic |
 |---|---|
 | NWS active alerts and gridded forecasts (api.weather.gov) | The facility profile (`backend/data/facility.json`) |
-| AMW ASOS observations, Iowa DOT road conditions, RWIS pavement sensors, NWS warning archive, archived NBM forecasts, SPC outlooks, Local Storm Reports (Iowa Environmental Mesonet) | The 25-person roster (`backend/data/employees.json`), including details, travel and telework |
+| AMW ASOS observations, Iowa DOT road conditions, RWIS pavement sensors, NWS warning archive, archived NBM forecasts, SPC outlooks, Local Storm Reports (Iowa Environmental Mesonet) | The 270-person roster (`backend/data/employees.json`, imported from `data/NADC_synthetic_assignments.csv`): schedules, details, scheduled telework, approved leave and emergency-required staff come from the CSV; home towns, commute corridors, contact channels and accessibility needs are generated |
 | Seven historical Story County events, each verified against the NWS VTEC archive | Every "recommended posture" in the backtest (*simulated by rules*, not real USDA decisions) |
 | Decisions recorded through the UI (labelled "real (recorded in this system)") | Commute corridor lines (approximate geometry) |
 
 ## Quick start
 
 Prerequisites: Python 3.11+ (tested on 3.14), Node 18+ (tested on 24).
+The frontend graph tests require Node 22.6+ for built-in TypeScript stripping; Node 24 is recommended.
 
 ```bash
-npm run setup      # backend/.venv + pip install, frontend npm install, .env from .env.example
+npm run setup      # dependencies, .env, and historical library for Replay
 npm run dev        # API on http://localhost:8000, dashboard on http://localhost:5173
 ```
 
 `make setup` / `make dev` do the same where GNU make exists. Windows has no make; use the npm scripts.
+
+If port 8000 is already occupied, set `API_PORT=8001` in `.env`; the API launcher and dashboard proxy use it together.
+
+Setup also builds the historical library from the committed cache, so Replay, analogs and backtests
+are ready on first launch. This build runs offline and does not change `DEMO_MODE` in your `.env`.
 
 Set `NWS_USER_AGENT` in `.env` to your app name and a contact (NWS asks every client to identify itself).
 
@@ -51,6 +57,14 @@ fully offline in about 20 seconds:
 DEMO_MODE=true npm run build:history
 ```
 
+Replay also accepts a custom date without a catalog event. It builds an hourly timeline
+12 hours before and after the exact selected minute, and updates the report, posture ribbon
+and Cooper-color ribbon together. Playback and stepping follow that timeline. Striped cells
+mark missing historical evidence; each hour's tooltip identifies incomplete coverage.
+Timeline cells use the rules engine without model calls or snapshot writes; the selected
+report is saved and receives its usual AI brief. Central-time spring-forward gaps are rejected,
+and a repeated fall-back hour starts at its first occurrence with an explicit note.
+
 ### Run the demo offline
 
 ```bash
@@ -61,13 +75,131 @@ In demo mode every source is served from the committed cache. "Live" is pinned t
 was fetched, so the demo is identical days later. **Live Check is the exception: it always calls the real NWS API.**
 To refresh the cached "live" moment before a demo, run once online (`npm run dev`, click *Re-evaluate now*).
 
+### Iowa DOT cameras
+
+The Roads map has a **Map layers** panel. Turn on **DOT cameras** to show two kinds of Iowa DOT camera:
+
+* **Traffic cameras with live video** (marked with a red dot): 20 Iowa DOT 511 traffic cameras spread around the
+  facility. Selection takes turns across compass directions, so the list covers US 30 west to Boone and east to
+  Nevada and I-35 south to Huxley and north to Ellsworth, not just the US 30 / I-35 interchange. Iowa DOT has no
+  cameras on Ames city streets. Click one to play its live HLS stream in the
+  browser (hls.js; native on Safari). If the stream fails, the viewer falls back to the current snapshot and
+  refreshes it every minute. Locations and stream URLs come from Iowa DOT's open-data
+  [Traffic Cameras](https://data.iowadot.gov/datasets/IowaDOT::traffic-cameras-3/about) feature service
+  (refreshed hourly). Iowa DOT keeps no public archive, so these cameras appear in live view only.
+* **ISU and KCCI webcams** (stills via IEM, every 5 minutes): Iowa State's Curtis Hall camera on campus (1.2 km,
+  three views facing SW, W and NW; the Design building and Memorial Union cameras also appear in older Replay
+  events) and KCCI's ISU Ag Farm camera west of town. They are archived, so they also follow Replay.
+* **RWIS weather-station cameras** (stills only): the nearest roadside weather-information cameras, archived by
+  IEM. These sensors send a JPEG every few minutes and have no video. In live view the 5 nearest are listed
+  alongside the traffic cameras; the nearest is about 50 km from Ames. In Replay they are the only cameras, and
+  they show what was captured at that time (3-hour archive grid, never later than the replay moment).
+
+Cameras are for situational awareness only. They are not inputs to the recommendation and are not stored on
+snapshots. See Iowa DOT's [511 data feeds](https://iowadot.gov/travel-tools/iowa-511/511-data-feeds) page for
+feed terms. Iowa DOT is moving video hosts (`video4.iowadot.gov` to `video.iowadot.gov`), so stream URLs are
+always read from the feed.
+
+For the offline demo, cache the images first (online, about 1 minute, ~80 MB in the git-ignored
+`backend/var/camera_cache`):
+
+```bash
+npm run cache:cameras
+```
+
+That pins the current camera list with every RWIS view and one snapshot per traffic camera, plus each historical
+event's impact day (main view, every 3 hours). In `DEMO_MODE` there is no live video: traffic cameras show their
+cached snapshot, only cached images are offered, and a camera with no cached image is simply not shown.
+
+### Past decisions
+
+On Today, **Past decisions** lists the facility's earlier decisions, most similar weather first, with a
+slight preference for recent ones. Similarity uses the same weighted feature distance as Similar past storms.
+Each row shows:
+
+* the Cooper urgency at the time
+* what was decided (and whether it followed the suggestion)
+* how it went
+
+Only real decisions count: live-weather decisions made outside demo mode, plus seeded examples, which are
+always tagged "example". Each decision now records whether the app was in demo mode. Replay practice is left out.
+
+**How it went** comes from reviews, which are append-only:
+
+* a manager can review any past decision
+* if no one has after `REVIEW_AFTER_DAYS` (default 7) past the decision day, an AI review compares the
+  decision with what the weather actually did: storm reports within 25 mi, AMW gusts and freezing hours, and
+  commute roads
+* without a model, the deterministic weather check is shown instead, with its confidence
+
+For the demo, seed example decisions on the historical storms (offline, after `build:history`):
+
+```bash
+npm run seed:examples
+```
+
+### Synthetic roster
+
+`backend/data/employees.json` is generated from `data/NADC_synthetic_assignments.csv` (270 fictitious people):
+
+```bash
+cd backend && .venv/Scripts/python -m scripts.import_roster
+```
+
+Each person keeps the CSV's division, job role, work days and start time, telework eligibility, emergency-required
+status (treated as essential), dated details elsewhere and approved sick leave. Fields the CSV doesn't have (home town,
+commute corridor, contact channels, accessibility needs) are filled deterministically and listed in each record's
+`synthetic_fill`. The header's "in building" count and the notification groups resolve everyone for the decision
+day: details, scheduled telework, leave and days off all apply.
+
 ### Tests
 
 ```bash
-npm test           # 50 backend tests: interval expansion, units, thresholds and margins, posture timing,
+npm test           # Backend tests: interval expansion, units, thresholds and margins, posture timing,
                    # confidence, counterfactuals, analogs, snapshot immutability, AI validation/fallback,
                    # and an end-to-end evaluation of the 2020 derecho from fixtures (offline)
+npm --prefix frontend test       # Chart evidence, missing data, reason citations and replay/DST dates
+npm --prefix frontend run build  # TypeScript and production bundle
 ```
+
+## Dashboard
+
+The dashboard uses one card with three sections. **Suggested Action** leads with “Due to [reasons], [action],”
+the provider, confidence, decision deadline and urgent safety guidance. The action always comes from the
+recorded rules; the manager accepts or overrides it before any operating instructions are sent.
+
+**Relevant Metrics** shows two charts chosen from the evidence and active hazard. Amber points and line segments
+mark measurements crossing the snapshot's threshold; shading marks the recorded hazard window. Legends and
+captions distinguish threshold evidence from alert context. Observations use solid lines and forecasts dashed
+lines, with source timestamps in tooltips. Missing measurements remain gaps. Each chart initially focuses on
+the relevant period and offers **Show full timeline**.
+Observed wind and temperature match the routine hourly weather.gov report. The separate observed peak-gust
+series supplies the wind threshold evidence; archived snapshots retain their original gust series.
+**Regenerate** asks Akamai to rewrite the same recorded evidence and keeps the previous brief visible while
+the new one is pending. Use **Re-evaluate** to fetch fresh weather first.
+
+**More information** starts collapsed and expands with mouse or keyboard to show the manager form, explanation,
+alerts, all weather charts, roads and cameras, analogs, history and raw evidence. **Review and record decision**
+opens that section and focuses the manager form. Detailed panels load on first expansion; collapsing preserves
+unfinished manager input and reuses the chart data.
+
+## Cloud storage
+
+With the `OBJ_*` settings filled in, the app mirrors its record to a private **Akamai Object Storage** bucket so it
+survives server rebuilds and can be opened from any device. The SQLite database stays the source of truth; its
+record tables are append-only, so a background sync copies each new row once, within seconds of the write:
+
+| Bucket path | Contents | Written |
+|---|---|---|
+| `logs/snapshots/`, `logs/briefs/`, `logs/decisions/`, `logs/notifications/` | one JSON file per snapshot, Akamai brief, manager decision and notification audit event | on every write |
+| `graphs/<snapshot>.json` | the chart data behind each snapshot (redrawn identically on any device) | on every evaluation |
+| `cameras/<snapshot>/decision-<id>/` | the camera frames saved with the decision (one per angle at each nearby camera), plus `index.json` | when a decision is recorded |
+| `backups/closurecall-latest.db`, `backups/closurecall-YYYY-MM-DD.db` | SQLite backups | daily and on shutdown |
+
+A fresh server with an empty volume restores `closurecall-latest.db` on first start. If the bucket is unreachable
+the app keeps working and the next pass resumes from `logs/_sync.json`. **Technical details → Cloud copy** shows the
+sync status and signed links (one hour) to the snapshot's log, chart data and saved camera stills. Setup steps are in
+[docs/akamai-usage.md](docs/akamai-usage.md#object-storage).
 
 ## Environment variables (`.env`)
 
@@ -79,11 +211,22 @@ npm test           # 50 backend tests: interval expansion, units, thresholds and
 | `SNAPSHOT_STALE_SECONDS` | `600` | `GET /api/snapshot/latest` re-evaluates when the latest live snapshot is older |
 | `LIVE_CACHE_TTL_SECONDS` | `600` | Live HTTP cache TTL (IEM asks clients not to hammer it; archives are cached forever) |
 | `DATABASE_PATH` | `backend/var/closurecall.db` | SQLite file |
-| `MODEL_PROVIDER` | `none` | `anthropic`, `bedrock`, `openai` (any OpenAI-compatible endpoint) or `none` |
-| `MODEL_ID` | provider default | e.g. `claude-sonnet-5-5`; required for Bedrock |
-| `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `OPENAI_BASE_URL` / `AWS_REGION` | | Provider credentials (Bedrock uses the AWS credential chain) |
+| `MODEL_PROVIDER` | `akamai` | Akamai workshop inference; `none` disables inference |
+| `AKAMAI_API_KEY` | | Backend-only workshop team key for `hackathon-chat` |
+| `STRANDS_FALLBACK_ENABLED` | `false` | Try a Strands agent through Amazon Bedrock if Akamai fails |
+| `STRANDS_MODEL_ID` / `AWS_REGION` | `global.anthropic.claude-sonnet-4-6` / `us-east-1` | Strands Bedrock model and region; uses the AWS credential chain |
+| `OBJ_BUCKET` / `OBJ_ACCESS_KEY` / `OBJ_SECRET_KEY` | | Akamai Object Storage mirror (off when empty); see [Cloud storage](#cloud-storage) |
+| `OBJ_ENDPOINT` / `OBJ_REGION` | `https://us-ord-1.linodeobjects.com` / `us-ord-1` | Bucket region (Chicago) |
+| `OBJ_PREFIX` | | Folder inside the bucket; set `dev` on laptops so local test data stays apart from the server's |
+| `OBJ_BACKUP_HOURS` | `24` | How often the SQLite database is backed up to the bucket |
 
 The dashboard works fully with **no API key**: the deterministic template rationale is used and labelled as such.
+With a workshop key, Akamai produces the manager decision brief, alert summaries, watch items and historical
+comparisons. Reports generate a brief when loaded, including previously stored and historical reports. If Akamai
+cannot produce a valid brief, the app uses the deterministic template. Set `STRANDS_FALLBACK_ENABLED=true` to explicitly try Strands through Bedrock before the template.
+Akamai also drafts weather-only notification wording after a manager records a decision; each
+notification group still requires manager approval. Provider identity and token usage are recorded with the
+draft. See [Akamai setup, usage bounds and optional cloud deployment](docs/akamai-usage.md).
 
 ## How a recommendation is made
 
@@ -96,7 +239,7 @@ adapters (NWS, IEM)  ->  normalized inputs (value, unit, source, URL, fetched_at
    -> posture: NORMAL | DELAYED_ARRIVAL | EARLY_DISMISSAL | TELEWORK | CLOSED (with OPM label)
    -> confidence (completeness, freshness, forecast/obs/alert agreement, alert certainty)
    -> "what would change this" (rules re-run with each input moved past its threshold)
-   -> Strands agent explains it (never decides)  ->  immutable snapshot
+   -> Akamai explains it (never decides)  ->  immutable snapshot
 ```
 
 - **Timing matters.** The same hazard maps to different postures by when it hits: warning-level ice from 03:00-05:00
@@ -104,10 +247,13 @@ adapters (NWS, IEM)  ->  normalized inputs (value, unit, source, URL, fetched_at
   dismissal; a Tornado Warning in effect during work hours is a closure with shelter-in-place guidance.
 - **Decision day.** Before noon the decision is about today; after noon (if today is quiet) it is about the next
   workday. Weekends roll to Monday.
-- **The AI never decides.** One Strands agent (`backend/ai/agent.py`) with five read-only tools over the current
-  snapshot (`get_snapshot_summary`, `get_triggered_rules`, `get_alerts`, `get_road_conditions`, `get_analogs`)
-  returns strict JSON (Pydantic). Every number in the rationale must exist in the snapshot. On failure it retries
-  once with feedback, then falls back to the template. The model id and prompt version are stored on the snapshot.
+- **The AI never decides.** Akamai workshop inference (`backend/ai/agent.py`) receives five read-only snapshot
+  views, including the computed posture, triggered rules, alerts, roads and historical analogs. It returns a JSON
+  decision brief with a concise summary, evidence citations, uncertainty and a paste-ready rationale. Every text
+  field is checked for unsupported numbers, citations are checked against the snapshot, and the manager's final
+  authority is explicit. One failed validation can trigger one repair; otherwise a labeled template is used.
+  A Strands agent through Bedrock is an optional secondary path, enabled only with `STRANDS_FALLBACK_ENABLED=true`. Provider, token usage, prompt version and validation
+  outcomes are stored with the immutable snapshot.
 
 ## Readiness (adapted from Cooper's color code)
 
@@ -126,6 +272,16 @@ Deadlines: delay/telework/closure announced by 04:30 local; early dismissal 2 h 
 cutoffs are in the `readiness` section of `thresholds.yaml` (`verified: false`, basis: policy). In the backtest,
 readiness went Yellow at 08:00 CDT on the derecho morning (rising SPC outlook, then the watch), three hours before the
 posture changed.
+
+## AI brief timing (template first, Akamai after)
+
+Evaluations return in under a second with the deterministic template brief. When `MODEL_PROVIDER=akamai` and a key
+is set, the Akamai brief is generated in the background and saved as a separate, append-only `snapshotinterpretation`
+record; the dashboard shows "Akamai brief in progress…" and swaps it in when ready (typically 4-7 s). The snapshot
+and its integrity hash are never changed. The model writes only the short parts (headline, two-sentence summary,
+uncertainty, up to three cited reason phrases and evidence rule ids, and alert one-liners, capped at 700 output tokens); the paste-ready rationale,
+"what would change" and watch items always come from the rules. `GET /api/snapshot/{id}/interpretation` returns
+`pending | ok | failed | none`.
 
 ## The decision record
 
@@ -195,11 +351,14 @@ ENH/MDT outlooks; forecast gust >= 45 mph; wind chill <= -20 F and <= -35 F (DMX
 | `GET /api/timeseries?snapshot_id=` | observed + forecast series, threshold lines, commute/hours windows |
 | `GET /api/roads?as_of=` | Iowa DOT segments GeoJSON with corridor matches + corridor table |
 | `GET /api/history/events`, `GET /api/history/events/{id}`, `GET /api/history/events/{id}/replay?as_of=` | backtest library and replay |
+| `GET /api/replay/timeline?as_of=` | 25 hourly rules-based summaries centered on the exact UTC instant; coverage flags, no model calls or stored snapshots |
 | `GET /api/analogs?snapshot_id=` | top 3 similar past events |
 | `POST /api/decisions`, `GET /api/decisions` | record / list human decisions |
 | `GET /api/live-check/alerts`, `POST /api/live-check/evaluate` | national alerts and what-if evaluation |
 | `GET /api/thresholds` | registry with anchors, verified flags, backtest summary |
-| `POST /api/notifications/preview` | **501** stub: the notification package is the next phase |
+| `GET /api/cameras?as_of=`, `GET /api/cameras/image?u=` | Live: Iowa DOT traffic cameras spread around the facility (`stream_url` HLS), ISU/KCCI webcams and RWIS stills; Replay: ISU/KCCI webcams and 20 nearest RWIS cameras. Image proxy (IEM archive and Iowa DOT snapshot URLs only) |
+| `GET /api/storage/status`, `POST /api/storage/sync` | object storage mirror status; sync now |
+| `GET /api/storage/record/{id}` | signed links to a snapshot's stored log, chart data and decision camera stills |
 
 ## Repository layout
 
@@ -208,7 +367,7 @@ backend/
   app/        FastAPI app, routers, SQLModel tables, snapshot service, facility/roster
   adapters/   base interface + nws, iem_obs, iem_roads (roads + RWIS), iem_vtec (archive + SPC), iem_mos, iem_lsr, cache
   engine/     normalize, features, scoring, posture, confidence, counterfactual, analogs, evaluate
-  ai/         Strands agent, snapshot tools, prompts/schema, deterministic fallback
+  ai/         Akamai-first briefs, grounded views, prompts/schema, Strands fallback
   config/     thresholds.yaml
   data/       facility.json, employees.json (synthetic)
   fixtures/   probe/ (real samples), http_cache/ (gzip cache, demo mode), history/ (event exports)
@@ -225,12 +384,73 @@ Hooks are in place: the roster model separates *assigned* from *where people act
 out, travel, telework), each employee has contact channels and accessibility needs, and every send will be logged
 against a snapshot and decision id. `POST /api/notifications/preview` describes the planned shape.
 
-## Akamai staff notifications
+### Notification review and delivery simulation
 
-Set `MODEL_PROVIDER=akamai` and `AKAMAI_API_KEY` in your local `.env`. The workshop endpoint is `https://ws.akamai-workshops.com/v1` with model `hackathon-chat`.
+Open **Notifications** after recording a live or replay decision on the Dashboard.
+Choose the decision, create drafts, review each group's recipients and SMS/email
+previews, edit the explanations if needed, and approve each group. One send action
+simulates immediate delivery and queues informational updates. Creating a draft or
+recording a decision never sends anything. Editing text, timing, test recipients,
+or a simulated delivery outcome clears that group's approval. Unsaved edits block send.
 
-Record a manager decision, then open **Staff notifications**. A new notification package automatically generates Akamai email and SMS copy from saved decision and weather evidence. The generated wording is shared across groups; each group retains its own reporting instructions. Drafts remain editable and require approval. Reopening a package reuses its saved drafts. If inference fails, the editable weather template is preserved and individual or bulk Akamai drafting can be retried.
+All delivery is **simulation only**: there is no SMS/email network adapter or credential
+requirement. The outbox tracks simulated success, failure, delay, retry, cancellation
+and scheduling. Recipient inbox previews show successful simulated deliveries.
+The SQLite database persists queues and audit records; the API checks due deliveries
+every two seconds. Repeated sends are idempotent. A newly dispatched decision for the
+same facility/date supersedes older packages and cancels their pending deliveries.
+Sent messages and all approval/edit/delivery audit entries remain available.
 
-Normal dispatch uses the simulated outbox and sends nothing externally. Configure local SMTP settings and allowlisted contacts to use the explicit real-test action; see `backend/notification-contacts.example.json`. This integration does not enable production delivery to the employee roster.
+Essential personnel receive immediate reporting clarification; closure never automatically
+excuses essential duties. Employees working onsite receive immediate changes. Remote,
+travel and detailed-out team members receive informational updates at `work_start`
+(`HH:MM`, facility local time). Missing schedules fall back to facility opening time,
+configurable when creating the package; managers can override each group's delivery
+with an ISO timestamp containing an offset. Unsupported contact channels are listed
+for manager follow-up. `workdays` defaults to Monday–Friday. This demonstration's
+`this_week_location` and `teleworking_today` apply to the selected decision date unless
+an employee has `assignments` entries with inclusive ISO `start`/`end` dates and overridden
+roster fields, or a `telework_dates` list. Historical replay uses this synthetic roster
+scenario; it does not claim to reconstruct a historical employee assignment.
 
-Run backend tests from `backend` with `MODEL_PROVIDER=none .venv/Scripts/python -m pytest -q` on Windows. Build the dashboard with `npm --prefix frontend run build`.
+AI uses the existing model configuration to draft a short weather explanation from
+hazard categories only, without names or contact details. Reporting instructions,
+posture and routing are deterministic. With no configured model or an invalid response,
+clearly labeled templates are used. Manager-approved explanations are combined with
+fixed reporting instructions and personalized recipient names. Delays/dismissals do not
+invent a clock time absent from the decision; the message directs staff to obtain it
+from their supervisor. Accessibility follow-up is flagged privately in recipient review.
+
+For separate test contacts, copy `backend/notification-contacts.example.json` to
+`backend/notification-contacts.local.json` and enter consented addresses there. This local
+file is ignored by Git. Select test contacts per group before approval; even these
+addresses receive simulated delivery only. Synthetic employees always use synthetic
+routing identifiers, never these test addresses. The provider interface in
+`backend/app/notifications.py` is the extension point for future real delivery.
+
+Use the notification **Simulation clock** to set an ISO timestamp (for example,
+`2026-10-12T04:00:00-05:00`) before creating drafts, then advance it to test scheduled
+messages. This clock persists separately from weather evaluation time. Reset returns
+the delivery simulation to wall-clock time. A failure can be retried as simulated
+success; a delayed message completes after five simulated minutes. Acknowledgments
+are deliberately not implemented.
+
+Sent packages have a **Create editable follow-up draft** action. Follow-up revisions
+preserve delivered messages and require fresh approvals before sending. Select all or
+choose several employees using the checkboxes within each group; save recipient edits
+before approval. Groups with no selected employees or test contacts are skipped.
+If unchanged reporting instructions produced an empty package, **Create groups for
+another update** lets a manager deliberately draft an informational follow-up.
+
+### Simple alert workflow and real test delivery
+
+The default UI now follows **Decision → Review alerts → Send & done**. Recording a
+human decision opens group drafts automatically. One **Approve and alert people**
+button saves your edits, approves the reviewed groups and sends/schedules the whole
+simulated package. Recipient changes, history and simulation tools are expandable.
+
+Real tests are separate: **Send real test emails / gateway texts** uses the SMTP service for locally configured email test contacts and explicit email-to-SMS gateway destinations. Phone delivery requires a gateway account. Configure the fields in
+`.env.example` in your ignored `.env`, restart the API, then explicitly approve a real
+test. Missing credentials show **Not configured**, rather than simulated success.
+See [delivery setup](docs/notification-delivery-setup.md). No real delivery was attempted
+while developing this feature; provider integration tests use mocks.

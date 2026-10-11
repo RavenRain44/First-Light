@@ -3,7 +3,6 @@ import asyncio
 import json
 
 import httpx
-import openai
 import pytest
 
 from ai import agent
@@ -16,7 +15,7 @@ def workshop(monkeypatch):
     seen = []
     reply = {"explanation": "Extreme winter hazards are present."}
     config = {"status": 200, "finish_reason": "stop"}
-    original = openai.AsyncOpenAI
+    original = httpx.AsyncClient
 
     def handle(request):
         body = json.loads(request.content)
@@ -33,9 +32,9 @@ def workshop(monkeypatch):
         })
 
     def client(**kwargs):
-        assert kwargs["max_retries"] == 0 and kwargs["timeout"] == 30
-        return original(**kwargs, http_client=httpx.AsyncClient(transport=httpx.MockTransport(handle)))
-    monkeypatch.setattr(openai, "AsyncOpenAI", client)
+        assert kwargs["timeout"] == 30
+        return original(**kwargs, transport=httpx.MockTransport(handle))
+    monkeypatch.setattr(httpx, "AsyncClient", client)
     return seen, reply, config
 
 
@@ -56,63 +55,6 @@ def test_notification_workshop_schema_and_usage(workshop):
     schema = seen[0]["response_format"]["json_schema"]["schema"]
     assert schema["additionalProperties"] is False
     assert schema["properties"]["explanation"]["maxLength"] == 350
-
-
-def test_staff_email_draft_uses_strict_akamai_schema(workshop):
-    seen, reply, _ = workshop
-    reply.clear()
-    reply["body"] = "Team, severe winter risk supports the recorded closure."
-    context = {"risk_recommendation": {"posture": "CLOSED", "risk_level": "Closed"},
-               "recorded_decision": {"decided_by": "Manager", "posture": "CLOSED"}}
-    body, model, inference = asyncio.run(agent.draft_staff_email(context))
-    assert body == reply["body"]
-    assert model == "akamai:hackathon-chat"
-    assert inference["provider"] == "akamai" and not inference["fallback_used"]
-    request = seen[0]
-    assert request["model"] == "hackathon-chat" and request["max_tokens"] == 500
-    assert request["response_format"]["json_schema"]["name"] == "staff_email_draft"
-    schema = request["response_format"]["json_schema"]["schema"]
-    assert schema["additionalProperties"] is False
-    assert schema["properties"]["body"]["maxLength"] == 1600
-    assert json.dumps(context) in request["messages"][1]["content"]
-
-
-def test_staff_email_draft_requires_akamai(workshop, monkeypatch):
-    seen, _, _ = workshop
-    monkeypatch.setattr(agent.settings, "model_provider", "none")
-    body, model, inference = asyncio.run(agent.draft_staff_email({}))
-    assert body is None and model == agent.FALLBACK_ID
-    assert seen == [] and inference["failures"]
-
-
-def test_staff_email_and_sms_drafts_use_strict_akamai_schema(workshop):
-    seen, reply, _ = workshop
-    reply.clear()
-    reply.update({
-        "email_body": "Team, the recorded closure reflects today's severe winter risk.",
-        "sms_intro": "Manager confirms closure as severe winter risk remains.",
-    })
-    context = {"risk_recommendation": {"posture": "CLOSED", "risk_level": "Closed"},
-               "recorded_decision": {"decided_by": "Manager", "posture": "CLOSED"}}
-    drafts, model, inference = asyncio.run(agent.draft_staff_notifications(context))
-    assert drafts == reply
-    assert model == "akamai:hackathon-chat"
-    assert inference["provider"] == "akamai" and not inference["fallback_used"]
-    request = seen[0]
-    assert request["response_format"]["json_schema"]["name"] == "staff_notification_drafts"
-    schema = request["response_format"]["json_schema"]["schema"]
-    assert schema["additionalProperties"] is False
-    assert schema["properties"]["sms_intro"]["maxLength"] == 120
-    assert json.dumps(context) in request["messages"][1]["content"]
-
-
-def test_staff_notification_drafts_reject_sms_over_120_characters(workshop):
-    seen, reply, _ = workshop
-    reply.clear()
-    reply.update({"email_body": "A complete email sentence.", "sms_intro": "x" * 121})
-    drafts, model, inference = asyncio.run(agent.draft_staff_notifications({}))
-    assert drafts is None and model == agent.FALLBACK_ID
-    assert seen and inference["failures"]
 
 
 @pytest.mark.parametrize("text", [

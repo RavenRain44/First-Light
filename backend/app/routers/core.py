@@ -1,19 +1,16 @@
-"""Facility, snapshots, evaluation, charts, roads, thresholds, decisions, notification stub."""
+"""Facility, snapshots, evaluation, charts, roads, thresholds, decisions."""
 from __future__ import annotations
 
 import asyncio
 import json
-import re
 from datetime import date, datetime, timedelta, timezone
 from typing import Literal
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import JSONResponse
+from fastapi import BackgroundTasks, APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field, field_validator
 from sqlmodel import select
 
-from ai.agent import draft_decision_change
 from adapters.base import utc
 from adapters.cache import SourceUnavailable
 from adapters.iem_roads import RANK_LABELS, fetch_road_geojson
@@ -21,7 +18,7 @@ from app import snapshots
 from app.config import settings
 from app.db import session
 from app.facility import get_facility, load_employees, roster_summary
-from app.models import Decision, HistoryEvent
+from app.models import Decision, DecisionContext, HistoryEvent
 from engine.posture import ORDER
 from engine.scoring import load_thresholds
 
@@ -39,6 +36,12 @@ def _facility(facility_id: str | None):
 @router.get("/health")
 def health():
     return {"ok": True, "demo_mode": settings.demo_mode, "model_provider": settings.model_provider,
+            "inference": {"provider": "akamai", "model": settings.akamai_model_id,
+                          "enabled": settings.model_provider != "none" and (
+                              bool(settings.akamai_api_key) or settings.strands_fallback_enabled),
+                          "key_configured": bool(settings.akamai_api_key),
+                          "strands_fallback_enabled": settings.strands_fallback_enabled,
+                          "strands_model": settings.strands_model_id},
             "time": datetime.now(timezone.utc).isoformat()}
 
 
@@ -60,7 +63,7 @@ async def snapshot_latest(facility_id: str | None = None, max_age_seconds: int |
         stale = snap is None or (datetime.now(timezone.utc) - datetime.fromisoformat(snap["created_at"])).total_seconds() > max_age
         if snap is None or (stale and not settings.demo_mode):  # demo data never changes; reuse it
             snap = await snapshots.evaluate(f, None, "live")
-    return snap
+    return snapshots.ensure_interpretation(snap)
 
 
 class EvaluateRequest(BaseModel):
@@ -83,11 +86,28 @@ async def evaluate(req: EvaluateRequest):
 
 
 @router.get("/snapshot/{snapshot_id}")
-def snapshot(snapshot_id: str):
+async def snapshot(snapshot_id: str):
     s = snapshots.get(snapshot_id)
     if not s:
         raise HTTPException(404, "snapshot not found")
-    return s
+    return snapshots.ensure_interpretation(s)
+
+
+@router.get("/snapshot/{snapshot_id}/interpretation")
+def snapshot_interpretation(snapshot_id: str):
+    """AI brief added after the snapshot was saved: pending | ok | failed | none."""
+    return snapshots.interpretation(snapshot_id)
+
+
+@router.post("/snapshot/{snapshot_id}/interpretation", status_code=202)
+async def regenerate_snapshot_interpretation(snapshot_id: str):
+    """Regenerate the AI brief for this snapshot now (runs in the background)."""
+    result = snapshots.regenerate_interpretation(snapshot_id)
+    if result is None:
+        raise HTTPException(404, "snapshot not found")
+    if result["status"] == "unavailable":
+        raise HTTPException(409, "AI brief unavailable: no inference provider is configured")
+    return result
 
 
 @router.get("/snapshots")
@@ -240,13 +260,6 @@ class DecisionIn(BaseModel):
     override_reason: str | None = Field(default=None, max_length=2000)
     notes: str | None = Field(default=None, max_length=2000)
 
-
-class DecisionChangeDraftIn(BaseModel):
-    snapshot_id: str
-    previous_decision_id: int
-    decision_posture: str
-    decided_by: str = Field(min_length=2, max_length=120)
-
     @field_validator("decided_by")
     @classmethod
     def manager_required(cls, value: str) -> str:
@@ -256,96 +269,8 @@ class DecisionChangeDraftIn(BaseModel):
         return value
 
 
-@router.post("/decisions/draft-message")
-async def decision_change_draft(req: DecisionChangeDraftIn):
-    if req.decision_posture not in ORDER:
-        raise HTTPException(422, f"decision_posture must be one of {ORDER}")
-    snap = snapshots.get(req.snapshot_id)
-    if not snap:
-        raise HTTPException(404, "snapshot not found")
-    with session() as s:
-        previous = s.get(Decision, req.previous_decision_id)
-    if not previous or previous.snapshot_id != req.snapshot_id:
-        raise HTTPException(404, "Previous decision not found for this case")
-    if previous.decision_posture == req.decision_posture:
-        raise HTTPException(422, "Choose a different operating status to draft a decision-change message")
-
-    posture = snap.get("posture", {})
-    contributing = set(posture.get("contributing_hazards", []))
-    hazard_levels = [
-        {"hazard": hazard.get("hazard", name), "level": hazard.get("level_name", hazard.get("level"))}
-        for name, hazard in snap.get("hazards", {}).items()
-        if not contributing or hazard.get("hazard", name) in contributing
-    ]
-    controlling_ids = {
-        rule_id
-        for name, hazard in snap.get("hazards", {}).items()
-        if not contributing or hazard.get("hazard", name) in contributing
-        for rule_id in hazard.get("controlling_rule_ids", [])
-    }
-    rules = [
-        {"name": rule.get("label", rule.get("metric")), "observed": rule.get("observed_value"),
-         "threshold": rule.get("threshold"), "unit": rule.get("unit")}
-        for rule in snap.get("rules", [])
-        if rule.get("triggered") and (not controlling_ids or rule.get("rule_id") in controlling_ids)
-    ][:5]
-    context = {
-        "facility": snap["facility"]["name"],
-        "decision_day": posture.get("decision_day"),
-        "risk_recommendation": {
-            "posture": posture.get("posture"),
-            "risk_level": posture.get("opm_label"),
-            "confidence": snap.get("confidence", {}).get("level"),
-            "key_reasons": posture.get("reasons", [])[:3],
-            "hazard_levels": hazard_levels,
-            "supporting_rules": rules,
-        },
-        "previous_decision": {
-            "posture": previous.decision_posture,
-            "decided_by": previous.decided_by,
-            "rationale": previous.override_reason or previous.notes,
-        },
-        "proposed_decision": {
-            "posture": req.decision_posture,
-            "decided_by": req.decided_by,
-        },
-    }
-    message, _, inference = await draft_decision_change(context)
-    if message is None:
-        detail = inference["failures"][0]["problems"][0] if inference["failures"] else "Akamai could not create the draft"
-        raise HTTPException(503, detail)
-    recommendation = context["risk_recommendation"]
-    contributors = list(recommendation["key_reasons"])
-    contributors.extend(f"{item['hazard']} hazard: {item['level']}" for item in hazard_levels)
-    contributors.extend(
-        f"{rule['name']}: {rule['observed']} {rule['unit']}"
-        + (f" (threshold {rule['threshold']} {rule['unit']})" if rule.get("threshold") is not None else "")
-        for rule in rules
-    )
-    evidence = "; ".join(dict.fromkeys(_first_sentence(str(item)) for item in contributors if item))
-    if not evidence:
-        evidence = "No specific hazard contributor or triggered rule was recorded."
-    ai_sentence = _first_sentence(message) or "Akamai prepared this proposed decision update."
-    rationale = _first_sentence(previous.override_reason or previous.notes or "No separate reason was recorded")
-    return {"message": "\n\n".join([
-        f"{ai_sentence.rstrip('.!?')}.",
-        (f"For {context['facility']} on {context['decision_day']}, {previous.decision_posture.replace('_', ' ').lower()} "
-         f"is proposed to change to {req.decision_posture.replace('_', ' ').lower()}, proposed by {req.decided_by}; "
-         f"the previous decision was made by {previous.decided_by} because {rationale.rstrip('.!?')}."),
-        (f"The system recommends {recommendation['posture'].replace('_', ' ').lower()} "
-         f"({recommendation['risk_level']} risk; {recommendation['confidence']} confidence), with main contributors "
-         f"including {evidence}."),
-    ])}
-
-
-def _first_sentence(text: str) -> str:
-    normalized = " ".join(text.split())
-    match = re.search(r"[.!?](?:\s|$)", normalized)
-    return normalized[:match.end() - 1].rstrip() if match else normalized.rstrip(".!?")
-
-
 @router.post("/decisions", status_code=201)
-def record_decision(d: DecisionIn):
+def record_decision(d: DecisionIn, background_tasks: BackgroundTasks):
     snap = snapshots.get(d.snapshot_id)
     if not snap:
         raise HTTPException(404, "snapshot not found")
@@ -362,6 +287,12 @@ def record_decision(d: DecisionIn):
         s.add(row)
         s.commit()
         s.refresh(row)
+        # Demo-mode decisions use cached weather; Past decisions leaves them out.
+        s.add(DecisionContext(decision_id=row.id, demo_mode=settings.demo_mode)); s.commit()
+        from app.camera_archive import pending, capture
+        s.add(pending(row)); s.commit()
+        camera_time = datetime.fromisoformat(snap["as_of"]) if snap["mode"] == "replay" else row.decided_at.replace(tzinfo=timezone.utc)
+        background_tasks.add_task(capture, row.id, row.facility_id, camera_time, snap["mode"] == "replay")
         return {**row.model_dump(mode="json"), "label": "real (recorded in this system)"}
 
 
@@ -374,13 +305,13 @@ def list_decisions(facility_id: str | None = None):
 
 
 @router.get("/record/{snapshot_id}")
-def decision_record(snapshot_id: str):
+async def decision_record(snapshot_id: str):
     """Everything needed to reconstruct one decision: the snapshot plus the human decisions against it."""
     snap = snapshots.get(snapshot_id)
     if not snap:
         raise HTTPException(404, "snapshot not found")
     with session() as s:
         ds = s.exec(select(Decision).where(Decision.snapshot_id == snapshot_id).order_by(Decision.decided_at)).all()
-    return {"snapshot": snap, "decisions": [d.model_dump(mode="json") for d in ds],
+    return {"snapshot": snapshots.ensure_interpretation(snap), "decisions": [d.model_dump(mode="json") for d in ds],
             "thresholds_current_sha256": load_thresholds().sha256,
             "thresholds_changed_since": load_thresholds().sha256 != snap["thresholds_sha256"]}

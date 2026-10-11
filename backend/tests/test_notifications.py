@@ -53,11 +53,10 @@ async def template(snap):
         "provider": "template", "fallback_used": True, "requests": [], "failures": []}
 
 
-def decision(posture="CLOSED", override_reason=None, notes=None):
+def decision(posture="CLOSED", **extra):
     with db.session() as s:
         d = Decision(snapshot_id="snapshot", facility_id="F", decided_by="Manager", decision_posture=posture,
-                     recommended_posture="CLOSED", agreed_with_recommendation=posture == "CLOSED",
-                     override_reason=override_reason, notes=notes, decided_at=NOW)
+                     recommended_posture="CLOSED", agreed_with_recommendation=posture == "CLOSED", decided_at=NOW, **extra)
         s.add(d); s.commit(); s.refresh(d)
         return d.id
 
@@ -212,175 +211,6 @@ def test_api_validation_and_overview(env):
     assert data["packages"][0]["groups"][0]["previews"]["sms"]
 
 
-def test_ai_email_draft_uses_saved_risk_and_decision_facts(env, monkeypatch):
-    from app.main import app
-
-    env.snap.update({
-        "posture": {"posture": "CLOSED", "opm_label": "Closed", "decision_day": "2026-10-12",
-                    "contributing_hazards": ["winter"], "reasons": ["Severe snow makes travel hazardous."]},
-        "confidence": {"level": "high"},
-        "hazards": {"winter": {"hazard": "winter", "level_name": "extreme",
-                               "controlling_rule_ids": ["snowfall"]}},
-        "rules": [{"triggered": True, "rule_id": "snowfall", "label": "Snowfall",
-                   "observed_value": 8, "threshold": 6, "unit": "in"}],
-    })
-    p = asyncio.run(n.create(decision(override_reason="Closed to avoid hazardous travel.")))
-    received = []
-
-    async def draft(context):
-        received.append(context)
-        return "Subject: Weather-related building closure", "akamai:hackathon-chat", {}
-
-    monkeypatch.setattr(n, "draft_staff_email", draft)
-    response = TestClient(app).post(f"/api/notifications/packages/{p['id']}/groups/{p['groups'][0]['id']}/draft-email")
-    assert response.status_code == 200
-    email = response.json()["email_intro"]
-    assert email.startswith("Subject: Facility status update for 2026-10-12\n\nHello team,")
-    assert "system recommends closed (Closed risk; high confidence)" in email
-    assert "Severe snow makes travel hazardous" in email
-    assert "winter hazard: extreme" in email
-    assert "Snowfall: 8 in (threshold 6 in)" in email
-    assert "decision is closed, made by Manager, because Closed to avoid hazardous travel." in email
-    email_body = email.split("Hello team,\n\n", 1)[1]
-    assert len([part for part in email_body.split(".") if part.strip()]) == 3
-    assert received[0]["risk_recommendation"]["posture"] == "CLOSED"
-    assert received[0]["risk_recommendation"]["hazard_levels"] == [{"hazard": "winter", "level": "extreme"}]
-    assert received[0]["risk_recommendation"]["supporting_rules"][0]["name"] == "Snowfall"
-    assert received[0]["recorded_decision"] == {
-        "posture": "CLOSED", "decided_by": "Manager", "rationale": "Closed to avoid hazardous travel."
-    }
-
-
-def test_ai_staff_message_drafts_include_email_sms_and_saved_decision(env, monkeypatch):
-    from app.main import app
-
-    env.snap.update({
-        "posture": {"posture": "CLOSED", "opm_label": "Closed", "decision_day": "2026-10-12",
-                    "contributing_hazards": ["winter"], "reasons": ["Severe snow makes travel hazardous."]},
-        "confidence": {"level": "high"},
-        "hazards": {"winter": {"hazard": "winter", "level_name": "extreme",
-                               "controlling_rule_ids": ["snowfall"]}},
-        "rules": [{"triggered": True, "rule_id": "snowfall", "label": "Snowfall",
-                   "observed_value": 8, "threshold": 6, "unit": "in"}],
-    })
-    p = asyncio.run(n.create(decision(override_reason="Closed to avoid hazardous travel.")))
-    received = []
-
-    async def draft(context):
-        received.append(context)
-        return {
-            "email_body": "Team, the manager's closure reflects today's hazardous winter conditions.",
-            "sms_intro": "Manager confirms closure due to severe winter risk.",
-        }, "akamai:hackathon-chat", {}
-
-    monkeypatch.setattr(n, "draft_staff_notifications", draft)
-    group_id = p["groups"][0]["id"]
-    response = TestClient(app).post(f"/api/notifications/packages/{p['id']}/groups/{group_id}/draft-messages")
-    assert response.status_code == 200
-    drafts = response.json()
-    assert "email_intro" in drafts and "sms_intro" in drafts
-    assert len(drafts["sms_intro"]) <= 120
-    assert "made by Manager" in drafts["email_intro"]
-    assert "Severe snow makes travel hazardous" in drafts["email_intro"]
-    assert len(received) == 1
-    assert received[0]["recorded_decision"]["decided_by"] == "Manager"
-
-
-def test_ai_bulk_staff_message_drafts_cover_every_group_without_sending(env, monkeypatch):
-    from app.main import app
-
-    env.snap.update({
-        "posture": {"posture": "CLOSED", "opm_label": "Closed", "decision_day": "2026-10-12",
-                    "contributing_hazards": ["winter"], "reasons": ["Severe snow makes travel hazardous."]},
-        "confidence": {"level": "high"},
-        "hazards": {"winter": {"hazard": "winter", "level_name": "extreme",
-                               "controlling_rule_ids": ["snowfall"]}},
-        "rules": [{"triggered": True, "rule_id": "snowfall", "label": "Snowfall",
-                   "observed_value": 8, "threshold": 6, "unit": "in"}],
-    })
-    p = asyncio.run(n.create(decision()))
-    original_messages = {g["id"]: (g["email_intro"], g["sms_intro"]) for g in p["groups"]}
-    generated = []
-
-    async def draft(context):
-        generated.append(context)
-        return {"email_body": "Manager update for the recorded facility decision.",
-                "sms_intro": "Manager confirms the recorded facility decision."}, "akamai:hackathon-chat", {}
-
-    monkeypatch.setattr(n, "draft_staff_notifications", draft)
-    response = TestClient(app).post(f"/api/notifications/packages/{p['id']}/draft-all-messages")
-    assert response.status_code == 200
-    result = response.json()
-    assert set(result["drafts"]) == {g["id"] for g in p["groups"]}
-    assert result["failures"] == {}
-    assert len(generated) == len(p["groups"])
-    assert all(len(draft["sms_intro"]) <= 120 for draft in result["drafts"].values())
-    with db.session() as s:
-        saved = json.loads(s.get(NotificationPackage, p["id"]).state_json)
-    assert saved["messages"] == []
-    assert all((g["email_intro"], g["sms_intro"]) == original_messages[g["id"]] for g in saved["groups"])
-
-
-def test_ai_decision_change_message_uses_previous_and_proposed_decision(env, monkeypatch):
-    from ai import agent
-    from app.config import settings
-    from app.main import app
-
-    env.snap.update({
-        "facility": {"name": "Demo facility"},
-        "posture": {"posture": "CLOSED", "opm_label": "Closed", "decision_day": "2026-10-12",
-                    "contributing_hazards": ["winter"], "reasons": ["Severe snow makes travel hazardous."]},
-        "confidence": {"level": "high"},
-        "hazards": {"winter": {"hazard": "winter", "level_name": "extreme",
-                               "controlling_rule_ids": ["snowfall"]}},
-        "rules": [{"triggered": True, "rule_id": "snowfall", "label": "Snowfall",
-                   "observed_value": 8, "threshold": 6, "unit": "in"}],
-    })
-    previous_id = decision("CLOSED", override_reason="Closed because of hazardous roads.")
-    captured = []
-
-    async def akamai(system, user, schema, name, max_tokens, timeout_s):
-        captured.append((system, json.loads(user.split("\n", 1)[1]), name, schema))
-        return json.dumps({"message": "The manager is proposing to change today's closure to normal operations."}), {
-            "provider": "akamai", "model": "hackathon-chat", "usage": None,
-        }
-
-    monkeypatch.setattr(settings, "model_provider", "akamai")
-    monkeypatch.setattr(settings, "akamai_api_key", "test-team-key")
-    monkeypatch.setattr(agent, "_akamai_chat", akamai)
-    response = TestClient(app).post("/api/decisions/draft-message", json={
-        "snapshot_id": "snapshot",
-        "previous_decision_id": previous_id,
-        "decision_posture": "NORMAL",
-        "decided_by": "New Manager",
-    })
-    assert response.status_code == 200
-    message = response.json()["message"]
-    assert "closed is proposed to change to normal, proposed by New Manager" in message
-    assert "system recommends closed (Closed risk; high confidence)" in message
-    assert "Severe snow makes travel hazardous" in message
-    assert "winter hazard: extreme" in message
-    assert "Snowfall: 8 in (threshold 6 in)" in message
-    assert "The manager is proposing to change today's closure to normal operations" in message
-    assert len([part for part in message.split(".") if part.strip()]) == 3
-    _, context, name, schema = captured[0]
-    assert name == "decision_change_message"
-    assert schema["additionalProperties"] is False
-    assert context["risk_recommendation"]["posture"] == "CLOSED"
-    assert context["risk_recommendation"]["hazard_levels"] == [{"hazard": "winter", "level": "extreme"}]
-    assert context["risk_recommendation"]["supporting_rules"][0]["name"] == "Snowfall"
-    assert context["previous_decision"] == {
-        "posture": "CLOSED", "decided_by": "Manager", "rationale": "Closed because of hazardous roads."
-    }
-    assert context["proposed_decision"] == {"posture": "NORMAL", "decided_by": "New Manager"}
-
-    wrong_case = TestClient(app).post("/api/decisions/draft-message", json={
-        "snapshot_id": "other", "previous_decision_id": previous_id,
-        "decision_posture": "NORMAL", "decided_by": "New Manager",
-    })
-    assert wrong_case.status_code == 404
-
-
 def test_no_credentials_template_and_ai_excludes_contacts(env, monkeypatch):
     # Restore actual function shadowed by fixture to verify real no-provider path below.
     from importlib import util
@@ -411,8 +241,9 @@ def test_unchanged_instructions_not_resent_and_dated_assignment(env):
     p = approve_all(package())
     n.dispatch(p["id"], action(p))
     fresh = asyncio.run(n.create(decision()))
-    assert not fresh["groups"]
-    assert all("unchanged" in r["reason"] for r in fresh["excluded"])
+    assert len(fresh["groups"]) == 4
+    assert not any(g["recipient_ids"] for g in fresh["groups"])
+    assert all("unchanged" in r["selection_note"] for g in fresh["groups"] for r in g["recipients"])
     e = employee("dated", assignments=[{"start": "2026-10-12", "end": "2026-10-13", "this_week_location": "detail:OTHER"}])
     groups, _ = n.resolve([e], FAC, "2026-10-12", "CLOSED", "07:30", NOW)
     assert groups[0]["kind"] == "awareness"
@@ -432,7 +263,7 @@ def test_followup_select_multiple_recipients_and_preserve_sent_history(env):
     p = n.followup(p["id"], action(p))
     assert p["status"] == "draft" and not any(g["approved"] for g in p["groups"])
     for g in list(p["groups"]):
-        p = edit(p, g, recipient_ids=["onsite", "second"] if g["kind"] == "onsite" else [])
+        p = edit(p, g, recipient_ids=["onsite", "second"] if g["id"] == "onsite-telework" else [])
     p = approve_all(p)
     p = n.dispatch(p["id"], action(p))
     new = [m for m in p["messages"] if ':v2:' in m["id"]]
@@ -447,14 +278,13 @@ def test_explicit_manual_update_can_create_groups_for_unchanged_decision(env):
     n.dispatch(p["id"], action(p))
     did = decision()
     empty = asyncio.run(n.create(did))
-    assert not empty["groups"]
-    manual = asyncio.run(n.create(did, include_unchanged=True))
-    assert manual["id"] == empty["id"] and manual["groups"]
-    assert not manual["messages"] and not any(g["approved"] for g in manual["groups"])
-    with db.session() as s:
-        row = s.exec(select(NotificationAudit).where(NotificationAudit.package_id == manual["id"],
-                     NotificationAudit.action == "manual_update_groups_created")).one()
-        assert json.loads(row.detail_json)["draft_inference"] == manual["draft_inference"]
+    assert len(empty["groups"]) == 4
+    assert not any(g['recipient_ids'] for g in empty['groups'])
+    group = next(g for g in empty['groups'] if g['id'] == 'onsite-telework')
+    manual = edit(empty, group, recipient_ids=[r['id'] for r in group['recipients']])
+    assert manual['groups'][0]['recipient_ids']
+    assert not manual['messages'] and not any(g['approved'] for g in manual['groups'])
+
 
 
 def test_one_action_reviews_all_groups_then_sends(env):
@@ -582,42 +412,220 @@ def test_login_check_never_sends(monkeypatch):
     assert result["status"] == "authentication_failed" and "secret" not in result["detail"]
 
 
-def test_package_automatically_generates_staff_copy_once(env, monkeypatch):
-    from app.config import settings
-    monkeypatch.setattr(settings, "model_provider", "akamai")
-    monkeypatch.setattr(settings, "akamai_api_key", "test-key")
-    env.snap["posture"].update(posture="CLOSED", opm_label="Closed", reasons=["Winter weather"])
-    env.snap["confidence"] = {"level": "high"}
-    captured = []
-
-    async def generate(context):
-        captured.append(context)
-        return {"email_body": "Staff should review the recorded facility update.", "sms_intro": "The manager has confirmed closure."}, "akamai:hackathon-chat", {
-            "provider": "akamai", "fallback_used": False, "requests": [], "failures": []}
-
-    monkeypatch.setattr(n, "draft_staff_notifications", generate)
-    did = decision("CLOSED")
-    pack = asyncio.run(n.create(did))
-    assert pack["status"] == "draft" and not pack["messages"]
-    assert pack["staff_draft_inference"]["provider"] == "akamai"
-    assert all(g["akamai_drafted"] and "recorded decision is closed" in g["email_intro"] for g in pack["groups"])
-    assert all(g["sms_intro"] == "The manager has confirmed closure." for g in pack["groups"])
-    assert "recipients" not in captured[0] and "employees" not in captured[0]
-    assert asyncio.run(n.create(did)) == pack
-    assert len(captured) == 1
+def test_three_box_override_delivery_and_audit(env):
+    p = package()
+    assert len({g['decision_text'] for g in p['groups']}) == 1
+    assert all(g['template'] for g in p['groups'])
+    g = p['groups'][0]
+    p = n.approve(p['id'], g['id'], action(p))
+    p = edit(p, g, location_text='Ames · Monday', decision_text='The facility is closed.',
+             instruction_text='Contact your supervisor before reporting.')
+    changed = p['groups'][0]
+    assert not changed['approved'] and changed['instruction_override']
+    assert p['snapshot_id'] == 'snapshot' and p['posture'] == 'CLOSED'
+    for channel in ['sms', 'email']:
+        assert n.message_text(p, changed, channel, 'Casey') == 'Ames · Monday\nThe facility is closed.\nCasey: Contact your supervisor before reporting.'
+    p = approve_all(p)
+    p = n.dispatch(p['id'], action(p))
+    assert any('Contact your supervisor before reporting.' in m['body'] for m in p['messages'])
+    with db.session() as s:
+        edits = s.exec(select(NotificationAudit).where(NotificationAudit.action == 'group_edited_approval_invalidated')).all()
+        assert any('instruction_override' in a.detail_json for a in edits)
 
 
-def test_automatic_staff_copy_failure_preserves_editable_template(env, monkeypatch):
-    from app.config import settings
-    monkeypatch.setattr(settings, "model_provider", "akamai")
-    monkeypatch.setattr(settings, "akamai_api_key", "test-key")
+def test_empty_message_box_does_not_change_saved_draft(env):
+    p = package()
+    with pytest.raises(HTTPException):
+        edit(p, p['groups'][0], instruction_text='   ')
+    assert read(p['id'])['version'] == p['version']
 
-    async def fail(context):
-        return None, "deterministic-fallback", {"provider": "template", "fallback_used": True,
-            "requests": [], "failures": [{"provider": "akamai", "problems": ["model call failed"]}]}
 
-    monkeypatch.setattr(n, "draft_staff_notifications", fail)
-    pack = package()
-    assert pack["status"] == "draft" and not pack["messages"]
-    assert pack["staff_draft_inference"]["fallback_used"]
-    assert all(g["email_intro"] == "Weather assessment: winter hazard." for g in pack["groups"])
+def test_decision_camera_frames_are_saved_once_and_survive_restart(env, monkeypatch):
+    from app import camera_archive as ca
+    from app.models import DecisionCameraFrame
+    from app.routers.cameras import saved_frame
+    did = decision()
+    with db.session() as s:
+        s.add(ca.pending(s.get(Decision, did))); s.commit()
+    calls = []
+    async def cameras(*args, **kwargs):
+        return ([{'id':'cam1','name':'Camera one','km':1,'views':[
+            {'url':'older','time':'2026-10-12T08:50:00+00:00','view':0},
+            {'url':'superseded-angle','time':'2026-10-12T08:40:00+00:00','view':0},
+            {'url':'latest','time':'2026-10-12T08:59:00+00:00','view':1},
+            {'url':'future','time':'2026-10-12T09:01:00+00:00','view':2}]},
+            {'id':'cam2','name':'Camera two','km':2,'views':[{'url':'missing','time':'2026-10-12T08:59:00+00:00','view':0}]}], None)
+    async def image(url): calls.append(url); return b'saved-image-bytes' if url in {'older','latest'} else None
+    async def empty(*args, **kwargs): return []
+    monkeypatch.setattr(ca, 'fetch_webcams', empty)
+    monkeypatch.setattr(ca, 'fetch_traffic_cameras', empty)
+    monkeypatch.setattr(ca,'fetch_cameras',cameras)
+    monkeypatch.setattr(ca,'get_image',image)
+    monkeypatch.setattr(ca,'get_facility',lambda _:FAC)
+    asyncio.run(ca.capture(did,'F',NOW))
+    archive = ca.saved(did)
+    assert len(archive['cameras']) == 1 and len(archive['cameras'][0]['views']) == 2
+    assert len(archive['unavailable']) == 1 and 'future' not in calls and 'superseded-angle' not in calls
+    ca.abandon_interrupted()
+    asyncio.run(ca.capture(did,'F',NOW))
+    assert len(calls)==3 and ca.saved(did)==archive
+    with db.session() as s:
+        frames=s.exec(select(DecisionCameraFrame)).all()
+        assert len(frames)==2 and all(f.image==b'saved-image-bytes' for f in frames)
+        assert saved_frame(frames[0].id).body==b'saved-image-bytes'
+    assert ca.saved(999)['status']=='unavailable'
+
+
+def test_interrupted_camera_capture_never_fetches_new_images(env):
+    from app import camera_archive as ca
+    did=decision()
+    with db.session() as s:
+        s.add(ca.pending(s.get(Decision,did)));s.commit()
+    ca.abandon_interrupted()
+    assert ca.saved(did)['status']=='unavailable'
+
+
+def test_live_traffic_photo_saved_without_live_links_or_stale_fallback(env, monkeypatch):
+    from app import camera_archive as ca
+    did=decision()
+    with db.session() as s:
+        s.add(ca.pending(s.get(Decision,did)));s.commit()
+    async def empty(*args, **kwargs): return []
+    async def traffic(*args, **kwargs):
+        return ([{'id':'traffic1','name':'Near facility','kind':'traffic','km':1,
+                  'stream_url':'live-stream', 'snapshot_url':'mutable-photo',
+                  'views':[{'view':0,'url':'mutable-photo','time':'2026-10-12T09:01:00+00:00','label':'Live'}]}],None)
+    calls=[]
+    async def image(url, allow_stale=True):
+        calls.append((url,allow_stale));return b'current-photo'
+    monkeypatch.setattr(ca,'fetch_cameras',empty)
+    monkeypatch.setattr(ca,'fetch_webcams',empty)
+    monkeypatch.setattr(ca,'fetch_traffic_cameras',traffic)
+    monkeypatch.setattr(ca,'get_image',image)
+    monkeypatch.setattr(ca,'get_facility',lambda _:FAC)
+    monkeypatch.setattr(ca.settings,'demo_mode',False)
+    asyncio.run(ca.capture(did,'F',NOW))
+    cam=ca.saved(did)['cameras'][0]
+    assert calls==[('mutable-photo',False)]
+    assert 'stream_url' not in cam and 'snapshot_url' not in cam
+    assert cam['views'][0]['url'].startswith('/api/cameras/saved-frame/')
+    assert cam['views'][0]['timestamp_kind']=='retrieved_at'
+    assert cam['views'][0]['source_url']=='mutable-photo'
+    asyncio.run(ca.capture(did,'F',NOW))
+    assert len(calls)==1
+
+
+def test_cancelled_capture_cleans_up_image_tasks(env, monkeypatch):
+    from app import camera_archive as ca
+    did=decision()
+    with db.session() as s:
+        s.add(ca.pending(s.get(Decision,did)));s.commit()
+    async def empty(*a,**kw):return []
+    async def cams(*a,**kw):
+        return ([{'id':'cam','name':'cam','km':1,'views':[{'view':0,'url':'image','time':NOW.isoformat()}]}],None)
+    monkeypatch.setattr(ca,'fetch_cameras',cams)
+    monkeypatch.setattr(ca,'fetch_webcams',empty)
+    monkeypatch.setattr(ca,'fetch_traffic_cameras',empty)
+    monkeypatch.setattr(ca,'get_facility',lambda _:FAC)
+    async def verify():
+        started=asyncio.Event(); stopped=asyncio.Event()
+        async def image(*a,**kw):
+            started.set()
+            try: await asyncio.Event().wait()
+            finally: stopped.set()
+        monkeypatch.setattr(ca,'get_image',image)
+        task=asyncio.create_task(ca.capture(did,'F',NOW))
+        await asyncio.wait_for(started.wait(),2)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):await task
+        assert stopped.is_set()
+    asyncio.run(verify())
+
+
+def test_refresh_ai_reason_preserves_routing_and_instructions_clears_approval(env, monkeypatch):
+    p = package()
+    p = n.approve(p['id'], p['groups'][0]['id'], action(p))
+    original = [(g['instruction_text'], g['recipients'], g['location_text']) for g in p['groups']]
+    async def wording(snap):
+        assert snap['manager_decision'] == 'CLOSED'
+        return 'Extreme winter hazards are present.', 'Powered by Akamai', {'provider': 'akamai'}
+    monkeypatch.setattr(n, 'weather_wording', wording)
+    updated = asyncio.run(n.regenerate(p['id'], action(p)))
+    assert updated['version'] == p['version'] + 1
+    assert all(not g['approved'] for g in updated['groups'])
+    assert [(g['instruction_text'], g['recipients'], g['location_text']) for g in updated['groups']] == original
+    assert all('Extreme winter hazards' in g['decision_text'] for g in updated['groups'])
+    assert updated['messages'] == []
+    with db.session() as s:
+        assert any(a.action == 'ai_wording_refreshed' for a in s.exec(select(NotificationAudit)).all())
+    with pytest.raises(HTTPException) as error:
+        asyncio.run(n.regenerate(p['id'], action(p)))
+    assert error.value.status_code == 409
+
+
+@pytest.mark.parametrize('posture', list(n.LABELS))
+def test_each_manager_scenario_has_its_own_prompt_and_group_instructions(env, monkeypatch, posture):
+    from importlib import util
+    spec = util.spec_from_file_location('scenario_notify', n.__file__)
+    copy = util.module_from_spec(spec); spec.loader.exec_module(copy)
+    async def model(system, user):
+        data = json.loads(user)
+        assert data['manager_decision'] == posture
+        assert data['recommended_decision'] == 'CLOSED'
+        assert copy.SCENARIO_FOCUS[posture] in system
+        assert 'employees' not in data and 'contacts' not in data
+        return 'Extreme winter hazards are present.', 'akamai:hackathon-chat', {'provider':'akamai', 'failures':[]}
+    monkeypatch.setattr(copy, 'hazard_sentence', model)
+    wording, source, _ = asyncio.run(copy.weather_wording({**env.snap, 'manager_decision':posture, 'posture':{'posture':'CLOSED'}}))
+    assert 'Powered by Akamai' in source
+    assert wording == 'Extreme winter hazards are present.'
+    p = asyncio.run(n.create(decision(posture), include_unchanged=True))
+    assert p['posture'] == posture
+    for g in p['groups']:
+        assert n.LABELS[posture].lower() in g['decision_text']
+        assert g['instruction_text'] == n.instruction(g['kind'], posture, g['id'] != 'onsite-leave')
+
+
+def test_legacy_draft_restores_missing_groups_without_selecting_them(env):
+    p = package()
+    missing = next(g for g in p['groups'] if g['id'] == 'onsite-telework')
+    p['groups'] = [g for g in p['groups'] if g['id'] != missing['id']]
+    p.pop('group_visibility_version')
+    p['excluded'].extend({'id':r['id'], 'name':r['name'], 'reason':'Already notified for this date; reporting instructions unchanged'} for r in missing['recipients'])
+    with db.session() as s:
+        row = s.get(NotificationPackage, p['id'])
+        n.store(s, row, p); s.commit()
+    restored = asyncio.run(n.create(p['decision_id']))
+    assert len(restored['groups']) == 4
+    recovered = next(g for g in restored['groups'] if g['id'] == missing['id'])
+    assert recovered['recipients'] and recovered['recipient_ids'] == []
+    assert not any(g['approved'] for g in restored['groups'])
+    assert not restored['messages']
+    selected = edit(restored, recovered, recipient_ids=['onsite'])
+    assert next(g for g in selected['groups'] if g['id'] == missing['id'])['recipient_ids'] == ['onsite']
+
+
+@pytest.mark.parametrize('posture,field', [('CLOSED','notes'), ('TELEWORK','override_reason')])
+def test_manager_reason_is_used_in_prompt_and_outgoing_decision(env, monkeypatch, posture, field):
+    from importlib import util
+    spec = util.spec_from_file_location('reason_notify', n.__file__)
+    copy = util.module_from_spec(spec); spec.loader.exec_module(copy)
+    reason = 'County roads remain untreated; contact lead@example.com or +19132206510.'
+    async def model(system, user):
+        data = json.loads(user)
+        assert 'County roads remain untreated' in data['manager_reason']
+        assert 'lead@example.com' not in user and '19132206510' not in user
+        assert data['agreed_with_recommendation'] == (posture == 'CLOSED')
+        assert 'primary emphasis' in system
+        return 'Winter hazards remain significant.', 'akamai:hackathon-chat', {'provider':'akamai', 'failures':[]}
+    monkeypatch.setattr(copy, 'hazard_sentence', model)
+    asyncio.run(copy.weather_wording({**env.snap, 'manager_decision':posture, 'manager_reason':reason, 'manager_agreed':posture == 'CLOSED'}))
+    did = decision(posture, **{field:reason})
+    p = asyncio.run(n.create(did))
+    for g in p['groups']:
+        assert 'County roads remain untreated' in g['decision_text']
+        assert 'lead@example.com' not in g['decision_text'] and '19132206510' not in g['decision_text']
+        assert 'County roads remain untreated' in g['template']['decision_text']
+    refreshed = asyncio.run(n.regenerate(p['id'], action(p)))
+    assert all('County roads remain untreated' in g['decision_text'] for g in refreshed['groups'])
+    assert not refreshed['messages']

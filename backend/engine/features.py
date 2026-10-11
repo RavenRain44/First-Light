@@ -150,12 +150,15 @@ def extract(inputs_list: list[NormalizedInput], as_of: datetime, employees: list
     else:
         sig["obs_ice_accretion_3h_in"] = _missing("obs_ice_accretion_3h_in", "Measured ice accretion (3 h)", "in",
                                                   "observation", "icing sensor value not reported (live only)")
-    og = owin("obs.wind_gust_mph")
+    # Thresholds use the highest gust from any report (incl. 5-minute obs and the peak-wind remark);
+    # older saved inputs only have the hourly-report gust.
+    gust_key = "obs.peak_gust_mph" if "obs.peak_gust_mph" in inputs else "obs.wind_gust_mph"
+    og = owin(gust_key)
     if og:
         pk = max(og, key=lambda x: x[1])
         sig["obs_max_gust_3h_mph"] = Signal(
-            id="obs_max_gust_3h_mph", label="Observed max gust (last 3 h)", value=round(pk[1], 1), unit="mph",
-            role="observation", peak_time=pk[0], window=obs_win, input_ids=["obs.wind_gust_mph"])
+            id="obs_max_gust_3h_mph", label="Observed peak gust (last 3 h)", value=round(pk[1], 1), unit="mph",
+            role="observation", peak_time=pk[0], window=obs_win, input_ids=[gust_key])
     else:
         sig["obs_max_gust_3h_mph"] = _missing("obs_max_gust_3h_mph", "Observed max gust (last 3 h)", "mph", "observation",
                                               "no gust observations in the last 3 h")

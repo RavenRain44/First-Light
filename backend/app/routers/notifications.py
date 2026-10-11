@@ -33,6 +33,9 @@ class Action(BaseModel):
 
 
 class Edit(Action):
+    location_text: str | None = Field(default=None, min_length=1, max_length=300)
+    decision_text: str | None = Field(default=None, min_length=1, max_length=1000)
+    instruction_text: str | None = Field(default=None, min_length=1, max_length=1000)
     sms_intro: str = Field(max_length=120)
     email_intro: str = Field(max_length=2000)
     schedule_override: datetime | None = None
@@ -83,21 +86,6 @@ def edit(pid: str, gid: str, req: Edit):
     return n.edit(pid, gid, req)
 
 
-@router.post("/packages/{pid}/groups/{gid}/draft-email")
-async def draft_email(pid: str, gid: str):
-    return await n.draft_email(pid, gid)
-
-
-@router.post("/packages/{pid}/groups/{gid}/draft-messages")
-async def draft_messages(pid: str, gid: str):
-    return await n.draft_messages(pid, gid)
-
-
-@router.post("/packages/{pid}/draft-all-messages")
-async def draft_all_messages(pid: str):
-    return await n.draft_all_messages(pid)
-
-
 @router.post("/packages/{pid}/groups/{gid}/approve")
 def approve(pid: str, gid: str, req: Action):
     return n.approve(pid, gid, req)
@@ -133,6 +121,9 @@ def followup(pid: str, req: Action):
 
 class GroupReview(BaseModel):
     id: str
+    location_text: str | None = Field(default=None, min_length=1, max_length=300)
+    decision_text: str | None = Field(default=None, min_length=1, max_length=1000)
+    instruction_text: str | None = Field(default=None, min_length=1, max_length=1000)
     sms_intro: str = Field(max_length=120)
     email_intro: str = Field(max_length=2000)
     recipient_ids: list[str]
@@ -187,3 +178,8 @@ def check_smtp_connection():
 def real_test(pid: str, req: RealTest):
     from app.real_delivery import send_tests
     return send_tests(pid, req)
+
+
+@router.post("/packages/{pid}/regenerate")
+async def regenerate(pid: str, req: Action):
+    return await n.regenerate(pid, req)

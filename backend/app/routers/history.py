@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
 from adapters.base import utc
-from app import snapshots
+from app import snapshots, replay_timeline
 from app.db import session
 from app.facility import load_facility
 from app.models import HistoryEvent, Snapshot
@@ -16,6 +16,22 @@ from ai import fallback
 from engine import analogs
 
 router = APIRouter(prefix="/api")
+
+
+@router.get("/replay/timeline")
+async def custom_timeline(as_of: datetime):
+    """25 hourly evaluations centered on the exact requested instant (including minutes).
+
+    Only the separately selected report is persisted/enriched; these ribbon cells
+    use the same deterministic rules without modifying recorded historical events.
+    """
+    as_of = utc(as_of)
+    try:
+        as_of - timedelta(hours=replay_timeline.WINDOW_HOURS)
+        as_of + timedelta(hours=replay_timeline.WINDOW_HOURS)
+    except OverflowError:
+        raise HTTPException(422, "Replay date is outside the supported range") from None
+    return await replay_timeline.build_timeline(load_facility(), as_of)
 
 
 def _event_dict(e: HistoryEvent) -> dict:
@@ -66,7 +82,7 @@ async def replay(event_id: str, as_of: datetime):
             # (not stored, so the snapshot itself stays untouched).
             snap["analogs"] = analogs.find_analogs(snap["features"], exclude_event=event_id)
             snap["ai"]["analog_comparison"] = fallback.build(snap, snap["analogs"]).analog_comparison
-        return snap
+        return snapshots.ensure_interpretation(snap)
     return await snapshots.evaluate(load_facility(), as_of, "replay", event_id=event_id)
 
 

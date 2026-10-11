@@ -8,6 +8,6 @@ python-dotenv>=1.0
 tzdata>=2024.1
 apscheduler>=3.10,<4
 boto3>=1.35
-openai>=1.50
+strands-agents>=1.0,<2
 pytest>=8.0
 pytest-asyncio>=0.23

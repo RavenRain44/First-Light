@@ -51,7 +51,7 @@
   ]
  },
  "outcome": {
-  "summary": "6 storm reports within 25 mi (3 non-tstm wnd gst, 2 non-tstm wnd dmg, 1 snow); max reported wind 62 mph; max reported snow 1.8 in; AMW peak gust 62 mph; worst commute corridor: not advised/closed.",
+  "summary": "6 storm reports within 25 mi (3 non-tstm wnd gst, 2 non-tstm wnd dmg, 1 snow); max reported wind 62 mph; max reported snow 1.8 in; AMW peak gust 59 mph; worst commute corridor: not advised/closed.",
   "severe_impact": true,
   "lsr_count": 6,
   "lsr_by_type": {
@@ -149,8 +149,8 @@
   "max_reported_wind_mph": 62.0,
   "max_reported_snow_in": 1.8,
   "max_reported_ice_in": null,
-  "amw_peak_gust_mph": 62.1,
-  "amw_peak_gust_time": "2025-03-05T07:00:00+00:00",
+  "amw_peak_gust_mph": 58.7,
+  "amw_peak_gust_time": "2025-03-05T09:00:00+00:00",
   "amw_freezing_precip_hours": 0,
   "amw_snow_hours": 9,
   "worst_corridor_rank": 5.0,
@@ -182,7 +182,7 @@
  },
  "timeline": [
   {
-   "snapshot_id": "8520a47fecff4f4cbd29bb21c6c75fdf",
+   "snapshot_id": "4ced4f7e87d4449cb623c2ed596c9688",
    "as_of": "2025-03-04T06:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -216,7 +216,7 @@
    }
   },
   {
-   "snapshot_id": "b0c556320a504e97b90684392f8e1db7",
+   "snapshot_id": "56422e543f5247a28ba02b2bd7cbbbe2",
    "as_of": "2025-03-04T07:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -250,7 +250,7 @@
    }
   },
   {
-   "snapshot_id": "6cd8505ca91f4d22ac450ffb722b6e9f",
+   "snapshot_id": "e68c552c918842f38e55f3bdf5952bf2",
    "as_of": "2025-03-04T08:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -284,7 +284,7 @@
    }
   },
   {
-   "snapshot_id": "3246342f4a3a42378ff4084139769279",
+   "snapshot_id": "d2307b70216b4bdbb2163b8d5841d74e",
    "as_of": "2025-03-04T09:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -317,7 +317,7 @@
    }
   },
   {
-   "snapshot_id": "010ef919aeeb41858781402e17f75f2e",
+   "snapshot_id": "361bd96ea2864d94af39e24c5110f9e4",
    "as_of": "2025-03-04T10:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -350,7 +350,7 @@
    }
   },
   {
-   "snapshot_id": "efbfe4f996434bbeb5290e2519424560",
+   "snapshot_id": "016516bc596c4de4a7e56c93c59e5f92",
    "as_of": "2025-03-04T11:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -383,7 +383,7 @@
    }
   },
   {
-   "snapshot_id": "f4efede8fb3541f2ad5c1ff7c682a01e",
+   "snapshot_id": "f440164e8f9a4b4d973e8d44805dd0fa",
    "as_of": "2025-03-04T12:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -416,7 +416,7 @@
    }
   },
   {
-   "snapshot_id": "35701b0d2e3046c6963e09505dac4046",
+   "snapshot_id": "59d096b015a84191b75159b016275800",
    "as_of": "2025-03-04T13:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -449,7 +449,7 @@
    }
   },
   {
-   "snapshot_id": "1057e8a203554b4c8498c7f7f7b0eba6",
+   "snapshot_id": "cd508b1f4a154dafb8af4a219f366b90",
    "as_of": "2025-03-04T14:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -482,7 +482,7 @@
    }
   },
   {
-   "snapshot_id": "14c7d2c1c4f14a82891fc38fcf9f3eec",
+   "snapshot_id": "6d08643e347e4644b4da4cccd67f9ab8",
    "as_of": "2025-03-04T15:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -515,7 +515,7 @@
    }
   },
   {
-   "snapshot_id": "c453385fabbe4c239bed74dfadc8f6d5",
+   "snapshot_id": "c443e7cd67904fe19d30f0ecdd56a0d2",
    "as_of": "2025-03-04T16:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -548,7 +548,7 @@
    }
   },
   {
-   "snapshot_id": "2cfb2e51657a4fc19b821b40a7da9139",
+   "snapshot_id": "c1a8c690692848bb940be2665c681510",
    "as_of": "2025-03-04T17:00:00+00:00",
    "posture": "NORMAL",
    "decision_day": "2025-03-04",
@@ -581,7 +581,7 @@
    }
   },
   {
-   "snapshot_id": "568723dc4c474f509af6cc9c606db5ea",
+   "snapshot_id": "6c234d5fc3ec4c1fbfc192e802f3719f",
    "as_of": "2025-03-04T18:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -615,7 +615,7 @@
    }
   },
   {
-   "snapshot_id": "2804ff39fca0470db04a21a75090270a",
+   "snapshot_id": "ff69d4a4455a4ab3b8248285a96af9cd",
    "as_of": "2025-03-04T19:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -649,7 +649,7 @@
    }
   },
   {
-   "snapshot_id": "7b5e394b0bbd426ba21052a5d0e04827",
+   "snapshot_id": "13dfc41a74d34b1ab647fff2c4b6bf23",
    "as_of": "2025-03-04T20:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -683,7 +683,7 @@
    }
   },
   {
-   "snapshot_id": "9ceae0e9b82743ae9a26dbbbb3efa339",
+   "snapshot_id": "274e2ee83f3141b9a18870caced3774f",
    "as_of": "2025-03-04T21:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -717,7 +717,7 @@
    }
   },
   {
-   "snapshot_id": "2c2114407ad449598710648dc68db253",
+   "snapshot_id": "8aeb3f6c0b5343d1b60022064dd5ec72",
    "as_of": "2025-03-04T22:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -751,7 +751,7 @@
    }
   },
   {
-   "snapshot_id": "d31869d30c2748c9ba22fd2fa6bc8164",
+   "snapshot_id": "96e31a9f38584c79aff5f425bfd4c5af",
    "as_of": "2025-03-04T23:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -785,7 +785,7 @@
    }
   },
   {
-   "snapshot_id": "b9c6ebdf8f234658882a7c81a5677e95",
+   "snapshot_id": "fd17ba7ed7ec4c42b3cefc40d71f4205",
    "as_of": "2025-03-05T00:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -819,7 +819,7 @@
    }
   },
   {
-   "snapshot_id": "986dea99f6224d009ff4defe5aa2247b",
+   "snapshot_id": "06dabc746ec447c28852be6887a2c3f1",
    "as_of": "2025-03-05T01:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -853,7 +853,7 @@
    }
   },
   {
-   "snapshot_id": "bf66bca4a4fb4ab8a304c8dd7fe55ee7",
+   "snapshot_id": "8147661f8b324f06acbf64bec3b02588",
    "as_of": "2025-03-05T02:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -887,7 +887,7 @@
    }
   },
   {
-   "snapshot_id": "d963c743afec487e82fdecb93d17bab3",
+   "snapshot_id": "567af542dd6e4562807bb61a5714bcc3",
    "as_of": "2025-03-05T03:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -921,7 +921,7 @@
    }
   },
   {
-   "snapshot_id": "6a0517f89b3d4e5dab12ca95b4838fa4",
+   "snapshot_id": "5e88a0eaa8874d64a591a453bbdd094c",
    "as_of": "2025-03-05T04:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -955,7 +955,7 @@
    }
   },
   {
-   "snapshot_id": "815def45f8ce4f5ebc1a27bac034a284",
+   "snapshot_id": "284bb487fa1143a1970900d4eaebd10d",
    "as_of": "2025-03-05T05:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -989,7 +989,7 @@
    }
   },
   {
-   "snapshot_id": "c6d75ad924d44d548f25bc6fbc614000",
+   "snapshot_id": "7d826c1bdc004ea9b94d77344e455db7",
    "as_of": "2025-03-05T06:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1023,7 +1023,7 @@
    }
   },
   {
-   "snapshot_id": "e19f6440aaa747f58dba7099bdf1b867",
+   "snapshot_id": "ccd6bbb04df1462da2b68fd02568b6c4",
    "as_of": "2025-03-05T07:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1057,7 +1057,7 @@
    }
   },
   {
-   "snapshot_id": "58d29b3d9e524a9495e03609b81a98e1",
+   "snapshot_id": "0642f0a98d6a476bbe52a534c48abffe",
    "as_of": "2025-03-05T08:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1091,7 +1091,7 @@
    }
   },
   {
-   "snapshot_id": "631b5568fa8147a59dbab1cb9342e10a",
+   "snapshot_id": "5077bd36d2284de683cd80aa699718c5",
    "as_of": "2025-03-05T09:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1125,7 +1125,7 @@
    }
   },
   {
-   "snapshot_id": "38b600c7595943bfa6e813595c67b8d0",
+   "snapshot_id": "682cddc88494419c8a39698c16184078",
    "as_of": "2025-03-05T10:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1159,7 +1159,7 @@
    }
   },
   {
-   "snapshot_id": "ef372fac917b40a2a37fc821060965c4",
+   "snapshot_id": "ee4886e3b1024050bdb3153ce34bfd81",
    "as_of": "2025-03-05T11:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1193,7 +1193,7 @@
    }
   },
   {
-   "snapshot_id": "63e4bbfee23f49c68acf317bebec7add",
+   "snapshot_id": "ffe55a4fd64649e7b51ea147f4c953cd",
    "as_of": "2025-03-05T12:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1227,7 +1227,7 @@
    }
   },
   {
-   "snapshot_id": "83413c18995648e8a9ba7223c70cdc25",
+   "snapshot_id": "4c7b6cb0b1c74f139e4f75864a8b98be",
    "as_of": "2025-03-05T13:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1261,7 +1261,7 @@
    }
   },
   {
-   "snapshot_id": "d0046b4d635d4763a41a0c3720d71418",
+   "snapshot_id": "e99c721016c44c9d9b00ac4283f887ac",
    "as_of": "2025-03-05T14:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1295,7 +1295,7 @@
    }
   },
   {
-   "snapshot_id": "544cd1cce2804ff4bf5c273ce8071820",
+   "snapshot_id": "62860d424ebf4796bc9bfa3536798f03",
    "as_of": "2025-03-05T15:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1329,7 +1329,7 @@
    }
   },
   {
-   "snapshot_id": "3f6a99aea6ee4435b37b136926623b0f",
+   "snapshot_id": "40022477aecc46378e2233b9f37e26ca",
    "as_of": "2025-03-05T16:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1363,7 +1363,7 @@
    }
   },
   {
-   "snapshot_id": "5df6ff8c95984ecaa720e723f62b05af",
+   "snapshot_id": "7c591b99c2844711ba9d1cae9dfd04ae",
    "as_of": "2025-03-05T17:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1397,7 +1397,7 @@
    }
   },
   {
-   "snapshot_id": "4df0568218e64229b914ce2e34b66085",
+   "snapshot_id": "a2a9b2a44e0d43d5b74e538b5ee272df",
    "as_of": "2025-03-05T18:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1431,7 +1431,7 @@
    }
   },
   {
-   "snapshot_id": "38ea2278d7c94fdd8aaf86c26d83793f",
+   "snapshot_id": "cbe18068409d4b7fabbdecf8d973564f",
    "as_of": "2025-03-05T19:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",
@@ -1465,7 +1465,7 @@
    }
   },
   {
-   "snapshot_id": "06750438a2944a57a7ecbfd0ce6a2601",
+   "snapshot_id": "22aa354051cb4be8904c1155d101e998",
    "as_of": "2025-03-05T20:00:00+00:00",
    "posture": "CLOSED",
    "decision_day": "2025-03-05",

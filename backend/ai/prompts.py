@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
-PROMPT_VERSION = "akamai-brief-v3.1-reasons"
+PROMPT_VERSION = "decision-brief-v4-akamai-strands"
 
 
 class SuggestedReason(BaseModel):
@@ -49,25 +49,6 @@ class WeatherDraft(BaseModel):
 
     explanation: str = Field(min_length=1, max_length=350, pattern=r"^[^\s.!?][^\n.!?]*[.!?]?$",
                              description="One short weather-only sentence; no reporting instructions or numbers")
-
-
-class StaffEmailDraft(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
-
-    body: str = Field(min_length=1, max_length=1600, description="A concise, staff-facing email body grounded only in supplied facts")
-
-
-class StaffNotificationDraft(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
-
-    email_body: str = Field(min_length=1, max_length=1600, description="One complete staff-facing email sentence grounded in supplied facts")
-    sms_intro: str = Field(min_length=1, max_length=120, description="Short staff-facing SMS explanation, maximum 120 characters")
-
-
-class DecisionChangeDraft(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
-
-    message: str = Field(min_length=1, max_length=1600, description="A concise, factual staff-facing update about a changed facility decision")
 
 
 SYSTEM_PROMPT = """You are the interpretation assistant inside "Closure Call", a decision-support dashboard for a

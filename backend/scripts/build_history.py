@@ -27,13 +27,12 @@ from sqlmodel import delete, select
 
 from adapters import cache
 from adapters.base import utc
-from adapters.iem_lsr import fetch_lsrs
-from adapters.iem_obs import fetch_obhistory, obs_series
 from app import snapshots
 from app.db import get_engine, session
 from app.facility import load_facility
 from app.models import HistoryEvent, Snapshot
 from engine import analogs
+from engine.outcomes import observed_outcome
 
 OUT = Path(__file__).resolve().parents[1] / "fixtures" / "history"
 BYUGC = "https://mesonet.agron.iastate.edu/json/vtec_events_byugc.php"
@@ -93,54 +92,11 @@ async def verify(ev: dict) -> dict:
 
 
 async def outcomes(ev: dict, timeline: list[dict]) -> dict:
-    fac = load_facility()
-    lsrs, lsr_url = await fetch_lsrs(fac, ev["start"], ev["end"])
-    rows, _ = await fetch_obhistory(fac.asos_station, ev["start"], ev["end"], fac.timezone)
-    s = obs_series(rows)
-    peak_gust = max(s["wind_gust_mph"], key=lambda x: x[1], default=None)
-    fz_hours = sum(1 for _, v in s["freezing_precip"] if v >= 1)
-    snow_hours = sum(1 for _, v in s["snow_obs"] if v >= 1)
-    worst_road = max((t["road_worst_rank"] for t in timeline if t["road_worst_rank"] is not None), default=None)
-    by_type: dict[str, int] = {}
-    for x in lsrs:
-        by_type[x["typetext"]] = by_type.get(x["typetext"], 0) + 1
-    wind_mags = [x["magnitude"] for x in lsrs if x.get("magnitude") and "WND" in (x.get("typetext") or "").upper()]
-    snow_mags = [x["magnitude"] for x in lsrs if x.get("magnitude") and "SNOW" in (x.get("typetext") or "").upper()]
-    ice_mags = [x["magnitude"] for x in lsrs if x.get("magnitude") and "ICE" in (x.get("typetext") or "").upper()]
-    road_names = {0: "normal", 1: "wet/frost", 2: "partially covered", 3: "completely covered", 4: "travel advisory", 5: "not advised/closed"}
-    parts = []
-    if lsrs:
-        parts.append(f"{len(lsrs)} storm reports within 25 mi (" + ", ".join(f"{n} {k.lower()}" for k, n in sorted(by_type.items(), key=lambda x: -x[1])[:3]) + ")")
-    else:
-        parts.append("no storm reports within 25 mi")
-    if wind_mags:
-        parts.append(f"max reported wind {max(wind_mags):.0f} mph")
-    if snow_mags:
-        parts.append(f"max reported snow {max(snow_mags):.1f} in")
-    if ice_mags:
-        parts.append(f"max reported ice {max(ice_mags):.2f} in")
-    if peak_gust:
-        parts.append(f"AMW peak gust {peak_gust[1]:.0f} mph")
-    if fz_hours:
-        parts.append(f"{fz_hours} h of freezing precip at AMW")
-    if worst_road is not None:
-        parts.append(f"worst commute corridor: {road_names[int(worst_road)]}")
-    severe = bool((wind_mags and max(wind_mags) >= 58) or (peak_gust and peak_gust[1] >= 58) or (worst_road or 0) >= 3
-                  or fz_hours >= 2 or (snow_mags and max(snow_mags) >= 6) or (ice_mags and max(ice_mags) >= 0.1))
-    return {
-        "summary": "; ".join(parts) + ".",
-        "severe_impact": severe,
-        "lsr_count": len(lsrs), "lsr_by_type": by_type, "lsr_source_url": lsr_url,
-        "lsrs": lsrs[:40],
-        "max_reported_wind_mph": max(wind_mags) if wind_mags else None,
-        "max_reported_snow_in": max(snow_mags) if snow_mags else None,
-        "max_reported_ice_in": max(ice_mags) if ice_mags else None,
-        "amw_peak_gust_mph": round(peak_gust[1], 1) if peak_gust else None,
-        "amw_peak_gust_time": peak_gust[0].isoformat() if peak_gust else None,
-        "amw_freezing_precip_hours": fz_hours, "amw_snow_hours": snow_hours,
-        "worst_corridor_rank": worst_road,
-        "amw_obs_note": "AMW ASOS stopped reporting during the derecho (power loss); LSRs are the ground truth." if ev["id"].startswith("derecho") else None,
-    }
+    out = await observed_outcome(load_facility(), ev["start"], ev["end"],
+                                 road_ranks=[t["road_worst_rank"] for t in timeline])
+    out["amw_obs_note"] = ("AMW ASOS stopped reporting during the derecho (power loss); LSRs are the ground truth."
+                           if ev["id"].startswith("derecho") else None)
+    return out
 
 
 def backtest_summary(ev: dict, timeline: list[dict], outcome: dict) -> dict:

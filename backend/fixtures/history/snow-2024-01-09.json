@@ -29,7 +29,7 @@
   ]
  },
  "outcome": {
-  "summary": "37 storm reports within 25 mi (37 snow); max reported snow 10.2 in; AMW peak gust 40 mph; worst commute corridor: completely covered.",
+  "summary": "37 storm reports within 25 mi (37 snow); max reported snow 10.2 in; AMW peak gust 38 mph; worst commute corridor: completely covered.",
   "severe_impact": true,
   "lsr_count": 37,
   "lsr_by_type": {
@@ -559,8 +559,8 @@
   "max_reported_wind_mph": null,
   "max_reported_snow_in": 10.2,
   "max_reported_ice_in": null,
-  "amw_peak_gust_mph": 40.3,
-  "amw_peak_gust_time": "2024-01-09T18:00:00+00:00",
+  "amw_peak_gust_mph": 38.0,
+  "amw_peak_gust_time": "2024-01-09T20:00:00+00:00",
   "amw_freezing_precip_hours": 0,
   "amw_snow_hours": 24,
   "worst_corridor_rank": 3.0,
@@ -592,7 +592,7 @@
  },
  "timeline": [
   {
-   "snapshot_id": "57982780ab3e493e905132d342f547fa",
+   "snapshot_id": "bdf622a596ee4fed81390fa8aee7f834",
    "as_of": "2024-01-08T06:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-08",
@@ -625,7 +625,7 @@
    }
   },
   {
-   "snapshot_id": "38e77ca6622646799b8203b49fcb3e56",
+   "snapshot_id": "5e5b9b8566554fa88791e7d44ef18d9a",
    "as_of": "2024-01-08T07:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-08",
@@ -658,7 +658,7 @@
    }
   },
   {
-   "snapshot_id": "167d99c72aa548fda6cf07e129cdc0ed",
+   "snapshot_id": "2d3c61d27e3b4e5c9032d6c94a52a0f9",
    "as_of": "2024-01-08T08:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-08",
@@ -691,7 +691,7 @@
    }
   },
   {
-   "snapshot_id": "41aede195dae4e0cb90e404637814e79",
+   "snapshot_id": "47ac39b88f2e4ab4968039858a421cce",
    "as_of": "2024-01-08T09:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-08",
@@ -724,7 +724,7 @@
    }
   },
   {
-   "snapshot_id": "c5cb1e39595142a292da23b3933b02c3",
+   "snapshot_id": "43f47aa264164c81a0b38f82fdfeb848",
    "as_of": "2024-01-08T10:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-08",
@@ -757,7 +757,7 @@
    }
   },
   {
-   "snapshot_id": "8efc4baad2d14a959b1e0214432885ed",
+   "snapshot_id": "bc4e2670ad5940a3a075adb5014498d9",
    "as_of": "2024-01-08T11:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-08",
@@ -790,7 +790,7 @@
    }
   },
   {
-   "snapshot_id": "8a50112d65be44e79ef2db0668683bce",
+   "snapshot_id": "befd5f3a12cf4de080c7a28281cd52a1",
    "as_of": "2024-01-08T12:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-08",
@@ -823,7 +823,7 @@
    }
   },
   {
-   "snapshot_id": "08c4793d860743e0b6f823992f2aa355",
+   "snapshot_id": "b1957f2f0573436696ba622a1f59a53b",
    "as_of": "2024-01-08T13:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-08",
@@ -856,7 +856,7 @@
    }
   },
   {
-   "snapshot_id": "9cd2bdbba36b420984efd263b11dabef",
+   "snapshot_id": "2ba2181bde24499f8a583907011fc372",
    "as_of": "2024-01-08T14:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-08",
@@ -889,7 +889,7 @@
    }
   },
   {
-   "snapshot_id": "182625ec9ea142f3a1f8a6fa8b5cbf04",
+   "snapshot_id": "ddcae137c05a4baabc8cca73ae7c52b1",
    "as_of": "2024-01-08T15:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2024-01-08",
@@ -922,7 +922,7 @@
    }
   },
   {
-   "snapshot_id": "2b4b41b6294841a4bc180c976a3abad9",
+   "snapshot_id": "35ce5e5aa3f045efa39f71e064ef7db9",
    "as_of": "2024-01-08T16:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2024-01-08",
@@ -955,7 +955,7 @@
    }
   },
   {
-   "snapshot_id": "a346bc526d6d488fb2d1b646eb58306b",
+   "snapshot_id": "3349bfff33d54f99a3c25803f10656db",
    "as_of": "2024-01-08T17:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2024-01-08",
@@ -988,7 +988,7 @@
    }
   },
   {
-   "snapshot_id": "746938fa728041cebce972fcfd543dbc",
+   "snapshot_id": "a05f74304a1440168d7d7a568cfe3438",
    "as_of": "2024-01-08T18:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2024-01-08",
@@ -1021,7 +1021,7 @@
    }
   },
   {
-   "snapshot_id": "e5512c4bd0b4449ba7f7b99d7451679c",
+   "snapshot_id": "82b0ffe50c064adc9e0d92188d879e08",
    "as_of": "2024-01-08T19:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2024-01-08",
@@ -1054,7 +1054,7 @@
    }
   },
   {
-   "snapshot_id": "68265df823ce4929b6dea99f26714242",
+   "snapshot_id": "085704d20676495cb5bcca303a3e0044",
    "as_of": "2024-01-08T20:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2024-01-08",
@@ -1087,7 +1087,7 @@
    }
   },
   {
-   "snapshot_id": "4b28d95c1f1f477aaf183dc5f9f971b6",
+   "snapshot_id": "fb7dde989f394ea39aa6d5000ccd605e",
    "as_of": "2024-01-08T21:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2024-01-08",
@@ -1120,7 +1120,7 @@
    }
   },
   {
-   "snapshot_id": "f9c50976587642d183e4302dd1c6632a",
+   "snapshot_id": "c982dc4c179b47bbbec27803648d831b",
    "as_of": "2024-01-08T22:00:00+00:00",
    "posture": "EARLY_DISMISSAL",
    "decision_day": "2024-01-08",
@@ -1153,7 +1153,7 @@
    }
   },
   {
-   "snapshot_id": "bcfd7b0c0b9245728d7a9801c78ef548",
+   "snapshot_id": "f3c8a01adbdf416a8c7a624905125684",
    "as_of": "2024-01-08T23:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1186,7 +1186,7 @@
    }
   },
   {
-   "snapshot_id": "6682fbc4d0be4cb1b55aec98261f2e13",
+   "snapshot_id": "34b3196ee756454ab1cc3ba36e1626d9",
    "as_of": "2024-01-09T00:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1219,7 +1219,7 @@
    }
   },
   {
-   "snapshot_id": "ec37faa5031048e6a7451830a00e68d8",
+   "snapshot_id": "9a3799bf0fba4c71ad0089aa9e1b7a64",
    "as_of": "2024-01-09T01:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1252,7 +1252,7 @@
    }
   },
   {
-   "snapshot_id": "c3059dbe58a84f16ac5ea13856ca28d2",
+   "snapshot_id": "4e407c1f283a4e348114690c4a1f5993",
    "as_of": "2024-01-09T02:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1285,7 +1285,7 @@
    }
   },
   {
-   "snapshot_id": "bd7667b80c1942f3a9fc265881170574",
+   "snapshot_id": "05e6309bc4354d729fa146393cd0cfc1",
    "as_of": "2024-01-09T03:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1318,7 +1318,7 @@
    }
   },
   {
-   "snapshot_id": "33e464f1abab4ed9baf8fb2d8843ba6a",
+   "snapshot_id": "0410543207a941a1b29654170e4b35de",
    "as_of": "2024-01-09T04:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1351,7 +1351,7 @@
    }
   },
   {
-   "snapshot_id": "f2a1efb28ef04e9788c2f36bfdf1611e",
+   "snapshot_id": "47e3012eefbf4729b242f9e0732c2009",
    "as_of": "2024-01-09T05:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1384,7 +1384,7 @@
    }
   },
   {
-   "snapshot_id": "e239c8b96ee548919487675510a079ca",
+   "snapshot_id": "77aa15db8cee42ce868d09b5c575ba43",
    "as_of": "2024-01-09T06:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1417,7 +1417,7 @@
    }
   },
   {
-   "snapshot_id": "78d815170365448f99904fca3ec4d334",
+   "snapshot_id": "85ec29f6d52b4731bd0b7420510adcad",
    "as_of": "2024-01-09T07:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1450,7 +1450,7 @@
    }
   },
   {
-   "snapshot_id": "f2fe7fc0ec2d4836a2c11c2d56307548",
+   "snapshot_id": "f1786e1b3f4a4fcfaa20662644d20740",
    "as_of": "2024-01-09T08:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1483,7 +1483,7 @@
    }
   },
   {
-   "snapshot_id": "068276f4bac84370bb828e323cce02b0",
+   "snapshot_id": "20acc266213c4214b2ca4a2106a97a31",
    "as_of": "2024-01-09T09:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1516,7 +1516,7 @@
    }
   },
   {
-   "snapshot_id": "537cf0a117624061a772232afa598d2e",
+   "snapshot_id": "bbff56e2da46491a92ff171fec3ec1c4",
    "as_of": "2024-01-09T10:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1549,7 +1549,7 @@
    }
   },
   {
-   "snapshot_id": "cbf89e58b9d8441cab9cfb008ed7cc29",
+   "snapshot_id": "a147c9d7638e4a1f99d5d0ce992000a1",
    "as_of": "2024-01-09T11:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1582,7 +1582,7 @@
    }
   },
   {
-   "snapshot_id": "be4180ac760e4252b3caf0d9bf471a53",
+   "snapshot_id": "d8adf1a418814ef290f070767e91adfa",
    "as_of": "2024-01-09T12:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1615,7 +1615,7 @@
    }
   },
   {
-   "snapshot_id": "189c2c4d130946e6a8f6c52810327266",
+   "snapshot_id": "a78c3e29ae99480aa50028573bd2032e",
    "as_of": "2024-01-09T13:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1648,7 +1648,7 @@
    }
   },
   {
-   "snapshot_id": "70d5b15d138c4320979eea3b2fc387b4",
+   "snapshot_id": "0cd651e782bb475193d55823630cf56e",
    "as_of": "2024-01-09T14:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1681,7 +1681,7 @@
    }
   },
   {
-   "snapshot_id": "73e99b19ab63470392ce99c733e72abe",
+   "snapshot_id": "4542e39f68f24377acda75029af95714",
    "as_of": "2024-01-09T15:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1714,7 +1714,7 @@
    }
   },
   {
-   "snapshot_id": "40476da912174150b741ddfc191d54f9",
+   "snapshot_id": "0cd63d2b39de4e0fb1ea9f3e268d173a",
    "as_of": "2024-01-09T16:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1747,7 +1747,7 @@
    }
   },
   {
-   "snapshot_id": "7061c041e1144ea9b55726186a7e2160",
+   "snapshot_id": "9dbf75a202ca4df3893d0274fa668ec5",
    "as_of": "2024-01-09T17:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1780,7 +1780,7 @@
    }
   },
   {
-   "snapshot_id": "ba17de0fdff2476086db8a4018d581fb",
+   "snapshot_id": "3de0c829755c48fabe0f2d391367d707",
    "as_of": "2024-01-09T18:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1813,7 +1813,7 @@
    }
   },
   {
-   "snapshot_id": "8239fc14bff44efa9d6dd8a31e3ff1fb",
+   "snapshot_id": "a2a0f0d9b38a4192b3fcec6a0437dc88",
    "as_of": "2024-01-09T19:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",
@@ -1846,7 +1846,7 @@
    }
   },
   {
-   "snapshot_id": "bb7df6e6783d460d8ce0bae1503be0aa",
+   "snapshot_id": "a33dd45a4c05495693799a3436148d08",
    "as_of": "2024-01-09T20:00:00+00:00",
    "posture": "TELEWORK",
    "decision_day": "2024-01-09",

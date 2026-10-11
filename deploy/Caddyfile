@@ -1,0 +1,22 @@
+# Public front door: HTTPS (automatic Let's Encrypt certificate) in front of the app.
+# Anyone can view the dashboard; recording decisions, notifications and storage actions need the manager login.
+{$SITE_ADDRESS} {
+	encode zstd gzip
+
+	@manager_actions {
+		method POST PUT PATCH DELETE
+		path /api/decisions /api/decisions/* /api/notifications/* /api/storage/*
+	}
+	basic_auth @manager_actions {
+		import /etc/caddy/manager-auth
+	}
+
+	reverse_proxy app:8000
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}

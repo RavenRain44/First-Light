@@ -7,14 +7,16 @@ import logging
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from adapters import cache
-from app import snapshots
+from app import snapshots, storage
 from app.notifications import delivery_loop
-from app.config import settings
+from app.config import REPO_DIR, settings
 from app.db import get_engine
 from app.facility import load_facility
-from app.routers import core, history, livecheck, notifications
+from app.routers import cameras, core, history, livecheck, notifications, past
+from app.routers import storage as storage_routes
 
 log = logging.getLogger("closurecall")
 
@@ -31,7 +33,12 @@ async def _refresh_loop():
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI):
+    if storage.configure():
+        storage.restore_if_empty()  # a fresh server picks up the last backup before opening the database
     get_engine()
+    from app.camera_archive import abandon_interrupted
+    abandon_interrupted()
+    storage_task = asyncio.create_task(storage.run_loop(settings.obj_backup_hours)) if storage.enabled() else None
     task = asyncio.create_task(_refresh_loop()) if settings.refresh_interval_seconds > 0 and not settings.demo_mode else None
     delivery_task = asyncio.create_task(delivery_loop())
     yield
@@ -40,6 +47,12 @@ async def lifespan(app: FastAPI):
         await delivery_task
     if task:
         task.cancel()
+    if storage_task:
+        storage_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await storage_task
+        await storage.sync_once()
+        await storage.backup()  # keep the bucket copy current across redeploys
     await cache.aclose()
 
 
@@ -48,6 +61,15 @@ app = FastAPI(title="Closure Call", version="0.1.0", lifespan=lifespan,
 app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
                    allow_methods=["*"], allow_headers=["*"])
 app.include_router(core.router)
-app.include_router(notifications.router)
 app.include_router(history.router)
 app.include_router(livecheck.router)
+app.include_router(cameras.router)
+app.include_router(notifications.router)
+app.include_router(past.router)
+app.include_router(storage_routes.router)
+
+# Production container serves the built dashboard and API from one origin.
+# Vite remains the normal development server when no build is present.
+web_dist = REPO_DIR / "frontend" / "dist"
+if web_dist.is_dir():
+    app.mount("/", StaticFiles(directory=web_dist, html=True), name="dashboard")

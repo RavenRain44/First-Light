@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import type { Posture, Readiness, ReadinessLevel } from "./types";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import type { Posture, Readiness, ReadinessLevel, Snapshot } from "./types";
 
 export const POSTURES: Posture[] = ["NORMAL", "DELAYED_ARRIVAL", "EARLY_DISMISSAL", "TELEWORK", "CLOSED"];
 
@@ -76,7 +76,24 @@ export function Prov({ children, source, url, fetched, sourceTime, tz, note }: {
   );
 }
 
+/** Inside a <Section>, panels drop their own card frame so there is one box, not a box in a box. */
+const InSection = createContext<{ title: boolean } | null>(null);
+
 export function Card({ title, right, children, className = "", id }: { title: ReactNode; right?: ReactNode; children: ReactNode; className?: string; id?: string }) {
+  const inSection = useContext(InSection);
+  if (inSection) {
+    return (
+      <div id={id} className={className}>
+        {(inSection.title || right) && (
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            {inSection.title ? <h3 className="text-sm font-semibold">{title}</h3> : <span />}
+            {right}
+          </div>
+        )}
+        {children}
+      </div>
+    );
+  }
   return (
     <section id={id} className={`card p-5 ${className}`}>
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
@@ -173,4 +190,106 @@ export function AnimatedNumber({ value, decimals = 0 }: { value: number; decimal
 
 export function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`skeleton ${className}`} aria-hidden />;
+}
+
+/** A collapsed-by-default card: a one-line title and summary that opens to the full panel.
+ *  Content mounts on first open (so charts and maps only load when wanted) and stays mounted. */
+export function Section({ id, title, summary, open, onToggle, children, innerTitles = false }: {
+  id: string; title: string; summary?: ReactNode; open: boolean; onToggle: () => void; children: ReactNode;
+  /** Show the titles of the panels inside (for sections that hold several panels). */
+  innerTitles?: boolean;
+}) {
+  const [mounted, setMounted] = useState(open);
+  useEffect(() => { if (open) setMounted(true); }, [open]);
+  return (
+    <section id={`section-${id}`} className="card scroll-mt-4">
+      <button type="button" onClick={onToggle} aria-expanded={open} aria-controls={`section-${id}-body`}
+        className="flex w-full items-center gap-3 rounded-[14px] px-5 py-4 text-left hover:bg-[var(--surface-2)]">
+        <span aria-hidden className={`text-muted transition-transform duration-300 ${open ? "rotate-90" : ""}`}>▸</span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-semibold">{title}</span>
+          {summary && <span className="block truncate text-sm text-ink2">{summary}</span>}
+        </span>
+        <span className="shrink-0 text-sm text-[var(--accent)]">{open ? "Hide" : "Show"}</span>
+      </button>
+      <div id={`section-${id}-body`} className="cc-collapse" data-open={open} aria-hidden={!open}>
+        <div className="overflow-hidden">
+          {mounted && (
+            <div className="space-y-6 border-t border-edge px-5 py-5">
+              <InSection.Provider value={{ title: innerTitles }}>{children}</InSection.Provider>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** Newest non-null value of a series input (e.g. "obs.temp_f"), with its time. */
+export function latest(snap: Snapshot, id: string): { v: number; t: string } | null {
+  const pts = snap.inputs.find((i) => i.id === id)?.series ?? [];
+  for (let i = pts.length - 1; i >= 0; i--) {
+    const p = pts[i];
+    if (typeof p.v === "number" && new Date(p.t).getTime() <= new Date(snap.as_of).getTime() + 60e3) return { v: p.v, t: p.t };
+  }
+  return null;
+}
+
+/** Largest forecast value of a series input in the next ``hours`` after the snapshot time. */
+export function maxAhead(snap: Snapshot, id: string, hours: number): number | null {
+  const from = new Date(snap.as_of).getTime(), to = from + hours * 3600e3;
+  const vals = (snap.inputs.find((i) => i.id === id)?.series ?? [])
+    .filter((p) => typeof p.v === "number" && new Date(p.t).getTime() >= from - 3600e3 && new Date(p.t).getTime() <= to)
+    .map((p) => p.v as number);
+  return vals.length ? Math.max(...vals) : null;
+}
+
+/** "3:00 PM" or "Mon 3:00 PM" in the facility's time zone. */
+export function fmtClock(iso: string | null | undefined, tz: string, withDay = false): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("en-US", { timeZone: tz, weekday: withDay ? "short" : undefined, hour: "numeric", minute: "2-digit" });
+}
+
+/** "Monday, Oct 12" from a YYYY-MM-DD day. */
+export function fmtDayLong(d: string): string {
+  const [y, m, day] = d.split("-").map(Number);
+  return new Date(y, m - 1, day).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+}
+
+/** Text color that stays readable on each Cooper color, in both themes. */
+const COOPER_INK: Record<ReadinessLevel, string> = { WHITE: "#1f2937", YELLOW: "#1f2937", ORANGE: "#1f2937", RED: "#ffffff" };
+const COOPER_RISK: Record<ReadinessLevel, string> = {
+  WHITE: "Low risk", YELLOW: "Be aware", ORANGE: "Get ready to act", RED: "Act now",
+};
+
+/** Risk shown with Col. Jeff Cooper's color code (White, Yellow, Orange, Red), always with its words. */
+export function CooperBanner({ r, className = "" }: { r: Readiness | null | undefined; className?: string }) {
+  if (!r) return null;
+  const x = READINESS.find((c) => c.level === r.level) ?? READINESS[0];
+  return (
+    <div className={`flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 sm:px-7 ${className}`}
+      style={{ background: x.color, color: COOPER_INK[x.level] }} role="status" aria-label={`Risk: Condition ${x.label}`}>
+      <span className="text-lg font-bold uppercase tracking-wide">Condition {x.label}</span>
+      <span className="font-semibold">{COOPER_RISK[x.level]}</span>
+      <span className="min-w-0 flex-1 text-sm opacity-90">{r.meaning}</span>
+      <span className="flex shrink-0 gap-1" aria-hidden>
+        {READINESS.map((c) => (
+          <span key={c.level} className={`h-3 w-6 rounded-full border border-black/20 ${c.level === x.level ? "ring-2 ring-black/60" : "opacity-50"}`} style={{ background: c.color }} />
+        ))}
+      </span>
+    </div>
+  );
+}
+
+/** Small Cooper color swatch with its words, for lists (urgency at the time of a past decision). */
+export function CooperChip({ level }: { level: ReadinessLevel | null | undefined }) {
+  const x = READINESS.find((c) => c.level === level);
+  if (!x) return <span className="text-xs text-muted">Urgency not recorded</span>;
+  return (
+    <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-edge px-2 py-0.5 text-xs font-semibold"
+      title={`Urgency then: Condition ${x.label} (${COOPER_RISK[x.level]})`}>
+      <span aria-hidden className="h-3 w-3 rounded-sm border border-black/20" style={{ background: x.color }} />
+      {x.label}
+    </span>
+  );
 }

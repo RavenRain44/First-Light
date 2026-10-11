@@ -12,7 +12,7 @@
   "nws_office": "DMX",
   "hours": {"open": "07:30", "close": "16:30"},
   "commute_windows": {"am": ["06:00", "08:00"], "pm": ["16:00", "18:00"]},
-  "building_type": "Single-story leased office with public counter (FSA/NRCS/RD), capacity ~40",
+  "building_type": "Office and laboratory campus (synthetic profile), ~270 staff including research, lab, animal care and facilities roles",
   "accessibility_notes": [
     "One ramp entrance (north side); ramp is not heated and ices first",
     "Parking lot drainage issue on the east side: standing water refreezes overnight",
