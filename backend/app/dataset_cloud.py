@@ -22,10 +22,25 @@ PREFIX='datasets/'
 
 def sha(data):return hashlib.sha256(data).hexdigest()
 def encoded(x):return json.dumps(x,sort_keys=True,separators=(',',':')).encode()
+_shared=None
 def bucket():
+    """The bucket's top level, ignoring OBJ_PREFIX: every laptop and the server share one dataset copy."""
+    global _shared
     b=storage.configure()
     if not b:raise ValueError('Akamai Object Storage is not configured; set OBJ_* locally.')
-    return b
+    if not getattr(b,'prefix',''):return b
+    if _shared is None:
+        _shared=storage.S3Bucket(settings.obj_endpoint,settings.obj_bucket,settings.obj_access_key,settings.obj_secret_key,settings.obj_region)
+    return _shared
+
+def ensure_local(version=VERSION):
+    """Load the frozen dataset from the bucket when this machine doesn't have it yet (fresh server or laptop).
+    Returns the restore summary, or None when it is already present or storage is off."""
+    from app.risk_experiment import manifest_path
+    if not storage.enabled() or manifest_path().exists():return None
+    try:catalog(version)
+    except FileNotFoundError:return None  # nothing published to this bucket yet
+    return restore(version,full=True)
 
 def valid_version(version):
     if not re.fullmatch(r'[A-Za-z0-9_-]{1,80}',version):raise ValueError('Invalid dataset version')

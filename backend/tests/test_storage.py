@@ -156,3 +156,27 @@ def test_storage_off_without_settings():
     assert storage.status()["enabled"] is False
     assert storage.record_links("x") == {"enabled": False}
     assert asyncio.run(storage.sync_once()) == 0
+
+
+def test_fresh_machine_loads_the_frozen_dataset_from_the_bucket(tmp_path, monkeypatch):
+    """The repository release, uploaded byte for byte, restores the full 7,470-day cohort on an empty machine."""
+    from app import dataset_cloud
+    from app.config import REPO_DIR
+    from app.risk_experiment import manifest_path
+    from scripts.dataset_repo import RepositoryBucket, upload
+
+    bucket, old = _setup(tmp_path, monkeypatch)
+    repo = RepositoryBucket(REPO_DIR / "backend/data/backtesting")
+    try:
+        assert dataset_cloud.ensure_local() is None  # nothing published yet: no error, nothing loaded
+        assert upload(repo)["datasets"] == ["ames-7470-v1"]
+        assert bucket.objects == {k: repo.get(k) for k in repo.list("datasets/")}
+        result = dataset_cloud.ensure_local()
+        assert result["evaluations"] == result["cohort_n"] == 7470 and manifest_path().exists()
+        assert dataset_cloud.ensure_local() is None  # already present: not reloaded
+        import sqlite3
+        with sqlite3.connect(tmp_path / "s.db") as c:
+            assert c.execute("select count(*) from historicalevaluation").fetchone()[0] == 7470
+    finally:
+        storage.set_bucket(None)
+        db.set_engine(old)

@@ -31,6 +31,17 @@ async def _refresh_loop():
             log.exception("scheduled refresh failed")
 
 
+async def _load_dataset():
+    """A fresh machine pulls the frozen 30-year backtesting dataset from Object Storage in the background."""
+    from app import dataset_cloud
+    try:
+        result = await asyncio.to_thread(dataset_cloud.ensure_local)
+        if result:
+            log.info("loaded backtesting dataset from object storage: %s", result)
+    except Exception:  # noqa: BLE001 - the dashboard works without it
+        log.exception("could not load the backtesting dataset from object storage")
+
+
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI):
     if storage.configure():
@@ -40,6 +51,7 @@ async def lifespan(app: FastAPI):
     from app.camera_archive import abandon_interrupted
     abandon_interrupted()
     storage_task = asyncio.create_task(storage.run_loop(settings.obj_backup_hours)) if storage.enabled() else None
+    dataset_task = asyncio.create_task(_load_dataset()) if storage.enabled() and settings.dataset_auto_restore else None
     task = asyncio.create_task(_refresh_loop()) if settings.refresh_interval_seconds > 0 and not settings.demo_mode else None
     delivery_task = asyncio.create_task(delivery_loop())
     yield
@@ -48,6 +60,10 @@ async def lifespan(app: FastAPI):
         await delivery_task
     if task:
         task.cancel()
+    if dataset_task and not dataset_task.done():
+        dataset_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await dataset_task
     if storage_task:
         storage_task.cancel()
         with contextlib.suppress(asyncio.CancelledError):
