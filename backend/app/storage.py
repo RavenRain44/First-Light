@@ -12,7 +12,7 @@ Bucket layout (private; the app hands out short-lived signed links):
     logs/decisions/YYYY-MM-DD/<id>.json                 manager decisions
     logs/notifications/YYYY-MM-DD/<id>.json             notification audit trail
     graphs/<snapshot_id>.json                           chart data, redrawn identically on any device
-    cameras/<snapshot_id>/decision-<id>/index.json      camera stills captured when a decision is recorded
+    cameras/<snapshot_id>/decision-<id>/index.json      camera frames saved when a decision is recorded
     backups/closurecall-latest.db, closurecall-YYYY-MM-DD.db   SQLite backups
 """
 from __future__ import annotations
@@ -33,7 +33,6 @@ from app.config import settings
 log = logging.getLogger("closurecall.storage")
 
 SYNC_KEY = "logs/_sync.json"
-CAMERAS_PER_DECISION = 10
 LINK_SECONDS = 3600
 # (table, id column, key prefix, date column). rowid orders inserts even where the primary key is text.
 TABLES = [
@@ -133,8 +132,11 @@ def status() -> dict:
 
 def kick() -> None:
     """Ask the background loop to sync soon (called after a record is written)."""
-    if _wake is not None and _loop is not None and enabled():
-        _loop.call_soon_threadsafe(_wake.set)  # commits can happen on worker threads
+    if _wake is not None and _loop is not None and not _loop.is_closed() and enabled():
+        try:
+            _loop.call_soon_threadsafe(_wake.set)  # commits can happen on worker threads
+        except RuntimeError:
+            pass  # the loop shut down between the check and the call
 
 
 def _json(x: Any) -> bytes:
@@ -171,42 +173,43 @@ def _snapshot_files(row: dict) -> list[tuple[str, bytes]]:
     return files
 
 
-async def _decision_cameras(row: dict) -> list[tuple[str, bytes, str]]:
-    """Stills from the nearest cameras at the snapshot's moment, saved alongside the decision."""
-    from adapters.iem_cameras import get_image
-    from app import snapshots
-    from app.routers.cameras import cameras as camera_list
-    snap = snapshots.get(row["snapshot_id"])
-    if not snap:
-        return []
-    as_of = datetime.fromisoformat(snap["as_of"])
-    live = snap.get("mode") == "live" and (datetime.now(timezone.utc) - as_of).total_seconds() < 3600
-    try:
-        listing = await camera_list(as_of=None if live else as_of, facility_id=snap["facility"]["id"])
-    except Exception as e:  # noqa: BLE001 - cameras are context, never block the record
-        log.warning("camera list for decision %s failed: %s", row["id"], e)
-        return []
+PENDING_GRACE_SECONDS = 600
+
+
+def _decision_cameras(row: dict) -> list[tuple[str, bytes, str]] | None:
+    """The camera frames saved when the decision was recorded (app.camera_archive), copied to the bucket.
+
+    Returns None while the capture is still running, so the sync waits and copies the finished set.
+    """
+    from app.db import session
+    from app.models import DecisionCameraArchive, DecisionCameraFrame
+    from sqlmodel import select
+    with session() as s:
+        archive = s.get(DecisionCameraArchive, row["id"])
+        decided = datetime.fromisoformat(str(row["decided_at"])).replace(tzinfo=timezone.utc)
+        recent = (datetime.now(timezone.utc) - decided).total_seconds() < PENDING_GRACE_SECONDS
+        if archive is None:
+            # Just recorded: the capture row is written right after the decision. Older decisions predate capture.
+            return None if recent else []
+        manifest = json.loads(archive.manifest_json)
+        if manifest.get("status") == "pending" and recent:
+            return None
+        frames = {f.id: f.image for f in s.exec(select(DecisionCameraFrame).where(DecisionCameraFrame.decision_id == row["id"])).all()}
     base = f"cameras/{row['snapshot_id']}/decision-{row['id']}"
-    files, index = [], []
-    for cam in listing.get("cameras", []):
-        stills = [v for v in cam.get("views", []) if v.get("url")]
-        if not stills or len(index) >= CAMERAS_PER_DECISION:
-            continue
-        v = max(stills, key=lambda v: v.get("time") or "")
-        try:
-            data = await get_image(v["url"])
-        except ValueError:
-            data = None
-        if not data:
-            continue
-        key = f"{base}/{cam['id']}-{v['view']}.jpg"
-        files.append((key, data, "image/jpeg"))
-        index.append({"key": key, "camera": cam["name"], "view": v.get("label"), "time": v.get("time"),
-                      "km": cam.get("km"), "direction": cam.get("direction"), "source_url": v["url"]})
-    if index:
-        files.append((f"{base}/index.json", _json({"snapshot_id": row["snapshot_id"], "decision_id": row["id"],
-                                                    "captured_at": datetime.now(timezone.utc).isoformat(),
-                                                    "images": index}), "application/json"))
+    files, images = [], []
+    for cam in manifest.get("cameras", []):
+        for v in cam.get("views", []):
+            frame_id = str(v.get("url", "")).rsplit("/", 1)[-1]
+            if frame_id not in frames:
+                continue
+            key = f"{base}/{cam['id']}-{v.get('view', 0)}.jpg"
+            files.append((key, frames[frame_id], "image/jpeg"))
+            images.append({"key": key, "camera": cam.get("name"), "view": v.get("label"), "time": v.get("time"),
+                           "km": cam.get("km"), "direction": cam.get("direction"), "source_url": v.get("source_url")})
+    files.append((f"{base}/index.json", _json({"snapshot_id": row["snapshot_id"], "decision_id": row["id"],
+                                                "captured_at": manifest.get("captured_at"), "status": manifest.get("status"),
+                                                "detail": manifest.get("detail"), "images": images,
+                                                "unavailable": manifest.get("unavailable", [])}), "application/json"))
     return files
 
 
@@ -223,7 +226,8 @@ async def sync_once() -> int:
         try:
             marker = await asyncio.to_thread(_marker)
             for table, idcol, prefix, datecol in TABLES:
-                while rows := await asyncio.to_thread(_new_rows, table, marker.get(table, 0)):
+                waiting = False
+                while not waiting and (rows := await asyncio.to_thread(_new_rows, table, marker.get(table, 0))):
                     for row in rows:
                         if table == "snapshot":
                             files = [(k, b, "application/json") for k, b in await asyncio.to_thread(_snapshot_files, row)]
@@ -231,7 +235,11 @@ async def sync_once() -> int:
                             body = {k: v for k, v in row.items() if k != "_rowid"}
                             files = [(f"{prefix}/{_day(row[datecol])}/{row[idcol]}.json", _json(body), "application/json")]
                             if table == "decision":
-                                files += await _decision_cameras(row)
+                                cams = await asyncio.to_thread(_decision_cameras, row)
+                                if cams is None:
+                                    waiting = True  # camera capture still running; copy this decision on a later pass
+                                    break
+                                files += cams
                         for key, data, ctype in files:
                             await asyncio.to_thread(_bucket.put, key, data, ctype)
                             written += 1
@@ -299,17 +307,20 @@ async def run_loop(backup_hours: float = 24) -> None:
     global _wake, _loop
     _wake, _loop = asyncio.Event(), asyncio.get_running_loop()
     last_backup = datetime.now(timezone.utc)
-    await sync_once()
-    while True:
-        try:
-            await asyncio.wait_for(_wake.wait(), timeout=60)
-        except asyncio.TimeoutError:
-            pass
-        _wake.clear()
+    try:
         await sync_once()
-        if (datetime.now(timezone.utc) - last_backup).total_seconds() >= backup_hours * 3600:
-            await backup()
-            last_backup = datetime.now(timezone.utc)
+        while True:
+            try:
+                await asyncio.wait_for(_wake.wait(), timeout=60)
+            except asyncio.TimeoutError:
+                pass
+            _wake.clear()
+            await sync_once()
+            if (datetime.now(timezone.utc) - last_backup).total_seconds() >= backup_hours * 3600:
+                await backup()
+                last_backup = datetime.now(timezone.utc)
+    finally:
+        _wake = _loop = None
 
 
 # ----------------------------------------------------------------------------- links for the dashboard

@@ -42,19 +42,22 @@ def _setup(tmp_path, monkeypatch):
 
 def test_sync_mirrors_records_graphs_and_decision_cameras(tmp_path, monkeypatch):
     bucket, old = _setup(tmp_path, monkeypatch)
-    images = []
+    async def fake_capture(decision_id, facility_id, as_of, replay=False):
+        """Stands in for app.camera_archive.capture: 3 saved angle frames, one camera unavailable."""
+        from app.db import session
+        from app.models import DecisionCameraArchive, DecisionCameraFrame
+        with session() as s:
+            row = s.get(DecisionCameraArchive, decision_id)
+            cams = [{"id": f"C{i}", "name": f"Cam {i}", "km": i, "direction": "N",
+                     "views": [{"view": 0, "label": "North", "url": f"/api/cameras/saved-frame/f{i}",
+                                "source_url": f"https://img/{i}", "time": "2020-08-10T15:55:00+00:00"}]} for i in range(3)]
+            row.manifest_json = json.dumps({"status": "ok", "cameras": cams, "captured_at": "2020-08-10T16:00:05+00:00",
+                                            "unavailable": [{"id": "C9", "name": "Cam 9", "reason": "offline"}]})
+            s.add_all([DecisionCameraFrame(id=f"f{i}", decision_id=decision_id, image=b"\xff\xd8jpeg") for i in range(3)])
+            s.add(row)
+            s.commit()
 
-    async def fake_cameras(as_of=None, facility_id=None):
-        return {"cameras": [{"id": f"C{i}", "name": f"Cam {i}", "km": i, "direction": "N",
-                             "views": [{"view": 0, "label": "North", "url": f"https://img/{i}", "time": "2020-08-10T15:55:00+00:00"}]}
-                            for i in range(12)]}
-
-    async def fake_image(url):
-        images.append(url)
-        return b"\xff\xd8jpeg" if not url.endswith("/3") else None  # one camera has no image: skipped
-
-    monkeypatch.setattr("app.routers.cameras.cameras", fake_cameras)
-    monkeypatch.setattr("adapters.iem_cameras.get_image", fake_image)
+    monkeypatch.setattr("app.camera_archive.capture", fake_capture)
     try:
         with TestClient(app) as client:
             snap = client.post("/api/evaluate", json={"mode": "replay", "as_of": "2020-08-10T16:00:00Z"}).json()
@@ -73,8 +76,7 @@ def test_sync_mirrors_records_graphs_and_decision_cameras(tmp_path, monkeypatch)
             decision = json.loads(next(v for k, v in keys.items() if k.startswith("logs/decisions/")))
             assert decision["id"] == did and decision["decided_by"] == "Test Manager"
             index = json.loads(keys[f"cameras/{sid}/decision-{did}/index.json"])
-            assert len(index["images"]) == storage.CAMERAS_PER_DECISION
-            assert "https://img/3" not in [i["source_url"] for i in index["images"]]
+            assert index["status"] == "ok" and len(index["images"]) == 3 and index["unavailable"][0]["id"] == "C9"
             assert all(keys[i["key"]].startswith(b"\xff\xd8") for i in index["images"])
 
             # Append-only: a second pass uploads nothing new.
@@ -85,8 +87,31 @@ def test_sync_mirrors_records_graphs_and_decision_cameras(tmp_path, monkeypatch)
             links = client.get(f"/api/storage/record/{sid}").json()
             assert links["log_url"].startswith("https://bucket.example/logs/snapshots/")
             assert links["graph_url"].endswith(f"graphs/{sid}.json?expires=3600")
-            assert len(links["camera_sets"][0]["images"]) == storage.CAMERAS_PER_DECISION
+            assert len(links["camera_sets"][0]["images"]) == 3
             assert client.get("/api/storage/status").json()["enabled"]
+    finally:
+        storage.set_bucket(None)
+        db.set_engine(old)
+
+
+def test_sync_waits_for_a_running_camera_capture(tmp_path, monkeypatch):
+    bucket, old = _setup(tmp_path, monkeypatch)
+
+    async def no_capture(*args, **kwargs):
+        return None  # capture still "running": the archive stays pending
+
+    monkeypatch.setattr("app.camera_archive.capture", no_capture)
+    try:
+        with TestClient(app) as client:
+            snap = client.post("/api/evaluate", json={"mode": "replay", "as_of": "2020-08-10T16:00:00Z"}).json()
+            did = client.post("/api/decisions", json={"snapshot_id": snap["snapshot_id"], "decided_by": "Test Manager",
+                                                      "decision_posture": snap["posture"]["posture"]}).json()["id"]
+            client.post("/api/storage/sync")
+            assert not any(k.startswith("logs/decisions/") for k in bucket.objects)
+            assert json.loads(bucket.objects[storage.SYNC_KEY]).get("decision", 0) == 0
+            monkeypatch.setattr(storage, "PENDING_GRACE_SECONDS", 0)  # capture abandoned: copy what exists
+            client.post("/api/storage/sync")
+            assert any(k.endswith(f"/{did}.json") for k in bucket.objects if k.startswith("logs/decisions/"))
     finally:
         storage.set_bucket(None)
         db.set_engine(old)
