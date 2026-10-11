@@ -107,3 +107,34 @@ class NotificationAudit(SQLModel, table=True):
     actor: str
     action: str
     detail_json: str
+
+
+class DecisionCameraArchive(SQLModel, table=True):
+    decision_id: int = Field(primary_key=True, foreign_key="decision.id")
+    manifest_json: str
+
+
+class DecisionCameraFrame(SQLModel, table=True):
+    id: str = Field(primary_key=True)
+    decision_id: int = Field(index=True, foreign_key="decision.id")
+    image: bytes
+
+
+class DecisionContext(SQLModel, table=True):
+    """How a decision was made: in demo mode (cached weather) or as a seeded example. Written once."""
+    decision_id: int = Field(primary_key=True, foreign_key="decision.id")
+    demo_mode: bool = False
+    example: bool = False
+
+
+class DecisionReview(SQLModel, table=True):
+    """How a past decision turned out. Append-only: the newest manager review wins, else the newest AI review."""
+    id: int | None = Field(default=None, primary_key=True)
+    decision_id: int = Field(index=True, foreign_key="decision.id")
+    source: str  # manager | ai | template (deterministic weather check when AI is unavailable)
+    verdict: str  # good_call | too_lenient | too_strict | mixed
+    confidence: float | None = None
+    note: str | None = None
+    reviewer: str
+    created_at: datetime
+    evidence_json: str = "{}"

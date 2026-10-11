@@ -33,6 +33,9 @@ class Action(BaseModel):
 
 
 class Edit(Action):
+    location_text: str | None = Field(default=None, min_length=1, max_length=300)
+    decision_text: str | None = Field(default=None, min_length=1, max_length=1000)
+    instruction_text: str | None = Field(default=None, min_length=1, max_length=1000)
     sms_intro: str = Field(max_length=120)
     email_intro: str = Field(max_length=2000)
     schedule_override: datetime | None = None
@@ -118,6 +121,9 @@ def followup(pid: str, req: Action):
 
 class GroupReview(BaseModel):
     id: str
+    location_text: str | None = Field(default=None, min_length=1, max_length=300)
+    decision_text: str | None = Field(default=None, min_length=1, max_length=1000)
+    instruction_text: str | None = Field(default=None, min_length=1, max_length=1000)
     sms_intro: str = Field(max_length=120)
     email_intro: str = Field(max_length=2000)
     recipient_ids: list[str]

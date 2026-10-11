@@ -15,7 +15,7 @@ from app.notifications import delivery_loop
 from app.config import REPO_DIR, settings
 from app.db import get_engine
 from app.facility import load_facility
-from app.routers import cameras, core, history, livecheck, notifications
+from app.routers import cameras, core, history, livecheck, notifications, past
 
 log = logging.getLogger("closurecall")
 
@@ -33,6 +33,8 @@ async def _refresh_loop():
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI):
     get_engine()
+    from app.camera_archive import abandon_interrupted
+    abandon_interrupted()
     task = asyncio.create_task(_refresh_loop()) if settings.refresh_interval_seconds > 0 and not settings.demo_mode else None
     delivery_task = asyncio.create_task(delivery_loop())
     yield
@@ -53,6 +55,7 @@ app.include_router(history.router)
 app.include_router(livecheck.router)
 app.include_router(cameras.router)
 app.include_router(notifications.router)
+app.include_router(past.router)
 
 # Production container serves the built dashboard and API from one origin.
 # Vite remains the normal development server when no build is present.

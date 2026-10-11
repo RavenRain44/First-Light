@@ -243,7 +243,7 @@ def is_snapshot(url: str) -> bool:
     return bool(SNAPSHOT_URL.match(url or ""))
 
 
-async def get_image(url: str) -> bytes | None:
+async def get_image(url: str, allow_stale: bool = True) -> bytes | None:
     """Image bytes from the local cache, fetching (and caching) when allowed. None if unavailable.
 
     IEM archive frames never change, so a cached copy is final. Iowa DOT traffic snapshots keep
@@ -259,7 +259,7 @@ async def get_image(url: str) -> bytes | None:
     if settings.demo_mode:
         return None
     fresh = await _download(url, path)
-    if fresh is None and path.exists():
+    if fresh is None and path.exists() and allow_stale:
         return path.read_bytes()  # stale snapshot beats a broken image
     return fresh
 

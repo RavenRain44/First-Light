@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "./api";
 import { AIPanel } from "./components/AIPanel";
 import { AlertsPanel } from "./components/AlertsPanel";
 import { RelevantMetrics, SuggestedAction, useTimeseries } from "./components/DashboardCard";
+import { DecisionLogView } from "./components/DecisionLogView";
 import { NotificationsView } from "./components/NotificationsView";
 import { PanelBoundary } from "./components/ErrorBoundary";
 import { GlanceRow } from "./components/GlanceRow";
@@ -12,6 +13,7 @@ import { AnalogsPanel, RecordTimeline } from "./components/HistoryPanel";
 import { LiveCheckPanel } from "./components/LiveCheckPanel";
 import { ReplayPanel } from "./components/ReplayPanel";
 import { RoadsPanel } from "./components/RoadsPanel";
+import { PastDecisions, pastSummary, usePastDecisions } from "./components/PastDecisions";
 import { RawDataDrawer } from "./components/RawDataDrawer";
 import { TechnicalSummary } from "./components/TechnicalDetails";
 import { ThreatPanel } from "./components/ThreatPanel";
@@ -20,7 +22,7 @@ import { TimelinePanel } from "./components/TimelinePanel";
 import type { Snapshot } from "./types";
 import { Section, Skeleton } from "./util";
 
-type SectionId = "why" | "alerts" | "charts" | "roads" | "analogs" | "technical";
+type SectionId = "why" | "past" | "alerts" | "charts" | "roads" | "analogs" | "technical";
 
 function initialTheme(): string {
   try {
@@ -79,6 +81,9 @@ export default function App() {
   const [theme, setTheme] = useState(initialTheme);
   const [recordKey, setRecordKey] = useState(0);
   const [view, setView] = useState<View>("today");
+  const [savedWeather, setSavedWeather] = useState(false);
+  const savedWeatherRef = useRef(false);
+  const [savedDecisionId, setSavedDecisionId] = useState<number | null>(null);
   const [notificationDecision, setNotificationDecision] = useState<number | null>(null);
   const [open, setOpen] = useState<Set<SectionId>>(new Set());
   const toggle = (id: SectionId) => setOpen((o) => { const n = new Set(o); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -107,21 +112,29 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (mode === "live") run(() => api.latest());
+    if (mode === "live" && !savedWeather) {
+      api.latest().then(s=>{if (!savedWeatherRef.current) setSnap(s);}).catch(e=>setErr(e.message));
+    }
     else setSnap((s) => (s && s.mode === "live" ? s : s));
-  }, [mode, run]);
+  }, [mode, run, savedWeather]);
 
   // Keep the live view fresh. Cadence follows readiness (Red 10 min ... White 6 h), capped at 30 min
   // so a quiet dashboard still notices change; the backend only re-evaluates when its snapshot is stale.
   const recheck = Math.min(snap?.readiness?.recheck_minutes ?? 10, 30);
   // Paused on Notify staff so the snapshot can't change under a decision being confirmed or alerts being reviewed.
   useEffect(() => {
-    if (mode !== "live" || view === "notifications") return;
-    const t = setInterval(() => api.latest().then(setSnap).catch(() => {}), recheck * 60 * 1000);
+    if (mode !== "live" || view === "notifications" || savedWeather) return;
+    const t = setInterval(() => api.latest().then(s=>{if (!savedWeatherRef.current) setSnap(s);}).catch(() => {}), recheck * 60 * 1000);
     return () => clearInterval(t);
-  }, [mode, recheck, view]);
+  }, [mode, recheck, view, savedWeather]);
 
   const alertCount = shown?.inputs.filter((i) => i.kind === "alert").length ?? 0;
+  // Past decisions compare against the weather being viewed (live, replay or a saved snapshot).
+  const past = usePastDecisions(shown && shown.mode !== "livecheck" && !shown.facility.hypothetical ? shown : null);
+  const viewDecisionWeather = (snapshotId: string, decisionId: number) => {
+    setSavedDecisionId(decisionId); savedWeatherRef.current = true; setSavedWeather(true); setView("today");
+    run(() => api.snapshot(snapshotId)); window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   // Active alerts are the one detail section worth opening without being asked.
   useEffect(() => { if (alertCount) setOpen((o) => new Set(o).add("alerts")); }, [shown?.snapshot_id, alertCount]);
   const ready = snap && (mode !== "livecheck" || snap.mode === "livecheck") && (mode !== "replay" || snap.mode !== "live");
@@ -131,13 +144,15 @@ export default function App() {
       <Header snap={shown} mode={mode} setMode={setMode} view={view} setView={setView} demo={demo} theme={theme}
         toggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")} />
 
+      {savedWeather && <div role="status" className="card p-3 text-sm">Saved weather snapshot · {snap?.snapshot_id}. Live updates are paused while reviewing this record. <button className="btn ml-2" onClick={()=>{savedWeatherRef.current=false;setSavedWeather(false);setMode('live');}}>Return to live weather</button></div>}
       {view === "notifications" ? (
         <div className="cc-fade space-y-5">
+          {err && <div role="alert" className="card p-3 text-sm">Could not load the app: {err}. <button className="btn ml-2" onClick={()=>run(()=>api.latest())}>Retry</button></div>}
           {shown ? <PanelBoundary name="Decision"><DecisionStep snap={shown} onDecided={(id) => { setNotificationDecision(id); if (id) setRecordKey((k) => k + 1); }} /></PanelBoundary>
             : <Skeleton className="h-48" />}
           {notificationDecision !== null && <NotificationsView key={notificationDecision} decisionId={notificationDecision} onBack={() => setView("today")} />}
         </div>
-      ) : view === "thresholds" ? <div className="cc-fade"><ThresholdsView /></div> : (
+      ) : view === "decisions" ? <DecisionLogView timezone={shown?.facility.timezone ?? "America/Chicago"} onSnapshot={(id, decisionId)=>{setSavedDecisionId(decisionId);savedWeatherRef.current=true;setSavedWeather(true);setView("today");run(()=>api.snapshot(id));}} /> : view === "thresholds" ? <div className="cc-fade"><ThresholdsView /></div> : (
         <>
           {mode === "replay" && <ReplayPanel onSnapshot={setSnap} busy={busy} setBusy={setBusy} current={snap} />}
           {mode === "livecheck" && <LiveCheckPanel onSnapshot={setSnap} busy={busy} setBusy={setBusy} />}
@@ -145,7 +160,7 @@ export default function App() {
           {ready && shown ? (
             <div className="cc-stagger space-y-4">
               <PanelBoundary name="Suggested action"><SuggestedAction snap={shown} busy={busy}
-                onRefresh={mode === "live" ? () => run(() => api.evaluateLive()) : undefined}
+                onRefresh={mode === "live" ? () => {savedWeatherRef.current=false;setSavedWeather(false);run(() => api.evaluateLive());} : undefined}
                 onRegenerate={aiEnabled ? regenerate : undefined}
                 onGoNotify={() => { setView("notifications"); window.scrollTo({ top: 0, behavior: "smooth" }); }} /></PanelBoundary>
               <PanelBoundary name="Relevant metrics"><RelevantMetrics snap={shown} /></PanelBoundary>
@@ -156,6 +171,11 @@ export default function App() {
                 summary="The weather behind it, what would change it, and what to watch">
                 <PanelBoundary name="Interpretation"><AIPanel snap={shown} onRegenerate={aiEnabled ? regenerate : undefined} /></PanelBoundary>
               </Section>
+              {!shown.facility.hypothetical && (
+                <Section id="past" title="Past decisions" open={open.has("past")} onToggle={() => toggle("past")} summary={pastSummary(past.rows)}>
+                  <PanelBoundary name="Past decisions"><PastDecisions past={past} onViewWeather={viewDecisionWeather} /></PanelBoundary>
+                </Section>
+              )}
               <Section id="alerts" title="Weather alerts" open={open.has("alerts")} onToggle={() => toggle("alerts")}
                 summary={alertCount ? `${alertCount} active: ${[...new Set(shown.inputs.filter((i) => i.kind === "alert").map((i) => (i.data as any)?.event))].join(", ")}` : "No active National Weather Service alerts"}>
                 <PanelBoundary name="Alerts"><AlertsPanel snap={shown} /></PanelBoundary>
@@ -166,7 +186,7 @@ export default function App() {
               </Section>
               <Section id="roads" title="Roads map & cameras" open={open.has("roads")} onToggle={() => toggle("roads")}
                 summary="Iowa DOT road conditions on commute routes, with live traffic cameras">
-                <PanelBoundary name="Roads"><RoadsPanel snap={shown} /></PanelBoundary>
+                <PanelBoundary name="Roads"><RoadsPanel snap={shown} historical={savedWeather} savedDecisionId={savedWeather ? savedDecisionId : null} /></PanelBoundary>
               </Section>
               {shown.analogs.length > 0 && (
                 <Section id="analogs" title="Similar past storms" open={open.has("analogs")} onToggle={() => toggle("analogs")}
@@ -178,7 +198,7 @@ export default function App() {
                 summary="Hazard scores, confidence factors, past decisions and raw data sources">
                 <PanelBoundary name="Technical summary"><TechnicalSummary snap={shown} /></PanelBoundary>
                 <PanelBoundary name="Threat breakdown"><ThreatPanel snap={shown} /></PanelBoundary>
-                <PanelBoundary name="Decision record"><RecordTimeline snap={shown} refreshKey={recordKey} onOpen={(id) => run(() => api.snapshot(id))} /></PanelBoundary>
+                <PanelBoundary name="Decision record"><RecordTimeline snap={shown} refreshKey={recordKey} onOpen={(id) => {savedWeatherRef.current=true;setSavedWeather(true);setSavedDecisionId(null);run(() => api.snapshot(id));}} /></PanelBoundary>
                 <PanelBoundary name="Raw data"><RawDataDrawer snap={shown} /></PanelBoundary>
               </Section>
             </div>

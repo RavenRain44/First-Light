@@ -78,7 +78,7 @@ export function CameraViewer({ cam, tz, live, onClose, onUnavailable }: {
             onLoad={() => setLoaded(true)}
             onError={() => setFailed((f) => new Set(f).add(current.view))} />
           <span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white">
-            {cam.kind === "traffic" ? (live ? "Latest snapshot" : "Cached snapshot") : live ? `${ago(current.time)}` : fmtTime(current.time, tz)}
+            {cam.kind === "traffic" ? (live ? "Latest snapshot" : fmtTime(current.time, tz)) : live ? `${ago(current.time)}` : fmtTime(current.time, tz)}
           </span>
         </a>
       )}
@@ -95,7 +95,7 @@ export function CameraViewer({ cam, tz, live, onClose, onUnavailable }: {
       )}
       <p className="text-[11px] text-muted">
         {cam.kind === "traffic"
-          ? streaming ? "Live video from Iowa DOT traffic camera." : "Snapshot from Iowa DOT traffic camera (live video unavailable)."
+          ? streaming ? "Live video from Iowa DOT traffic camera." : live ? "Snapshot from Iowa DOT traffic camera (live video unavailable)." : "Saved decision-time traffic photo; time shown is retrieval time, not the provider’s frame timestamp."
           : `Still image from ${cam.kind === "webcam" ? cam.source ?? "webcam via IEM" : "Iowa DOT weather-station camera via IEM"}, ${live ? "refreshed every few minutes" : "as archived at that time"}.`}
         {" "}For situational awareness; not used in the recommendation.
       </p>

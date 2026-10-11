@@ -27,10 +27,16 @@ export const api = {
   roads: (as_of?: string) => req<any>(`/api/roads${as_of ? `?as_of=${encodeURIComponent(as_of)}` : ""}`),
   cameras: (as_of?: string) => req<{ status: string; detail: string | null; as_of: string; cameras: import("./types").Camera[]; note: string; source_url?: string; fetched_at?: string }>(
     `/api/cameras${as_of ? `?as_of=${encodeURIComponent(as_of)}` : ""}`),
-  cameraImage: (url: string) => `/api/cameras/image?u=${encodeURIComponent(url)}`,
+  decisionCameras: (id: number) => req<any>(`/api/cameras/decision/${id}`),
+  cameraImage: (url: string) => url.startsWith("/api/cameras/saved-frame/") ? url : `/api/cameras/image?u=${encodeURIComponent(url)}`,
   thresholds: () => req<any>("/api/thresholds"),
   history: () => req<any[]>("/api/snapshots?limit=40"),
   decisions: () => req<Decision[]>("/api/decisions"),
+  pastDecisions: (snapshotId?: string) => req<{ decisions: import("./types").PastDecision[]; reviewing: number[] }>(
+    `/api/past-decisions${snapshotId ? `?snapshot_id=${encodeURIComponent(snapshotId)}` : ""}`),
+  reviewDecision: (id: number, body: { reviewer: string; verdict: import("./types").Verdict; note?: string }) =>
+    req<import("./types").DecisionReview>(`/api/decisions/${id}/review`, { method: "POST", body: JSON.stringify(body) }),
+  aiReviewDecision: (id: number) => req<import("./types").DecisionReview>(`/api/decisions/${id}/ai-review`, { method: "POST" }),
   record: (id: string) => req<any>(`/api/record/${id}`),
   decide: (body: { snapshot_id: string; decided_by: string; decision_posture: string; override_reason?: string; notes?: string }) =>
     req<Decision>("/api/decisions", { method: "POST", body: JSON.stringify(body) }),

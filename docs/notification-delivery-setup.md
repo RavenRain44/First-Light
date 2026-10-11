@@ -66,3 +66,43 @@ clock and never automatically retries a network failure. Duplicate requests reus
 persisted results. Provider acceptance is shown as acceptance, not confirmed inbox
 delivery. An unknown outcome requires checking provider logs before
 starting a new test.
+
+## Three-box message review and saved decisions
+
+The top of the notification tab contains one expanded message composer: a shared
+Location box, a shared Decision box, and a Personal instructions section with
+separate editable instructions for each group. One collapsed recipient list
+combines all groups and supports searching and selecting everyone. Location and Decision
+are shared across groups; reporting instructions can be overridden per group,
+including essential personnel. Edits invalidate approval and are audited. A Use
+template text button restores deterministic wording. Akamai supplies a bounded
+weather explanation informed by the recorded manager posture; unavailable or
+rejected inference uses labeled template wording. AI receives no contact details.
+The three reviewed boxes form the delivered message for both email and SMS; the
+real-test channel additionally labels it TEST ONLY.
+
+The notification decision log opens saved human decisions and their immutable
+weather snapshots. Historical dashboard review pauses live weather refresh until
+Return to live weather is selected. Editing notification wording does not alter
+the recorded decision or weather snapshot.
+
+## Saved camera evidence
+
+New human decisions start a background capture of the facility's camera set,
+including nearby Iowa DOT traffic-camera stills, ISU/KCCI webcams, and RWIS weather
+cameras, using the same location selection as the live dashboard. One newest available frame
+at or before the decision time is saved per angle at each camera location, including its source timestamp
+and URL. Replay decisions capture against the replay snapshot time. Image bytes
+and camera metadata persist in SQLite independently of the live camera cache.
+Completed archives cannot be replaced or deleted through normal database writes.
+Historical decision review serves only these saved bytes, never live replacements.
+Camera stills may be several minutes older than the decision; they are not exact
+instantaneous photos. Unavailable frames are recorded as unavailable. A server
+restart during capture marks the archive interrupted rather than capturing later
+images. Existing decisions have no archive unless one was captured when recorded.
+
+Live traffic feeds are saved using their provider-published JPEG snapshot endpoint,
+not by recording a video. Each saved traffic photo records retrieval time (the
+provider does not supply a reliable source-frame timestamp). Online capture rejects
+stale cached traffic photos if a fresh fetch fails. Replay decisions do not fetch
+current traffic photos. Historical objects omit live stream links entirely.

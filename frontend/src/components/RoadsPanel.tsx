@@ -26,24 +26,24 @@ const camIcon = (selected: boolean, video: boolean) => L.divIcon({
 
 const CAMERA_REFRESH_MS = 5 * 60 * 1000;
 
-export function RoadsPanel({ snap }: { snap: Snapshot }) {
-  const { data, err } = useRoads(snap);
+export function RoadsPanel({ snap, savedDecisionId, historical = false }: { snap: Snapshot; savedDecisionId?: number | null; historical?: boolean }) {
+  const { data, err } = useRoads(historical ? {...snap, mode:"replay"} : snap);
   const [layers, setLayers] = useState({ roads: true, corridors: true, cameras: false });
   const [cams, setCams] = useState<{ status: string; detail: string | null; cameras: Camera[] } | null>(null);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<string | null>(null);
-  const live = snap.mode === "live";
+  const live = snap.mode === "live" && !historical;
 
   // Cameras load only when the layer is on; they follow the replay clock and refresh while live.
   useEffect(() => {
     if (!layers.cameras || snap.facility.hypothetical) return;
     let alive = true;
-    const load = () => api.cameras(live ? undefined : snap.as_of).then((c) => { if (alive) setCams(c); })
+    const load = () => (historical ? (savedDecisionId ? api.decisionCameras(savedDecisionId) : Promise.resolve({status:"unavailable", detail:"No decision camera archive selected.", cameras:[]})) : api.cameras(live ? undefined : snap.as_of)).then((c) => { if (alive) setCams(c); })
       .catch((e) => alive && setCams({ status: "unavailable", detail: String(e.message ?? e), cameras: [] }));
     load();
     const t = live ? setInterval(load, CAMERA_REFRESH_MS) : undefined;
     return () => { alive = false; if (t) clearInterval(t); };
-  }, [layers.cameras, live, snap.as_of, snap.facility.hypothetical]);
+  }, [layers.cameras, live, snap.as_of, snap.facility.hypothetical, historical, savedDecisionId]);
 
   const visibleCams = useMemo(() => (cams?.cameras ?? []).filter((c) => !hidden.has(c.id)), [cams, hidden]);
   // Frame the traffic cameras and webcams around Ames; the far-off RWIS sites (~50+ km) stay on the map but would zoom it out too far.
@@ -118,12 +118,13 @@ export function RoadsPanel({ snap }: { snap: Snapshot }) {
               <LayerToggle on={layers.cameras} onChange={() => toggle("cameras")}
                 label={`DOT cameras${layers.cameras && cams ? ` (${visibleCams.length})` : ""}`} />
             </div>
+            {layers.cameras && historical && cams?.status === "ok" && <p className="mt-2 text-xs text-muted">{cams.detail}</p>}
             {layers.cameras && cams && cams.status !== "ok" && (
               <p className="mt-2 text-xs text-muted">{cams.detail ?? "No camera images available for this time."}</p>
             )}
             {layers.cameras && cams?.status === "ok" && !selectedCam && (
               <p className="mt-2 text-xs text-muted">
-                Click a camera on the map.{live && visibleCams.some((c) => c.stream_url) && <> Cameras with a <span className="cc-cam-dot" aria-hidden /> stream live video; the others show stills.</>}
+                {historical ? "Click a camera to view its saved decision-time frames by angle." : "Click a camera on the map."}{live && visibleCams.some((c) => c.stream_url) && <> Cameras with a <span className="cc-cam-dot" aria-hidden /> stream live video; the others show stills.</>}
                 {!live && " Replay shows weather-station and campus webcam stills archived at that time (traffic video is live only)."}
               </p>
             )}

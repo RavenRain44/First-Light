@@ -103,6 +103,33 @@ That pins the current camera list with every RWIS view and one snapshot per traf
 event's impact day (main view, every 3 hours). In `DEMO_MODE` there is no live video: traffic cameras show their
 cached snapshot, only cached images are offered, and a camera with no cached image is simply not shown.
 
+### Past decisions
+
+On Today, **Past decisions** lists the facility's earlier decisions, most similar weather first, with a
+slight preference for recent ones. Similarity uses the same weighted feature distance as Similar past storms.
+Each row shows:
+
+* the Cooper urgency at the time
+* what was decided (and whether it followed the suggestion)
+* how it went
+
+Only real decisions count: live-weather decisions made outside demo mode, plus seeded examples, which are
+always tagged "example". Each decision now records whether the app was in demo mode. Replay practice is left out.
+
+**How it went** comes from reviews, which are append-only:
+
+* a manager can review any past decision
+* if no one has after `REVIEW_AFTER_DAYS` (default 7) past the decision day, an AI review compares the
+  decision with what the weather actually did: storm reports within 25 mi, AMW gusts and freezing hours, and
+  commute roads
+* without a model, the deterministic weather check is shown instead, with its confidence
+
+For the demo, seed example decisions on the historical storms (offline, after `build:history`):
+
+```bash
+npm run seed:examples
+```
+
 ### Synthetic roster
 
 `backend/data/employees.json` is generated from `data/NADC_synthetic_assignments.csv` (270 fictitious people):
