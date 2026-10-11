@@ -46,7 +46,7 @@ class Thresholds(BaseModel):
 
 
 @lru_cache
-def load_thresholds(path: str | None = None) -> Thresholds:
+def load_base_thresholds(path: str | None = None) -> Thresholds:
     p = Path(path) if path else THRESHOLDS_PATH
     # Hash with LF line endings so a Windows checkout (CRLF) identifies the same rules as Linux and the datasets.
     text = p.read_bytes().replace(b"\r\n", b"\n")
@@ -59,6 +59,17 @@ def load_thresholds(path: str | None = None) -> Thresholds:
         timing=raw["timing"],
         raw=raw,
     )
+
+
+def load_thresholds(path: str | None = None) -> Thresholds:
+    base = load_base_thresholds(path)
+    if path is not None:
+        return base
+    from app.policy import effective
+    return effective(base)
+
+# Preserve the existing cache-control API; activated overlays are never cached.
+load_thresholds.cache_clear = load_base_thresholds.cache_clear
 
 
 class RuleResult(BaseModel):

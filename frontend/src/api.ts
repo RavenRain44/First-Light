@@ -19,6 +19,18 @@ export type StorageLinks = { enabled: boolean; error?: string; expires_in?: numb
   camera_sets?: { decision_id: number; captured_at?: string; images: { key: string; url: string; camera: string; view?: string; time?: string }[] }[] };
 
 export const api = {
+  grade: (id: number) => req<any>(`/api/decisions/${id}/grade`),
+  saveGrade: (id: number, body: any) => req<any>(`/api/decisions/${id}/grade`, {method:"POST", body:JSON.stringify(body)}),
+  intention: (id: number, body: any) => req<any>(`/api/decisions/${id}/intention`, {method:"POST", body:JSON.stringify(body)}),
+  refreshGrade: (id: number) => req<any>(`/api/decisions/${id}/grade/refresh`, {method:"POST"}),
+  feedback: (fp = 1, fn = 5) => req<any>(`/api/feedback/statistics?false_alarm_cost=${fp}&missed_disruption_cost=${fn}`),
+  feedbackCatalog: () => req<any>("/api/feedback/catalog"),
+  feedbackAnalysis: () => req<any>("/api/feedback/analysis"),
+  analyzeFeedback: (body: any) => req<any>("/api/feedback/analyze", {method:"POST",body:JSON.stringify(body)}),
+  policies: () => req<any>("/api/policies"),
+  proposePolicy: (body: any) => req<any>("/api/policies", {method:"POST",body:JSON.stringify(body)}),
+  policyAction: (id: string, action: string, body: any, token = "") => req<any>(`/api/policies/${id}/${action}`, {
+    method:"POST",headers:{"Content-Type":"application/json", "X-Threshold-Admin-Token":token},body:JSON.stringify(body)}),
   backtesting: () => req<any>("/api/backtesting"),
   searchHistory: (body: any) => req<any>("/api/backtesting/search", {method:"POST",body:JSON.stringify(body)}),
   startHistoryBuild: (body: any) => req<any>("/api/backtesting/build", {method:"POST",body:JSON.stringify(body)}),
@@ -50,7 +62,7 @@ export const api = {
     req<import("./types").DecisionReview>(`/api/decisions/${id}/review`, { method: "POST", body: JSON.stringify(body) }),
   aiReviewDecision: (id: number) => req<import("./types").DecisionReview>(`/api/decisions/${id}/ai-review`, { method: "POST" }),
   record: (id: string) => req<any>(`/api/record/${id}`),
-  decide: (body: { snapshot_id: string; decided_by: string; decision_posture: string; override_reason?: string; notes?: string }) =>
+  decide: (body: { snapshot_id: string; decided_by: string; decision_posture: string; override_reason?: string; notes?: string; intended_objective?: string }) =>
     req<Decision>("/api/decisions", { method: "POST", body: JSON.stringify(body) }),
   events: (signal?: AbortSignal) => req<ReplayEvent[]>("/api/history/events", { signal }),
   event: (id: string, signal?: AbortSignal) => req<ReplayEvent>(`/api/history/events/${id}`, { signal }),

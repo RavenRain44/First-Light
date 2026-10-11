@@ -20,9 +20,8 @@ def past_decisions(background_tasks: BackgroundTasks, snapshot_id: str | None = 
     if reference and (reference['mode']=='backtest' or reference.get('historical_context')):
         due = []  # Historical browsing must not launch paid AI reviews.
         rows = [row for row in rows if datetime.fromisoformat(row['decided_at']) <= datetime.fromisoformat(reference['as_of'])]
-    if due:
-        background_tasks.add_task(past.review_due, due[:3])
-    return {"decisions": rows, "reviewing": due[:3]}
+    # Browsing never spends inference credits; reviews are explicitly requested.
+    return {"decisions": rows, "reviewing": []}
 
 
 class ReviewIn(BaseModel):

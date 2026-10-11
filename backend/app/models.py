@@ -167,3 +167,68 @@ class HistoricalEvaluation(SQLModel, table=True):
 class HistoricalBuild(SQLModel, table=True):
     id: str = Field(primary_key=True)
     state_json: str
+
+
+class DecisionIntent(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    decision_id: int = Field(index=True, foreign_key="decision.id")
+    created_at: datetime
+    actor: str
+    objective: str
+    retrospective: bool = False
+    correction_reason: str = ""
+
+
+class DecisionAssessment(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    decision_id: int = Field(index=True, foreign_key="decision.id")
+    created_at: datetime
+    actor: str
+    content_sha256: str = Field(index=True)
+    evidence_json: str
+
+
+class FeedbackMetric(SQLModel, table=True):
+    id: str = Field(primary_key=True)
+    created_at: datetime
+    summary_json: str
+
+
+class FeedbackAnalysis(SQLModel, table=True):
+    """Append-only analysis request/result events, including interrupted requests."""
+    id: str = Field(primary_key=True)
+    created_at: datetime
+    metric_id: str = Field(index=True, foreign_key="feedbackmetric.id")
+    actor: str
+    payload_json: str
+
+
+class PolicyProposal(SQLModel, table=True):
+    id: str = Field(primary_key=True)
+    created_at: datetime
+    actor: str
+    base_sha: str
+    category: str
+    payload_json: str
+
+
+class PolicyEvent(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    proposal_id: str = Field(index=True, foreign_key="policyproposal.id")
+    created_at: datetime
+    actor: str
+    status: str
+    payload_json: str = "{}"
+
+
+class PolicyActivation(SQLModel, table=True):
+    """Atomic policy pointer: newest append wins, including rollbacks."""
+    id: int | None = Field(default=None, primary_key=True)
+    proposal_id: str = Field(foreign_key="policyproposal.id")
+    created_at: datetime
+    actor: str
+    action: str
+    source_base_sha: str
+    policy_sha: str
+    policy_json: str
+    previous_id: int | None = None

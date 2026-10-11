@@ -53,7 +53,8 @@ def counts(ctx: DecisionContext | None, mode: str) -> bool:
 def day_window(day: str, tz: str) -> tuple[datetime, datetime]:
     d = date.fromisoformat(day)
     start = datetime.combine(d, time(0), ZoneInfo(tz)).astimezone(timezone.utc)
-    return start, start + timedelta(days=1)
+    end = datetime.combine(d + timedelta(days=1), time(0), ZoneInfo(tz)).astimezone(timezone.utc)
+    return start, end
 
 
 def chosen_review(reviews: list[DecisionReview]) -> DecisionReview | None:
@@ -65,7 +66,7 @@ def review_dict(r: DecisionReview | None) -> dict | None:
     if not r:
         return None
     ev = json.loads(r.evidence_json or "{}")
-    return {"source": r.source, "verdict": r.verdict, "confidence": r.confidence, "note": r.note, "reviewer": r.reviewer,
+    return {"id": r.id, "evidence": ev, "source": r.source, "verdict": r.verdict, "confidence": r.confidence, "note": r.note, "reviewer": r.reviewer,
             "created_at": _utc(r.created_at).isoformat(), "observed": ev.get("summary"), "impact": ev.get("impact")}
 
 
@@ -114,7 +115,7 @@ def list_past(current_snapshot_id: str | None, facility_id: str | None = None, n
     return out, due
 
 
-async def run_review(decision_id: int, now: datetime | None = None) -> dict:
+async def run_review(decision_id: int, now: datetime | None = None, *, use_ai: bool = True) -> dict:
     """Write an AI (or weather-check) review for one decision from what the weather did that day."""
     from ai.review import review
 
@@ -145,9 +146,10 @@ async def run_review(decision_id: int, now: datetime | None = None) -> dict:
     warned = bool(snap.get("alerts")) or any(h.get("level", 0) > 0 for h in snap.get("hazards", {}).values())
     gaps = outcome.get("amw_peak_gust_mph") is None
     check = grade(d.decision_posture, outcome, warned=warned, data_gaps=gaps)
+    from app.feedback import intent_category, record_assessment
     evidence = {
         "decision": {"day": day, "chose": d.decision_posture, "suggested": d.recommended_posture,
-                     "followed_suggestion": d.agreed_with_recommendation, "override_reason": d.override_reason},
+                     "followed_suggestion": d.agreed_with_recommendation, "override_reason_category": intent_category(d.override_reason or d.notes or "")},
         "at_decision_time": {"cooper_readiness": snap.get("readiness", {}).get("level") if snap.get("readiness") else None,
                              "alerts": [a.get("event") for a in snap.get("alerts", [])],
                              "suggestion_reasons": snap["posture"].get("reasons", [])[:3]},
@@ -155,7 +157,10 @@ async def run_review(decision_id: int, now: datetime | None = None) -> dict:
                                                  "max_reported_snow_in", "max_reported_ice_in", "amw_peak_gust_mph",
                                                  "amw_freezing_precip_hours", "worst_corridor_rank")},
     }
-    r = await review(evidence, check)
+    assessment = record_assessment(d, snap, outcome, now)
+    if not assessment["eligible"]:
+        check = {"verdict": "mixed", "confidence": .3, "impact": "unknown", "reasons": ["Insufficient independently observed weather coverage; no accuracy classification is available"]}
+    r = await review(evidence, check, use_ai=use_ai and assessment["eligible"])
     row = DecisionReview(decision_id=decision_id, source=r["source"], verdict=r["verdict"], confidence=r["confidence"],
                          note=r["note"], reviewer="AI review" if r["source"] == "ai" else "Weather check",
                          created_at=now, evidence_json=json.dumps({"summary": outcome.get("summary"), "impact": check["impact"],
@@ -182,11 +187,24 @@ async def review_due(ids: list[int]) -> None:
             _running.discard(i)
 
 
-def add_manager_review(decision_id: int, reviewer: str, verdict: str, note: str | None, now: datetime | None = None) -> dict:
+def add_manager_review(decision_id: int, reviewer: str, verdict: str, note: str | None, now: datetime | None = None,
+                       *, achievement: str = "unknown", evidence_refs: list[str] | None = None, correction_reason: str = "", expected_id: int | None = None, versioned: bool = False, observed_evidence_status: str = "not_disputed") -> dict:
     with session() as s:
+        from sqlalchemy import text
+        from fastapi import HTTPException
+        s.exec(text("BEGIN IMMEDIATE"))
+        previous = s.exec(select(DecisionReview).where(DecisionReview.decision_id == decision_id, DecisionReview.source == "manager").order_by(DecisionReview.id.desc())).first()
+        if versioned and expected_id != (previous.id if previous else None):
+            raise HTTPException(409, "Review changed. Refresh before correcting it.")
+        if versioned and previous and not correction_reason.strip():
+            raise HTTPException(422, "A correction reason is required")
         if not s.get(Decision, decision_id):
             raise KeyError(decision_id)
         row = DecisionReview(decision_id=decision_id, source="manager", verdict=verdict, confidence=None,
-                             note=(note or "").strip() or None, reviewer=reviewer.strip(), created_at=now or datetime.now(timezone.utc))
+                             note=(note or "").strip() or None, reviewer=reviewer.strip(), created_at=now or datetime.now(timezone.utc),
+                             evidence_json=json.dumps({"observed_evidence_status": observed_evidence_status, "achievement": achievement, "evidence_refs": evidence_refs or [],
+                                                       "correction_reason": correction_reason, "label": "Manager opinion; not a verified training label"}))
         s.add(row); s.commit(); s.refresh(row)
-        return review_dict(row)
+    from app.storage import kick
+    kick()
+    return review_dict(row)

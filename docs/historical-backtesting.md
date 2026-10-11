@@ -396,3 +396,7 @@ production frontend build passed. Chrome verified the 7,470-day cohort display,
 chronological split counts, 20-day disruption sample warning, cost-ratio selection,
 and the 50:1 final-test comparison. A regression test confirms later evaluation
 attempts cannot replace the pinned original cohort. No production thresholds changed.
+
+## Operational feedback and candidate policies
+
+[Decision grading](decision-grading.md) adds a separate private operational-feedback catalog, manager goals/reviews, completed-day weather assessments and cached error statistics. Feedback never changes the frozen historical cohort or promotes subjective manager judgments to training truth. Candidate policy validation reruns the full operating engine on identical retained inputs with chronological, purged splits. [Measured verification](decision-grading-verification.md) documents the current checkout's trial comparison and insufficient forecast-validation sample.

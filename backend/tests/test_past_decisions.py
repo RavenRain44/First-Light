@@ -107,6 +107,7 @@ def test_manager_review_beats_ai_and_reviews_are_append_only(monkeypatch):
 
 async def calm_day(*_a, **_k):
     return {"summary": "no storm reports within 25 mi; AMW peak gust 18 mph.", "severe_impact": False, "lsr_count": 0,
+            "coverage": {"complete": True, "observed_hours": 24, "expected_hours": 24},
             "lsr_by_type": {}, "lsrs": [], "amw_peak_gust_mph": 18.0, "amw_freezing_precip_hours": 0, "worst_corridor_rank": 0}
 
 
@@ -152,10 +153,15 @@ def test_record_decision_tags_demo_mode(monkeypatch):
     import app.camera_archive as ca
     async def no_capture(*a, **k): return None
     monkeypatch.setattr(ca, "capture", no_capture)
-    r = TestClient(app).post("/api/decisions", json={"snapshot_id": "s", "decided_by": "Pat Lee", "decision_posture": "NORMAL"})
+    r = TestClient(app).post("/api/decisions", json={"snapshot_id": "s", "decided_by": "Pat Lee", "decision_posture": "NORMAL", "intended_objective": "Protect commuters"})
     assert r.status_code == 201
     with db.session() as s:
         assert s.get(DecisionContext, r.json()["id"]).demo_mode is True
+        from app.models import DecisionIntent
+        from sqlmodel import select
+        objective = s.exec(select(DecisionIntent)).one()
+        assert objective.objective == "Protect commuters" and objective.retrospective is False
+        assert r.json()["decided_at"].endswith("+00:00")
 
 
 def test_replay_shows_the_example_decided_at_that_same_moment():

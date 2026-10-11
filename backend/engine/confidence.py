@@ -146,7 +146,7 @@ def _certainty(ctx: Context, rules: list[RuleResult], hazards: dict[str, HazardR
                               (" (inferred from VTEC significance)" if inferred else ""))
 
 
-def compute(statuses, inputs, ctx, rules, hazards, mode) -> Confidence:
+def compute(statuses, inputs, ctx, rules, hazards, mode, brackets=None) -> Confidence:
     factors = [
         _completeness(statuses, mode, ctx.as_of),
         _freshness(inputs, ctx.as_of),
@@ -158,5 +158,6 @@ def compute(statuses, inputs, ctx, rules, hazards, mode) -> Confidence:
         total = min(total, 0.65)
         factors.append(Factor(name="secondary_forecast", score=0.65, weight=0,
                               explanation="Backup model in use: confidence is capped at medium; source limitations remain explicit. This score is not a calibrated accuracy probability."))
-    level = "high" if total >= 0.75 else "medium" if total >= 0.5 else "low"
+    brackets = brackets or {}
+    level = "high" if total >= brackets.get("high_min", .75) else "medium" if total >= brackets.get("medium_min", .5) else "low"
     return Confidence(level=level, score=round(total, 2), factors=factors)

@@ -48,6 +48,8 @@ async def lifespan(app: FastAPI):
         storage.restore_if_empty()  # a fresh server picks up the last backup before opening the database
     get_engine()
     historical.recover_jobs()
+    from app import policy
+    policy.recover()
     from app.camera_archive import abandon_interrupted
     abandon_interrupted()
     storage_task = asyncio.create_task(storage.run_loop(settings.obj_backup_hours)) if storage.enabled() else None
@@ -74,6 +76,10 @@ async def lifespan(app: FastAPI):
         job.cancel()
         with contextlib.suppress(asyncio.CancelledError):
             await job
+    for job in list(policy.JOBS.values()):
+        job.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await job
     await cache.aclose()
 
 
@@ -90,6 +96,8 @@ app.include_router(notifications.router)
 app.include_router(past.router)
 app.include_router(risk.router)
 app.include_router(storage_routes.router)
+from app.routers import feedback as feedback_routes
+app.include_router(feedback_routes.router)
 
 # Production container serves the built dashboard and API from one origin.
 # Vite remains the normal development server when no build is present.

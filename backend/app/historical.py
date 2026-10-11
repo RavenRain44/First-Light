@@ -369,7 +369,8 @@ def overview():
         artifact_bytes=s.exec(select(func.sum(func.length(HistoricalArtifact.payload)))).one() or 0
     from app.decision_evidence import describe
     decision_dataset = describe(proxies(include_unconfirmed=True))
-    return {'analysis_cohort':{k:v for k,v in cohort.items() if k!='entries'} if cohort else None,'archive_evaluation_count':len(rows),'decision_dataset':decision_dataset,'supported_start':START,'supported_end':(datetime.now(ZoneInfo(load_facility().timezone)).date()-timedelta(days=1)).isoformat(),
+    from app.feedback import catalog
+    return {'operational_feedback':catalog(), 'analysis_cohort':{k:v for k,v in cohort.items() if k!='entries'} if cohort else None,'archive_evaluation_count':len(rows),'decision_dataset':decision_dataset,'supported_start':START,'supported_end':(datetime.now(ZoneInfo(load_facility().timezone)).date()-timedelta(days=1)).isoformat(),
             'default_start':'2020-01-01','default_time':'04:00','timezone':load_facility().timezone,
             'rules_sha':rules.sha256,'benchmark_sha':hashlib.sha256(dumps(proxies()).encode()).hexdigest(), 'metrics_by_time':{t:metrics(v) for t,v in groups.items()},
             'jobs':sorted(jobs,key=lambda j:j['created_at'],reverse=True), 'proxy_records':proxies(),

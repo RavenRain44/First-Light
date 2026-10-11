@@ -161,14 +161,14 @@ def feature_vector(ctx: Context, rules: list[RuleResult], hazards: dict[str, Haz
 
 
 def assess(inputs: list[NormalizedInput], statuses: list[SourceStatus], facility: Facility, as_of: datetime,
-           mode: str, th: Thresholds | None = None, employees: list[dict] | None = None) -> Assessment:
+           mode: str, th: Thresholds | None = None, employees: list[dict] | None = None, include_counterfactuals: bool = True) -> Assessment:
     th = th or load_thresholds()
     ctx = extract(inputs, as_of, employees, horizon_end(utc(as_of), facility, th.timing), facility.timezone)
     rules = evaluate_rules(ctx, th)
     hazards = score_hazards(rules)
     posture = decide(hazards, rules, ctx.as_of, facility, th)
-    confidence = conf.compute(statuses, inputs, ctx, rules, hazards, mode)
-    changes = what_would_change(ctx, th, facility, posture.posture, rules)
+    confidence = conf.compute(statuses, inputs, ctx, rules, hazards, mode, th.raw.get("confidence_brackets"))
+    changes = what_would_change(ctx, th, facility, posture.posture, rules) if include_counterfactuals else []
     sufficiency = assess_sufficiency(inputs, statuses, hazards, rules, posture, ctx.as_of, mode, facility.timezone, th.timing)
     readiness = assess_readiness(hazards, rules, posture, confidence, ctx.alerts, ctx.as_of, facility, th, sufficiency)
     return Assessment(

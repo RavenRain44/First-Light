@@ -11,7 +11,7 @@ takes precedence.
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from adapters.base import Facility
 from adapters.iem_lsr import fetch_lsrs
@@ -24,9 +24,12 @@ VERDICTS = ("good_call", "too_lenient", "too_strict", "mixed")
 
 async def observed_outcome(facility: Facility, start: datetime, end: datetime, road_ranks: list[int | None] | None = None) -> dict:
     lsrs, lsr_url = await fetch_lsrs(facility, start, end)
-    rows, _ = await fetch_obhistory(facility.asos_station, start, end, facility.timezone)
+    obs_urls = []
+    rows, fetched_at = await fetch_obhistory(facility.asos_station, start, end, facility.timezone, urls=obs_urls)
+    from adapters.iem_obs import _t
+    rows = [r for r in rows if r.get("utc_valid") and start <= _t(r["utc_valid"]) < end]
     s = obs_series(rows)
-    peak_gust = max(s["wind_gust_mph"], key=lambda x: x[1], default=None)
+    peak_gust = max(s.get("peak_gust_mph") or s["wind_gust_mph"], key=lambda x: x[1], default=None)
     fz_hours = sum(1 for _, v in s["freezing_precip"] if v >= 1)
     snow_hours = sum(1 for _, v in s["snow_obs"] if v >= 1)
     worst_road = max((r for r in road_ranks or [] if r is not None), default=None)
@@ -53,11 +56,25 @@ async def observed_outcome(facility: Facility, start: datetime, end: datetime, r
         parts.append(f"{fz_hours} h of freezing precip at AMW")
     if worst_road is not None:
         parts.append(f"worst commute corridor: {ROAD_NAMES[int(worst_road)]}")
-    severe = bool((wind_mags and max(wind_mags) >= 58) or (peak_gust and peak_gust[1] >= 58) or (worst_road or 0) >= 3
+    severe = bool(any("TORNADO" in k.upper() for k in by_type) or (wind_mags and max(wind_mags) >= 58) or (peak_gust and peak_gust[1] >= 58) or (worst_road or 0) >= 3
                   or fz_hours >= 2 or (snow_mags and max(snow_mags) >= 6) or (ice_mags and max(ice_mags) >= 0.1))
+    expected = int((end - start).total_seconds() / 3600)
+    wind_hours = {t for t, v in s["wind_speed_mph"] if v is not None}
+    covered = {int((t - start).total_seconds() // 3600) for t, v in s["temp_f"] if v is not None and t in wind_hours and start <= t < end}
+    missing_run = longest_gap = 0
+    for hour in range(expected):
+        missing_run = 0 if hour in covered else missing_run + 1
+        longest_gap = max(longest_gap, missing_run)
+    complete = len(covered) >= expected * .875 and longest_gap <= 3
     return {
         "summary": "; ".join(parts) + ".",
         "severe_impact": severe,
+        "scope": "Local weather benchmark: tornado report within 25 miles, gust at least 58 mph, road rank at least 3, freezing precipitation at least 2 hours, snow report at least 6 inches or ice at least 0.1 inch. Not facility operating truth.",
+        "retrieved_at": datetime.now(timezone.utc).isoformat(),
+        "coverage": {"complete": complete, "expected_hours": expected, "observed_hours": len(covered), "largest_gap_hours": longest_gap,
+                     "policy": "At least 87.5% of local-day hourly temperature and wind observations and no gap longer than 3 hours; storm-report requests must succeed"},
+        "observation_source_urls": obs_urls,
+        "observation_fetched_at": fetched_at.isoformat() if fetched_at else None,
         "lsr_count": len(lsrs), "lsr_by_type": by_type, "lsr_source_url": lsr_url,
         "lsrs": lsrs[:40],
         "max_reported_wind_mph": max(wind_mags) if wind_mags else None,

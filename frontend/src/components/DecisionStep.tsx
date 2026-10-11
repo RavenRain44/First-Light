@@ -87,6 +87,7 @@ function DecideForm({ snap, onRecorded, onCancel }: { snap: Snapshot; onRecorded
   const [by, setBy] = useState(savedName);
   const [posture, setPosture] = useState<Posture>(rec);
   const [reason, setReason] = useState("");
+  const [objective, setObjective] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const override = posture !== rec;
@@ -101,7 +102,7 @@ function DecideForm({ snap, onRecorded, onCancel }: { snap: Snapshot; onRecorded
     setBusy(true); setErr(null);
     try {
       const d = await api.decide({ snapshot_id: snap.snapshot_id, decided_by: by.trim(), decision_posture: posture,
-        override_reason: needReason ? reason.trim() : undefined, notes: !needReason && reason.trim() ? reason.trim() : undefined });
+        intended_objective: objective.trim() || undefined, override_reason: needReason ? reason.trim() : undefined, notes: !needReason && reason.trim() ? reason.trim() : undefined });
       try { localStorage.setItem(NAME_KEY, by.trim()); } catch { /* storage blocked */ }
       onRecorded({ id: d.id, decided_by: by.trim(), decision_posture: posture, decided_at: new Date().toISOString(),
         agreed_with_recommendation: d.agreed_with_recommendation, decision_basis: d.decision_basis });
@@ -133,6 +134,11 @@ function DecideForm({ snap, onRecorded, onCancel }: { snap: Snapshot; onRecorded
           <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} className="rounded-lg border border-edge bg-surface px-3 py-2"
             placeholder="e.g. County roads north of town are untreated; staff on US 69 can't get in" />
         </label>
+      <label className="flex max-w-2xl flex-col gap-1 text-sm">
+        <span className="font-medium">What should this decision achieve? (optional)</span>
+        <input value={objective} onChange={e => setObjective(e.target.value)} maxLength={1000}
+          className="min-h-[44px] rounded-lg border border-edge bg-surface px-3" placeholder="e.g. Keep staff off icy roads while essential tasks continue remotely" />
+      </label>
       <p className="text-xs text-muted">Your reasoning helps draft the notification explanation. Keep personal contact details out of this field.</p>
       <label className="flex max-w-sm flex-col gap-1 text-sm">
         <span className="font-medium">Your name and title</span>

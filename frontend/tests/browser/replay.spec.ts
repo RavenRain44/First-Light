@@ -492,3 +492,92 @@ test('notification groups support editing, selection, errors and simulated sends
   await expect(page.getByText('Delivered (simulated)',{exact:true})).toBeVisible();
   expect(app.errors).toEqual([]);
 });
+
+function gradeMetric(fp=1,fn=0) {
+  const n=1, rate=(count:number,den:number)=>({count,n:den,rate:den?count/den:null,ci95:den?[0,1]:null,status:'not enough data'});
+  return {n,accuracy:fp?0:1,balanced_accuracy:null,precision:0,recall:null,specificity:0,status:'not enough data',
+    weighted_loss:fp+5*fn,confusion:{true_positive:0,true_negative:0,false_alarm:fp,missed_disruption:fn},
+    false_positive_rate:rate(fp,1),false_negative_rate:rate(fn,0),false_alarm_share_of_warnings:rate(fp,1),accuracy_95pct_wilson:[0,.8],definitions:{accuracy:'Correct classifications / eligible days'}};
+}
+
+for (const width of [390,1280]) test(`decision grading, separate statistics and authorized policy workflow at ${width}px`, async ({page})=>{
+  await page.setViewportSize({width,height:1000});
+  const app=await mockApp(page);
+  const decision={id:99,snapshot_id:'saved-grade',decision_posture:'CLOSED',recommended_posture:'NORMAL',decided_at:'2024-01-02T10:00:00Z',decided_by:'Synthetic manager',override_reason:'Commute safety'};
+  const data:any={decision,facility:{name:'Synthetic test facility'},decision_day:'2024-01-02',timezone:'America/Chicago',recommended_reason:['No threshold crossed'],thresholds_version:'baseline',agreed:false,status:'reviewable',period_end:'2024-01-03T06:00:00Z',demo_or_example:true,intentions:[],reviews:[],assessments:[]};
+  const metrics=gradeMetric();
+  const stats:any={id:'metric1',updated_at:'2026-10-11T10:00:00Z',label:'Completed-day weather; not verified office accuracy',range:{start:'2024-01-02',end:'2024-01-02'},cohort_sha:'abc123',eligible_count:1,excluded_count:0,manager:metrics,recommendation:gradeMetric(0),agreement:{rate:0,count:0,n:1},confirmed_operating_decisions:{status:'not enough data'},excluded:{},rule_versions:{baseline:1},years:{},hazards:{},limitations:['Manager opinions never become training truth'],objective_achievement_opinions:{}};
+  let analyses=0, active=0, proposal:any=null;
+  const registry:any={parameters:[{path:'rules.wind.fcst_gust_advisory.value',category:'weather',current:45,min:22.5,max:67.5,unit:'mph'}],current_version:'baseline',current_sha:'original',admin_configured:true,proposals:[]};
+  await page.route('**/api/decisions',r=>r.fulfill({json:[decision]}));
+  await page.route('**/api/feedback/statistics?*',r=>r.fulfill({json:stats}));
+  await page.route('**/api/feedback/catalog',r=>r.fulfill({json:{dataset:{id:'operational-feedback-v1'},cloud:{enabled:false}}}));
+  await page.route('**/api/feedback/analysis',r=>r.fulfill({json:analyses?{source:'akamai',status:'complete',metric_id:'metric1',explanation:'Independent statistics require manager review',proposals:[]}:null}));
+  await page.route('**/api/feedback/analyze',r=>{analyses++;return r.fulfill({json:{status:'complete'}});});
+  await page.route('**/api/decisions/99/intention',r=>{const b=r.request().postDataJSON();data.intentions=[{...b,id:1,created_at:'2026-10-11T10:00:00Z',retrospective:true}];return r.fulfill({json:data.intentions[0]});});
+  await page.route('**/api/decisions/99/grade',r=>{
+    if(r.request().method()==='POST'){
+      const b=r.request().postDataJSON();expect(b.expected_id).toBe(data.reviews[0]?.id??null);
+      data.reviews.unshift({...b,id:data.reviews.length+1,source:'manager',evidence:{achievement:b.achievement,correction_reason:b.correction_reason,evidence_refs:b.evidence_refs},created_at:'2026-10-11T10:00:00Z'});
+      stats.objective_achievement_opinions={achieved:1};return r.fulfill({json:data.reviews[0]});
+    }
+    return r.fulfill({json:data});
+  });
+  await page.route('**/api/decisions/99/grade/refresh',r=>{data.assessments=[{id:1,eligible:true,manager_weather_classification:'false_alarm',recommendation_weather_classification:'true_negative',comparison:'override worsened weather classification',outcome:{summary:'Independent observed calm weather',coverage:{observed_hours:24,expected_hours:24}},label_version:'completed-weather-v1',action_assessment:'No independently verified operating-action labels',created_at:'2026-10-11T10:00:00Z',status:'complete',hash:'abcdef'}];return r.fulfill({json:data});});
+  await page.route('**/api/policies',r=>{
+    if(r.request().method()==='POST'){
+      const b=r.request().postDataJSON();proposal={...b,id:'candidate1',version:1,status:'proposed',events:[{id:1,status:'proposed',at:'2026-10-11T10:00:00Z',actor:'Test manager'}]};registry.proposals=[proposal];return r.fulfill({json:proposal});
+    }
+    return r.fulfill({json:registry});
+  });
+  await page.route('**/api/policies/candidate1/*',r=>{
+    const b=r.request().postDataJSON();expect(b.version).toBe(proposal.version);
+    const action=new URL(r.request().url()).pathname.split('/').at(-1);
+    if(action!=='evaluate')expect(r.request().headers()['x-threshold-admin-token']).toBe('test-manager-token');
+    if(action==='activate'){active++;registry.current_version='policy-candidate1';}
+    if(action==='rollback'){active--;registry.current_version='baseline';}
+    proposal.status=action==='evaluate'?'validated':action==='approve'?'approved':action==='activate'?'active':'rolled_back';
+    proposal.version++;
+    proposal.events.push({id:proposal.version,status:proposal.status,actor:b.actor,at:'2026-10-11T10:00:00Z',...(action==='evaluate'?{report:{cohort_n:100,cohort_sha:'weather-cohort',purged_days:[],scores:{validation:{incumbent:metrics,candidate:gradeMetric(0)}},additional_disruptions_caught:1,additional_false_alarms:1,limitations:['Historical test scores are retrospective']}}:{})});
+    return r.fulfill({json:proposal});
+  });
+  await page.getByRole('button',{name:'Decision log',exact:true}).click();
+  await page.getByRole('button',{name:'Grade decision',exact:true}).click();
+  await page.getByLabel('Your name / title',{exact:true}).fill('Test manager');
+  await page.getByLabel('What did you want to happen?').fill('Protect commuters and continue remote tasks');
+  await page.getByRole('button',{name:'Save objective',exact:true}).click();
+  await expect(page.getByText(/Retrospective annotation/)).toBeVisible();
+  await page.getByRole('button',{name:'Calculate from observed weather'}).click();
+  await expect(page.getByText('override worsened weather classification',{exact:true})).toBeVisible();
+  await page.getByLabel('How did the call fit the situation?').selectOption('good_call');
+  await page.getByLabel('Was your objective achieved?').selectOption('achieved');
+  await page.getByRole('button',{name:'Save manager grade',exact:true}).click();
+  await expect(page.getByRole('status')).toContainText('Review saved');
+  await expect(page.getByRole('button',{name:'Save manager grade'})).toBeDisabled();
+  await page.getByLabel('Reason for correcting your review').fill('Task completion verified');
+  await page.getByRole('button',{name:'Save manager grade',exact:true}).click();
+  await page.getByText('Review and correction history',{exact:true}).click();
+  await expect(page.getByText('Manager opinion · good call',{exact:true})).toHaveCount(2);
+  await page.getByRole('button',{name:'← Back to decision log',exact:true}).click();
+  await expect(page.getByText(/Goal achievement.*achieved: 1/)).toBeVisible();
+  await page.getByText('Akamai explanation & policy proposals',{exact:true}).click();
+  await page.getByLabel('Manager name / title',{exact:true}).fill('Test manager');
+  await page.getByRole('button',{name:'Ask Akamai to explain errors'}).click();
+  await expect(page.getByText('Independent statistics require manager review',{exact:true})).toBeVisible();
+  await page.getByRole('combobox',{name:'Policy parameter',exact:true}).selectOption('rules.wind.fcst_gust_advisory.value');
+  await page.getByLabel(/Candidate value/).fill('35');
+  await page.getByLabel('Why test this change?').fill('Reduce missed hazardous wind disruption');
+  await page.getByRole('button',{name:'Save candidate proposal'}).click();
+  await page.getByRole('button',{name:'Run full-engine backtest'}).click();
+  await expect(page.getByRole('button',{name:'Approve validated candidate'})).toBeDisabled();
+  expect(active).toBe(0);
+  await page.getByLabel('Manager authorization token (approve / activate / roll back)').fill('test-manager-token');
+  await page.getByRole('button',{name:'Approve validated candidate'}).click();
+  expect(active).toBe(0);
+  await page.getByRole('button',{name:'Activate approved policy'}).click();
+  await expect(page.getByText(/Effective policy: policy-candidate1/)).toBeVisible();expect(active).toBe(1);
+  await page.getByRole('button',{name:'Roll back active policy'}).click();
+  await expect(page.getByText(/Effective policy: baseline/)).toBeVisible();expect(active).toBe(0);
+  expect(analyses).toBe(1);expect(app.errors).toEqual([]);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+});

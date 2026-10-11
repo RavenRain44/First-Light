@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import type { Decision } from "../types";
 import { Card, Skeleton } from "../util";
+import { DecisionGrade } from "./DecisionGrade";
+import { DecisionFeedback } from "./DecisionFeedback";
 import { NotificationsView } from "./NotificationsView";
 
 export function DecisionLogView({ timezone, onSnapshot }: {
@@ -11,6 +13,7 @@ export function DecisionLogView({ timezone, onSnapshot }: {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selected, setSelected] = useState<number | null>(null);
+  const [grading, setGrading] = useState<number | null>(null);
   const [refresh, setRefresh] = useState(0);
   useEffect(() => {
     let active = true;
@@ -21,11 +24,12 @@ export function DecisionLogView({ timezone, onSnapshot }: {
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [refresh]);
+  if (grading !== null) return <DecisionGrade id={grading} onBack={() => {setGrading(null);setRefresh(n => n+1);}} />;
   if (selected !== null) return <div className="space-y-4">
     <button className="btn" onClick={() => setSelected(null)}>← Back to decision log</button>
     <NotificationsView key={selected} decisionId={selected} onBack={() => setSelected(null)} />
   </div>;
-  return <Card title="Decision log">
+  return <div className="space-y-4"><Card title="Decision log">
     <p className="text-sm text-muted">Review recorded decisions and the weather saved when each decision was made.</p>
     {loading && <Skeleton className="mt-3 h-40" />}
     {error && <div role="alert" className="mt-3 text-sm">Could not load decisions: {error} <button className="btn" onClick={() => setRefresh(n => n + 1)}>Retry</button></div>}
@@ -37,9 +41,10 @@ export function DecisionLogView({ timezone, onSnapshot }: {
       {d.decision_basis === "manual_provisional_forecast" && <p className="mt-1 font-semibold">Manager decision based on a provisional backup forecast</p>}
       <p className="mt-1">{d.override_reason || d.notes || "Manager confirmed the assessment."}</p>
       <div className="mt-3 flex flex-wrap gap-2">
+        <button className="btn" onClick={() => setGrading(d.id)}>Grade decision</button>
         <button className="btn" onClick={() => setSelected(d.id)}>Review decision & alerts</button>
         <button className="btn" onClick={() => onSnapshot(d.snapshot_id, d.id)}>View saved weather & cameras</button>
       </div>
     </li>)}</ul>
-  </Card>;
+  </Card><DecisionFeedback key={refresh} /></div>;
 }

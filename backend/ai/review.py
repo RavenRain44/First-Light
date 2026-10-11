@@ -41,10 +41,10 @@ def _template(check: dict, outcome: dict) -> dict:
     return {"source": "template", "verdict": check["verdict"], "confidence": check["confidence"], "note": note}
 
 
-async def review(evidence: dict, check: dict) -> dict:
+async def review(evidence: dict, check: dict, *, use_ai: bool = True) -> dict:
     """``evidence``: decision, suggestion, alerts at decision time and the observed outcome. ``check``: grade()."""
     outcome = evidence.get("observed", {})
-    if settings.model_provider != "akamai" or not settings.akamai_api_key:
+    if not use_ai or settings.model_provider != "akamai" or not settings.akamai_api_key:
         return _template(check, outcome)
     user = json.dumps({**evidence, "weather_check": check}, default=str)[:6000]
     try:

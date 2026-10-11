@@ -21,8 +21,9 @@ class Settings:
         "NWS_USER_AGENT", "ClosureCall-HackMidwest2026 (set NWS_USER_AGENT to your contact)"
     )
     demo_mode: bool = _bool("DEMO_MODE")
-    # Unreviewed past decisions get an AI review this many days after their decision day.
+    # Past decisions become due for an explicitly requested review after this many days.
     review_after_days: int = int(os.environ.get("REVIEW_AFTER_DAYS", "7"))
+    threshold_admin_token: str = os.environ.get("THRESHOLD_ADMIN_TOKEN", "")
     db_path: Path = Path(os.environ.get("DATABASE_PATH", BACKEND_DIR / "var" / "closurecall.db"))
     cache_dir: Path = Path(os.environ.get("HTTP_CACHE_DIR", BACKEND_DIR / "fixtures" / "http_cache"))
     live_ttl_seconds: int = int(os.environ.get("LIVE_CACHE_TTL_SECONDS", "600"))

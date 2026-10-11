@@ -49,6 +49,11 @@ IMMUTABLE_TRIGGERS = [
        BEGIN SELECT RAISE(ABORT, 'decisions are append-only'); END""",
 ]
 
+for _table in ("decisionintent", "decisionassessment", "feedbackmetric", "feedbackanalysis", "policyproposal", "policyevent", "policyactivation"):
+    for _op in ("UPDATE", "DELETE"):
+        IMMUTABLE_TRIGGERS.append(f"CREATE TRIGGER IF NOT EXISTS {_table}_no_{_op.lower()} BEFORE {_op} ON {_table} "
+                                  "BEGIN SELECT RAISE(ABORT, 'operational feedback is append-only'); END")
+
 
 MIGRATIONS = [("readiness_level", "VARCHAR NOT NULL DEFAULT ''"), ("readiness_json", "VARCHAR NOT NULL DEFAULT '{}'"),
               ("sufficiency_status", "VARCHAR NOT NULL DEFAULT ''"), ("sufficiency_json", "VARCHAR NOT NULL DEFAULT '{}'")]

@@ -18,7 +18,7 @@ from app import snapshots
 from app.config import settings
 from app.db import session
 from app.facility import get_facility, load_employees, roster_summary
-from app.models import Decision, DecisionContext, HistoryEvent
+from app.models import Decision, DecisionContext, DecisionIntent, HistoryEvent
 from engine import sufficiency
 from engine.features import wind_chill_f
 from engine.posture import ORDER
@@ -276,6 +276,7 @@ def thresholds():
 # ----------------------------------------------------------------------------- decisions
 
 class DecisionIn(BaseModel):
+    intended_objective: str | None = Field(default=None, max_length=1000)
     snapshot_id: str
     decided_by: str = Field(min_length=2, max_length=120)
     decision_posture: str
@@ -318,6 +319,10 @@ def record_decision(d: DecisionIn, background_tasks: BackgroundTasks):
              else "manual_insufficient_evidence" if manual else "recommendation" if agreed else "override")
     with session() as s:
         s.add(row)
+        s.flush()
+        if d.intended_objective and d.intended_objective.strip():
+            s.add(DecisionIntent(decision_id=row.id, created_at=row.decided_at, actor=row.decided_by,
+                                 objective=d.intended_objective.strip(), retrospective=False))
         s.commit()
         s.refresh(row)
         # Demo-mode decisions use cached weather; Past decisions leaves them out.
@@ -327,13 +332,13 @@ def record_decision(d: DecisionIn, background_tasks: BackgroundTasks):
         s.add(pending(row)); s.commit()
         camera_time = datetime.fromisoformat(snap["as_of"]) if snap["mode"] == "replay" else row.decided_at.replace(tzinfo=timezone.utc)
         background_tasks.add_task(capture, row.id, row.facility_id, camera_time, snap["mode"] == "replay")
-        return {**row.model_dump(mode="json"), "label": "real (recorded in this system)",
+        return {**row.model_dump(mode="json"), "decided_at": utc(row.decided_at).isoformat(), "label": "real (recorded in this system)",
                 "evidence_status": evidence["status"], "decision_basis": basis}
 
 
 def _with_context(rows: list[Decision], s) -> list[dict]:
     ctx = {c.decision_id: c for c in s.exec(select(DecisionContext).where(DecisionContext.decision_id.in_([r.id for r in rows]))).all()}
-    return [{**r.model_dump(mode="json"), "label": "real (recorded in this system)",
+    return [{**r.model_dump(mode="json"), "decided_at": utc(r.decided_at).isoformat(), "label": "real (recorded in this system)",
              "evidence_status": ctx[r.id].evidence_status if r.id in ctx else "",
              "decision_basis": ctx[r.id].decision_basis if r.id in ctx else ""} for r in rows]
 

@@ -40,6 +40,14 @@ TABLES = [
     ("snapshotinterpretation", "id", "logs/briefs", "created_at"),
     ("decision", "id", "logs/decisions", "decided_at"),
     ("notificationaudit", "id", "logs/notifications", "at"),
+    ("decisionreview", "id", "feedback/reviews", "created_at"),
+    ("decisionintent", "id", "feedback/intentions", "created_at"),
+    ("decisionassessment", "id", "feedback/assessments", "created_at"),
+    ("feedbackmetric", "id", "feedback/metrics", "created_at"),
+    ("feedbackanalysis", "id", "feedback/analyses", "created_at"),
+    ("policyproposal", "id", "feedback/policy-proposals", "created_at"),
+    ("policyevent", "id", "feedback/policy-events", "created_at"),
+    ("policyactivation", "id", "feedback/policy-activations", "created_at"),
 ]
 
 
@@ -237,6 +245,15 @@ async def sync_once() -> int:
                         else:
                             body = {k: v for k, v in row.items() if k != "_rowid"}
                             files = [(f"{prefix}/{_day(row[datecol])}/{row[idcol]}.json", _json(body), "application/json")]
+                            if prefix.startswith("feedback/"):
+                                import hashlib
+                                body["integrity_sha256"] = hashlib.sha256(_json(body)).hexdigest()
+                                files = [(files[0][0], _json(body), "application/json")]
+                                if table == "feedbackmetric":
+                                    catalog = {"dataset": "operational-feedback-v1", "metric_id": row["id"],
+                                               "updated_at": row["created_at"], "private": True,
+                                               "label": "Operational feedback; separate from historical weather benchmarks"}
+                                    files.append((f"feedback/catalog/{row['id']}.json", _json(catalog), "application/json"))
                             if table == "decision":
                                 cams = await asyncio.to_thread(_decision_cameras, row)
                                 if cams is None:
