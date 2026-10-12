@@ -1,14 +1,14 @@
-# Closure Call
+# First Light
 
 Weather-driven facility operating-status decision support for the **USDA AI Challenge, Hack Midwest 2026**
-("Closure Call: Weather-Driven Facility Decisions and Notification").
+("First Light: Weather-Driven Facility Decisions and Notification").
 
 Built by Landen, Isaac, Caleb, Casey and Collin.
 
 > When severe weather threatens a federal facility, how does the decision to close happen fast enough,
 > consistently enough, and with a clear enough record of why?
 
-Closure Call does **not** automate the decision. It puts every input a manager needs in one place, recommends an
+First Light does **not** automate the decision. It puts every input a manager needs in one place, recommends an
 OPM-aligned posture from deterministic, cited thresholds, explains it in a paste-ready paragraph, and writes an
 immutable, reconstructable record of what was known, when, and what the human decided.
 
