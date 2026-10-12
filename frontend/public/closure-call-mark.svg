@@ -1,7 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <title>Closure Call — weather-informed decisions</title>
+  <title>First Light — weather-informed decisions</title>
   <rect x="1" y="1" width="62" height="62" rx="18" fill="#234B7D"/>
   <rect x="1.5" y="1.5" width="61" height="61" rx="17.5" stroke="#92B8E6" stroke-opacity=".45"/>
-  <path d="M19 47a10 10 0 0 1-1.5-19.9A14 14 0 0 1 44 25.3 11 11 0 1 1 46 47H19Z" fill="#F8FBFF"/>
-  <path d="m24 34 6 6 11-12" stroke="#234B7D" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M18 42h28" stroke="#92B8E6" stroke-width="4" stroke-linecap="round"/>
+  <path d="M32 42a10 10 0 1 1 10-10" stroke="#F8FBFF" stroke-width="4" stroke-linecap="round"/>
+  <path d="M32 42a10 10 0 1 0-10-10" stroke="#F8FBFF" stroke-width="4" stroke-linecap="round"/>
+  <path d="M32 18v4m-8 0 2.5 3M40 22l-2.5 3" stroke="#92B8E6" stroke-width="2.5" stroke-linecap="round"/>
 </svg>

@@ -39,10 +39,10 @@ export function Header({ snap, mode, setMode, view, setView, demo, theme, toggle
     <header className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-3">
-        <button onClick={goToday} className="flex items-center gap-3 text-left" aria-label="Closure Call: go to today">
+        <button onClick={goToday} className="flex items-center gap-3 text-left" aria-label="First Light: go to today">
           <img src="/closure-call-mark.svg" alt="" width="40" height="40" className="h-10 w-10 shrink-0" />
           <span className="leading-tight">
-            <span className="block text-base font-semibold">Closure Call</span>
+            <span className="block text-base font-semibold">First Light</span>
             <span className="block text-xs text-muted">{facility.name}</span>
           </span>
         </button>

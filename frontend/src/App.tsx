@@ -284,7 +284,7 @@ function FacilitySession({ facility, facilities, changeFacility, registryError }
         </>
       )}
       <footer className="pb-6 text-center text-xs text-muted">
-        Closure Call · Hack Midwest 2026 USDA AI Challenge · Facility and roster are synthetic; weather sources include NWS and the Iowa Environmental Mesonet; roads use the selected state’s DOT, where available. Times shown in facility local time.
+        First Light · Hack Midwest 2026 USDA AI Challenge · Facility and roster are synthetic; weather sources include NWS and the Iowa Environmental Mesonet; roads use the selected state’s DOT, where available. Times shown in facility local time.
       </footer>
     </div>
   );
